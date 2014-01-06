@@ -2,4 +2,6 @@ target/
 bin/
 work/
 .classpath
-
+.idea
+*.iml
+.DS_Store

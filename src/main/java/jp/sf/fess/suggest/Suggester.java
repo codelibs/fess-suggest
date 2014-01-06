@@ -1,99 +1,106 @@
-/*
- * Copyright 2009-2013 the Fess Project and the Others.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
- * either express or implied. See the License for the specific language
- * governing permissions and limitations under the License.
- */
-
 package jp.sf.fess.suggest;
+
+
+import jp.sf.fess.suggest.converter.SuggestReadingConverter;
+import jp.sf.fess.suggest.normalizer.SuggestNormalizer;
+import org.apache.commons.lang.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import jp.sf.fess.suggest.converter.SuggestConverter;
-
 public class Suggester {
+    private final static String _AND_ = " AND ";
 
-    protected final List<SuggestConverter> preQueryConverterList = new ArrayList<SuggestConverter>();
+    private final static String _OR_ = " OR ";
 
-    protected final List<SuggestConverter> queryConverterList = new ArrayList<SuggestConverter>();
+    SuggestReadingConverter converter = null;
 
-    protected final List<SuggestConverter> resultConverterList = new ArrayList<SuggestConverter>();
+    SuggestNormalizer normalizer = null;
 
-    public String wordSeprator = SuggestConstants.WORD_SEPARATOR;
-
-    public void addQueryConverter(final SuggestConverter converter) {
-        queryConverterList.add(converter);
+    public void setConverter(SuggestReadingConverter converter) {
+        this.converter = converter;
     }
 
-    public void addPreQueryConverter(final SuggestConverter converter) {
-        preQueryConverterList.add(converter);
+    public void setNormalizer(SuggestNormalizer normalizer) {
+        this.normalizer = normalizer;
     }
 
-    public void addResultConverter(final SuggestConverter converter) {
-        resultConverterList.add(converter);
-    }
-
-    public String convertQuery(final String query) {
-
-        String target = query;
-        for (final SuggestConverter conveter : preQueryConverterList) {
-            target = conveter.convert(target);
+    public String buildSuggestQuery(String query, List<String> targetFields, List<String> labels) {
+        String q = buildQuery(query);
+        if (StringUtils.isBlank(q)) {
+            return "";
         }
 
-        final List<String> queryList = new ArrayList<String>();
-        for (final SuggestConverter converter : queryConverterList) {
-            String convertedQuery = converter.convert(target);
-            if (convertedQuery != null) {
-                convertedQuery = convertedQuery.trim();
-                if (convertedQuery.length() > 0) {
-                    queryList.add(convertedQuery);
+        StringBuilder queryBuf = new StringBuilder(q);
+        if (targetFields != null && targetFields.size() > 0) {
+            queryBuf.append(_AND_);
+            if (targetFields.size() >= 2) {
+                queryBuf.append("(");
+            }
+            for (int i = 0; i < targetFields.size(); i++) {
+                String fieldName = targetFields.get(i);
+                if (i > 0) {
+                    queryBuf.append(_OR_);
                 }
+                queryBuf.append(SuggestConstants.SuggestFieldNames.FIELD_NAME + ":" + fieldName);
+            }
+            if (targetFields.size() >= 2) {
+                queryBuf.append(")");
             }
         }
 
-        if (queryList.size() == 0) {
-            queryList.add(target);
-        }
-
-        final StringBuilder resultStrBuff = new StringBuilder(255);
-
-        for (int i = 0; i < queryList.size(); i++) {
-            if (i > 0) {
-                resultStrBuff.append(' ');
+        if(labels != null && labels.size() > 0) {
+            queryBuf.append(_AND_);
+            if(labels.size() >= 2) {
+                queryBuf.append('(');
             }
-
-            resultStrBuff.append(queryList.get(i));
+            boolean isFirst = true;
+            for(String label: labels) {
+                if(!isFirst) {
+                    queryBuf.append(_OR_);
+                }
+                queryBuf.append(SuggestConstants.SuggestFieldNames.LABELS + ":" + label);
+                isFirst = false;
+            }
+            if(labels.size() >= 2) {
+                queryBuf.append(')');
+            }
         }
 
-        return resultStrBuff.toString();
+        return queryBuf.toString();
     }
 
-    public String convertResultString(final String suggestTerm) {
-        final String[] strArray = suggestTerm.split(wordSeprator);
+    protected String buildQuery(String query) {
+        String q = query;
+        if (normalizer != null) {
+            q = normalizer.normalize(q);
+        }
 
-        String target;
-
-        if (strArray.length == 1) {
-            target = strArray[0];
-        } else if (strArray.length == 2) {
-            target = strArray[1];
+        List<String> readingList = new ArrayList<String>();
+        if (converter != null) {
+            readingList = converter.convert(q);
         } else {
-            return SuggestConstants.EMPTY_STRING;
+            readingList.add(q);
         }
 
-        for (final SuggestConverter converter : resultConverterList) {
-            target = converter.convert(target);
+        if (readingList.size() == 0) {
+            return SuggestConstants.SuggestFieldNames.READING + ":" + query + "*";
         }
-        return target;
+
+        StringBuilder queryBuf = new StringBuilder();
+        if (readingList.size() >= 2) {
+            queryBuf.append('(');
+        }
+        for (String reading : readingList) {
+            if (queryBuf.length() > 1) {
+                queryBuf.append(_OR_);
+            }
+            queryBuf.append(SuggestConstants.SuggestFieldNames.READING + ":" + reading + "*");
+        }
+        if (readingList.size() >= 2) {
+            queryBuf.append(')');
+        }
+
+        return queryBuf.toString();
     }
 }
