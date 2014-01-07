@@ -5,3 +5,7 @@ work/
 .idea
 *.iml
 .DS_Store
+solr/core1/data
+solr/core1/txlog
+solr/core2/data
+solr/core2/txlog

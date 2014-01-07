@@ -59,7 +59,7 @@ public class TestUtils {
             return;
         }
 
-        jettySolrRunner = new JettySolrRunner("/Users/yfujita/fuji/work/fess/suggest2/fess-suggest-plugin/solr",
+        jettySolrRunner = new JettySolrRunner("./solr",
                 CONTEXT_PATH, PORT);
         try {
             jettySolrRunner.start();
