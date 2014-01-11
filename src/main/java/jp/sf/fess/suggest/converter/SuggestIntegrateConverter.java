@@ -23,6 +23,8 @@ public class SuggestIntegrateConverter implements SuggestReadingConverter {
 
     @Override
     public void start() {
-
+        for(SuggestReadingConverter converter: converterList) {
+            converter.start();
+        }
     }
 }
