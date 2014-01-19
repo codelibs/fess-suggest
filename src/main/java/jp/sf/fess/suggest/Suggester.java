@@ -25,7 +25,8 @@ public class Suggester {
         this.normalizer = normalizer;
     }
 
-    public String buildSuggestQuery(String query, List<String> targetFields, List<String> labels) {
+    public String buildSuggestQuery(String query, List<String> targetFields, List<String> labels,
+                                    List<String> roles) {
         String q = buildQuery(query);
         if (StringUtils.isBlank(q)) {
             return "";
@@ -63,6 +64,24 @@ public class Suggester {
                 isFirst = false;
             }
             if(labels.size() >= 2) {
+                queryBuf.append(')');
+            }
+        }
+
+        if(roles != null && roles.size() > 0) {
+            queryBuf.append(_AND_);
+            if(roles.size() >= 2) {
+                queryBuf.append('(');
+            }
+            boolean isFirst = true;
+            for(String role: roles) {
+                if(!isFirst) {
+                    queryBuf.append(_OR_);
+                }
+                queryBuf.append(SuggestConstants.SuggestFieldNames.ROLES + ":" + role);
+                isFirst = false;
+            }
+            if(roles.size() >= 2) {
                 queryBuf.append(')');
             }
         }
