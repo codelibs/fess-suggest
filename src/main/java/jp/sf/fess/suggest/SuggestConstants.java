@@ -1,6 +1,6 @@
 package jp.sf.fess.suggest;
 
-public class SuggestConstants {
+public final class SuggestConstants {
     public static final String USER_DICT_ENCODING = "fess.user.dict.encoding";
 
     public static final String USER_DICT_PATH = "fess.user.dict.path";

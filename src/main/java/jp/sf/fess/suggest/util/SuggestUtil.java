@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.Field;
 import java.util.*;
 
-public class SuggestUtil {
+public final class SuggestUtil {
 
     private SuggestUtil() {
     }
