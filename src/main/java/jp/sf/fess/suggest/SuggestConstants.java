@@ -18,4 +18,7 @@ public class SuggestConstants {
 
         public static final String ROLES = "role_s_m";
     }
+
+    private SuggestConstants() {
+    }
 }

@@ -100,7 +100,6 @@ public class KatakanaConverter implements SuggestReadingConverter {
                 String term = att.toString();
                 int pos = inputStr.substring(offset).indexOf(term);
                 if (pos > 0) {
-                    System.out.println(offset + " " + pos);
                     String tmp = inputStr.substring(offset, offset + pos);
                     kanaBuf.append(transliterator.transliterate(tmp));
                     offset += pos;

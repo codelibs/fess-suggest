@@ -78,12 +78,12 @@ public class SuggestTokenizerFactory extends TokenizerFactory implements
 
     private final int maxLength;
 
-    private final static String DEFAULT_INCLUDE_PARTOFSPEECH =
+    private static final String DEFAULT_INCLUDE_PARTOFSPEECH =
             "start:名詞,start:接頭詞,start:形容詞,middle:名詞,middle:接頭詞,middle:形容詞";
 
-    private final static String DEFAULT_EXCLUDE_PARTOFSPEECH = "start:副詞可能";
+    private static final String DEFAULT_EXCLUDE_PARTOFSPEECH = "start:副詞可能";
 
-    private final static String DEFAULT_INCLUDE_CHAR_TERM = "middle:な";
+    private static final String DEFAULT_INCLUDE_CHAR_TERM = "middle:な";
 
     public SuggestTokenizerFactory(final Map<String, String> args) {
         super(args);

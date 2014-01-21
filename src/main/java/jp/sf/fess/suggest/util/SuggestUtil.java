@@ -10,10 +10,12 @@ import java.lang.reflect.Field;
 import java.util.*;
 
 public class SuggestUtil {
-    private static final Logger logger = LoggerFactory.getLogger(SuggestUtil.class);
+
+    private SuggestUtil() {
+    }
 
     public static SuggestReadingConverter createConverter(String className, Map<String, String> properties)
-            throws Exception {
+            throws ClassNotFoundException, IllegalAccessException, InstantiationException, NoSuchFieldException {
         Class cls = Class.forName(className);
         Object obj = cls.newInstance();
         if (!(obj instanceof SuggestReadingConverter)) {
@@ -31,7 +33,7 @@ public class SuggestUtil {
     }
 
     public static SuggestNormalizer createNormalizer(String className, Map<String, String> properties)
-            throws Exception {
+            throws ClassNotFoundException, IllegalAccessException, InstantiationException, NoSuchFieldException {
         Class cls = Class.forName(className);
         Object obj = cls.newInstance();
         if (!(obj instanceof SuggestNormalizer)) {

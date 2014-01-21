@@ -9,9 +9,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Suggester {
-    private final static String _AND_ = " AND ";
+    private static final String _AND_ = " AND ";
 
-    private final static String _OR_ = " OR ";
+    private static final String _OR_ = " OR ";
 
     SuggestReadingConverter converter = null;
 
@@ -33,7 +33,7 @@ public class Suggester {
         }
 
         StringBuilder queryBuf = new StringBuilder(q);
-        if (targetFields != null && targetFields.size() > 0) {
+        if (targetFields != null && !targetFields.isEmpty()) {
             queryBuf.append(_AND_);
             if (targetFields.size() >= 2) {
                 queryBuf.append("(");

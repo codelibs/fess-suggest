@@ -19,6 +19,6 @@ public class FullWidthToHalfWidthAlphabetNormalizer implements SuggestNormalizer
 
     @Override
     public void start() {
-
+        //No-op;
     }
 }

@@ -186,7 +186,6 @@ public class SuggestTokenizer extends Tokenizer {
             offset++;
         } else {
             int tmpOffset = offset - termListByKuromoji.size();
-            boolean readingFlg = false;
             if (tmpOffset < termListByKuromoji.size()) {
                 StringBuilder buffer = null;
                 StringBuilder readingBuf = null;

@@ -16,12 +16,10 @@ public class AlphabetConverter implements SuggestReadingConverter {
 
     protected Transliterator anyLower;
 
-    protected int maxReadingNumInteger = 10;
-
-    public String maxReadingNum = "10";
+    protected int maxReadingPatternNum = 10;
 
     public AlphabetConverter() {
-        convertMap = generateMapping();
+        convertMap = generateConvertMapping();
         katakanaConverter = new KatakanaConverter();
         fullWidthHalfWidth = Transliterator.getInstance("Fullwidth-Halfwidth");
         anyLower = Transliterator.getInstance("Any-Lower");
@@ -30,7 +28,6 @@ public class AlphabetConverter implements SuggestReadingConverter {
     @Override
     public void start() {
         katakanaConverter.start();
-        maxReadingNumInteger = Integer.parseInt(maxReadingNum);
     }
 
     @Override
@@ -65,7 +62,7 @@ public class AlphabetConverter implements SuggestReadingConverter {
                         for (StringBuilder buf : bufList) {
                             buf.append(alphabets[j]);
                         }
-                    } else if (bufList.size() < maxReadingNumInteger) {
+                    } else if (bufList.size() < maxReadingPatternNum) {
                         final List<StringBuilder> tmpBufList = deepCopyBufList(originBufList);
                         for (StringBuilder buf : tmpBufList) {
                             buf.append(alphabets[j]);
@@ -85,7 +82,7 @@ public class AlphabetConverter implements SuggestReadingConverter {
         return list;
     }
 
-    private Map<String, String[]> generateMapping() {
+    private Map<String, String[]> generateConvertMapping() {
         HashMap<String, String[]> map = new HashMap<String, String[]>();
 
         map.put("ア", new String[]{"a"});
@@ -221,7 +218,6 @@ public class AlphabetConverter implements SuggestReadingConverter {
         map.put("フェ", new String[]{"fe"});
         map.put("フォ", new String[]{"fo"});
 
-
         map.put("ミャ", new String[]{"mya"});
         map.put("ミュ", new String[]{"myu"});
         map.put("ミョ", new String[]{"myo"});
@@ -235,11 +231,9 @@ public class AlphabetConverter implements SuggestReadingConverter {
         map.put("ゥ", new String[]{"u"});
         map.put("ェ", new String[]{"e"});
         map.put("ォ", new String[]{"o"});
-
         map.put("ャ", new String[]{"ya"});
         map.put("ュ", new String[]{"yu"});
         map.put("ョ", new String[]{"yo"});
-
         map.put("ッ", new String[]{"tu", "tsu"});
 
         return map;
