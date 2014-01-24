@@ -52,4 +52,11 @@ public class SuggesterTest extends TestCase {
                 roleField + ":role1 OR " + roleField + ":role2)",
                 query);
     }
+
+    public void test_buildSpaceQuery() {
+        Suggester suggester = new Suggester();
+        String readingField = SuggestConstants.SuggestFieldNames.READING;
+        String query = suggester.buildQuery("りんご　みかん");
+        assertEquals(readingField + ":りんご AND みかん*", query);
+    }
 }

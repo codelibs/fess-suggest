@@ -90,7 +90,7 @@ public class Suggester {
     }
 
     protected String buildQuery(String query) {
-        String q = query;
+        String q = query.trim().replace("　", " ").replaceAll(" +", _AND_); //TODO multi word suggest
         if (normalizer != null) {
             q = normalizer.normalize(q);
         }
