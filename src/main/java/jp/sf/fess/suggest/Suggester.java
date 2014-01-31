@@ -20,6 +20,7 @@ package jp.sf.fess.suggest;
 import jp.sf.fess.suggest.converter.SuggestReadingConverter;
 import jp.sf.fess.suggest.normalizer.SuggestNormalizer;
 import org.apache.commons.lang.StringUtils;
+import org.apache.solr.client.solrj.util.ClientUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -105,11 +106,12 @@ public class Suggester {
         return queryBuf.toString();
     }
 
-    protected String buildQuery(String query) {
-        String q = query.trim().replace("　", " ").replaceAll(" +", _AND_); //TODO multi word suggest
+    protected String buildQuery(final String query) {
+        String q = query.trim();
         if (normalizer != null) {
             q = normalizer.normalize(q);
         }
+        q = ClientUtils.escapeQueryChars(q);
 
         List<String> readingList = new ArrayList<String>();
         if (converter != null) {

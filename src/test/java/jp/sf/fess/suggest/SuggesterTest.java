@@ -69,10 +69,18 @@ public class SuggesterTest extends TestCase {
                 query);
     }
 
-    public void test_buildSpaceQuery() {
+    public void test_buildQueryWithSpace() {
         Suggester suggester = new Suggester();
         String readingField = SuggestConstants.SuggestFieldNames.READING;
         String query = suggester.buildQuery("りんご　みかん");
-        assertEquals(readingField + ":りんご AND みかん*", query);
+        assertEquals(readingField + ":りんご\\　みかん*", query);
     }
+
+    public void test_buildQueryWithEscape() {
+        Suggester suggester = new Suggester();
+        String readingField = SuggestConstants.SuggestFieldNames.READING;
+        String query = suggester.buildQuery("りんご+-&&||!(){}[]^\"~*?:");
+        assertEquals(readingField + ":りんご\\+\\-\\&\\&\\|\\|\\!\\(\\)\\{\\}\\[\\]\\^\\\"\\~\\*\\?\\:*", query);
+    }
+
 }
