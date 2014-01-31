@@ -73,7 +73,7 @@ public class SuggesterTest extends TestCase {
         Suggester suggester = new Suggester();
         String readingField = SuggestConstants.SuggestFieldNames.READING;
         String query = suggester.buildQuery("りんご　みかん");
-        assertEquals(readingField + ":りんご\\　みかん*", query);
+        assertEquals(readingField + ":りんご\\ みかん*", query);
     }
 
     public void test_buildQueryWithEscape() {

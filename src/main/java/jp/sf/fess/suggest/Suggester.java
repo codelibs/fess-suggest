@@ -107,7 +107,7 @@ public class Suggester {
     }
 
     protected String buildQuery(final String query) {
-        String q = query.trim();
+        String q = query.replace("　", " ").trim();
         if (normalizer != null) {
             q = normalizer.normalize(q);
         }
