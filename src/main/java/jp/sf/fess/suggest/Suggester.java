@@ -16,14 +16,14 @@
 
 package jp.sf.fess.suggest;
 
+import java.util.ArrayList;
+import java.util.List;
 
 import jp.sf.fess.suggest.converter.SuggestReadingConverter;
 import jp.sf.fess.suggest.normalizer.SuggestNormalizer;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.solr.client.solrj.util.ClientUtils;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class Suggester {
     private static final String _AND_ = " AND ";
@@ -34,71 +34,79 @@ public class Suggester {
 
     SuggestNormalizer normalizer = null;
 
-    public void setConverter(SuggestReadingConverter converter) {
+    public void setConverter(final SuggestReadingConverter converter) {
         this.converter = converter;
     }
 
-    public void setNormalizer(SuggestNormalizer normalizer) {
+    public void setNormalizer(final SuggestNormalizer normalizer) {
         this.normalizer = normalizer;
     }
 
-    public String buildSuggestQuery(String query, List<String> targetFields, List<String> labels,
-                                    List<String> roles) {
-        String q = buildQuery(query);
+    public String buildSuggestQuery(final String query,
+            final List<String> targetFields, final List<String> labels,
+            final List<String> roles) {
+        final String q = buildQuery(query);
         if (StringUtils.isBlank(q)) {
             return "";
         }
 
-        StringBuilder queryBuf = new StringBuilder(q);
+        final StringBuilder queryBuf = new StringBuilder(q.length() + 100);
+        queryBuf.append(q);
         if (targetFields != null && !targetFields.isEmpty()) {
             queryBuf.append(_AND_);
             if (targetFields.size() >= 2) {
                 queryBuf.append("(");
             }
             for (int i = 0; i < targetFields.size(); i++) {
-                String fieldName = targetFields.get(i);
+                final String fieldName = targetFields.get(i);
                 if (i > 0) {
                     queryBuf.append(_OR_);
                 }
-                queryBuf.append(SuggestConstants.SuggestFieldNames.FIELD_NAME + ":" + fieldName);
+                queryBuf.append(SuggestConstants.SuggestFieldNames.FIELD_NAME);
+                queryBuf.append(':');
+                queryBuf.append(fieldName);
             }
             if (targetFields.size() >= 2) {
-                queryBuf.append(")");
-            }
-        }
-
-        if(labels != null && labels.size() > 0) {
-            queryBuf.append(_AND_);
-            if(labels.size() >= 2) {
-                queryBuf.append('(');
-            }
-            boolean isFirst = true;
-            for(String label: labels) {
-                if(!isFirst) {
-                    queryBuf.append(_OR_);
-                }
-                queryBuf.append(SuggestConstants.SuggestFieldNames.LABELS + ":" + label);
-                isFirst = false;
-            }
-            if(labels.size() >= 2) {
                 queryBuf.append(')');
             }
         }
 
-        if(roles != null && roles.size() > 0) {
+        if (labels != null && !labels.isEmpty()) {
             queryBuf.append(_AND_);
-            if(roles.size() >= 2) {
+            if (labels.size() >= 2) {
                 queryBuf.append('(');
             }
             boolean isFirst = true;
-            for(String role: roles) {
-                if(!isFirst) {
+            for (final String label : labels) {
+                if (!isFirst) {
                     queryBuf.append(_OR_);
                 }
-                queryBuf.append(SuggestConstants.SuggestFieldNames.ROLES + ":" + role);
+                queryBuf.append(SuggestConstants.SuggestFieldNames.LABELS);
+                queryBuf.append(':');
+                queryBuf.append(label);
                 isFirst = false;
             }
-            if(roles.size() >= 2) {
+            if (labels.size() >= 2) {
+                queryBuf.append(')');
+            }
+        }
+
+        if (roles != null && !roles.isEmpty()) {
+            queryBuf.append(_AND_);
+            if (roles.size() >= 2) {
+                queryBuf.append('(');
+            }
+            boolean isFirst = true;
+            for (final String role : roles) {
+                if (!isFirst) {
+                    queryBuf.append(_OR_);
+                }
+                queryBuf.append(SuggestConstants.SuggestFieldNames.ROLES);
+                queryBuf.append(':');
+                queryBuf.append(role);
+                isFirst = false;
+            }
+            if (roles.size() >= 2) {
                 queryBuf.append(')');
             }
         }
@@ -120,19 +128,23 @@ public class Suggester {
             readingList.add(q);
         }
 
-        if (readingList.size() == 0) {
-            return SuggestConstants.SuggestFieldNames.READING + ":" + query + "*";
+        if (readingList.isEmpty()) {
+            return SuggestConstants.SuggestFieldNames.READING + ':' + query
+                    + '*';
         }
 
-        StringBuilder queryBuf = new StringBuilder();
+        final StringBuilder queryBuf = new StringBuilder(100);
         if (readingList.size() >= 2) {
             queryBuf.append('(');
         }
-        for (String reading : readingList) {
+        for (final String reading : readingList) {
             if (queryBuf.length() > 1) {
                 queryBuf.append(_OR_);
             }
-            queryBuf.append(SuggestConstants.SuggestFieldNames.READING + ":" + reading + "*");
+            queryBuf.append(SuggestConstants.SuggestFieldNames.READING);
+            queryBuf.append(':');
+            queryBuf.append(reading);
+            queryBuf.append('*');
         }
         if (readingList.size() >= 2) {
             queryBuf.append(')');

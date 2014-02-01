@@ -33,6 +33,9 @@ public final class SuggestConstants {
         public static final String LABELS = "label_s_m";
 
         public static final String ROLES = "role_s_m";
+
+        private SuggestFieldNames() {
+        }
     }
 
     private SuggestConstants() {

@@ -16,12 +16,13 @@
 
 package jp.sf.fess.suggest.normalizer;
 
-public class FullWidthToHalfWidthAlphabetNormalizer implements SuggestNormalizer {
+public class FullWidthToHalfWidthAlphabetNormalizer implements
+        SuggestNormalizer {
     @Override
-    public String normalize(String text) {
-        StringBuffer sb = new StringBuffer(text);
+    public String normalize(final String text) {
+        final StringBuilder sb = new StringBuilder(text);
         for (int i = 0; i < sb.length(); i++) {
-            char c = sb.charAt(i);
+            final char c = sb.charAt(i);
             if (c >= 'ａ' && c <= 'ｚ') {
                 sb.setCharAt(i, (char) (c - 'ａ' + 'a'));
             } else if (c >= 'Ａ' && c <= 'Ｚ') {

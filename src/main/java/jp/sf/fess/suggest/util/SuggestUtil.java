@@ -16,50 +16,51 @@
 
 package jp.sf.fess.suggest.util;
 
+import java.lang.reflect.Field;
+import java.util.Map;
 
 import jp.sf.fess.suggest.converter.SuggestReadingConverter;
 import jp.sf.fess.suggest.normalizer.SuggestNormalizer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.lang.reflect.Field;
-import java.util.*;
 
 public final class SuggestUtil {
 
     private SuggestUtil() {
     }
 
-    public static SuggestReadingConverter createConverter(String className, Map<String, String> properties)
-            throws ClassNotFoundException, IllegalAccessException, InstantiationException, NoSuchFieldException {
-        Class cls = Class.forName(className);
-        Object obj = cls.newInstance();
+    public static SuggestReadingConverter createConverter(
+            final String className, final Map<String, String> properties)
+            throws ClassNotFoundException, IllegalAccessException,
+            InstantiationException, NoSuchFieldException {
+        final Class cls = Class.forName(className);
+        final Object obj = cls.newInstance();
         if (!(obj instanceof SuggestReadingConverter)) {
             throw new IllegalArgumentException("Not converter. " + className);
         }
 
-        for (Map.Entry<String, String> entry : properties.entrySet()) {
-            String fieldName = entry.getKey();
-            String fieldValue = entry.getValue();
-            Field field = cls.getField(fieldName);
+        for (final Map.Entry<String, String> entry : properties.entrySet()) {
+            final String fieldName = entry.getKey();
+            final String fieldValue = entry.getValue();
+            final Field field = cls.getField(fieldName);
             field.set(obj, fieldValue);
         }
 
         return (SuggestReadingConverter) obj;
     }
 
-    public static SuggestNormalizer createNormalizer(String className, Map<String, String> properties)
-            throws ClassNotFoundException, IllegalAccessException, InstantiationException, NoSuchFieldException {
-        Class cls = Class.forName(className);
-        Object obj = cls.newInstance();
+    public static SuggestNormalizer createNormalizer(final String className,
+            final Map<String, String> properties)
+            throws ClassNotFoundException, IllegalAccessException,
+            InstantiationException, NoSuchFieldException {
+        final Class cls = Class.forName(className);
+        final Object obj = cls.newInstance();
         if (!(obj instanceof SuggestNormalizer)) {
             throw new IllegalArgumentException("Not normalizer. " + className);
         }
 
-        for (Map.Entry<String, String> entry : properties.entrySet()) {
-            String fieldName = entry.getKey();
-            String fieldValue = entry.getValue();
-            Field field = cls.getField(fieldName);
+        for (final Map.Entry<String, String> entry : properties.entrySet()) {
+            final String fieldName = entry.getKey();
+            final String fieldValue = entry.getValue();
+            final Field field = cls.getField(fieldName);
             field.set(obj, fieldValue);
         }
 

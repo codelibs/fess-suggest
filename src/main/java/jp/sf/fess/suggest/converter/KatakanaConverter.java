@@ -16,10 +16,21 @@
 
 package jp.sf.fess.suggest.converter;
 
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringReader;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CodingErrorAction;
+import java.util.ArrayList;
+import java.util.List;
 
-import com.ibm.icu.text.Transliterator;
 import jp.sf.fess.suggest.SuggestConstants;
 import jp.sf.fess.suggest.exception.FessSuggestException;
+
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.ja.JapaneseTokenizer;
 import org.apache.lucene.analysis.ja.dict.UserDictionary;
@@ -27,12 +38,7 @@ import org.apache.lucene.analysis.ja.tokenattributes.ReadingAttribute;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.util.IOUtils;
 
-import java.io.*;
-import java.nio.charset.Charset;
-import java.nio.charset.CharsetDecoder;
-import java.nio.charset.CodingErrorAction;
-import java.util.ArrayList;
-import java.util.List;
+import com.ibm.icu.text.Transliterator;
 
 public class KatakanaConverter implements SuggestReadingConverter {
     private final Transliterator transliterator = Transliterator
@@ -52,12 +58,14 @@ public class KatakanaConverter implements SuggestReadingConverter {
                 return;
             }
 
-            final String path = System.getProperty(SuggestConstants.USER_DICT_PATH);
+            final String path = System
+                    .getProperty(SuggestConstants.USER_DICT_PATH);
             if (path != null) {
                 InputStream stream = null;
                 try {
                     stream = new FileInputStream(path);
-                    String encoding = System.getProperty(SuggestConstants.USER_DICT_ENCODING);
+                    String encoding = System
+                            .getProperty(SuggestConstants.USER_DICT_ENCODING);
                     if (encoding == null) {
                         encoding = IOUtils.UTF_8;
                     }
@@ -89,34 +97,34 @@ public class KatakanaConverter implements SuggestReadingConverter {
     }
 
     @Override
-    public List<String> convert(String text) {
-        List<String> readingList = new ArrayList<String>();
+    public List<String> convert(final String text) {
+        final List<String> readingList = new ArrayList<String>();
         try {
             readingList.add(toKatakana(text));
-        } catch (Exception e) {
+        } catch (final Exception e) {
 
         }
         return readingList;
     }
 
-    protected String toKatakana(String inputStr) throws IOException {
-        StringBuilder kanaBuf = new StringBuilder();
+    protected String toKatakana(final String inputStr) throws IOException {
+        final StringBuilder kanaBuf = new StringBuilder();
 
         final Reader rd = new StringReader(inputStr);
         TokenStream stream = null;
         try {
-            stream = new JapaneseTokenizer(rd, userDictionary,
-                    false, JapaneseTokenizer.Mode.NORMAL);
+            stream = new JapaneseTokenizer(rd, userDictionary, false,
+                    JapaneseTokenizer.Mode.NORMAL);
             stream.reset();
 
             int offset = 0;
             while (stream.incrementToken()) {
                 final CharTermAttribute att = stream
                         .getAttribute(CharTermAttribute.class);
-                String term = att.toString();
-                int pos = inputStr.substring(offset).indexOf(term);
+                final String term = att.toString();
+                final int pos = inputStr.substring(offset).indexOf(term);
                 if (pos > 0) {
-                    String tmp = inputStr.substring(offset, offset + pos);
+                    final String tmp = inputStr.substring(offset, offset + pos);
                     kanaBuf.append(transliterator.transliterate(tmp));
                     offset += pos;
                 }

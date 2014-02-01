@@ -16,22 +16,21 @@
 
 package jp.sf.fess.suggest.converter;
 
-
 import java.util.ArrayList;
 import java.util.List;
 
 public class SuggestIntegrateConverter implements SuggestReadingConverter {
     List<SuggestReadingConverter> converterList = new ArrayList<SuggestReadingConverter>();
 
-    public void addConverter(SuggestReadingConverter converter) {
+    public void addConverter(final SuggestReadingConverter converter) {
         converterList.add(converter);
     }
 
     @Override
-    public List<String> convert(String text) {
-        List<String> convertedStrings = new ArrayList<String>();
-        for (SuggestReadingConverter converter : converterList) {
-            List<String> list = converter.convert(text);
+    public List<String> convert(final String text) {
+        final List<String> convertedStrings = new ArrayList<String>();
+        for (final SuggestReadingConverter converter : converterList) {
+            final List<String> list = converter.convert(text);
             convertedStrings.addAll(list);
         }
         return convertedStrings;
@@ -39,7 +38,7 @@ public class SuggestIntegrateConverter implements SuggestReadingConverter {
 
     @Override
     public void start() {
-        for(SuggestReadingConverter converter: converterList) {
+        for (final SuggestReadingConverter converter : converterList) {
             converter.start();
         }
     }

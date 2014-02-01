@@ -16,6 +16,15 @@
 
 package jp.sf.fess.suggest.analysis;
 
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CodingErrorAction;
+import java.util.Locale;
+import java.util.Map;
+
 import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.ja.JapaneseTokenizer.Mode;
 import org.apache.lucene.analysis.ja.dict.UserDictionary;
@@ -26,17 +35,6 @@ import org.apache.lucene.util.AttributeSource.AttributeFactory;
 import org.apache.lucene.util.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.nio.charset.Charset;
-import java.nio.charset.CharsetDecoder;
-import java.nio.charset.CodingErrorAction;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 
 public class SuggestTokenizerFactory extends TokenizerFactory implements
         ResourceLoaderAware {
@@ -78,8 +76,7 @@ public class SuggestTokenizerFactory extends TokenizerFactory implements
 
     private final int maxLength;
 
-    private static final String DEFAULT_INCLUDE_PARTOFSPEECH =
-            "start:名詞,start:接頭詞,start:形容詞,middle:名詞,middle:接頭詞,middle:形容詞";
+    private static final String DEFAULT_INCLUDE_PARTOFSPEECH = "start:名詞,start:接頭詞,start:形容詞,middle:名詞,middle:接頭詞,middle:形容詞";
 
     private static final String DEFAULT_EXCLUDE_PARTOFSPEECH = "start:副詞可能";
 
@@ -97,7 +94,8 @@ public class SuggestTokenizerFactory extends TokenizerFactory implements
 
         termChecker = new SuggestTokenizer.TermChecker();
         // ex. start:名詞,middle:動詞
-        final String includePartOfSpeech = get(args, INCLUDE_PART_OF_SPEECH, DEFAULT_INCLUDE_PARTOFSPEECH);
+        final String includePartOfSpeech = get(args, INCLUDE_PART_OF_SPEECH,
+                DEFAULT_INCLUDE_PARTOFSPEECH);
         if (includePartOfSpeech != null) {
             for (String text : includePartOfSpeech.split(",")) {
                 text = text.trim();
@@ -110,7 +108,8 @@ public class SuggestTokenizerFactory extends TokenizerFactory implements
                 }
             }
         }
-        final String excludePartOfSpeech = get(args, EXCLUDE_PART_OF_SPEECH, DEFAULT_EXCLUDE_PARTOFSPEECH);
+        final String excludePartOfSpeech = get(args, EXCLUDE_PART_OF_SPEECH,
+                DEFAULT_EXCLUDE_PARTOFSPEECH);
         if (excludePartOfSpeech != null) {
             for (String text : excludePartOfSpeech.split(",")) {
                 text = text.trim();
@@ -123,7 +122,8 @@ public class SuggestTokenizerFactory extends TokenizerFactory implements
                 }
             }
         }
-        final String includeCharTerm = get(args, INCLUDE_CHAR_TERM, DEFAULT_INCLUDE_CHAR_TERM);
+        final String includeCharTerm = get(args, INCLUDE_CHAR_TERM,
+                DEFAULT_INCLUDE_CHAR_TERM);
         if (includeCharTerm != null) {
             for (String text : includeCharTerm.split(",")) {
                 text = text.trim();
