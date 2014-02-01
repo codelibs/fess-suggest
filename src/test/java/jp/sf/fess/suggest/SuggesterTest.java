@@ -18,6 +18,7 @@ package jp.sf.fess.suggest;
 
 
 import jp.sf.fess.suggest.converter.SuggestReadingConverter;
+import jp.sf.fess.suggest.normalizer.ICUNormalizer;
 import jp.sf.fess.suggest.normalizer.SuggestNormalizer;
 import junit.framework.TestCase;
 
@@ -70,9 +71,13 @@ public class SuggesterTest extends TestCase {
     }
 
     public void test_buildQueryWithSpace() {
+        ICUNormalizer normalizer = new ICUNormalizer();
+        normalizer.transliteratorId = "Fullwidth-Halfwidth";
+        normalizer.start();
         Suggester suggester = new Suggester();
+        suggester.setNormalizer(normalizer);
         String readingField = SuggestConstants.SuggestFieldNames.READING;
-        String query = suggester.buildQuery("りんご　みかん");
+        String query = suggester.buildQuery("りんご　みかん　");
         assertEquals(readingField + ":りんご\\ みかん*", query);
     }
 

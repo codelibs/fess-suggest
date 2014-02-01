@@ -115,11 +115,11 @@ public class Suggester {
     }
 
     protected String buildQuery(final String query) {
-        String q = query.replace("　", " ").trim();
+        String q = query;
         if (normalizer != null) {
             q = normalizer.normalize(q);
         }
-        q = ClientUtils.escapeQueryChars(q);
+        q = ClientUtils.escapeQueryChars(q.trim());
 
         List<String> readingList = new ArrayList<String>();
         if (converter != null) {
