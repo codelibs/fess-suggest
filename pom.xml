@@ -42,9 +42,9 @@
 		</site>
 	</distributionManagement>
 	<scm>
-		<connection>scm:svn:http://svn.sourceforge.jp/svnroot/fess/fess-suggest/trunk</connection>
-		<developerConnection>scm:svn:https://svn.sourceforge.jp/svnroot/fess/fess-suggest/trunk</developerConnection>
-		<url>http://sourceforge.jp/projects/fess/svn/view/</url>
+		<connection>scm:git:git@github.com:codelibs/fess-suggest.git</connection>
+	    <developerConnection>scm:git:git@github.com:codelibs/fess-suggest.git</developerConnection>
+	    <url>https://github.com/codelibs/fess-suggest</url>
 	</scm>
 	<mailingLists>
 		<mailingList>
