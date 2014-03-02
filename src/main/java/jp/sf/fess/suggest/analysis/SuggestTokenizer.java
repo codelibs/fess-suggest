@@ -16,6 +16,16 @@
 
 package jp.sf.fess.suggest.analysis;
 
+import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import jp.sf.fess.suggest.io.AccessibleStringReader;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.Tokenizer;
@@ -28,15 +38,13 @@ import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.Reader;
-import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 public class SuggestTokenizer extends Tokenizer {
+    private static final String NOUN = "名詞";
+
+    private static final String MIDDLE = "middle";
+
+    private static final String START = "start";
+
     private static final Logger logger = LoggerFactory
             .getLogger(SuggestTokenizer.class);
 
@@ -67,10 +75,9 @@ public class SuggestTokenizer extends Tokenizer {
     private final int maxLength;
 
     public SuggestTokenizer(final Reader input, final int bufferSize,
-                            final UserDictionary userDictionaryPara,
-                            final boolean discardPunctuationPara, final Mode modePara,
-                            final TermChecker termChecker,
-                            final int maxLength) {
+            final UserDictionary userDictionaryPara,
+            final boolean discardPunctuationPara, final Mode modePara,
+            final TermChecker termChecker, final int maxLength) {
         super(input);
 
         userDictionary = userDictionaryPara;
@@ -87,17 +94,24 @@ public class SuggestTokenizer extends Tokenizer {
         readingList.clear();
         suggestStringList.clear();
         offset = 0;
-        inputStr = "";
 
         try {
-            String s = IOUtils.toString(input);
+            String s;
+            if (input instanceof AccessibleStringReader) {
+                s = ((AccessibleStringReader) input).getString();
+            } else {
+                s = IOUtils.toString(input);
+            }
             if (s != null && s.length() > 0) {
                 if (maxLength > 0 && s.length() > maxLength) {
                     s = truncateInput(s);
                 }
                 inputStr = s;
+            } else {
+                inputStr = "";
             }
         } catch (final IOException e) {
+            inputStr = "";
         }
 
         final Reader rd = new StringReader(inputStr);
@@ -106,7 +120,7 @@ public class SuggestTokenizer extends Tokenizer {
 
         try {
             stream = new JapaneseTokenizer(rd, userDictionary,
-                    discardPunctuation, tokenizerMode);
+                    discardPunctuation, tokenizerMode); // TODO reuse?
 
             stream.reset();
             while (stream.incrementToken()) {
@@ -171,45 +185,48 @@ public class SuggestTokenizer extends Tokenizer {
         termAtt.setEmpty();
         readingAtt.setEmpty();
 
-        if (offset < termListByKuromoji.size()) {
-            while (partOfSpeechList.get(offset).indexOf("名詞") == -1) {
+        final int termListByKuromojiSize = termListByKuromoji.size();
+        if (offset < termListByKuromojiSize) {
+            while (partOfSpeechList.get(offset).indexOf(NOUN) == -1) {
                 offset++;
-                if (offset >= termListByKuromoji.size()) {
+                if (offset >= termListByKuromojiSize) {
                     break;
                 }
             }
         }
 
-        if (offset < termListByKuromoji.size()) {
+        if (offset < termListByKuromojiSize) {
             termAtt.append(termListByKuromoji.get(offset));
             readingAtt.append(readingList.get(offset));
             offset++;
         } else {
-            int tmpOffset = offset - termListByKuromoji.size();
-            if (tmpOffset < termListByKuromoji.size()) {
-                StringBuilder buffer = null;
-                StringBuilder readingBuf = null;
+            int tmpOffset = offset - termListByKuromojiSize;
+            if (tmpOffset < termListByKuromojiSize) {
+                final StringBuilder buffer = new StringBuilder(100);
+                final StringBuilder readingBuf = new StringBuilder(100);
                 int end = 1;
 
-                for (; tmpOffset < partOfSpeechList.size(); tmpOffset++) {
-                    buffer = new StringBuilder();
-                    readingBuf = new StringBuilder();
+                final int partOfSpeechListSize = partOfSpeechList.size();
+                for (; tmpOffset < partOfSpeechListSize; tmpOffset++) {
+                    buffer.setLength(0);
+                    readingBuf.setLength(0);
+                    final String termByKuromoji = termListByKuromoji
+                            .get(tmpOffset);
                     if (termChecker.check(partOfSpeechList.get(tmpOffset),
-                            termListByKuromoji.get(tmpOffset), "start")) {
-                        buffer.append(termListByKuromoji.get(tmpOffset));
+                            termByKuromoji, START)) {
+                        buffer.append(termByKuromoji);
                         readingBuf.append(readingList.get(tmpOffset));
 
-                        for (int i = 1; tmpOffset + i < partOfSpeechList.size(); i++) {
+                        for (int i = 1; tmpOffset + i < partOfSpeechListSize; i++) {
+                            final String termPairByKuromoji = termListByKuromoji
+                                    .get(tmpOffset + i);
                             if (termChecker.check(
                                     partOfSpeechList.get(tmpOffset + i),
-                                    termListByKuromoji.get(tmpOffset + i),
-                                    "middle")) {
-                                if (inputStr
-                                        .indexOf(buffer.toString()
-                                                + termListByKuromoji
-                                                .get(tmpOffset + i)) != -1) {
-                                    buffer.append(termListByKuromoji
-                                            .get(tmpOffset + i));
+                                    termPairByKuromoji, MIDDLE)) {
+                                // TODO remove string conjunction
+                                if (inputStr.indexOf(buffer.toString()
+                                        + termPairByKuromoji) != -1) {
+                                    buffer.append(termPairByKuromoji);
                                     readingBuf.append(readingList.get(tmpOffset
                                             + i));
                                     end++;
@@ -227,15 +244,15 @@ public class SuggestTokenizer extends Tokenizer {
                 }
 
                 if (buffer != null
-                        && tmpOffset < partOfSpeechList.size()
+                        && tmpOffset < partOfSpeechListSize
                         && buffer.length() > termListByKuromoji.get(tmpOffset)
-                        .length()) {
+                                .length()) {
                     termAtt.append(buffer.toString());
                     readingAtt.append(readingBuf.toString());
                 } else {
                     return false;
                 }
-                offset = tmpOffset + termListByKuromoji.size() + end;
+                offset = tmpOffset + termListByKuromojiSize + end;
             } else {
                 return false;
             }
@@ -251,38 +268,44 @@ public class SuggestTokenizer extends Tokenizer {
     }
 
     public static class TermChecker {
+        private static final String INCLUDE_CHAR_TERM = "includeCharTerm";
+
+        private static final String EXCLUDE_PART_OF_SPEECH = "excludePartOfSpeech";
+
+        private static final String INCLUDE_PART_OF_SPEECH = "includePartOfSpeech";
+
         private final Map<String, Map<String, List<String>>> paramMap = new HashMap<String, Map<String, List<String>>>(
                 2);
 
         public TermChecker() {
             final Map<String, List<String>> startParamMap = new HashMap<String, List<String>>(
                     3);
-            startParamMap.put("includePartOfSpeech", new ArrayList<String>());
-            startParamMap.put("excludePartOfSpeech", new ArrayList<String>());
-            startParamMap.put("includeCharTerm", new ArrayList<String>());
-            paramMap.put("start", startParamMap);
+            startParamMap.put(INCLUDE_PART_OF_SPEECH, new ArrayList<String>());
+            startParamMap.put(EXCLUDE_PART_OF_SPEECH, new ArrayList<String>());
+            startParamMap.put(INCLUDE_CHAR_TERM, new ArrayList<String>());
+            paramMap.put(START, startParamMap);
             final Map<String, List<String>> middleParamMap = new HashMap<String, List<String>>(
                     3);
-            middleParamMap.put("includePartOfSpeech", new ArrayList<String>());
-            middleParamMap.put("excludePartOfSpeech", new ArrayList<String>());
-            middleParamMap.put("includeCharTerm", new ArrayList<String>());
-            paramMap.put("middle", middleParamMap);
+            middleParamMap.put(INCLUDE_PART_OF_SPEECH, new ArrayList<String>());
+            middleParamMap.put(EXCLUDE_PART_OF_SPEECH, new ArrayList<String>());
+            middleParamMap.put(INCLUDE_CHAR_TERM, new ArrayList<String>());
+            paramMap.put(MIDDLE, middleParamMap);
         }
 
         public void includePartOfSpeech(final String mode, final String value) {
-            updateParam(mode, "includePartOfSpeech", value);
+            updateParam(mode, INCLUDE_PART_OF_SPEECH, value);
         }
 
         public void excludePartOfSpeech(final String mode, final String value) {
-            updateParam(mode, "excludePartOfSpeech", value);
+            updateParam(mode, EXCLUDE_PART_OF_SPEECH, value);
         }
 
         public void includeCharTerm(final String mode, final String value) {
-            updateParam(mode, "includeCharTerm", value);
+            updateParam(mode, INCLUDE_CHAR_TERM, value);
         }
 
         private void updateParam(final String mode, final String target,
-                                 final String value) {
+                final String value) {
             final Map<String, List<String>> modeParamMap = paramMap.get(mode);
             if (modeParamMap != null) {
                 final List<String> list = modeParamMap.get(target);
@@ -293,14 +316,14 @@ public class SuggestTokenizer extends Tokenizer {
         }
 
         public boolean check(final String partOfSpeech,
-                             final String termByKuromoji, final String mode) {
+                final String termByKuromoji, final String mode) {
             final Map<String, List<String>> modeParamMap = paramMap.get(mode);
             final List<String> includePartOfSpeechList = modeParamMap
-                    .get("includePartOfSpeech");
+                    .get(INCLUDE_PART_OF_SPEECH);
             final List<String> excludePartOfSpeechList = modeParamMap
-                    .get("excludePartOfSpeech");
+                    .get(EXCLUDE_PART_OF_SPEECH);
             final List<String> includeCharTermList = modeParamMap
-                    .get("includeCharTerm");
+                    .get(INCLUDE_CHAR_TERM);
 
             boolean ret = false;
             for (int i = 0; i < includePartOfSpeechList.size(); i++) {
@@ -328,6 +351,11 @@ public class SuggestTokenizer extends Tokenizer {
                 }
             }
             return ret;
+        }
+
+        @Override
+        public String toString() {
+            return "TermChecker [paramMap=" + paramMap + "]";
         }
     }
 }

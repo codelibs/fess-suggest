@@ -22,6 +22,8 @@ public final class SuggestConstants {
     public static final String USER_DICT_PATH = "fess.user.dict.path";
 
     public static class SuggestFieldNames {
+        public static final String ID = "id";
+
         public static final String TEXT = "text_s";
 
         public static final String READING = "reading_s_m";
