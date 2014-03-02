@@ -39,6 +39,8 @@ import org.slf4j.LoggerFactory;
 public class SuggestTokenizerFactory extends TokenizerFactory implements
         ResourceLoaderAware {
 
+    private static final int DEFAULT_MAX_LENGTH = 1000000;
+
     private static final Logger logger = LoggerFactory
             .getLogger(SuggestTokenizerFactory.class);
 
@@ -90,7 +92,7 @@ public class SuggestTokenizerFactory extends TokenizerFactory implements
         userDictionaryEncoding = args.get(USER_DICT_ENCODING);
         bufferSize = getInt(args, BUFFER_SIZE, 256);
         discardPunctuation = getBoolean(args, DISCARD_PUNCTUATION, true);
-        maxLength = getInt(args, MAX_LENGTH, 0);
+        maxLength = getInt(args, MAX_LENGTH, DEFAULT_MAX_LENGTH);
 
         termChecker = new SuggestTokenizer.TermChecker();
         // ex. start:名詞,middle:動詞
