@@ -1,38 +1,26 @@
-/*
- * Copyright 2009-2014 the CodeLibs Project and the Others.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
- * either express or implied. See the License for the specific language
- * governing permissions and limitations under the License.
- */
-
 package jp.sf.fess.suggest;
+
+import jp.sf.fess.suggest.converter.SuggestReadingConverter;
+import jp.sf.fess.suggest.normalizer.SuggestNormalizer;
+import org.apache.solr.client.solrj.util.ClientUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import jp.sf.fess.suggest.converter.SuggestReadingConverter;
-import jp.sf.fess.suggest.normalizer.SuggestNormalizer;
-
-import org.apache.commons.lang.StringUtils;
-import org.apache.solr.client.solrj.util.ClientUtils;
-
-public class Suggester {
+public class SpellChecker {
     private static final String _AND_ = " AND ";
 
     private static final String _OR_ = " OR ";
 
+    public float fuzzyValue = 0.5F;
+
     private SuggestReadingConverter converter = null;
 
     private SuggestNormalizer normalizer = null;
+
+    public void setFuzzyValue(final float fuzzyValue) {
+        this.fuzzyValue = fuzzyValue;
+    }
 
     public void setConverter(final SuggestReadingConverter converter) {
         this.converter = converter;
@@ -42,16 +30,42 @@ public class Suggester {
         this.normalizer = normalizer;
     }
 
-    public String buildSuggestQuery(final String query,
-            final List<String> targetFields, final List<String> labels,
-            final List<String> roles) {
-        final String q = buildQuery(query);
-        if (StringUtils.isBlank(q)) {
-            return "";
+    public String buildSpellCheckQuery(final String query,
+                                       final List<String> targetFields, final List<String> labels,
+                                       final List<String> roles) {
+        return buildSpellCheckQuery(query, fuzzyValue, targetFields, labels, roles);
+    }
+
+    public String buildSpellCheckQuery(final String query, final float fuzzy,
+                                       final List<String> targetFields, final List<String> labels,
+                                       final List<String> roles) {
+        StringBuilder queryBuf = new StringBuilder();
+
+        String q = query;
+        if (normalizer != null) {
+            q = normalizer.normalize(q);
+        }
+        q = ClientUtils.escapeQueryChars(q.trim());
+
+        List<String> readingList = new ArrayList<String>();
+        if (converter != null) {
+            readingList = converter.convert(q);
+        } else {
+            readingList.add(q);
         }
 
-        final StringBuilder queryBuf = new StringBuilder(q.length() + 100);
-        queryBuf.append(q);
+        if(readingList.isEmpty()) {
+            queryBuf.append(SuggestConstants.SuggestFieldNames.READING)
+                    .append(':')
+                    .append(q);
+        } else {
+            queryBuf.append(SuggestConstants.SuggestFieldNames.READING)
+                .append(':')
+                .append(readingList.get(0));
+        }
+        queryBuf.append('~')
+                .append(fuzzy);
+
         if (targetFields != null && !targetFields.isEmpty()) {
             queryBuf.append(_AND_);
             if (targetFields.size() >= 2) {
@@ -114,42 +128,4 @@ public class Suggester {
         return queryBuf.toString();
     }
 
-    protected String buildQuery(final String query) {
-        String q = query;
-        if (normalizer != null) {
-            q = normalizer.normalize(q);
-        }
-        q = ClientUtils.escapeQueryChars(q.trim());
-
-        List<String> readingList = new ArrayList<String>();
-        if (converter != null) {
-            readingList = converter.convert(q);
-        } else {
-            readingList.add(q);
-        }
-
-        if (readingList.isEmpty()) {
-            return SuggestConstants.SuggestFieldNames.READING + ':' + query
-                    + '*';
-        }
-
-        final StringBuilder queryBuf = new StringBuilder(100);
-        if (readingList.size() >= 2) {
-            queryBuf.append('(');
-        }
-        for (final String reading : readingList) {
-            if (queryBuf.length() > 1) {
-                queryBuf.append(_OR_);
-            }
-            queryBuf.append(SuggestConstants.SuggestFieldNames.READING);
-            queryBuf.append(':');
-            queryBuf.append(reading);
-            queryBuf.append('*');
-        }
-        if (readingList.size() >= 2) {
-            queryBuf.append(')');
-        }
-
-        return queryBuf.toString();
-    }
 }
