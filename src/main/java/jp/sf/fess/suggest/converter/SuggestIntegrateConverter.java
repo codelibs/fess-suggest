@@ -16,6 +16,8 @@
 
 package jp.sf.fess.suggest.converter;
 
+import org.apache.lucene.analysis.util.TokenizerFactory;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,5 +43,16 @@ public class SuggestIntegrateConverter implements SuggestReadingConverter {
         for (final SuggestReadingConverter converter : converterList) {
             converter.start();
         }
+    }
+
+    @Override
+    public void setTokenizerFactory(TokenizerFactory tokenizerFactory) {
+        for (final SuggestReadingConverter converter : converterList) {
+            converter.setTokenizerFactory(tokenizerFactory);
+        }
+    }
+
+    public List<SuggestReadingConverter> getConverterList() {
+        return getConverterList();
     }
 }

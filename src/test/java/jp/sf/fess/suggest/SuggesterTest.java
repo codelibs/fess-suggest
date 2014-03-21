@@ -21,6 +21,7 @@ import jp.sf.fess.suggest.converter.SuggestReadingConverter;
 import jp.sf.fess.suggest.normalizer.ICUNormalizer;
 import jp.sf.fess.suggest.normalizer.SuggestNormalizer;
 import junit.framework.TestCase;
+import org.apache.lucene.analysis.util.TokenizerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -51,6 +52,10 @@ public class SuggesterTest extends TestCase {
 
             @Override
             public void start() {
+            }
+
+            @Override
+            public void setTokenizerFactory(TokenizerFactory tokenizerFactory) {
             }
         });
 

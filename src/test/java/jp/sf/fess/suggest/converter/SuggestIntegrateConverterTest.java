@@ -18,6 +18,7 @@ package jp.sf.fess.suggest.converter;
 
 
 import junit.framework.TestCase;
+import org.apache.lucene.analysis.util.TokenizerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,6 +38,10 @@ public class SuggestIntegrateConverterTest extends TestCase {
             @Override
             public void start() {
             }
+
+            @Override
+            public void setTokenizerFactory(TokenizerFactory tokenizerFactory) {
+            }
         });
 
         converter.addConverter(new SuggestReadingConverter() {
@@ -50,6 +55,10 @@ public class SuggestIntegrateConverterTest extends TestCase {
 
             @Override
             public void start() {
+            }
+
+            @Override
+            public void setTokenizerFactory(TokenizerFactory tokenizerFactory) {
             }
         });
 

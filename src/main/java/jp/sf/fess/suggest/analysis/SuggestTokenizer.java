@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.ibm.icu.text.Transliterator;
 import jp.sf.fess.suggest.io.AccessibleStringReader;
 
 import org.apache.commons.io.IOUtils;
@@ -73,6 +74,9 @@ public class SuggestTokenizer extends Tokenizer {
     private final TermChecker termChecker;
 
     private final int maxLength;
+
+    private final Transliterator transliterator = Transliterator
+            .getInstance("Hiragana-Katakana");
 
     public SuggestTokenizer(final Reader input, final int bufferSize,
             final UserDictionary userDictionaryPara,
@@ -140,7 +144,7 @@ public class SuggestTokenizer extends Tokenizer {
                 if (rdAttr.getReading() != null) {
                     reading = rdAttr.getReading();
                 } else {
-                    reading = att.toString();
+                    reading = transliterator.transliterate(att.toString());
                 }
 
                 readingList.add(reading);
@@ -186,14 +190,6 @@ public class SuggestTokenizer extends Tokenizer {
         readingAtt.setEmpty();
 
         final int termListByKuromojiSize = termListByKuromoji.size();
-        if (offset < termListByKuromojiSize) {
-            while (partOfSpeechList.get(offset).indexOf(NOUN) == -1) {
-                offset++;
-                if (offset >= termListByKuromojiSize) {
-                    break;
-                }
-            }
-        }
 
         if (offset < termListByKuromojiSize) {
             termAtt.append(termListByKuromoji.get(offset));

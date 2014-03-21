@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.ibm.icu.text.Transliterator;
+import org.apache.lucene.analysis.util.TokenizerFactory;
 
 public class AlphabetConverter implements SuggestReadingConverter {
     private final Map<String, String[]> convertMap;
@@ -39,6 +40,11 @@ public class AlphabetConverter implements SuggestReadingConverter {
         katakanaConverter = new KatakanaConverter();
         fullWidthHalfWidth = Transliterator.getInstance("Fullwidth-Halfwidth");
         anyLower = Transliterator.getInstance("Any-Lower");
+    }
+
+    @Override
+    public void setTokenizerFactory(TokenizerFactory tokenizerFactory) {
+        katakanaConverter.setTokenizerFactory(tokenizerFactory);
     }
 
     @Override

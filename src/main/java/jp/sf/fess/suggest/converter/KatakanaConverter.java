@@ -16,31 +16,34 @@
 
 package jp.sf.fess.suggest.converter;
 
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
-import java.nio.charset.Charset;
-import java.nio.charset.CharsetDecoder;
-import java.nio.charset.CodingErrorAction;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import jp.sf.fess.suggest.SuggestConstants;
-import jp.sf.fess.suggest.exception.FessSuggestException;
+import jp.sf.fess.suggest.analysis.SuggestReadingAttribute;
+import jp.sf.fess.suggest.analysis.SuggestTokenizerFactory;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.ja.JapaneseTokenizer;
+import org.apache.lucene.analysis.ja.JapaneseTokenizerFactory;
 import org.apache.lucene.analysis.ja.dict.UserDictionary;
 import org.apache.lucene.analysis.ja.tokenattributes.ReadingAttribute;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
-import org.apache.lucene.util.IOUtils;
+import org.apache.lucene.analysis.util.FilesystemResourceLoader;
+import org.apache.lucene.analysis.util.TokenizerFactory;
 
 import com.ibm.icu.text.Transliterator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class KatakanaConverter implements SuggestReadingConverter {
+    private static final Logger logger = LoggerFactory.getLogger(KatakanaConverter.class);
+
     private final Transliterator transliterator = Transliterator
             .getInstance("Hiragana-Katakana");
 
@@ -48,52 +51,48 @@ public class KatakanaConverter implements SuggestReadingConverter {
 
     protected volatile boolean initialized = false;
 
+    protected TokenizerFactory tokenizerFactory = null;
+
     protected void init() {
         if (initialized) {
             return;
         }
 
-        synchronized (this) {
-            if (initialized) {
-                return;
-            }
-
+        if (tokenizerFactory == null) {
             final String path = System
                     .getProperty(SuggestConstants.USER_DICT_PATH);
-            if (path != null) {
-                InputStream stream = null;
-                try {
-                    stream = new FileInputStream(path);
-                    String encoding = System
-                            .getProperty(SuggestConstants.USER_DICT_ENCODING);
-                    if (encoding == null) {
-                        encoding = IOUtils.UTF_8;
-                    }
-                    final CharsetDecoder decoder = Charset.forName(encoding)
-                            .newDecoder()
-                            .onMalformedInput(CodingErrorAction.REPORT)
-                            .onUnmappableCharacter(CodingErrorAction.REPORT);
-                    final Reader reader = new InputStreamReader(stream, decoder);
-                    userDictionary = new UserDictionary(reader);
-                } catch (final Exception e) {
-                    throw new FessSuggestException(e);
-                } finally {
-                    if (stream != null) {
-                        try {
-                            stream.close();
-                        } catch (final IOException e) {
-                        }
-                    }
-                }
+            String encoding = System
+                    .getProperty(SuggestConstants.USER_DICT_ENCODING);
+            Map<String, String> args = new HashMap<String, String>();
+            args.put("mode", "normal");
+            args.put("discardPunctuation", "false");
+            if(StringUtils.isNotBlank(path)) {
+                args.put("userDictionary", path);
             }
-
-            initialized = true;
+            if(StringUtils.isNotBlank(encoding)) {
+                args.put("userDictionaryEncoding", encoding);
+            }
+            JapaneseTokenizerFactory japaneseTokenizerFactory = new JapaneseTokenizerFactory(args);
+            try {
+                japaneseTokenizerFactory.inform(new FilesystemResourceLoader());
+            } catch (Exception e) {
+                logger.warn("Failed to initialize.", e);
+            }
+            tokenizerFactory = japaneseTokenizerFactory;
         }
+        initialized = true;
     }
 
     @Override
     public void start() {
         init();
+    }
+
+    @Override
+    public void setTokenizerFactory(TokenizerFactory tokenizerFactory) {
+        if(isEnableTokenizer(tokenizerFactory)) {
+            this.tokenizerFactory = tokenizerFactory;
+        }
     }
 
     @Override
@@ -113,8 +112,7 @@ public class KatakanaConverter implements SuggestReadingConverter {
         final Reader rd = new StringReader(inputStr);
         TokenStream stream = null;
         try {
-            stream = new JapaneseTokenizer(rd, userDictionary, false,
-                    JapaneseTokenizer.Mode.NORMAL);
+            stream = tokenizerFactory.create(rd);
             stream.reset();
 
             int offset = 0;
@@ -127,14 +125,12 @@ public class KatakanaConverter implements SuggestReadingConverter {
                     final String tmp = inputStr.substring(offset, offset + pos);
                     kanaBuf.append(transliterator.transliterate(tmp));
                     offset += pos;
+                } else if(pos == -1) {
+                    continue;
                 }
 
-                final ReadingAttribute rdAttr = stream
-                        .getAttribute(ReadingAttribute.class);
-                String reading;
-                if (rdAttr.getReading() != null) {
-                    reading = rdAttr.getReading();
-                } else {
+                String reading = getReadingFromAttribute(stream);
+                if(StringUtils.isBlank(reading)) {
                     reading = transliterator.transliterate(att.toString());
                 }
                 kanaBuf.append(reading);
@@ -147,6 +143,28 @@ public class KatakanaConverter implements SuggestReadingConverter {
         }
 
         return kanaBuf.toString();
+    }
+
+    protected boolean isEnableTokenizer(TokenizerFactory factory) {
+        if(factory instanceof JapaneseTokenizerFactory
+                || factory instanceof SuggestTokenizerFactory) {
+            return true;
+        }
+        return false;
+    }
+
+    protected String getReadingFromAttribute(TokenStream stream) {
+        if(tokenizerFactory instanceof JapaneseTokenizerFactory) {
+            final ReadingAttribute rdAttr = stream
+                    .getAttribute(ReadingAttribute.class);
+            return rdAttr.getReading();
+        } else if(tokenizerFactory instanceof SuggestTokenizerFactory) {
+            final SuggestReadingAttribute rdAttr = stream
+                    .getAttribute(SuggestReadingAttribute.class);
+            return rdAttr.toString();
+        } else {
+            return null;
+        }
     }
 
 }
