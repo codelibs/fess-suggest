@@ -142,8 +142,16 @@ public class SuggestTokenizerFactory extends TokenizerFactory implements
 
     @Override
     public Tokenizer create(final AttributeFactory factory, final Reader input) {
+        return create(factory, input, false);
+    }
+
+    public Tokenizer create(final Reader input, final boolean allTokenMode) {
+        return create(AttributeFactory.DEFAULT_ATTRIBUTE_FACTORY, input, allTokenMode);
+    }
+
+    public Tokenizer create(final AttributeFactory factory, final Reader input, boolean allTokenMode) {
         return new SuggestTokenizer(input, bufferSize, userDictionary,
-                discardPunctuation, mode, termChecker, maxLength);
+                discardPunctuation, mode, termChecker, maxLength, allTokenMode);
     }
 
     @Override

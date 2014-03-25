@@ -92,6 +92,8 @@ public class KatakanaConverter implements SuggestReadingConverter {
     public void setTokenizerFactory(TokenizerFactory tokenizerFactory) {
         if(isEnableTokenizer(tokenizerFactory)) {
             this.tokenizerFactory = tokenizerFactory;
+        } else {
+            logger.warn("Invalid tokenizerFactory. " + tokenizerFactory.getClass().getName());
         }
     }
 
@@ -112,7 +114,7 @@ public class KatakanaConverter implements SuggestReadingConverter {
         final Reader rd = new StringReader(inputStr);
         TokenStream stream = null;
         try {
-            stream = tokenizerFactory.create(rd);
+            stream = createTokenStream(rd);
             stream.reset();
 
             int offset = 0;
@@ -151,6 +153,18 @@ public class KatakanaConverter implements SuggestReadingConverter {
             return true;
         }
         return false;
+    }
+
+    private TokenStream createTokenStream(Reader rd) {
+        if(tokenizerFactory instanceof JapaneseTokenizerFactory) {
+            return tokenizerFactory.create(rd);
+        } else if(tokenizerFactory instanceof SuggestTokenizerFactory) {
+            SuggestTokenizerFactory suggestTokenizerFactory =
+                    (SuggestTokenizerFactory) tokenizerFactory;
+            return suggestTokenizerFactory.create(rd, true);
+        } else {
+            return null;
+        }
     }
 
     protected String getReadingFromAttribute(TokenStream stream) {

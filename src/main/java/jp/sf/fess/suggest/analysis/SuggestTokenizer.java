@@ -71,6 +71,8 @@ public class SuggestTokenizer extends Tokenizer {
 
     private final Mode tokenizerMode;
 
+    private final boolean allTokenMode;
+
     private final TermChecker termChecker;
 
     private final int maxLength;
@@ -79,9 +81,9 @@ public class SuggestTokenizer extends Tokenizer {
             .getInstance("Hiragana-Katakana");
 
     public SuggestTokenizer(final Reader input, final int bufferSize,
-            final UserDictionary userDictionaryPara,
-            final boolean discardPunctuationPara, final Mode modePara,
-            final TermChecker termChecker, final int maxLength) {
+                            final UserDictionary userDictionaryPara,
+                            final boolean discardPunctuationPara, final Mode modePara,
+                            final TermChecker termChecker, final int maxLength, boolean allTokenMode) {
         super(input);
 
         userDictionary = userDictionaryPara;
@@ -90,6 +92,7 @@ public class SuggestTokenizer extends Tokenizer {
         termAtt.resizeBuffer(bufferSize);
         this.termChecker = termChecker;
         this.maxLength = maxLength;
+        this.allTokenMode = allTokenMode;
     }
 
     public void initialize() {
@@ -190,6 +193,14 @@ public class SuggestTokenizer extends Tokenizer {
         readingAtt.setEmpty();
 
         final int termListByKuromojiSize = termListByKuromoji.size();
+        if (!allTokenMode && offset < termListByKuromojiSize) {
+            while (partOfSpeechList.get(offset).indexOf(NOUN) == -1) {
+                offset++;
+                if (offset >= termListByKuromojiSize) {
+                    break;
+                }
+            }
+        }
 
         if (offset < termListByKuromojiSize) {
             termAtt.append(termListByKuromoji.get(offset));
@@ -242,7 +253,7 @@ public class SuggestTokenizer extends Tokenizer {
                 if (buffer != null
                         && tmpOffset < partOfSpeechListSize
                         && buffer.length() > termListByKuromoji.get(tmpOffset)
-                                .length()) {
+                        .length()) {
                     termAtt.append(buffer.toString());
                     readingAtt.append(readingBuf.toString());
                 } else {
@@ -301,7 +312,7 @@ public class SuggestTokenizer extends Tokenizer {
         }
 
         private void updateParam(final String mode, final String target,
-                final String value) {
+                                 final String value) {
             final Map<String, List<String>> modeParamMap = paramMap.get(mode);
             if (modeParamMap != null) {
                 final List<String> list = modeParamMap.get(target);
@@ -312,7 +323,7 @@ public class SuggestTokenizer extends Tokenizer {
         }
 
         public boolean check(final String partOfSpeech,
-                final String termByKuromoji, final String mode) {
+                             final String termByKuromoji, final String mode) {
             final Map<String, List<String>> modeParamMap = paramMap.get(mode);
             final List<String> includePartOfSpeechList = modeParamMap
                     .get(INCLUDE_PART_OF_SPEECH);

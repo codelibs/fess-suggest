@@ -77,6 +77,6 @@ public class SuggestTokenizerTest extends TestCase {
         }
 
         return new SuggestTokenizer(rd, 256, null, true,
-                JapaneseTokenizer.Mode.NORMAL, termChecker, 1000);
+                JapaneseTokenizer.Mode.NORMAL, termChecker, 1000, false);
     }
 }
