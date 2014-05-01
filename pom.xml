@@ -63,8 +63,8 @@
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
-					<source>1.6</source>
-					<target>1.6</target>
+					<source>1.7</source>
+					<target>1.7</target>
 					<encoding>UTF-8</encoding>
 				</configuration>
 			</plugin>
@@ -87,16 +87,10 @@
 					<docencoding>UTF-8</docencoding>
 					<charset>UTF-8</charset>
 					<links>
-						<link>http://docs.oracle.com/javase/6/docs/api/</link>
+						<link>http://docs.oracle.com/javase/7/docs/api/</link>
 						<link>http://docs.oracle.com/javaee/6/api/</link>
-						<link>http://aopalliance.sourceforge.net/doc/</link>
-						<link>http://www.csg.is.titech.ac.jp/~chiba/javassist/html/</link>
 						<link>http://www.junit.org/junit/javadoc/4.3/</link>
 						<link>http://www.junit.org/junit/javadoc/3.8.1/</link>
-						<link>http://s2container.seasar.org/2.4/s2-framework/ja/apidocs/</link>
-						<link>http://s2container.seasar.org/2.4/s2-extension/ja/apidocs/</link>
-						<link>http://s2container.seasar.org/2.4/s2-tiger/ja/apidocs/</link>
-						<link>http://s2robot.sandbox.seasar.org/apidocs/</link>
 					</links>
 				</configuration>
 				<executions>
