@@ -56,7 +56,7 @@
 	</mailingLists>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<solr.version>4.8.0</solr.version>
+		<solr.version>4.8.1</solr.version>
 	</properties>
 	<build>
 		<plugins>
