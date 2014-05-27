@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>jp.sf.fess</groupId>
 	<artifactId>fess-suggest</artifactId>
@@ -42,8 +43,8 @@
 	</distributionManagement>
 	<scm>
 		<connection>scm:git:git@github.com:codelibs/fess-suggest.git</connection>
-	    <developerConnection>scm:git:git@github.com:codelibs/fess-suggest.git</developerConnection>
-	    <url>https://github.com/codelibs/fess-suggest</url>
+		<developerConnection>scm:git:git@github.com:codelibs/fess-suggest.git</developerConnection>
+		<url>https://github.com/codelibs/fess-suggest</url>
 	</scm>
 	<mailingLists>
 		<mailingList>
@@ -56,7 +57,7 @@
 	</mailingLists>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<solr.version>4.8.1</solr.version>
+		<lucene.version>4.8.1</lucene.version>
 	</properties>
 	<build>
 		<plugins>
@@ -169,11 +170,11 @@
 		</repository>
 	</repositories>
 	<dependencies>
-        <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-            <version>2.2</version>
-        </dependency>
+		<dependency>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+			<version>2.2</version>
+		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>jcl-over-slf4j</artifactId>
@@ -192,24 +193,24 @@
 		<dependency>
 			<groupId>org.apache.lucene</groupId>
 			<artifactId>lucene-analyzers-kuromoji</artifactId>
-			<version>4.8.1</version>
+			<version>${lucene.version}</version>
 		</dependency>
 		<dependency>
-		    <groupId>commons-lang</groupId>
-		    <artifactId>commons-lang</artifactId>
-		    <version>2.6</version>
+			<groupId>commons-lang</groupId>
+			<artifactId>commons-lang</artifactId>
+			<version>2.6</version>
 		</dependency>
 		<dependency>
 			<groupId>com.ibm.icu</groupId>
 			<artifactId>icu4j</artifactId>
 			<version>52.1</version>
 		</dependency>
-        <dependency>
-            <groupId>org.apache.solr</groupId>
-            <artifactId>solr-solrj</artifactId>
-            <version>${solr.version}</version>
-        </dependency>
-        <dependency>
+		<dependency>
+			<groupId>org.apache.solr</groupId>
+			<artifactId>solr-solrj</artifactId>
+			<version>${lucene.version}</version>
+		</dependency>
+		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<version>4.11</version>
