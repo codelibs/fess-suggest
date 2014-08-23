@@ -56,7 +56,7 @@
 	</mailingLists>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<lucene.version>4.8.1</lucene.version>
+		<lucene.version>4.9.0</lucene.version>
 	</properties>
 	<build>
 		<plugins>
