@@ -31,7 +31,7 @@ import org.apache.lucene.analysis.ja.dict.UserDictionary;
 import org.apache.lucene.analysis.util.ResourceLoader;
 import org.apache.lucene.analysis.util.ResourceLoaderAware;
 import org.apache.lucene.analysis.util.TokenizerFactory;
-import org.apache.lucene.util.AttributeSource.AttributeFactory;
+import org.apache.lucene.util.AttributeFactory;
 import org.apache.lucene.util.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -146,10 +146,12 @@ public class SuggestTokenizerFactory extends TokenizerFactory implements
     }
 
     public Tokenizer create(final Reader input, final boolean allTokenMode) {
-        return create(AttributeFactory.DEFAULT_ATTRIBUTE_FACTORY, input, allTokenMode);
+        return create(AttributeFactory.DEFAULT_ATTRIBUTE_FACTORY, input,
+                allTokenMode);
     }
 
-    public Tokenizer create(final AttributeFactory factory, final Reader input, boolean allTokenMode) {
+    public Tokenizer create(final AttributeFactory factory, final Reader input,
+            final boolean allTokenMode) {
         return new SuggestTokenizer(input, bufferSize, userDictionary,
                 discardPunctuation, mode, termChecker, maxLength, allTokenMode);
     }
