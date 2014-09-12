@@ -16,10 +16,10 @@
 
 package jp.sf.fess.suggest.converter;
 
-import org.apache.lucene.analysis.util.TokenizerFactory;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.lucene.analysis.util.TokenizerFactory;
 
 public class SuggestIntegrateConverter implements SuggestReadingConverter {
     List<SuggestReadingConverter> converterList = new ArrayList<SuggestReadingConverter>();
@@ -46,13 +46,13 @@ public class SuggestIntegrateConverter implements SuggestReadingConverter {
     }
 
     @Override
-    public void setTokenizerFactory(TokenizerFactory tokenizerFactory) {
+    public void setTokenizerFactory(final TokenizerFactory tokenizerFactory) {
         for (final SuggestReadingConverter converter : converterList) {
             converter.setTokenizerFactory(tokenizerFactory);
         }
     }
 
     public List<SuggestReadingConverter> getConverterList() {
-        return getConverterList();
+        return converterList;
     }
 }
