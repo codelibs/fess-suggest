@@ -16,13 +16,23 @@
 
 package jp.sf.fess.suggest.util;
 
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
+import java.net.URLDecoder;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import jp.sf.fess.suggest.SuggestConstants;
 import jp.sf.fess.suggest.converter.SuggestReadingConverter;
 import jp.sf.fess.suggest.normalizer.SuggestNormalizer;
+import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class SuggestUtil {
+    private static final Logger logger = LoggerFactory.getLogger(SuggestUtil.class);
 
     private SuggestUtil() {
     }
@@ -65,5 +75,51 @@ public final class SuggestUtil {
         }
 
         return (SuggestNormalizer) obj;
+    }
+
+    public static Map<String, String> parseSolrParams(String solrParams) {
+        Map<String, String> map = new HashMap<>();
+
+        String[] params = solrParams.split("&");
+        for(String param: params) {
+            String[] keyValue = param.split("=");
+            if(keyValue.length != 2) {
+                continue;
+            }
+            String key = keyValue[0];
+            String value;
+            try {
+                value = URLDecoder.decode(keyValue[1], SuggestConstants.UTF_8);
+            } catch (Exception e) {
+                value = keyValue[1];
+            }
+            if(StringUtils.isNotBlank(key) && StringUtils.isNotBlank(value)) {
+                map.put(key, value);
+            }
+        }
+
+        return map;
+    }
+
+    public static List<String> parseQuery(String query, String field) {
+        List<String> words = new ArrayList<>();
+        String[] elems = query.replace("(", " ")
+            .replace(")", " ")
+            .replaceAll(" +", " ")
+            .trim()
+            .split(" ");
+        for(String elem: elems) {
+            if(elem.indexOf(":") == -1) {
+                continue;
+            }
+            String[] pair = elem.split(":");
+            if(pair.length != 2 || !field.equals(pair[0])) {
+                continue;
+            }
+            if(!words.contains(pair[1])) {
+                words.add(pair[1]);
+            }
+        }
+        return words;
     }
 }

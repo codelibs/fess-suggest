@@ -17,6 +17,10 @@
 package jp.sf.fess.suggest;
 
 public final class SuggestConstants {
+    public static final String UTF_8 = "UTF-8";
+
+    public static final String SEARCHLOG_SEGMENT = "0";
+
     public static final String USER_DICT_ENCODING = "fess.user.dict.encoding";
 
     public static final String USER_DICT_PATH = "fess.user.dict.path";
@@ -35,6 +39,10 @@ public final class SuggestConstants {
         public static final String LABELS = "label_s_m";
 
         public static final String ROLES = "role_s_m";
+
+        public static final String EXPIRES = "expires_dt";
+
+        public static final String SEGMENT = "segment";
 
         private SuggestFieldNames() {
         }

@@ -42,6 +42,10 @@ public class Suggester {
         this.normalizer = normalizer;
     }
 
+    public SuggestReadingConverter getConverter() {
+        return converter;
+    }
+
     public String buildSuggestQuery(final String query,
             final List<String> targetFields, final List<String> labels,
             final List<String> roles) {
@@ -115,39 +119,51 @@ public class Suggester {
     }
 
     protected String buildQuery(final String query) {
-        String q = query;
-        if (normalizer != null) {
-            q = normalizer.normalize(q);
-        }
-        q = ClientUtils.escapeQueryChars(q.trim());
-
-        List<String> readingList = new ArrayList<String>();
-        if (converter != null) {
-            readingList = converter.convert(q);
-        } else {
-            readingList.add(q);
-        }
-
-        if (readingList.isEmpty()) {
-            return SuggestConstants.SuggestFieldNames.READING + ':' + query
-                    + '*';
-        }
-
         final StringBuilder queryBuf = new StringBuilder(100);
-        if (readingList.size() >= 2) {
-            queryBuf.append('(');
-        }
-        for (final String reading : readingList) {
-            if (queryBuf.length() > 1) {
-                queryBuf.append(_OR_);
+        String[] array = query.trim().replace("　", " ").replaceAll(" +", " ").split(" ");
+        for(String q: array) {
+            if(StringUtils.isBlank(q)) {
+                continue;
             }
-            queryBuf.append(SuggestConstants.SuggestFieldNames.READING);
-            queryBuf.append(':');
-            queryBuf.append(reading);
-            queryBuf.append('*');
-        }
-        if (readingList.size() >= 2) {
-            queryBuf.append(')');
+
+            if (normalizer != null) {
+                q = normalizer.normalize(q);
+            }
+            q = ClientUtils.escapeQueryChars(q.trim());
+
+            List<String> readingList;
+            if (converter != null) {
+                readingList = converter.convert(q);
+            } else {
+                readingList = new ArrayList<>();
+                readingList.add(q);
+            }
+
+            if (readingList.isEmpty()) {
+                continue;
+            }
+
+            if(queryBuf.length() > 0) {
+                queryBuf.append(_AND_);
+            }
+
+            if (readingList.size() >= 2) {
+                queryBuf.append('(');
+            }
+            boolean first = true;
+            for (final String reading : readingList) {
+                if (!first) {
+                    queryBuf.append(_OR_);
+                }
+                first = false;
+                queryBuf.append(SuggestConstants.SuggestFieldNames.READING);
+                queryBuf.append(':');
+                queryBuf.append(reading);
+                queryBuf.append('*');
+            }
+            if (readingList.size() >= 2) {
+                queryBuf.append(')');
+            }
         }
 
         return queryBuf.toString();
