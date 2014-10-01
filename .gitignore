@@ -9,5 +9,5 @@ solr/core1/data
 solr/core1/txlog
 solr/core2/data
 solr/core2/txlog
-solr/core1-suggest/data                                                                                 │g.catalina keyword:WARN
+solr/core1-suggest/data
 solr/core1-suggest/txlog/tlog
