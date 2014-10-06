@@ -57,6 +57,15 @@ public class SuggestService {
         indexUpdater.start();
     }
 
+    public void shutdown() {
+        indexUpdater.close();
+        try {
+            indexUpdater.join();
+        } catch(InterruptedException e) {
+            logger.info("Interrupted suggestService.");
+        }
+    }
+
     public SuggestResponse getSuggestResponse(final String q,
                                               final List<String> fieldNames,
                                               final List<String> labels,
