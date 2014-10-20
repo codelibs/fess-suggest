@@ -19,11 +19,15 @@ package jp.sf.fess.suggest;
 public final class SuggestConstants {
     public static final String UTF_8 = "UTF-8";
 
-    public static final String SEARCHLOG_SEGMENT = "0";
-
     public static final String USER_DICT_ENCODING = "fess.user.dict.encoding";
 
     public static final String USER_DICT_PATH = "fess.user.dict.path";
+
+    public static final String SEGMENT_QUERY = "1";
+
+    public static final String SEGMENT_ELEVATE = "0";
+
+    public static final String BADWORD_FILENAME = "badword.txt";
 
     public static class SuggestFieldNames {
         public static final String ID = "id";
@@ -43,6 +47,8 @@ public final class SuggestConstants {
         public static final String EXPIRES = "expires_dt";
 
         public static final String SEGMENT = "segment";
+
+        public static final String BOOST = "boost_l";
 
         private SuggestFieldNames() {
         }

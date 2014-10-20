@@ -85,4 +85,14 @@ public class SuggestServiceTest extends FessSuggestTestCase {
 
     }
 
+    public void test_addElevateWord() throws Exception {
+        service.addElevateWord("hoge", null, null, null, 0);
+        service.commit();
+        Thread.sleep(2 * 1000);
+
+        SuggestResponse response = service.getSuggestResponse("hoge", null, null, null, 20);
+        List sList = response.get("hoge");
+        assertEquals("hoge", sList.get(0));
+    }
+
 }

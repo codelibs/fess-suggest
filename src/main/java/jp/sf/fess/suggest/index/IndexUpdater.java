@@ -13,6 +13,7 @@ import jp.sf.fess.suggest.SuggestConstants;
 import jp.sf.fess.suggest.entity.SuggestItem;
 import jp.sf.fess.suggest.enums.RequestType;
 import jp.sf.fess.suggest.server.SuggestSolrServer;
+import org.apache.commons.lang.StringUtils;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrInputDocument;
@@ -287,6 +288,22 @@ public class IndexUpdater extends Thread {
                                     }
                                 }
                             }
+
+                            final Object segmentObj = doc
+                                .getFieldValue(SuggestConstants.SuggestFieldNames.SEGMENT);
+                            if (segmentObj != null && StringUtils.isNotBlank(segmentObj.toString())) {
+                                long docType = Long.parseLong(segmentObj.toString());
+                                long currentDocType = Long.parseLong(item.getSegment());
+                                if (currentDocType > docType) {
+                                    item.setSegment(String.valueOf(docType));
+                                }
+                                final Object expiresObj = doc
+                                    .getFieldValue(SuggestConstants.SuggestFieldNames.EXPIRES);
+                                if (expiresObj == null && SuggestConstants.SEGMENT_ELEVATE.equals(segmentObj.toString())) {
+                                    item.setExpires("-1");
+                                }
+                            }
+
                             break;
                         }
                     }

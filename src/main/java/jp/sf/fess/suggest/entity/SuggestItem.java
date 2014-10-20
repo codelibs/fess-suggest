@@ -23,9 +23,11 @@ public class SuggestItem {
     private final List<String> roles = Collections
         .synchronizedList(new ArrayList<String>()); // TODO Set?
 
+    private volatile long userBoost = 0;
+
     private volatile long count = 1;
 
-    private volatile String expires;
+    private volatile String expires = "-1";
 
     private volatile String expiresField;
 
@@ -63,8 +65,10 @@ public class SuggestItem {
 
     public void setLabels(final List<String> labels) {
         this.labels.clear();
-        for (final String label : labels) {
-            this.labels.add(label);
+        if(labels != null) {
+            for (final String label : labels) {
+                this.labels.add(label);
+            }
         }
     }
 
@@ -74,8 +78,10 @@ public class SuggestItem {
 
     public void setRoles(final List<String> roles) {
         this.roles.clear();
-        for (final String label : roles) {
-            this.roles.add(label);
+        if(roles != null) {
+            for (final String label : roles) {
+                this.roles.add(label);
+            }
         }
     }
 
@@ -119,6 +125,14 @@ public class SuggestItem {
         this.segmentField = segmentField;
     }
 
+    public long getUserBoost() {
+        return userBoost;
+    }
+
+    public void setUserBoost(long userBoost) {
+        this.userBoost = userBoost;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (o instanceof SuggestItem) {
@@ -147,7 +161,9 @@ public class SuggestItem {
                 fieldName);
         }
         doc.setField(SuggestConstants.SuggestFieldNames.COUNT, count);
-        doc.setField(expiresField, expires);
+        if(!expires.equals("-1")) {
+            doc.setField(expiresField, expires);
+        }
         doc.setField(segmentField, segment);
         for (final String label : labels) {
             doc.addField(SuggestConstants.SuggestFieldNames.LABELS, label);
@@ -155,6 +171,7 @@ public class SuggestItem {
         for (final String role : roles) {
             doc.addField(SuggestConstants.SuggestFieldNames.ROLES, role);
         }
+        doc.addField(SuggestConstants.SuggestFieldNames.BOOST, userBoost);
         doc.addField(SuggestConstants.SuggestFieldNames.ID, getDocumentId());
 
         return doc;
