@@ -262,12 +262,21 @@ public class SuggestService {
         indexUpdater.commit();
     }
 
+    public long getDocumentNum() {
+        return getDocumentNum("*:*");
+    }
+
     public long getContentDocumentNum() {
-        return getDocumentNum("*:* NOT " + SuggestConstants.SuggestFieldNames.SEGMENT + ":" + SuggestConstants.SEGMENT_QUERY);
+        return getDocumentNum("*:* NOT " + SuggestConstants.SuggestFieldNames.SEGMENT + ":" + SuggestConstants.SEGMENT_QUERY
+        + " NOT " + SuggestConstants.SuggestFieldNames.SEGMENT + ":" + SuggestConstants.SEGMENT_ELEVATE);
     }
 
     public long getSearchLogDocumentNum() {
         return getDocumentNum(SuggestConstants.SuggestFieldNames.SEGMENT + ":" + SuggestConstants.SEGMENT_QUERY);
+    }
+
+    public long getElevateDocumentNum() {
+        return getDocumentNum(SuggestConstants.SuggestFieldNames.SEGMENT + ":" + SuggestConstants.SEGMENT_ELEVATE);
     }
 
     protected long getDocumentNum(String query) {
