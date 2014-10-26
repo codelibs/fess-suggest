@@ -25,9 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class SuggestService {
     private static final Logger logger = LoggerFactory.getLogger(SuggestService.class);
@@ -49,6 +47,8 @@ public class SuggestService {
     public int defaultSearchLogExpires = 30;
 
     public long updateInterval = 1 * 1000;
+
+    protected volatile Set<String> badWords = new HashSet<>();
 
     public SuggestService(Suggester suggester, SpellChecker spellChecker, SuggestSolrServer suggestSolrServer) {
         this.suggester = suggester;
@@ -183,12 +183,14 @@ public class SuggestService {
         }
     }
 
-    public void deleteBadWord(String word) {
-        try {
-            suggestSolrServer.deleteByQuery(SuggestConstants.SuggestFieldNames.TEXT + ":"
-                + ClientUtils.escapeQueryChars(word));
-        } catch (Exception e) {
-            logger.warn("Failed to delete BadWord", e);
+    public void deleteBadWords() {
+        for(String badWord: badWords) {
+            try {
+                suggestSolrServer.deleteByQuery(SuggestConstants.SuggestFieldNames.TEXT + ":"
+                    + ClientUtils.escapeQueryChars(badWord));
+            } catch (Exception e) {
+                logger.warn("Failed to delete BadWord", e);
+            }
         }
     }
 
@@ -228,16 +230,26 @@ public class SuggestService {
             sb.setLength(0);
             SuggestItem item = new SuggestItem();
             item.addFieldName(field);
+
+            boolean isBadWord = false;
             for (String word : words) {
+                if(badWords.contains(word)) {
+                    isBadWord = true;
+                    break;
+                }
                 if (sb.length() > 0) {
                     sb.append(" ");
                 }
-                sb.append(word);
+                sb.append(normalize(word));
                 List<String> readings = converter.convert(word);
                 for (String reading : readings) {
                     item.addReading(reading);
                 }
             }
+            if(isBadWord) {
+                continue;
+            }
+
             item.setText(sb.toString());
             if (labels != null) {
                 item.setLabels(labels);
@@ -292,6 +304,10 @@ public class SuggestService {
         return queryResponse.getResults().getNumFound();
     }
 
+    public void updateBadWords(Set<String> badWords) {
+        this.badWords = badWords;
+    }
+
     public String getLabelFieldName() {
         return labelFieldName;
     }
@@ -310,6 +326,11 @@ public class SuggestService {
 
     protected long getExpiredTimestamp(final int days) {
         return DateUtils.addDays(new Date(), days).getTime();
+    }
+
+    protected String normalize(String word) {
+        return word.replace("*", "")
+            .replace("?", "");
     }
 
     public SuggestSolrServer getSuggestSolrServer() {
