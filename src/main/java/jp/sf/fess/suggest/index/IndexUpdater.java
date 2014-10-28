@@ -1,6 +1,5 @@
 package jp.sf.fess.suggest.index;
 
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -9,10 +8,10 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import jp.sf.fess.suggest.SuggestConstants;
-
 import jp.sf.fess.suggest.entity.SuggestItem;
 import jp.sf.fess.suggest.enums.RequestType;
 import jp.sf.fess.suggest.server.SuggestSolrServer;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
@@ -22,7 +21,7 @@ import org.slf4j.LoggerFactory;
 
 public class IndexUpdater extends Thread {
     private static final Logger logger = LoggerFactory
-        .getLogger(IndexUpdater.class);
+            .getLogger(IndexUpdater.class);
 
     // TODO BlockingQueue?
     protected Queue<Request> suggestRequestQueue = new ConcurrentLinkedQueue<Request>();
@@ -85,8 +84,9 @@ public class IndexUpdater extends Thread {
     @Override
     public void run() {
         if (logger.isInfoEnabled()) {
-            logger.info("Start indexUpdater");
+            logger.info("SuggestIndexer is started.");
         }
+        final long startTime = System.currentTimeMillis();
 
         StringBuilder ids = new StringBuilder(maxIDsBufferCapacity);
         final Request[] requestArray = new Request[maxUpdateNum];
@@ -169,7 +169,7 @@ public class IndexUpdater extends Thread {
                     mergeSolrIndex(suggestItemArray, itemSize, ids.toString());
 
                     final List<SolrInputDocument> solrInputDocumentList = new ArrayList<SolrInputDocument>(
-                        itemSize);
+                            itemSize);
                     for (int i = 0; i < itemSize; i++) {
                         final SuggestItem item = suggestItemArray[i];
                         solrInputDocumentList.add(item.toSolrInputDocument());
@@ -177,8 +177,9 @@ public class IndexUpdater extends Thread {
                     try {
                         suggestSolrServer.add(solrInputDocumentList);
                         if (logger.isDebugEnabled()) {
-                            logger.debug("Done add " + itemSize + " terms. took: "
-                                + (System.currentTimeMillis() - start));
+                            logger.debug("Done add " + itemSize
+                                    + " terms. took: "
+                                    + (System.currentTimeMillis() - start));
                         }
                     } catch (final Exception e) {
                         logger.warn("Failed to add document.", e);
@@ -195,13 +196,13 @@ public class IndexUpdater extends Thread {
                     }
                     break;
                 case DELETE_BY_QUERY:
-                    if (logger.isInfoEnabled()) {
-                        logger.info("DeleteByQuery. query="
-                            + requestArray[0].obj.toString());
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("DeleteByQuery. query="
+                                + requestArray[0].obj.toString());
                     }
                     try {
                         suggestSolrServer
-                            .deleteByQuery((String) requestArray[0].obj);
+                                .deleteByQuery((String) requestArray[0].obj);
                         suggestSolrServer.commit();
                     } catch (final Exception e) {
                         logger.warn("Failed to deleteByQuery.", e);
@@ -213,13 +214,14 @@ public class IndexUpdater extends Thread {
         }
 
         if (logger.isInfoEnabled()) {
-            logger.info("Stop IndexUpdater");
-            suggestRequestQueue.clear();
+            logger.info("Finished SuggestIndexer: "
+                    + (System.currentTimeMillis() - startTime) + "ms");
         }
+        suggestRequestQueue.clear();
     }
 
     protected void mergeSolrIndex(final SuggestItem[] suggestItemArray,
-                                  final int itemSize, final String ids) {
+            final int itemSize, final String ids) {
         final long startTime = System.currentTimeMillis();
         if (itemSize > 0) {
             SolrDocumentList documentList = null;
@@ -227,8 +229,8 @@ public class IndexUpdater extends Thread {
                 documentList = suggestSolrServer.get(ids);
                 if (logger.isDebugEnabled()) {
                     logger.debug("search end. " + "getNum="
-                        + documentList.size() + "  took:"
-                        + (System.currentTimeMillis() - startTime));
+                            + documentList.size() + "  took:"
+                            + (System.currentTimeMillis() - startTime));
                 }
             } catch (final Exception e) {
                 logger.warn("Failed merge solr index.", e);
@@ -237,7 +239,7 @@ public class IndexUpdater extends Thread {
                 int itemCount = 0;
                 for (final SolrDocument doc : documentList) {
                     final Object idObj = doc
-                        .getFieldValue(SuggestConstants.SuggestFieldNames.ID);
+                            .getFieldValue(SuggestConstants.SuggestFieldNames.ID);
                     if (idObj == null) {
                         continue;
                     }
@@ -248,28 +250,28 @@ public class IndexUpdater extends Thread {
 
                         if (item.getDocumentId().equals(id)) {
                             final Object count = doc
-                                .getFieldValue(SuggestConstants.SuggestFieldNames.COUNT);
+                                    .getFieldValue(SuggestConstants.SuggestFieldNames.COUNT);
                             if (count != null) {
                                 item.setCount(item.getCount()
-                                    + Long.parseLong(count.toString()));
+                                        + Long.parseLong(count.toString()));
                             }
                             final Collection<Object> labels = doc
-                                .getFieldValues(SuggestConstants.SuggestFieldNames.LABELS);
+                                    .getFieldValues(SuggestConstants.SuggestFieldNames.LABELS);
                             if (labels != null) {
                                 final List<String> itemLabelList = item
-                                    .getLabels();
+                                        .getLabels();
                                 for (final Object label : labels) {
                                     if (!itemLabelList.contains(label
-                                        .toString())) {
+                                            .toString())) {
                                         itemLabelList.add(label.toString());
                                     }
                                 }
                             }
                             final Collection<Object> roles = doc
-                                .getFieldValues(SuggestConstants.SuggestFieldNames.ROLES);
+                                    .getFieldValues(SuggestConstants.SuggestFieldNames.ROLES);
                             if (roles != null) {
                                 final List<String> itemRoleList = item
-                                    .getRoles();
+                                        .getRoles();
                                 for (final Object role : roles) {
                                     if (!itemRoleList.contains(role.toString())) {
                                         itemRoleList.add(role.toString());
@@ -277,29 +279,35 @@ public class IndexUpdater extends Thread {
                                 }
                             }
                             final Collection<Object> fields = doc
-                                .getFieldValues(SuggestConstants.SuggestFieldNames.FIELD_NAME);
+                                    .getFieldValues(SuggestConstants.SuggestFieldNames.FIELD_NAME);
                             if (fields != null) {
                                 final List<String> fieldNameList = item
-                                    .getFieldNameList();
+                                        .getFieldNameList();
                                 for (final Object field : fields) {
                                     if (!fieldNameList.contains(field
-                                        .toString())) {
+                                            .toString())) {
                                         fieldNameList.add(field.toString());
                                     }
                                 }
                             }
 
                             final Object segmentObj = doc
-                                .getFieldValue(SuggestConstants.SuggestFieldNames.SEGMENT);
-                            if (segmentObj != null && StringUtils.isNotBlank(segmentObj.toString())) {
-                                long docType = Long.parseLong(segmentObj.toString());
-                                long currentDocType = Long.parseLong(item.getSegment());
+                                    .getFieldValue(SuggestConstants.SuggestFieldNames.SEGMENT);
+                            if (segmentObj != null
+                                    && StringUtils.isNotBlank(segmentObj
+                                            .toString())) {
+                                final long docType = Long.parseLong(segmentObj
+                                        .toString());
+                                final long currentDocType = Long.parseLong(item
+                                        .getSegment());
                                 if (currentDocType > docType) {
                                     item.setSegment(String.valueOf(docType));
                                 }
                                 final Object expiresObj = doc
-                                    .getFieldValue(SuggestConstants.SuggestFieldNames.EXPIRES);
-                                if (expiresObj == null && SuggestConstants.SEGMENT_ELEVATE.equals(segmentObj.toString())) {
+                                        .getFieldValue(SuggestConstants.SuggestFieldNames.EXPIRES);
+                                if (expiresObj == null
+                                        && SuggestConstants.SEGMENT_ELEVATE
+                                                .equals(segmentObj.toString())) {
                                     item.setExpires("-1");
                                 }
                             }
@@ -313,7 +321,7 @@ public class IndexUpdater extends Thread {
     }
 
     protected void mergeSuggestItem(final SuggestItem item1,
-                                    final SuggestItem item2) {
+            final SuggestItem item2) {
         item1.setCount(item1.getCount() + 1);
         item1.setExpires(item2.getExpires());
         item1.setSegment(item2.getSegment());

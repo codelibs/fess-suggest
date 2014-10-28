@@ -1,5 +1,11 @@
 package jp.sf.fess.suggest.service;
 
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import jp.sf.fess.suggest.SpellChecker;
 import jp.sf.fess.suggest.SuggestConstants;
 import jp.sf.fess.suggest.Suggester;
@@ -7,10 +13,10 @@ import jp.sf.fess.suggest.converter.SuggestReadingConverter;
 import jp.sf.fess.suggest.entity.SpellCheckResponse;
 import jp.sf.fess.suggest.entity.SuggestItem;
 import jp.sf.fess.suggest.entity.SuggestResponse;
-import jp.sf.fess.suggest.exception.FessSuggestException;
 import jp.sf.fess.suggest.index.IndexUpdater;
 import jp.sf.fess.suggest.server.SuggestSolrServer;
 import jp.sf.fess.suggest.util.SuggestUtil;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
 import org.apache.solr.client.solrj.SolrQuery;
@@ -23,12 +29,9 @@ import org.codelibs.core.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
-import java.util.*;
-
 public class SuggestService {
-    private static final Logger logger = LoggerFactory.getLogger(SuggestService.class);
+    private static final Logger logger = LoggerFactory
+            .getLogger(SuggestService.class);
 
     protected Suggester suggester;
 
@@ -38,7 +41,7 @@ public class SuggestService {
 
     protected SuggestSolrServer suggestSolrServer;
 
-    public String[] supportedFields = {"content"};
+    public String[] supportedFields = { "content" };
 
     public String labelFieldName = "label";
 
@@ -50,11 +53,13 @@ public class SuggestService {
 
     protected volatile Set<String> badWords = new HashSet<>();
 
-    public SuggestService(Suggester suggester, SpellChecker spellChecker, SuggestSolrServer suggestSolrServer) {
+    public SuggestService(final Suggester suggester,
+            final SpellChecker spellChecker,
+            final SuggestSolrServer suggestSolrServer) {
         this.suggester = suggester;
         this.spellChecker = spellChecker;
         this.suggestSolrServer = suggestSolrServer;
-        this.indexUpdater = new IndexUpdater(suggestSolrServer);
+        indexUpdater = new IndexUpdater(suggestSolrServer);
         indexUpdater.setUpdateInterval(updateInterval);
         indexUpdater.start();
     }
@@ -63,19 +68,17 @@ public class SuggestService {
         indexUpdater.close();
         try {
             indexUpdater.join();
-        } catch (InterruptedException e) {
+        } catch (final InterruptedException e) {
             logger.info("Interrupted suggestService.");
         }
     }
 
     public SuggestResponse getSuggestResponse(final String q,
-                                              final List<String> fieldNames,
-                                              final List<String> labels,
-                                              final List<String> roleList,
-                                              final int rows) {
+            final List<String> fieldNames, final List<String> labels,
+            final List<String> roleList, final int rows) {
 
         final String suggestQuery = suggester.buildSuggestQuery(q, fieldNames,
-            labels, roleList);
+                labels, roleList);
 
         final long startTime = System.currentTimeMillis();
 
@@ -88,31 +91,29 @@ public class SuggestService {
             solrQuery.setRows(rows);
             //sort
             solrQuery.addSort(SuggestConstants.SuggestFieldNames.BOOST,
-                SolrQuery.ORDER.desc);
+                    SolrQuery.ORDER.desc);
             solrQuery.addSort(SuggestConstants.SuggestFieldNames.COUNT,
-                SolrQuery.ORDER.desc);
+                    SolrQuery.ORDER.desc);
 
             try {
                 queryResponse = suggestSolrServer.query(solrQuery,
-                    SolrRequest.METHOD.POST);
-            } catch (SolrServerException e) {
+                        SolrRequest.METHOD.POST);
+            } catch (final SolrServerException e) {
                 logger.warn("Failed to request.", e);
             }
         }
         final long execTime = System.currentTimeMillis() - startTime;
         final SuggestResponse suggestResponse = new SuggestResponse(
-            queryResponse, rows, q);
+                queryResponse, rows, q);
         suggestResponse.setExecTime(execTime);
         return suggestResponse;
     }
 
     public SpellCheckResponse getSpellCheckResponse(final String q,
-                                                    final List<String> fieldNames,
-                                                    final List<String> labels,
-                                                    final List<String> roleList,
-                                                    final int rows) {
+            final List<String> fieldNames, final List<String> labels,
+            final List<String> roleList, final int rows) {
         final String spellCheckQuery = spellChecker.buildSpellCheckQuery(q,
-            fieldNames, labels, roleList);
+                fieldNames, labels, roleList);
 
         final long startTime = System.currentTimeMillis();
 
@@ -125,25 +126,26 @@ public class SuggestService {
             solrQuery.setRows(rows);
             //sort
             solrQuery.setSort(SuggestConstants.SuggestFieldNames.COUNT,
-                SolrQuery.ORDER.desc);
+                    SolrQuery.ORDER.desc);
 
             try {
                 queryResponse = suggestSolrServer.query(solrQuery,
-                    SolrRequest.METHOD.POST);
-            } catch (SolrServerException e) {
+                        SolrRequest.METHOD.POST);
+            } catch (final SolrServerException e) {
                 logger.warn("Failed to request.", e);
             }
         }
         final long execTime = System.currentTimeMillis() - startTime;
         final SpellCheckResponse spellCheckResponse = new SpellCheckResponse(
-            queryResponse, rows, q);
+                queryResponse, rows, q);
         spellCheckResponse.setExecTime(execTime);
         return spellCheckResponse;
     }
 
-    public void addElevateWord(String word, String reading, List<String> labels,
-                               List<String> roles, long boost) {
-        SuggestItem item = new SuggestItem();
+    public void addElevateWord(final String word, final String reading,
+            final List<String> labels, final List<String> roles,
+            final long boost) {
+        final SuggestItem item = new SuggestItem();
         item.setText(word);
 
         final String readingTarget;
@@ -153,13 +155,13 @@ public class SuggestService {
             readingTarget = word;
         }
 
-        SuggestReadingConverter converter = suggester.getConverter();
-        List<String> readings = converter.convert(readingTarget);
-        for (String r : readings) {
+        final SuggestReadingConverter converter = suggester.getConverter();
+        final List<String> readings = converter.convert(readingTarget);
+        for (final String r : readings) {
             item.addReading(r);
         }
 
-        for (String field : supportedFields) {
+        for (final String field : supportedFields) {
             item.addFieldName(field);
         }
 
@@ -176,34 +178,35 @@ public class SuggestService {
 
     public void deleteAllElevateWords() {
         try {
-            suggestSolrServer.deleteByQuery(SuggestConstants.SuggestFieldNames.SEGMENT + ":"
-                + SuggestConstants.SEGMENT_ELEVATE);
-        } catch (Exception e) {
+            suggestSolrServer
+                    .deleteByQuery(SuggestConstants.SuggestFieldNames.SEGMENT
+                            + ":" + SuggestConstants.SEGMENT_ELEVATE);
+        } catch (final Exception e) {
             logger.warn("Failed to delete elevate words.", e);
         }
     }
 
     public void deleteBadWords() {
-        for(String badWord: badWords) {
+        for (final String badWord : badWords) {
             try {
-                suggestSolrServer.deleteByQuery(SuggestConstants.SuggestFieldNames.TEXT + ":"
-                    + ClientUtils.escapeQueryChars(badWord));
-            } catch (Exception e) {
+                suggestSolrServer
+                        .deleteByQuery(SuggestConstants.SuggestFieldNames.TEXT
+                                + ":" + ClientUtils.escapeQueryChars(badWord));
+            } catch (final Exception e) {
                 logger.warn("Failed to delete BadWord", e);
             }
         }
     }
 
-
-    public void addSolrParams(String solrParams) {
+    public void addSolrParams(final String solrParams) {
         addSolrParams(solrParams, defaultSearchLogExpires);
     }
 
-
-    public void addSolrParams(String solrParams, int dayForCleanup) {
-        Map<String, String> paramMap = SuggestUtil.parseSolrParams(solrParams);
-        String q = paramMap.get("q");
-        String fq = paramMap.get("fq");
+    public void addSolrParams(final String solrParams, final int dayForCleanup) {
+        final Map<String, String> paramMap = SuggestUtil
+                .parseSolrParams(solrParams);
+        final String q = paramMap.get("q");
+        final String fq = paramMap.get("fq");
 
         if (StringUtils.isBlank(q)) {
             return;
@@ -219,21 +222,21 @@ public class SuggestService {
             roles = SuggestUtil.parseQuery(fq, roleFieldName);
         }
 
-        StringBuilder sb = new StringBuilder(30);
-        SuggestReadingConverter converter = suggester.getConverter();
-        for (String field : supportedFields) {
-            List<String> words = SuggestUtil.parseQuery(q, field);
+        final StringBuilder sb = new StringBuilder(30);
+        final SuggestReadingConverter converter = suggester.getConverter();
+        for (final String field : supportedFields) {
+            final List<String> words = SuggestUtil.parseQuery(q, field);
             if (words.isEmpty()) {
                 continue;
             }
 
             sb.setLength(0);
-            SuggestItem item = new SuggestItem();
+            final SuggestItem item = new SuggestItem();
             item.addFieldName(field);
 
             boolean isBadWord = false;
-            for (String word : words) {
-                if(badWords.contains(word)) {
+            for (final String word : words) {
+                if (badWords.contains(word)) {
                     isBadWord = true;
                     break;
                 }
@@ -241,12 +244,12 @@ public class SuggestService {
                     sb.append(" ");
                 }
                 sb.append(normalize(word));
-                List<String> readings = converter.convert(word);
-                for (String reading : readings) {
+                final List<String> readings = converter.convert(word);
+                for (final String reading : readings) {
                     item.addReading(reading);
                 }
             }
-            if(isBadWord) {
+            if (isBadWord) {
                 continue;
             }
 
@@ -259,7 +262,9 @@ public class SuggestService {
             }
 
             if (dayForCleanup >= 0) {
-                String dayForCleanupStr = DateUtil.getThreadLocalDateFormat().format(new Date(getExpiredTimestamp(dayForCleanup)));
+                final String dayForCleanupStr = DateUtil
+                        .getThreadLocalDateFormat().format(
+                                new Date(getExpiredTimestamp(dayForCleanup)));
                 item.setExpires(dayForCleanupStr);
                 item.setExpiresField(SuggestConstants.SuggestFieldNames.EXPIRES);
             }
@@ -279,32 +284,38 @@ public class SuggestService {
     }
 
     public long getContentDocumentNum() {
-        return getDocumentNum("*:* NOT " + SuggestConstants.SuggestFieldNames.SEGMENT + ":" + SuggestConstants.SEGMENT_QUERY
-        + " NOT " + SuggestConstants.SuggestFieldNames.SEGMENT + ":" + SuggestConstants.SEGMENT_ELEVATE);
+        return getDocumentNum("*:* NOT "
+                + SuggestConstants.SuggestFieldNames.SEGMENT + ":"
+                + SuggestConstants.SEGMENT_QUERY + " NOT "
+                + SuggestConstants.SuggestFieldNames.SEGMENT + ":"
+                + SuggestConstants.SEGMENT_ELEVATE);
     }
 
     public long getSearchLogDocumentNum() {
-        return getDocumentNum(SuggestConstants.SuggestFieldNames.SEGMENT + ":" + SuggestConstants.SEGMENT_QUERY);
+        return getDocumentNum(SuggestConstants.SuggestFieldNames.SEGMENT + ":"
+                + SuggestConstants.SEGMENT_QUERY);
     }
 
     public long getElevateDocumentNum() {
-        return getDocumentNum(SuggestConstants.SuggestFieldNames.SEGMENT + ":" + SuggestConstants.SEGMENT_ELEVATE);
+        return getDocumentNum(SuggestConstants.SuggestFieldNames.SEGMENT + ":"
+                + SuggestConstants.SEGMENT_ELEVATE);
     }
 
-    protected long getDocumentNum(String query) {
+    protected long getDocumentNum(final String query) {
         QueryResponse queryResponse = null;
         try {
-            SolrQuery solrQuery = new SolrQuery();
+            final SolrQuery solrQuery = new SolrQuery();
             solrQuery.setQuery(query);
-            queryResponse = suggestSolrServer.query(solrQuery, SolrRequest.METHOD.POST);
-        } catch (SolrServerException e) {
+            queryResponse = suggestSolrServer.query(solrQuery,
+                    SolrRequest.METHOD.POST);
+        } catch (final SolrServerException e) {
             return -1;
         }
 
         return queryResponse.getResults().getNumFound();
     }
 
-    public void updateBadWords(Set<String> badWords) {
+    public void updateBadWords(final Set<String> badWords) {
         this.badWords = badWords;
     }
 
@@ -312,7 +323,7 @@ public class SuggestService {
         return labelFieldName;
     }
 
-    public void setLabelFieldName(String labelFieldName) {
+    public void setLabelFieldName(final String labelFieldName) {
         this.labelFieldName = labelFieldName;
     }
 
@@ -320,7 +331,7 @@ public class SuggestService {
         return roleFieldName;
     }
 
-    public void setRoleFieldName(String roleFieldName) {
+    public void setRoleFieldName(final String roleFieldName) {
         this.roleFieldName = roleFieldName;
     }
 
@@ -328,9 +339,8 @@ public class SuggestService {
         return DateUtils.addDays(new Date(), days).getTime();
     }
 
-    protected String normalize(String word) {
-        return word.replace("*", "")
-            .replace("?", "");
+    protected String normalize(final String word) {
+        return word.replace("*", "").replace("?", "");
     }
 
     public SuggestSolrServer getSuggestSolrServer() {
