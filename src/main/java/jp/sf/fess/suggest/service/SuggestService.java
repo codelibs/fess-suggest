@@ -191,7 +191,7 @@ public class SuggestService {
             try {
                 suggestSolrServer
                         .deleteByQuery(SuggestConstants.SuggestFieldNames.TEXT
-                                + ":" + ClientUtils.escapeQueryChars(badWord));
+                                + ":*" + ClientUtils.escapeQueryChars(badWord)+ "*");
             } catch (final Exception e) {
                 logger.warn("Failed to delete BadWord", e);
             }
