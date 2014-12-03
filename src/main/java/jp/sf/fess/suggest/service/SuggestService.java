@@ -346,4 +346,9 @@ public class SuggestService {
     public SuggestSolrServer getSuggestSolrServer() {
         return suggestSolrServer;
     }
+
+    public void setUpdateInterval(long updateInterval) {
+        this.updateInterval = updateInterval;
+        indexUpdater.setUpdateInterval(updateInterval);
+    }
 }

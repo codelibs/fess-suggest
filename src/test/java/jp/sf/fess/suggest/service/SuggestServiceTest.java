@@ -33,6 +33,7 @@ public class SuggestServiceTest extends FessSuggestTestCase {
 
         suggestSolrServer = new SuggestSolrServer(new HttpSolrServer(SOLR_URL));
         service = new SuggestService(suggester, spellChecker, suggestSolrServer);
+        service.setUpdateInterval(100);
         suggestSolrServer.deleteByQuery("*:*");
     }
 
