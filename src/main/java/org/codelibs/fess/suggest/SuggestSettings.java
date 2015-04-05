@@ -15,7 +15,7 @@ public class SuggestSettings {
         SuggestSettings settings = new SuggestSettings();
         settings.index = "suggest";
         settings.type = "item";
-        settings.supportedFields = new String[] { "content" };
+        settings.supportedFields = new String[]{"content"};
         settings.tagFieldName = "label";
         settings.roleFieldName = "role";
         return settings;

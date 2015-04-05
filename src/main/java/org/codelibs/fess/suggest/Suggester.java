@@ -25,15 +25,15 @@ public class Suggester {
     }
 
     public Suggester(final Client client, final SuggestSettings settings, final ReadingConverter readingConverter,
-            final Normalizer normalizer) {
+                     final Normalizer normalizer) {
         this.client = client;
         this.settings = settings;
         this.readingConverter = readingConverter;
         this.normalizer = normalizer;
 
         this.indexer =
-                new SuggestIndexer(client, settings.index, settings.type, settings.supportedFields, settings.tagFieldName,
-                        settings.roleFieldName, this.readingConverter, this.normalizer);
+            new SuggestIndexer(client, settings.index, settings.type, settings.supportedFields, settings.tagFieldName,
+                settings.roleFieldName, this.readingConverter, this.normalizer);
     }
 
     public SuggestRequestBuilder suggest() {

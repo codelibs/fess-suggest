@@ -176,7 +176,7 @@ public class SuggestRequest extends Request<SuggestResponse> {
                 }
 
                 items.add(new SuggestItem(text.split(" "), readings.toArray(new String[readings.size()][]), Long.valueOf(source.get(
-                        FieldNames.SCORE).toString()), tags.toArray(new String[tags.size()]), roles.toArray(new String[tags.size()]), kind));
+                    FieldNames.SCORE).toString()), tags.toArray(new String[tags.size()]), roles.toArray(new String[tags.size()]), kind));
             }
         }
 
