@@ -1,168 +1,77 @@
-/*
- * Copyright 2009-2014 the CodeLibs Project and the Others.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
- * either express or implied. See the License for the specific language
- * governing permissions and limitations under the License.
- */
-
 package org.codelibs.fess.suggest;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.apache.commons.lang.StringUtils;
-import org.apache.solr.client.solrj.util.ClientUtils;
-import org.codelibs.fess.suggest.converter.SuggestReadingConverter;
-import org.codelibs.fess.suggest.normalizer.SuggestNormalizer;
+import org.codelibs.fess.suggest.converter.ReadingConverter;
+import org.codelibs.fess.suggest.converter.ReadingConverterChain;
+import org.codelibs.fess.suggest.index.SuggestIndexer;
+import org.codelibs.fess.suggest.normalizer.Normalizer;
+import org.codelibs.fess.suggest.normalizer.NormalizerChain;
+import org.codelibs.fess.suggest.request.suggest.SuggestRequestBuilder;
+import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
+import org.elasticsearch.client.Client;
 
 public class Suggester {
-    private static final String _AND_ = " AND ";
+    protected final Client client;
+    protected final SuggestSettings settings;
+    protected final SuggestIndexer indexer;
+    protected final ReadingConverter readingConverter;
+    protected final Normalizer normalizer;
 
-    private static final String _OR_ = " OR ";
-
-    private SuggestReadingConverter converter = null;
-
-    private SuggestNormalizer normalizer = null;
-
-    public void setConverter(final SuggestReadingConverter converter) {
-        this.converter = converter;
+    public Suggester(Client client) {
+        this(client, SuggestSettings.defaultSettings());
     }
 
-    public void setNormalizer(final SuggestNormalizer normalizer) {
+    public Suggester(Client client, SuggestSettings settings) {
+        this(client, settings, createReadingConverter(settings), createNormalizer(settings));
+    }
+
+    public Suggester(final Client client, final SuggestSettings settings, final ReadingConverter readingConverter,
+            final Normalizer normalizer) {
+        this.client = client;
+        this.settings = settings;
+        this.readingConverter = readingConverter;
         this.normalizer = normalizer;
+
+        this.indexer =
+                new SuggestIndexer(client, settings.index, settings.type, settings.supportedFields, settings.tagFieldName,
+                        settings.roleFieldName, this.readingConverter, this.normalizer);
     }
 
-    public SuggestReadingConverter getConverter() {
-        return converter;
+    public SuggestRequestBuilder suggest() {
+        return new SuggestRequestBuilder(client).setIndex(settings.index).setType(settings.type);
     }
 
-    public String buildSuggestQuery(final String query, final List<String> targetFields, final List<String> labels, final List<String> roles) {
-        final String q = buildQuery(query);
-        if (StringUtils.isBlank(q)) {
-            return "";
-        }
-
-        final StringBuilder queryBuf = new StringBuilder(q.length() + 100);
-        queryBuf.append(q);
-        if (targetFields != null && !targetFields.isEmpty()) {
-            queryBuf.append(_AND_);
-            if (targetFields.size() >= 2) {
-                queryBuf.append("(");
-            }
-            for (int i = 0; i < targetFields.size(); i++) {
-                final String fieldName = targetFields.get(i);
-                if (i > 0) {
-                    queryBuf.append(_OR_);
-                }
-                queryBuf.append(SuggestConstants.SuggestFieldNames.FIELD_NAME);
-                queryBuf.append(':');
-                queryBuf.append(fieldName);
-            }
-            if (targetFields.size() >= 2) {
-                queryBuf.append(')');
-            }
-        }
-
-        if (labels != null && !labels.isEmpty()) {
-            queryBuf.append(_AND_);
-            if (labels.size() >= 2) {
-                queryBuf.append('(');
-            }
-            boolean isFirst = true;
-            for (final String label : labels) {
-                if (!isFirst) {
-                    queryBuf.append(_OR_);
-                }
-                queryBuf.append(SuggestConstants.SuggestFieldNames.LABELS);
-                queryBuf.append(':');
-                queryBuf.append(label);
-                isFirst = false;
-            }
-            if (labels.size() >= 2) {
-                queryBuf.append(')');
-            }
-        }
-
-        if (roles != null && !roles.isEmpty()) {
-            queryBuf.append(_AND_);
-            if (roles.size() >= 2) {
-                queryBuf.append('(');
-            }
-            boolean isFirst = true;
-            for (final String role : roles) {
-                if (!isFirst) {
-                    queryBuf.append(_OR_);
-                }
-                queryBuf.append(SuggestConstants.SuggestFieldNames.ROLES);
-                queryBuf.append(':');
-                queryBuf.append(role);
-                isFirst = false;
-            }
-            if (roles.size() >= 2) {
-                queryBuf.append(')');
-            }
-        }
-
-        return queryBuf.toString();
+    public RefreshResponse refresh() {
+        return indexer.refresh();
     }
 
-    protected String buildQuery(final String query) {
-        final StringBuilder queryBuf = new StringBuilder(100);
-        String[] array = query.trim().replace("　", " ").replaceAll(" +", " ").split(" ");
-        for (String q : array) {
-            if (StringUtils.isBlank(q)) {
-                continue;
-            }
+    public SuggestIndexer indexer() {
+        return indexer;
+    }
 
-            if (normalizer != null) {
-                q = normalizer.normalize(q);
-            }
-            q = ClientUtils.escapeQueryChars(q.trim());
+    protected static ReadingConverter createReadingConverter(SuggestSettings settings) {
+        //TODO
+        return new ReadingConverterChain();
+    }
 
-            List<String> readingList;
-            if (converter != null) {
-                readingList = converter.convert(q);
-            } else {
-                readingList = new ArrayList<>();
-                readingList.add(q);
-            }
+    protected static Normalizer createNormalizer(SuggestSettings settings) {
+        //TODO
+        return new NormalizerChain();
+    }
 
-            if (readingList.isEmpty()) {
-                continue;
-            }
+    //getter
+    public SuggestSettings getSettings() {
+        return settings;
+    }
 
-            if (queryBuf.length() > 0) {
-                queryBuf.append(_AND_);
-            }
+    public SuggestIndexer getIndexer() {
+        return indexer;
+    }
 
-            if (readingList.size() >= 2) {
-                queryBuf.append('(');
-            }
-            boolean first = true;
-            for (final String reading : readingList) {
-                if (!first) {
-                    queryBuf.append(_OR_);
-                }
-                first = false;
-                queryBuf.append(SuggestConstants.SuggestFieldNames.READING);
-                queryBuf.append(':');
-                queryBuf.append(reading);
-                queryBuf.append('*');
-            }
-            if (readingList.size() >= 2) {
-                queryBuf.append(')');
-            }
-        }
+    public ReadingConverter getReadingConverter() {
+        return readingConverter;
+    }
 
-        return queryBuf.toString();
+    public Normalizer getNormalizer() {
+        return normalizer;
     }
 }

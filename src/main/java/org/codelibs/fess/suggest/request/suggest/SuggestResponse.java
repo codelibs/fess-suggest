@@ -1,0 +1,46 @@
+package org.codelibs.fess.suggest.request.suggest;
+
+import org.codelibs.fess.suggest.entity.SuggestItem;
+import org.codelibs.fess.suggest.request.Response;
+
+import java.util.List;
+
+public class SuggestResponse implements Response {
+    protected final long tookMs;
+
+    protected final List<String> words;
+
+    protected final int num;
+
+    protected final long total;
+
+    protected final List<SuggestItem> items;
+
+    protected SuggestResponse(final long tookMs, final List<String> words, final long total, final List<SuggestItem> items) {
+        this.tookMs = tookMs;
+        this.words = words;
+        this.num = words.size();
+        this.total = total;
+        this.items = items;
+    }
+
+    public long getTookMs() {
+        return tookMs;
+    }
+
+    public List<String> getWords() {
+        return words;
+    }
+
+    public int getNum() {
+        return num;
+    }
+
+    public long getTotal() {
+        return total;
+    }
+
+    public List<SuggestItem> getItems() {
+        return items;
+    }
+}

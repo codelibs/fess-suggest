@@ -1,184 +1,171 @@
 package org.codelibs.fess.suggest.entity;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import org.codelibs.fess.suggest.constants.FieldNames;
+import org.codelibs.fess.suggest.constants.SuggestConstants;
+import org.elasticsearch.common.Nullable;
 
-import org.apache.solr.common.SolrInputDocument;
-import org.codelibs.fess.suggest.SuggestConstants;
+import java.util.HashMap;
+import java.util.Map;
 
 public class SuggestItem {
-    private volatile String text;
+    public enum Kind {
+        DOCUMENT("document"), QUERY("query"), USER("user");
 
-    private final List<String> readingList = Collections.synchronizedList(new ArrayList<String>());
+        private final String kind;
 
-    private final List<String> fieldNameList = Collections.synchronizedList(new ArrayList<String>()); // TODO Set?
+        private Kind(String kind) {
+            this.kind = kind;
+        }
 
-    private final List<String> labels = Collections.synchronizedList(new ArrayList<String>()); // TODO Set?
+        @Override
+        public String toString() {
+            return kind;
+        }
+    }
 
-    private final List<String> roles = Collections.synchronizedList(new ArrayList<String>()); // TODO Set?
+    private final String text;
 
-    private volatile long userBoost = 0;
+    private final long queryFreq;
 
-    private volatile long count = 1;
+    private final long docFreq;
 
-    private volatile String expires = "-1";
+    private final long userBoost;
 
-    private volatile String expiresField;
+    private final String[][] readings;
 
-    private volatile String segment;
+    private final String[] tags;
 
-    private volatile String segmentField;
+    private final String[] roles;
+
+    private final Kind kind;
+
+    public SuggestItem(final String[] text, final String[][] readings, final long score, @Nullable final String[] tags,
+            @Nullable final String[] roles, final Kind kind) {
+        this.text = String.join(SuggestConstants.TEXT_SEPARATOR, text);
+        this.readings = readings;
+        this.tags = tags != null ? tags : new String[] {};
+
+        this.roles = new String[roles.length + 1];
+        this.roles[0] = SuggestConstants.DEFAULT_ROLE;
+        for (int i = 0; i < roles.length; i++) {
+            this.roles[i + 1] = roles[i];
+        }
+
+        this.kind = kind;
+        if (kind == Kind.QUERY) {
+            this.queryFreq = score;
+            this.docFreq = 0;
+            this.userBoost = -1;
+        } else if (kind == Kind.USER) {
+            this.queryFreq = 0;
+            this.docFreq = 1;
+            this.userBoost = score;
+        } else {
+            this.queryFreq = 0;
+            this.docFreq = score;
+            this.userBoost = -1;
+        }
+    }
 
     public String getText() {
         return text;
     }
 
-    public void setText(final String text) {
-        this.text = text;
-    }
-
-    public List<String> getReadingList() {
-        return readingList;
-    }
-
-    public void addReading(final String reading) {
-        readingList.add(reading);
-    }
-
-    public List<String> getFieldNameList() {
-        return fieldNameList;
-    }
-
-    public void addFieldName(final String fieldName) {
-        fieldNameList.add(fieldName);
-    }
-
-    public List<String> getLabels() {
-        return labels;
-    }
-
-    public void setLabels(final List<String> labels) {
-        this.labels.clear();
-        if (labels != null) {
-            for (final String label : labels) {
-                this.labels.add(label);
-            }
+    public long getScore() {
+        if (kind == Kind.QUERY) {
+            return queryFreq;
+        } else if (kind == Kind.USER) {
+            return userBoost;
+        } else {
+            return docFreq;
         }
     }
 
-    public List<String> getRoles() {
+    public String[][] getReadings() {
+        return readings;
+    }
+
+    public String[] getTags() {
+        return tags;
+    }
+
+    public String[] getRoles() {
         return roles;
     }
 
-    public void setRoles(final List<String> roles) {
-        this.roles.clear();
-        if (roles != null) {
-            for (final String label : roles) {
-                this.roles.add(label);
-            }
+    public Kind getKind() {
+        return kind;
+    }
+
+    //TODO 最初に一度つくればいい
+    public Map<String, Object> toEmptyMap() {
+        Map<String, Object> map = new HashMap<>();
+        map.put(FieldNames.TEXT, "");
+
+        for (int i = 0; i < readings.length; i++) {
+            map.put(FieldNames.READING_PREFIX + i, new String[] {});
         }
+
+        map.put(FieldNames.TAGS, new String[] {});
+        map.put(FieldNames.ROLES, new String[] {});
+        map.put(FieldNames.KINDS, new String[] {});
+        map.put(FieldNames.SCORE, 0L);
+        map.put(FieldNames.QUERY_FREQ, 0L);
+        map.put(FieldNames.DOC_FREQ, 0L);
+        map.put(FieldNames.USER_BOOST, 1L);
+        return map;
     }
 
-    public long getCount() {
-        return count;
+    public String getId() {
+        return String.valueOf(text.hashCode());
     }
 
-    public void setCount(final long count) {
-        this.count = count;
-    }
+    public String getScript() {
+        StringBuilder script = new StringBuilder(100);
 
-    public String getExpires() {
-        return expires;
-    }
+        // define vars
+        script.append("def source=ctx._source;");
 
-    public void setExpires(final String expires) {
-        this.expires = expires;
-    }
+        //text
+        script.append("source.text=text;");
 
-    public String getExpiresField() {
-        return expiresField;
-    }
-
-    public void setExpiresField(final String expiresField) {
-        this.expiresField = expiresField;
-    }
-
-    public String getSegment() {
-        return segment;
-    }
-
-    public void setSegment(final String segment) {
-        this.segment = segment;
-    }
-
-    public String getSegmentField() {
-        return segmentField;
-    }
-
-    public void setSegmentField(final String segmentField) {
-        this.segmentField = segmentField;
-    }
-
-    public long getUserBoost() {
-        return userBoost;
-    }
-
-    public void setUserBoost(long userBoost) {
-        this.userBoost = userBoost;
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        if (o instanceof SuggestItem) {
-            final SuggestItem item = (SuggestItem) o;
-            if (getDocumentId().equals(item.getDocumentId())) {
-                return true;
-            }
+        //readings
+        for (int i = 0; i < readings.length; i++) {
+            script.append("source[\"reading_").append(i).append("\"]").append("=reading").append(i).append(';');
         }
-        return false;
+
+        //score
+        script.append("source.queryFreq+=queryFreq;");
+        script.append("source.docFreq+=docFreq;");
+        script.append("if(userBoost >= 0) source.userBoost=userBoost;");
+        script.append("source.score=(source.queryFreq + source.docFreq) * source.userBoost;");
+
+        //tags
+        script.append("sourceTags=source.tags; tags.each{ if(!sourceTags.contains(it)) sourceTags.add(it);};");
+
+        //roles
+        script.append("sourceRoles=source.roles; roles.each{ if(!sourceRoles.contains(it)) sourceRoles.add(it);};");
+
+        //kind
+        script.append("if(!source.kinds.contains(kind)) {source.kinds.add(kind);}");
+
+        return script.toString();
     }
 
-    @Override
-    public int hashCode() {
-        return getDocumentId().hashCode();
+    public Map<String, Object> getScriptParams() {
+        Map<String, Object> params = new HashMap<>();
+        params.put("text", text);
+        for (int i = 0; i < readings.length; i++) {
+            params.put("reading" + i, readings[i]);
+        }
+        params.put("queryFreq", queryFreq);
+        params.put("docFreq", docFreq);
+        params.put("userBoost", userBoost);
+        params.put("tags", tags);
+        params.put("roles", roles);
+        params.put("kind", kind.toString());
+
+        return params;
     }
 
-    public SolrInputDocument toSolrInputDocument() {
-        final SolrInputDocument doc = new SolrInputDocument();
-
-        doc.setField(SuggestConstants.SuggestFieldNames.TEXT, text);
-        for (final String reading : readingList) {
-            doc.addField(SuggestConstants.SuggestFieldNames.READING, reading);
-        }
-        for (final String fieldName : fieldNameList) {
-            doc.addField(SuggestConstants.SuggestFieldNames.FIELD_NAME, fieldName);
-        }
-        doc.setField(SuggestConstants.SuggestFieldNames.COUNT, count);
-        if (!expires.equals("-1")) {
-            doc.setField(expiresField, expires);
-        }
-        doc.setField(segmentField, segment);
-        for (final String label : labels) {
-            doc.addField(SuggestConstants.SuggestFieldNames.LABELS, label);
-        }
-        for (final String role : roles) {
-            doc.addField(SuggestConstants.SuggestFieldNames.ROLES, role);
-        }
-        doc.addField(SuggestConstants.SuggestFieldNames.BOOST, userBoost);
-        doc.addField(SuggestConstants.SuggestFieldNames.ID, getDocumentId());
-
-        return doc;
-    }
-
-    public String getDocumentId() {
-        return text;
-    }
-
-    @Override
-    public String toString() {
-        return "SuggestItem [text=" + text + ", readingList=" + readingList + ", fieldNameList=" + fieldNameList + ", labels=" + labels
-                + ", roles=" + roles + ", count=" + count + ", expires=" + expires + ", expiresField=" + expiresField + ", segment="
-                + segment + ", segmentField=" + segmentField + "]";
-    }
 }
