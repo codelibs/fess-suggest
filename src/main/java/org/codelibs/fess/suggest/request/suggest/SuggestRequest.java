@@ -3,8 +3,10 @@ package org.codelibs.fess.suggest.request.suggest;
 import org.apache.commons.lang.StringUtils;
 import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
+import org.codelibs.fess.suggest.converter.ReadingConverter;
 import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.fess.suggest.exception.SuggestorException;
+import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.request.Request;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
@@ -31,6 +33,10 @@ public class SuggestRequest extends Request<SuggestResponse> {
     private final List<String> roles = new ArrayList<>();
 
     private boolean suggestDetail = false;
+
+    private ReadingConverter readingConverter;
+
+    private Normalizer normalizer;
 
     private static final String _AND_ = " AND ";
 
@@ -62,6 +68,14 @@ public class SuggestRequest extends Request<SuggestResponse> {
 
     public void setSuggestDetail(boolean suggestDetail) {
         this.suggestDetail = suggestDetail;
+    }
+
+    public void setReadingConverter(ReadingConverter readingConverter) {
+        this.readingConverter = readingConverter;
+    }
+
+    public void setNormalizer(Normalizer normalizer) {
+        this.normalizer = normalizer;
     }
 
     @Override
@@ -116,14 +130,43 @@ public class SuggestRequest extends Request<SuggestResponse> {
         if (StringUtils.isBlank(query)) {
             queryString = FieldNames.ID + ":*";
         } else {
+            List<String> readingList = new ArrayList<>();
+
             StringBuilder buf = new StringBuilder(50);
             String[] queries = q.replaceAll("　", " ").replaceAll(" +", " ").trim().split(" ");
             for (int i = 0; i < queries.length; i++) {
                 if (i > 0) {
                     buf.append(_AND_);
                 }
-                String fieldName = FieldNames.READING_PREFIX + i;
-                buf.append(fieldName).append(':').append(queries[i]).append('*');
+                final String fieldName = FieldNames.READING_PREFIX + i;
+
+                final String query;
+                if (normalizer != null) {
+                    query = queries[i];
+                } else {
+                    query = normalizer.normalize(queries[i]);
+                }
+
+                if (readingConverter == null) {
+                    readingList.add(query);
+                } else {
+                    readingList = readingConverter.convert(query);
+                }
+
+                final int readingNum = readingList.size();
+                if (queries.length > 1 && readingNum > 1) {
+                    buf.append('(');
+                }
+                for (int readingCount = 0; readingCount < readingNum; readingCount++) {
+                    if (readingCount > 0) {
+                        buf.append(_OR_);
+                    }
+                    buf.append(fieldName).append(':').append(readingList.get(readingCount)).append('*');
+                }
+                if (queries.length > 1 && readingNum > 1) {
+                    buf.append(')');
+                }
+                readingList.clear();
             }
             queryString = buf.toString();
         }
@@ -176,7 +219,7 @@ public class SuggestRequest extends Request<SuggestResponse> {
                 }
 
                 items.add(new SuggestItem(text.split(" "), readings.toArray(new String[readings.size()][]), Long.valueOf(source.get(
-                    FieldNames.SCORE).toString()), tags.toArray(new String[tags.size()]), roles.toArray(new String[tags.size()]), kind));
+                        FieldNames.SCORE).toString()), tags.toArray(new String[tags.size()]), roles.toArray(new String[tags.size()]), kind));
             }
         }
 

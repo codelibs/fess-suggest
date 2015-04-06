@@ -4,16 +4,21 @@ import junit.framework.TestCase;
 import org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner;
 import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.fess.suggest.index.SuggestIndexer;
+import org.codelibs.fess.suggest.index.querylog.QueryLogReader;
 import org.codelibs.fess.suggest.request.suggest.SuggestResponse;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner.newConfigs;
 
 public class SuggesterTest extends TestCase {
     Suggester suggester;
 
+    ElasticsearchClusterRunner runner;
+
     @Override
     public void setUp() throws Exception {
-        ElasticsearchClusterRunner runner = new ElasticsearchClusterRunner();
+        runner = new ElasticsearchClusterRunner();
         runner.onBuild((number, settingsBuilder) -> {
             settingsBuilder.put("http.cors.enabled", true);
             settingsBuilder.put("index.number_of_replicas", 0);
@@ -25,11 +30,15 @@ public class SuggesterTest extends TestCase {
         suggester = new Suggester(runner.client());
     }
 
-    public void test_indexAndSuggest() throws Exception {
-        SuggestIndexer indexor = suggester.indexer();
+    @Override
+    protected void tearDown() throws Exception {
+        runner.close();
+        runner.clean();
+    }
 
+    public void test_indexAndSuggest() throws Exception {
         SuggestItem[] items = getItemSet1();
-        indexor.index(items);
+        suggester.indexer().index(items);
         suggester.refresh();
 
         SuggestResponse response = suggester.suggest().setQuery("kensaku").setSuggestDetail(true).execute();
@@ -45,7 +54,69 @@ public class SuggesterTest extends TestCase {
         assertEquals(1, response.getNum());
         assertEquals("全文 検索", response.getWords().get(0));
         assertEquals(2, response.getItems().get(0).getScore());
+    }
 
+    public void test_indexByQueryString() throws Exception {
+        SuggestSettings settings = suggester.getSettings();
+        String field = settings.supportedFields[0];
+
+        suggester.indexer().indexByQueryString(field + ":検索");
+        suggester.refresh();
+
+        SuggestResponse responseKanji = suggester.suggest().setQuery("検索").setSuggestDetail(true).execute();
+        assertEquals(1, responseKanji.getNum());
+        assertEquals(1, responseKanji.getTotal());
+        assertEquals("検索", responseKanji.getWords().get(0));
+
+        SuggestResponse responseKana = suggester.suggest().setQuery("けん").setSuggestDetail(true).execute();
+        assertEquals(1, responseKana.getNum());
+        assertEquals(1, responseKana.getTotal());
+        assertEquals("検索", responseKana.getWords().get(0));
+
+        SuggestResponse responseAlphabet = suggester.suggest().setQuery("kensa").setSuggestDetail(true).execute();
+        assertEquals(1, responseAlphabet.getNum());
+        assertEquals(1, responseAlphabet.getTotal());
+        assertEquals("検索", responseAlphabet.getWords().get(0));
+
+        suggester.indexer().indexByQueryString(field + ":検索 AND " + field + ":ワード");
+        suggester.refresh();
+
+        SuggestResponse responseMulti = suggester.suggest().setQuery("けんさく わーど").setSuggestDetail(true).execute();
+
+        assertEquals(1, responseMulti.getNum());
+        assertEquals(1, responseMulti.getTotal());
+        assertEquals("検索 ワード", responseMulti.getWords().get(0));
+    }
+
+    public void test_indexByQueryLog() throws Exception {
+        String field = suggester.getSettings().supportedFields[0];
+
+        QueryLogReader reader = new QueryLogReader() {
+            AtomicInteger count = new AtomicInteger();
+            String[] queryLogs = new String[] { field + ":検索", field + ":fess", field + ":検索エンジン" };
+
+            @Override
+            public String read() {
+                if (count.get() >= queryLogs.length) {
+                    return null;
+                }
+                return queryLogs[count.getAndIncrement()];
+            }
+        };
+
+        SuggestIndexer.IndexingStatus status = suggester.indexer().indexByQueryLog(reader);
+        while (!status.isDone()) {
+            Thread.sleep(1000);
+        }
+        suggester.refresh();
+
+        SuggestResponse response1 = suggester.suggest().setQuery("けん").setSuggestDetail(true).execute();
+        assertEquals(2, response1.getNum());
+        assertEquals(2, response1.getTotal());
+
+        SuggestResponse response2 = suggester.suggest().setQuery("fes").setSuggestDetail(true).execute();
+        assertEquals(1, response2.getNum());
+        assertEquals(1, response2.getTotal());
     }
 
     private SuggestItem[] getItemSet1() {

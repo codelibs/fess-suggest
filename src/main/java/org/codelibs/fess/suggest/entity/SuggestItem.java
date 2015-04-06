@@ -40,15 +40,19 @@ public class SuggestItem {
     private final Kind kind;
 
     public SuggestItem(final String[] text, final String[][] readings, final long score, @Nullable final String[] tags,
-                       @Nullable final String[] roles, final Kind kind) {
+            @Nullable final String[] roles, final Kind kind) {
         this.text = String.join(SuggestConstants.TEXT_SEPARATOR, text);
         this.readings = readings;
-        this.tags = tags != null ? tags : new String[]{};
+        this.tags = tags != null ? tags : new String[] {};
 
-        this.roles = new String[roles.length + 1];
-        this.roles[0] = SuggestConstants.DEFAULT_ROLE;
-        for (int i = 0; i < roles.length; i++) {
-            this.roles[i + 1] = roles[i];
+        if (roles == null) {
+            this.roles = new String[] { SuggestConstants.DEFAULT_ROLE };
+        } else {
+            this.roles = new String[roles.length + 1];
+            this.roles[0] = SuggestConstants.DEFAULT_ROLE;
+            for (int i = 0; i < roles.length; i++) {
+                this.roles[i + 1] = roles[i];
+            }
         }
 
         this.kind = kind;
@@ -103,12 +107,12 @@ public class SuggestItem {
         map.put(FieldNames.TEXT, "");
 
         for (int i = 0; i < readings.length; i++) {
-            map.put(FieldNames.READING_PREFIX + i, new String[]{});
+            map.put(FieldNames.READING_PREFIX + i, new String[] {});
         }
 
-        map.put(FieldNames.TAGS, new String[]{});
-        map.put(FieldNames.ROLES, new String[]{});
-        map.put(FieldNames.KINDS, new String[]{});
+        map.put(FieldNames.TAGS, new String[] {});
+        map.put(FieldNames.ROLES, new String[] {});
+        map.put(FieldNames.KINDS, new String[] {});
         map.put(FieldNames.SCORE, 0L);
         map.put(FieldNames.QUERY_FREQ, 0L);
         map.put(FieldNames.DOC_FREQ, 0L);

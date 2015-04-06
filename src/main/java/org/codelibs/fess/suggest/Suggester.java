@@ -1,5 +1,7 @@
 package org.codelibs.fess.suggest;
 
+import org.codelibs.fess.suggest.converter.KatakanaConverter;
+import org.codelibs.fess.suggest.converter.KatakanaToAlphabetConverter;
 import org.codelibs.fess.suggest.converter.ReadingConverter;
 import org.codelibs.fess.suggest.converter.ReadingConverterChain;
 import org.codelibs.fess.suggest.index.SuggestIndexer;
@@ -21,23 +23,23 @@ public class Suggester {
     }
 
     public Suggester(Client client, SuggestSettings settings) {
-        this(client, settings, createReadingConverter(settings), createNormalizer(settings));
+        this(client, settings, createDefaultReadingConverter(), createDefaultNormalizer());
     }
 
     public Suggester(final Client client, final SuggestSettings settings, final ReadingConverter readingConverter,
-                     final Normalizer normalizer) {
+            final Normalizer normalizer) {
         this.client = client;
         this.settings = settings;
         this.readingConverter = readingConverter;
         this.normalizer = normalizer;
 
         this.indexer =
-            new SuggestIndexer(client, settings.index, settings.type, settings.supportedFields, settings.tagFieldName,
-                settings.roleFieldName, this.readingConverter, this.normalizer);
+                new SuggestIndexer(client, settings.index, settings.type, settings.supportedFields, settings.tagFieldName,
+                        settings.roleFieldName, this.readingConverter, this.normalizer);
     }
 
     public SuggestRequestBuilder suggest() {
-        return new SuggestRequestBuilder(client).setIndex(settings.index).setType(settings.type);
+        return new SuggestRequestBuilder(client, readingConverter, normalizer).setIndex(settings.index).setType(settings.type);
     }
 
     public RefreshResponse refresh() {
@@ -48,12 +50,14 @@ public class Suggester {
         return indexer;
     }
 
-    protected static ReadingConverter createReadingConverter(SuggestSettings settings) {
-        //TODO
-        return new ReadingConverterChain();
+    protected static ReadingConverter createDefaultReadingConverter() {
+        ReadingConverterChain chain = new ReadingConverterChain();
+        chain.addConverter(new KatakanaConverter());
+        chain.addConverter(new KatakanaToAlphabetConverter());
+        return chain;
     }
 
-    protected static Normalizer createNormalizer(SuggestSettings settings) {
+    protected static Normalizer createDefaultNormalizer() {
         //TODO
         return new NormalizerChain();
     }

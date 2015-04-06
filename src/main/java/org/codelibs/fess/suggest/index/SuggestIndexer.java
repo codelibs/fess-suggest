@@ -29,7 +29,7 @@ public class SuggestIndexer {
     protected final Normalizer normalizer;
 
     public SuggestIndexer(final Client client, final String index, final String type, final String[] supportedField,
-                          final String tagFieldName, final String roleFieldName, final ReadingConverter readingConverter, final Normalizer normalizer) {
+            final String tagFieldName, final String roleFieldName, final ReadingConverter readingConverter, final Normalizer normalizer) {
         this.client = client;
         this.index = index;
         this.type = type;
@@ -41,7 +41,7 @@ public class SuggestIndexer {
     }
 
     public BulkResponse index(final SuggestItem item) {
-        return index(new SuggestItem[]{item});
+        return index(new SuggestItem[] { item });
     }
 
     public BulkResponse index(final SuggestItem[] items) {
@@ -68,7 +68,7 @@ public class SuggestIndexer {
     }
 
     public BulkResponse indexByQueryString(final String queryString) {
-        return indexByQueryString(new String[]{queryString});
+        return indexByQueryString(new String[] { queryString });
     }
 
     public BulkResponse indexByQueryString(final String[] queryStrings) {
@@ -93,12 +93,13 @@ public class SuggestIndexer {
             String[][] readings = new String[words.length][];
             for (int i = 0; i < words.length; i++) {
                 words[i] = normalizer.normalize(words[i]);
-                readings[i] = readingConverter.convert(words[i]);
+                List<String> l = readingConverter.convert(words[i]);
+                readings[i] = l.toArray(new String[l.size()]);
             }
 
             items.add(new SuggestItem(words, readings, 1L, null, //TODO label
-                null, //TODO role
-                SuggestItem.Kind.QUERY));
+                    null, //TODO role
+                    SuggestItem.Kind.QUERY));
         }
 
         return items;
@@ -112,7 +113,7 @@ public class SuggestIndexer {
         //TODO thread pool
         Thread th = new Thread(() -> {
             String doc;
-            while ((doc = documentReader.next()) != null) {
+            while ((doc = documentReader.read()) != null) {
 
             }
 
@@ -133,20 +134,20 @@ public class SuggestIndexer {
         Thread th = new Thread(() -> {
             int maxNum = 1000; //TODO
 
-            List<String> queryStrings = new ArrayList<>(maxNum);
-            String queryString = queryLogReader.next();
-            while (queryString != null) {
-                queryStrings.add(queryString);
-                queryString = queryLogReader.next();
-                if (queryString == null || queryStrings.size() >= maxNum) {
-                    indexByQueryString(queryStrings.toArray(new String[queryStrings.size()]));
-                    queryStrings.clear();
+                List<String> queryStrings = new ArrayList<>(maxNum);
+                String queryString = queryLogReader.read();
+                while (queryString != null) {
+                    queryStrings.add(queryString);
+                    queryString = queryLogReader.read();
+                    if (queryString == null || queryStrings.size() >= maxNum) {
+                        indexByQueryString(queryStrings.toArray(new String[queryStrings.size()]));
+                        queryStrings.clear();
+                    }
                 }
-            }
 
-            indexingStatus.running.set(false);
-            indexingStatus.done.set(true);
-        });
+                indexingStatus.running.set(false);
+                indexingStatus.done.set(true);
+            });
 
         th.start();
         return indexingStatus;
