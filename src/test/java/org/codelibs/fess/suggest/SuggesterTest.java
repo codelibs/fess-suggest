@@ -56,11 +56,11 @@ public class SuggesterTest extends TestCase {
         assertEquals(2, response.getItems().get(0).getScore());
     }
 
-    public void test_indexByQueryString() throws Exception {
+    public void test_indexFromQueryString() throws Exception {
         SuggestSettings settings = suggester.getSettings();
         String field = settings.supportedFields[0];
 
-        suggester.indexer().indexByQueryString(field + ":検索");
+        suggester.indexer().indexFromQueryString(field + ":検索");
         suggester.refresh();
 
         SuggestResponse responseKanji = suggester.suggest().setQuery("検索").setSuggestDetail(true).execute();
@@ -78,7 +78,7 @@ public class SuggesterTest extends TestCase {
         assertEquals(1, responseAlphabet.getTotal());
         assertEquals("検索", responseAlphabet.getWords().get(0));
 
-        suggester.indexer().indexByQueryString(field + ":検索 AND " + field + ":ワード");
+        suggester.indexer().indexFromQueryString(field + ":検索 AND " + field + ":ワード");
         suggester.refresh();
 
         SuggestResponse responseMulti = suggester.suggest().setQuery("けんさく わーど").setSuggestDetail(true).execute();
@@ -88,7 +88,7 @@ public class SuggesterTest extends TestCase {
         assertEquals("検索 ワード", responseMulti.getWords().get(0));
     }
 
-    public void test_indexByQueryLog() throws Exception {
+    public void test_indexFromQueryLog() throws Exception {
         String field = suggester.getSettings().supportedFields[0];
 
         QueryLogReader reader = new QueryLogReader() {
@@ -104,7 +104,7 @@ public class SuggesterTest extends TestCase {
             }
         };
 
-        SuggestIndexer.IndexingStatus status = suggester.indexer().indexByQueryLog(reader);
+        SuggestIndexer.IndexingStatus status = suggester.indexer().indexFromQueryLog(reader);
         while (!status.isDone()) {
             Thread.sleep(1000);
         }

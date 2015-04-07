@@ -67,11 +67,11 @@ public class SuggestIndexer {
         return client.admin().indices().prepareRefresh(index).execute().actionGet();
     }
 
-    public BulkResponse indexByQueryString(final String queryString) {
-        return indexByQueryString(new String[] { queryString });
+    public BulkResponse indexFromQueryString(final String queryString) {
+        return indexFromQueryString(new String[]{queryString});
     }
 
-    public BulkResponse indexByQueryString(final String[] queryStrings) {
+    public BulkResponse indexFromQueryString(final String[] queryStrings) {
         List<SuggestItem> items = new ArrayList<>();
         for (final String queryString : queryStrings) {
             items.addAll(queryStringToSuggestItem(queryString));
@@ -105,7 +105,7 @@ public class SuggestIndexer {
         return items;
     }
 
-    public IndexingStatus indexByDocument(final DocumentReader documentReader) {
+    public IndexingStatus indexFromDocument(final DocumentReader documentReader) {
         final IndexingStatus indexingStatus = new IndexingStatus();
         indexingStatus.running.set(true);
         indexingStatus.done.set(false);
@@ -125,7 +125,7 @@ public class SuggestIndexer {
         return indexingStatus;
     }
 
-    public IndexingStatus indexByQueryLog(final QueryLogReader queryLogReader) {
+    public IndexingStatus indexFromQueryLog(final QueryLogReader queryLogReader) {
         final IndexingStatus indexingStatus = new IndexingStatus();
         indexingStatus.running.set(true);
         indexingStatus.done.set(false);
@@ -140,7 +140,7 @@ public class SuggestIndexer {
                     queryStrings.add(queryString);
                     queryString = queryLogReader.read();
                     if (queryString == null || queryStrings.size() >= maxNum) {
-                        indexByQueryString(queryStrings.toArray(new String[queryStrings.size()]));
+                        indexFromQueryString(queryStrings.toArray(new String[queryStrings.size()]));
                         queryStrings.clear();
                     }
                 }
