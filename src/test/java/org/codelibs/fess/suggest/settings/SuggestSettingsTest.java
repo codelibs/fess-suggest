@@ -46,7 +46,19 @@ public class SuggestSettingsTest extends TestCase {
         settings.set(SuggestSettings.DefaultKeys.INDEX, indexName);
 
         SuggestSettings newSettingsInstance = SuggestSettings.builder().build(runner.client(), id);
+        newSettingsInstance.init();
         assertEquals(indexName, newSettingsInstance.getAsString(SuggestSettings.DefaultKeys.INDEX, ""));
+    }
+
+    public void test_useOwnSettings() {
+        String indexName = "test";
+        settings.set(SuggestSettings.DefaultKeys.INDEX, indexName);
+
+        SuggestSettings anotherSettingsInstance = SuggestSettings.builder().build(runner.client(), id + "-2");
+        anotherSettingsInstance.init();
+        assertNotSame(indexName, anotherSettingsInstance.getAsString(SuggestSettings.DefaultKeys.INDEX, ""));
+        assertEquals("settings-test-2-suggest",
+            anotherSettingsInstance.getAsString(SuggestSettings.DefaultKeys.INDEX, ""));
     }
 
     public void test_setAndGetAsInt() {

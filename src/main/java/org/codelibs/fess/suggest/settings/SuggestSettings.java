@@ -78,6 +78,9 @@ public class SuggestSettings {
             .setId(id)
             .execute()
             .actionGet();
+        if(!getResponse.isExists()) {
+            return null;
+        }
         Map<String, Object> map = getResponse.getSource();
         return map.get(key);
     }
