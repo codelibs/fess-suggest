@@ -6,6 +6,8 @@ import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.fess.suggest.index.SuggestIndexer;
 import org.codelibs.fess.suggest.index.querylog.QueryLogReader;
 import org.codelibs.fess.suggest.request.suggest.SuggestResponse;
+import org.codelibs.fess.suggest.settings.SuggestSettings;
+import org.elasticsearch.action.bulk.BulkResponse;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -27,7 +29,7 @@ public class SuggesterTest extends TestCase {
         }).build(newConfigs().ramIndexStore().numOfNode(1));
         runner.ensureYellow();
 
-        suggester = new Suggester(runner.client());
+        suggester = Suggester.builder().build(runner.client(), "SuggesterTest");
     }
 
     @Override
@@ -38,7 +40,9 @@ public class SuggesterTest extends TestCase {
 
     public void test_indexAndSuggest() throws Exception {
         SuggestItem[] items = getItemSet1();
-        suggester.indexer().index(items);
+        BulkResponse responses = suggester.indexer().index(items);
+        System.out.println(responses);
+
         suggester.refresh();
 
         SuggestResponse response = suggester.suggest().setQuery("kensaku").setSuggestDetail(true).execute();
@@ -58,7 +62,7 @@ public class SuggesterTest extends TestCase {
 
     public void test_indexFromQueryString() throws Exception {
         SuggestSettings settings = suggester.getSettings();
-        String field = settings.supportedFields[0];
+        String field = settings.getAsArray(SuggestSettings.DefaultKeys.SUPPORTED_FIELDS)[0];
 
         suggester.indexer().indexFromQueryString(field + ":検索");
         suggester.refresh();
@@ -89,9 +93,10 @@ public class SuggesterTest extends TestCase {
     }
 
     public void test_indexFromQueryLog() throws Exception {
-        String field = suggester.getSettings().supportedFields[0];
+        SuggestSettings settings = suggester.getSettings();
+        String field = settings.getAsArray(SuggestSettings.DefaultKeys.SUPPORTED_FIELDS)[0];
 
-        QueryLogReader reader = new QueryLogReader() {
+        final QueryLogReader reader = new QueryLogReader() {
             AtomicInteger count = new AtomicInteger();
             String[] queryLogs = new String[] { field + ":検索", field + ":fess", field + ":検索エンジン" };
 

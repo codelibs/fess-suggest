@@ -5,7 +5,7 @@ import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.converter.ReadingConverter;
 import org.codelibs.fess.suggest.entity.SuggestItem;
-import org.codelibs.fess.suggest.exception.SuggestorException;
+import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.request.Request;
 import org.elasticsearch.action.search.SearchRequestBuilder;
@@ -84,7 +84,7 @@ public class SuggestRequest extends Request<SuggestResponse> {
     }
 
     @Override
-    protected SuggestResponse processRequest(Client client) throws SuggestorException {
+    protected SuggestResponse processRequest(Client client) throws SuggesterException {
         SearchRequestBuilder builder = client.prepareSearch(index);
         if (StringUtils.isNotBlank(type)) {
             builder.setTypes(type);
@@ -120,7 +120,7 @@ public class SuggestRequest extends Request<SuggestResponse> {
 
         SearchResponse searchResponse = builder.execute().actionGet();
         if (searchResponse.getFailedShards() > 0) {
-            throw new SuggestorException("Search failure. Failed shards num:" + searchResponse.getFailedShards());
+            throw new SuggesterException("Search failure. Failed shards num:" + searchResponse.getFailedShards());
         }
         return createResponse(searchResponse);
     }
@@ -141,7 +141,7 @@ public class SuggestRequest extends Request<SuggestResponse> {
                 final String fieldName = FieldNames.READING_PREFIX + i;
 
                 final String query;
-                if (normalizer != null) {
+                if (normalizer == null) {
                     query = queries[i];
                 } else {
                     query = normalizer.normalize(queries[i]);

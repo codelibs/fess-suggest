@@ -1,6 +1,6 @@
 package org.codelibs.fess.suggest.request;
 
-import org.codelibs.fess.suggest.exception.SuggestorException;
+import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.elasticsearch.client.Client;
 
 public abstract class RequestBuilder<Req extends Request<Res>, Res extends Response> {
@@ -12,7 +12,7 @@ public abstract class RequestBuilder<Req extends Request<Res>, Res extends Respo
         this.request = request;
     }
 
-    public Res execute() throws SuggestorException {
+    public Res execute() throws SuggesterException {
         return request.execute(client);
     }
 }

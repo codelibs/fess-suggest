@@ -1,13 +1,10 @@
 package org.codelibs.fess.suggest;
 
-import org.codelibs.fess.suggest.converter.KatakanaConverter;
-import org.codelibs.fess.suggest.converter.KatakanaToAlphabetConverter;
 import org.codelibs.fess.suggest.converter.ReadingConverter;
-import org.codelibs.fess.suggest.converter.ReadingConverterChain;
 import org.codelibs.fess.suggest.index.SuggestIndexer;
 import org.codelibs.fess.suggest.normalizer.Normalizer;
-import org.codelibs.fess.suggest.normalizer.NormalizerChain;
 import org.codelibs.fess.suggest.request.suggest.SuggestRequestBuilder;
+import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
 import org.elasticsearch.client.Client;
 
@@ -18,28 +15,22 @@ public class Suggester {
     protected final ReadingConverter readingConverter;
     protected final Normalizer normalizer;
 
-    public Suggester(Client client) {
-        this(client, SuggestSettings.defaultSettings());
-    }
-
-    public Suggester(Client client, SuggestSettings settings) {
-        this(client, settings, createDefaultReadingConverter(), createDefaultNormalizer());
-    }
+    protected final String index;
+    protected final String type;
 
     public Suggester(final Client client, final SuggestSettings settings, final ReadingConverter readingConverter,
-            final Normalizer normalizer) {
+                     final Normalizer normalizer, final SuggestIndexer indexer) {
         this.client = client;
         this.settings = settings;
         this.readingConverter = readingConverter;
         this.normalizer = normalizer;
-
-        this.indexer =
-                new SuggestIndexer(client, settings.index, settings.type, settings.supportedFields, settings.tagFieldName,
-                        settings.roleFieldName, this.readingConverter, this.normalizer);
+        this.index = settings.getAsString(SuggestSettings.DefaultKeys.INDEX, "");
+        this.type = settings.getAsString(SuggestSettings.DefaultKeys.TYPE, "");
+        this.indexer = indexer;
     }
 
     public SuggestRequestBuilder suggest() {
-        return new SuggestRequestBuilder(client, readingConverter, normalizer).setIndex(settings.index).setType(settings.type);
+        return new SuggestRequestBuilder(client, readingConverter, normalizer).setIndex(index).setType(type);
     }
 
     public RefreshResponse refresh() {
@@ -50,16 +41,8 @@ public class Suggester {
         return indexer;
     }
 
-    protected static ReadingConverter createDefaultReadingConverter() {
-        ReadingConverterChain chain = new ReadingConverterChain();
-        chain.addConverter(new KatakanaConverter());
-        chain.addConverter(new KatakanaToAlphabetConverter());
-        return chain;
-    }
-
-    protected static Normalizer createDefaultNormalizer() {
-        //TODO
-        return new NormalizerChain();
+    public static SuggesterBuilder builder() {
+        return new SuggesterBuilder();
     }
 
     //getter
