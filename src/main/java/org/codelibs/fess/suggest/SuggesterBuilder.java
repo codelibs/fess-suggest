@@ -47,10 +47,9 @@ public class SuggesterBuilder {
     }
 
     public Suggester build(final Client client, final String id) {
-        if(settings == null) {
+        if (settings == null) {
             if (settingsBuilder == null) {
-                settingsBuilder = SuggestSettings
-                    .builder();
+                settingsBuilder = SuggestSettings.builder();
             }
             settings = settingsBuilder.build(client, id);
         }
@@ -64,7 +63,6 @@ public class SuggesterBuilder {
             normalizer = createDefaultNormalizer();
         }
 
-
         String index = settings.getAsString(SuggestSettings.DefaultKeys.INDEX, "");
         String type = settings.getAsString(SuggestSettings.DefaultKeys.TYPE, "");
         String[] supportedFields = settings.getAsArray(SuggestSettings.DefaultKeys.SUPPORTED_FIELDS);
@@ -72,8 +70,9 @@ public class SuggesterBuilder {
         String roleFieldName = settings.getAsString(SuggestSettings.DefaultKeys.ROLE_FIELD_NAME, "");
 
         if (indexer == null) {
-            indexer = createDefaultIndexer(client, index, type, supportedFields,
-                tagFieldName, roleFieldName, settings, readingConverter, normalizer);
+            indexer =
+                    createDefaultIndexer(client, index, type, supportedFields, tagFieldName, roleFieldName, settings, readingConverter,
+                            normalizer);
         }
 
         return new Suggester(client, settings, readingConverter, normalizer, indexer);
@@ -92,13 +91,10 @@ public class SuggesterBuilder {
     }
 
     protected SuggestIndexer createDefaultIndexer(final Client client, final String index, final String type,
-                                                  final String[] supportedFields, final String tagFieldName,
-                                                  final String roleFieldName, final SuggestSettings settings,
-                                                  final ReadingConverter readingConverter, final Normalizer normalizer) {
-        return new SuggestIndexer(client, index, type, supportedFields, tagFieldName,
-            roleFieldName, readingConverter, normalizer, settings);
+            final String[] supportedFields, final String tagFieldName, final String roleFieldName, final SuggestSettings settings,
+            final ReadingConverter readingConverter, final Normalizer normalizer) {
+        return new SuggestIndexer(client, index, type, supportedFields, tagFieldName, roleFieldName, readingConverter, normalizer, settings);
 
     }
-
 
 }

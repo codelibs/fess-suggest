@@ -31,12 +31,6 @@ public class SuggestSettingsBuilder {
     }
 
     public SuggestSettings build(final Client client, final String id) {
-        return new SuggestSettings(
-            client,
-            id,
-            initialSettings,
-            settingsIndexName,
-            settingsTypeName
-        );
+        return new SuggestSettings(client, id, initialSettings, settingsIndexName, settingsTypeName);
     }
 }

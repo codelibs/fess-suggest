@@ -31,8 +31,8 @@ public class SuggestIndexer {
     protected final Normalizer normalizer;
 
     public SuggestIndexer(final Client client, final String index, final String type, final String[] supportedField,
-                          final String tagFieldName, final String roleFieldName, final ReadingConverter readingConverter,
-                          final Normalizer normalizer, final SuggestSettings settings) {
+            final String tagFieldName, final String roleFieldName, final ReadingConverter readingConverter, final Normalizer normalizer,
+            final SuggestSettings settings) {
         this.client = client;
         this.index = index;
         this.type = type;
@@ -45,7 +45,7 @@ public class SuggestIndexer {
     }
 
     public BulkResponse index(final SuggestItem item) {
-        return index(new SuggestItem[]{item});
+        return index(new SuggestItem[] { item });
     }
 
     public BulkResponse index(final SuggestItem[] items) {
@@ -72,7 +72,7 @@ public class SuggestIndexer {
     }
 
     public BulkResponse indexFromQueryString(final String queryString) {
-        return indexFromQueryString(new String[]{queryString});
+        return indexFromQueryString(new String[] { queryString });
     }
 
     public BulkResponse indexFromQueryString(final String[] queryStrings) {
@@ -102,8 +102,8 @@ public class SuggestIndexer {
             }
 
             items.add(new SuggestItem(words, readings, 1L, null, //TODO label
-                null, //TODO role
-                SuggestItem.Kind.QUERY));
+                    null, //TODO role
+                    SuggestItem.Kind.QUERY));
         }
 
         return items;
@@ -138,20 +138,20 @@ public class SuggestIndexer {
         Thread th = new Thread(() -> {
             int maxNum = 1000; //TODO
 
-            List<String> queryStrings = new ArrayList<>(maxNum);
-            String queryString = queryLogReader.read();
-            while (queryString != null) {
-                queryStrings.add(queryString);
-                queryString = queryLogReader.read();
-                if (queryString == null || queryStrings.size() >= maxNum) {
-                    indexFromQueryString(queryStrings.toArray(new String[queryStrings.size()]));
-                    queryStrings.clear();
+                List<String> queryStrings = new ArrayList<>(maxNum);
+                String queryString = queryLogReader.read();
+                while (queryString != null) {
+                    queryStrings.add(queryString);
+                    queryString = queryLogReader.read();
+                    if (queryString == null || queryStrings.size() >= maxNum) {
+                        indexFromQueryString(queryStrings.toArray(new String[queryStrings.size()]));
+                        queryStrings.clear();
+                    }
                 }
-            }
 
-            indexingStatus.running.set(false);
-            indexingStatus.done.set(true);
-        });
+                indexingStatus.running.set(false);
+                indexingStatus.done.set(true);
+            });
 
         th.start();
         return indexingStatus;

@@ -19,7 +19,7 @@ public class Suggester {
     protected final String type;
 
     public Suggester(final Client client, final SuggestSettings settings, final ReadingConverter readingConverter,
-                     final Normalizer normalizer, final SuggestIndexer indexer) {
+            final Normalizer normalizer, final SuggestIndexer indexer) {
         this.client = client;
         this.settings = settings;
         this.readingConverter = readingConverter;

@@ -57,8 +57,7 @@ public class SuggestSettingsTest extends TestCase {
         SuggestSettings anotherSettingsInstance = SuggestSettings.builder().build(runner.client(), id + "-2");
         anotherSettingsInstance.init();
         assertNotSame(indexName, anotherSettingsInstance.getAsString(SuggestSettings.DefaultKeys.INDEX, ""));
-        assertEquals("settings-test-2-suggest",
-            anotherSettingsInstance.getAsString(SuggestSettings.DefaultKeys.INDEX, ""));
+        assertEquals("settings-test-2-suggest", anotherSettingsInstance.getAsString(SuggestSettings.DefaultKeys.INDEX, ""));
     }
 
     public void test_setAndGetAsInt() {
@@ -93,7 +92,7 @@ public class SuggestSettingsTest extends TestCase {
         String value1 = "a";
         String value2 = "b";
         String value3 = "c";
-        String[] value = new String[]{value1, value2, value3};
+        String[] value = new String[] { value1, value2, value3 };
         settings.set(key, value);
         assertEquals(value[0], settings.getAsArray(key)[0]);
         assertEquals(value[1], settings.getAsArray(key)[1]);

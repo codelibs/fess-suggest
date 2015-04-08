@@ -53,14 +53,10 @@ public class SuggesterBuilderTest extends TestCase {
 
         final Normalizer normalizer = (text) -> null;
 
-        final Suggester suggester = Suggester.builder()
-            .settings(
-                SuggestSettings.builder()
-                    .setSettingsIndexName(settingsIndexName)
-                    .setSettingsTypeName(settingsTypeName))
-            .readingConverter(converter)
-            .normalizer(normalizer)
-            .build(runner.client(), id);
+        final Suggester suggester =
+                Suggester.builder()
+                        .settings(SuggestSettings.builder().setSettingsIndexName(settingsIndexName).setSettingsTypeName(settingsTypeName))
+                        .readingConverter(converter).normalizer(normalizer).build(runner.client(), id);
 
         assertEquals(runner.client(), suggester.client);
 
