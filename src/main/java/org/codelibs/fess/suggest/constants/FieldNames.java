@@ -13,6 +13,9 @@ public class FieldNames {
     public static final String TAGS = "tags";
     public static final String ROLES = "roles";
 
+    public static final String ARRAY_KEY = "key";
+    public static final String ARRAY_VALUE = "value";
+
     private FieldNames() {
     }
 }

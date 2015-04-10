@@ -39,7 +39,7 @@ public class SuggesterBuilderTest extends TestCase {
         assertNotNull(suggester.getIndexer());
         assertNotNull(suggester.getNormalizer());
         assertNotNull(suggester.getReadingConverter());
-        assertNotNull(suggester.getSettings());
+        assertNotNull(suggester.settings());
         assertTrue(StringUtils.isNotBlank(suggester.index));
         assertTrue(StringUtils.isNotBlank(suggester.type));
     }
@@ -60,10 +60,10 @@ public class SuggesterBuilderTest extends TestCase {
 
         assertEquals(runner.client(), suggester.client);
 
-        SuggestSettings settings = suggester.getSettings();
+        SuggestSettings settings = suggester.settings();
         assertEquals(settingsIndexName, settings.getSettingsIndexName());
         assertEquals(settingsTypeName, settings.getSettingsTypeName());
-        assertEquals(id, settings.getId());
+        assertEquals(id, settings.getSettingsId());
 
         assertEquals(converter, suggester.getReadingConverter());
         assertEquals(normalizer, suggester.getNormalizer());

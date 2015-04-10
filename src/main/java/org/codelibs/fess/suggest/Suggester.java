@@ -46,7 +46,7 @@ public class Suggester {
     }
 
     //getter
-    public SuggestSettings getSettings() {
+    public SuggestSettings settings() {
         return settings;
     }
 

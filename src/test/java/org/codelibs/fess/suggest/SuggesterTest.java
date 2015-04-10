@@ -61,8 +61,8 @@ public class SuggesterTest extends TestCase {
     }
 
     public void test_indexFromQueryString() throws Exception {
-        SuggestSettings settings = suggester.getSettings();
-        String field = settings.getAsArray(SuggestSettings.DefaultKeys.SUPPORTED_FIELDS)[0];
+        SuggestSettings settings = suggester.settings();
+        String field = settings.array().get(SuggestSettings.DefaultKeys.SUPPORTED_FIELDS)[0];
 
         suggester.indexer().indexFromQueryString(field + ":検索");
         suggester.refresh();
@@ -93,8 +93,8 @@ public class SuggesterTest extends TestCase {
     }
 
     public void test_indexFromQueryLog() throws Exception {
-        SuggestSettings settings = suggester.getSettings();
-        String field = settings.getAsArray(SuggestSettings.DefaultKeys.SUPPORTED_FIELDS)[0];
+        SuggestSettings settings = suggester.settings();
+        String field = settings.array().get(SuggestSettings.DefaultKeys.SUPPORTED_FIELDS)[0];
 
         final QueryLogReader reader = new QueryLogReader() {
             AtomicInteger count = new AtomicInteger();

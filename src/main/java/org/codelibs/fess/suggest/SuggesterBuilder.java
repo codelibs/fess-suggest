@@ -65,7 +65,7 @@ public class SuggesterBuilder {
 
         String index = settings.getAsString(SuggestSettings.DefaultKeys.INDEX, "");
         String type = settings.getAsString(SuggestSettings.DefaultKeys.TYPE, "");
-        String[] supportedFields = settings.getAsArray(SuggestSettings.DefaultKeys.SUPPORTED_FIELDS);
+        String[] supportedFields = settings.array().get(SuggestSettings.DefaultKeys.SUPPORTED_FIELDS);
         String tagFieldName = settings.getAsString(SuggestSettings.DefaultKeys.TAG_FIELD_NAME, "");
         String roleFieldName = settings.getAsString(SuggestSettings.DefaultKeys.ROLE_FIELD_NAME, "");
 
