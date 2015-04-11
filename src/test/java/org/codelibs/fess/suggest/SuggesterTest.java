@@ -4,10 +4,9 @@ import junit.framework.TestCase;
 import org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner;
 import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.fess.suggest.index.SuggestIndexer;
-import org.codelibs.fess.suggest.index.querylog.QueryLogReader;
+import org.codelibs.fess.suggest.index.contents.querylog.QueryLogReader;
 import org.codelibs.fess.suggest.request.suggest.SuggestResponse;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
-import org.elasticsearch.action.bulk.BulkResponse;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -40,9 +39,7 @@ public class SuggesterTest extends TestCase {
 
     public void test_indexAndSuggest() throws Exception {
         SuggestItem[] items = getItemSet1();
-        BulkResponse responses = suggester.indexer().index(items);
-        System.out.println(responses);
-
+        suggester.indexer().index(items);
         suggester.refresh();
 
         SuggestResponse response = suggester.suggest().setQuery("kensaku").setSuggestDetail(true).execute();

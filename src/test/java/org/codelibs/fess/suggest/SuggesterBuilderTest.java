@@ -36,7 +36,7 @@ public class SuggesterBuilderTest extends TestCase {
 
         assertNotNull(suggester);
         assertNotNull(suggester.client);
-        assertNotNull(suggester.getIndexer());
+        assertNotNull(suggester.indexer());
         assertNotNull(suggester.getNormalizer());
         assertNotNull(suggester.getReadingConverter());
         assertNotNull(suggester.settings());

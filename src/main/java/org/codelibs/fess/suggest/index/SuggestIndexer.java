@@ -1,38 +1,41 @@
 package org.codelibs.fess.suggest.index;
 
+import org.apache.lucene.analysis.Analyzer;
 import org.codelibs.fess.suggest.converter.ReadingConverter;
 import org.codelibs.fess.suggest.entity.SuggestItem;
-import org.codelibs.fess.suggest.index.document.DocumentReader;
-import org.codelibs.fess.suggest.index.querylog.QueryLogReader;
+import org.codelibs.fess.suggest.index.contents.ContentsParser;
+import org.codelibs.fess.suggest.index.contents.DefaultContentsParser;
+import org.codelibs.fess.suggest.index.contents.document.DocumentReader;
+import org.codelibs.fess.suggest.index.contents.querylog.QueryLogReader;
+import org.codelibs.fess.suggest.index.writer.SuggestIndexWriter;
+import org.codelibs.fess.suggest.index.writer.SuggestWriter;
 import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
-import org.codelibs.fess.suggest.util.SuggestUtil;
-import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
-import org.elasticsearch.action.bulk.BulkRequestBuilder;
-import org.elasticsearch.action.bulk.BulkResponse;
-import org.elasticsearch.action.update.UpdateRequestBuilder;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.script.ScriptService;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SuggestIndexer {
     protected final Client client;
-    protected final String index;
-    protected final String type;
-    protected final SuggestSettings settings;
+    protected String index;
+    protected String type;
+    protected SuggestSettings settings;
 
-    protected final String[] supportedFields;
-    protected final String tagFieldName;
-    protected final String roleFieldName;
+    protected String[] supportedFields;
+    protected String tagFieldName;
+    protected String roleFieldName;
 
-    protected final ReadingConverter readingConverter;
-    protected final Normalizer normalizer;
+    protected ReadingConverter readingConverter;
+    protected Normalizer normalizer;
+    protected Analyzer analyzer;
+
+    protected ContentsParser contentsParser;
+    protected SuggestWriter suggestWriter;
 
     public SuggestIndexer(final Client client, final String index, final String type, final String[] supportedField,
             final String tagFieldName, final String roleFieldName, final ReadingConverter readingConverter, final Normalizer normalizer,
-            final SuggestSettings settings) {
+            final Analyzer analyzer, final SuggestSettings settings) {
         this.client = client;
         this.index = index;
         this.type = type;
@@ -41,72 +44,33 @@ public class SuggestIndexer {
         this.roleFieldName = roleFieldName;
         this.readingConverter = readingConverter;
         this.normalizer = normalizer;
+        this.analyzer = analyzer;
         this.settings = settings;
+
+        this.contentsParser = new DefaultContentsParser();
+        this.suggestWriter = new SuggestIndexWriter();
     }
 
-    public BulkResponse index(final SuggestItem item) {
-        return index(new SuggestItem[] { item });
+    //TODO return result
+    public void index(final SuggestItem item) {
+        index(new SuggestItem[] { item });
     }
 
-    public BulkResponse index(final SuggestItem[] items) {
-        Set<String> upsertedIdSet = new HashSet<>();
-        BulkRequestBuilder bulkRequestBuilder = client.prepareBulk();
-        for (SuggestItem item : items) {
-            final UpdateRequestBuilder updateRequestBuilder = new UpdateRequestBuilder(client, index, type, item.getId());
-            updateRequestBuilder.setScript(item.getScript(), ScriptService.ScriptType.INLINE);
-            updateRequestBuilder.setScriptParams(item.getScriptParams());
-            String itemId = item.getId();
-            if (!upsertedIdSet.contains(itemId)) {
-                updateRequestBuilder.setScriptedUpsert(true);
-                updateRequestBuilder.setUpsert(item.toEmptyMap());
-                upsertedIdSet.add(itemId);
-            }
-            bulkRequestBuilder.add(updateRequestBuilder);
+    //TODO return result
+    public void index(final SuggestItem[] items) {
+        suggestWriter.write(client, settings, index, type, items);
+    }
+
+    public void indexFromQueryString(final String queryString) {
+        indexFromQueryString(new String[] { queryString });
+    }
+
+    public void indexFromQueryString(final String[] queryStrings) {
+        final List<SuggestItem> items = new ArrayList<>(queryStrings.length * supportedFields.length);
+        for (String queryString : queryStrings) {
+            items.addAll(contentsParser.parseQueryString(queryString, supportedFields, readingConverter, normalizer));
         }
-
-        return bulkRequestBuilder.execute().actionGet();
-    }
-
-    public RefreshResponse refresh() {
-        return client.admin().indices().prepareRefresh(index).execute().actionGet();
-    }
-
-    public BulkResponse indexFromQueryString(final String queryString) {
-        return indexFromQueryString(new String[] { queryString });
-    }
-
-    public BulkResponse indexFromQueryString(final String[] queryStrings) {
-        List<SuggestItem> items = new ArrayList<>();
-        for (final String queryString : queryStrings) {
-            items.addAll(queryStringToSuggestItem(queryString));
-        }
-        return index(items.toArray(new SuggestItem[items.size()]));
-    }
-
-    protected List<SuggestItem> queryStringToSuggestItem(final String queryString) {
-        final List<SuggestItem> items = new ArrayList<>();
-
-        //TODO support query dsl.
-
-        for (String field : supportedFields) {
-            final String[] words = SuggestUtil.parseQuery(queryString, field);
-            if (words.length == 0) {
-                continue;
-            }
-
-            String[][] readings = new String[words.length][];
-            for (int i = 0; i < words.length; i++) {
-                words[i] = normalizer.normalize(words[i]);
-                List<String> l = readingConverter.convert(words[i]);
-                readings[i] = l.toArray(new String[l.size()]);
-            }
-
-            items.add(new SuggestItem(words, readings, 1L, null, //TODO label
-                    null, //TODO role
-                    SuggestItem.Kind.QUERY));
-        }
-
-        return items;
+        index(items.toArray(new SuggestItem[items.size()]));
     }
 
     public IndexingStatus indexFromDocument(final DocumentReader documentReader) {
@@ -136,25 +100,75 @@ public class SuggestIndexer {
 
         //TODO thread pool
         Thread th = new Thread(() -> {
-            int maxNum = 1000; //TODO
+            int maxNum = 1000;
 
-                List<String> queryStrings = new ArrayList<>(maxNum);
-                String queryString = queryLogReader.read();
-                while (queryString != null) {
-                    queryStrings.add(queryString);
-                    queryString = queryLogReader.read();
-                    if (queryString == null || queryStrings.size() >= maxNum) {
-                        indexFromQueryString(queryStrings.toArray(new String[queryStrings.size()]));
-                        queryStrings.clear();
-                    }
+            List<String> queryStrings = new ArrayList<>(maxNum);
+            String queryString = queryLogReader.read();
+            while (queryString != null) {
+                queryStrings.add(queryString);
+                queryString = queryLogReader.read();
+                if (queryString == null || queryStrings.size() >= maxNum) {
+                    indexFromQueryString(queryStrings.toArray(new String[queryStrings.size()]));
+                    queryStrings.clear();
                 }
+            }
 
-                indexingStatus.running.set(false);
-                indexingStatus.done.set(true);
-            });
+            indexingStatus.running.set(false);
+            indexingStatus.done.set(true);
+        });
 
         th.start();
         return indexingStatus;
+    }
+
+    public SuggestIndexer index(String index) {
+        this.index = index;
+        return this;
+    }
+
+    public SuggestIndexer type(String type) {
+        this.type = type;
+        return this;
+    }
+
+    public SuggestIndexer supportedFields(String[] supportedFields) {
+        this.supportedFields = supportedFields;
+        return this;
+    }
+
+    public SuggestIndexer tagFieldName(String tagFieldName) {
+        this.tagFieldName = tagFieldName;
+        return this;
+    }
+
+    public SuggestIndexer roleFieldName(String roleFieldName) {
+        this.roleFieldName = roleFieldName;
+        return this;
+    }
+
+    public SuggestIndexer readingConverter(ReadingConverter readingConverter) {
+        this.readingConverter = readingConverter;
+        return this;
+    }
+
+    public SuggestIndexer normalizer(Normalizer normalizer) {
+        this.normalizer = normalizer;
+        return this;
+    }
+
+    public SuggestIndexer analyzer(Analyzer analyzer) {
+        this.analyzer = analyzer;
+        return this;
+    }
+
+    public SuggestIndexer contentsParser(ContentsParser contentsParser) {
+        this.contentsParser = contentsParser;
+        return this;
+    }
+
+    public SuggestIndexer suggestWriter(SuggestWriter suggestWriter) {
+        this.suggestWriter = suggestWriter;
+        return this;
     }
 
     public class IndexingStatus {
