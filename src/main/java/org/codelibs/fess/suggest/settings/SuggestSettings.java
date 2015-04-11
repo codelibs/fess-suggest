@@ -185,6 +185,10 @@ public class SuggestSettings {
         return new NgWordSettings(client, settingsIndexName, settingsId);
     }
 
+    public ElevateWordSettings elevateWord() {
+        return new ElevateWordSettings(client, settingsIndexName, settingsId);
+    }
+
     public String getSettingsIndexName() {
         return settingsIndexName;
     }
