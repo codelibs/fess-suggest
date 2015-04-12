@@ -210,16 +210,21 @@ public class SuggestRequest extends Request<SuggestResponse> {
                 List<String> roles = (List) source.get(FieldNames.ROLES);
                 List<String> kinds = (List) source.get(FieldNames.KINDS);
                 SuggestItem.Kind kind;
+                long freq;
                 if (SuggestItem.Kind.USER.toString().equals(kinds.get(0))) {
                     kind = SuggestItem.Kind.USER;
+                    freq = 0;
                 } else if (SuggestItem.Kind.QUERY.toString().equals(kinds.get(0))) {
                     kind = SuggestItem.Kind.QUERY;
+                    freq = Long.valueOf(source.get(FieldNames.QUERY_FREQ).toString());
                 } else {
                     kind = SuggestItem.Kind.DOCUMENT;
+                    freq = Long.valueOf(source.get(FieldNames.DOC_FREQ).toString());
                 }
 
-                items.add(new SuggestItem(text.split(" "), readings.toArray(new String[readings.size()][]), Long.valueOf(source.get(
-                        FieldNames.SCORE).toString()), tags.toArray(new String[tags.size()]), roles.toArray(new String[tags.size()]), kind));
+                items.add(new SuggestItem(text.split(" "), readings.toArray(new String[readings.size()][]), freq, Float.valueOf(source.get(
+                        FieldNames.USER_BOOST).toString()), tags.toArray(new String[tags.size()]), roles.toArray(new String[tags.size()]),
+                        kind));
             }
         }
 

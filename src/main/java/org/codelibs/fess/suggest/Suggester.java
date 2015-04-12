@@ -22,6 +22,7 @@ public class Suggester {
     protected final String[] supportedFields;
     protected final String tagFieldName;
     protected final String roleFieldName;
+    protected final String[] ngWords;
 
     public Suggester(final Client client, final SuggestSettings settings, final ReadingConverter readingConverter,
             final Normalizer normalizer, final Analyzer analyzer) {
@@ -34,6 +35,7 @@ public class Suggester {
         this.type = settings.getAsString(SuggestSettings.DefaultKeys.TYPE, "");
 
         this.supportedFields = settings.array().get(SuggestSettings.DefaultKeys.SUPPORTED_FIELDS);
+        this.ngWords = settings.ngword().get();
         tagFieldName = settings.getAsString(SuggestSettings.DefaultKeys.TAG_FIELD_NAME, "");
         roleFieldName = settings.getAsString(SuggestSettings.DefaultKeys.ROLE_FIELD_NAME, "");
     }
@@ -47,8 +49,7 @@ public class Suggester {
     }
 
     public SuggestIndexer indexer() {
-        return createDefaultIndexer(client, index, type, supportedFields, tagFieldName, roleFieldName, settings, readingConverter,
-                normalizer, analyzer);
+        return createDefaultIndexer();
     }
 
     public static SuggesterBuilder builder() {
@@ -68,10 +69,8 @@ public class Suggester {
         return normalizer;
     }
 
-    protected SuggestIndexer createDefaultIndexer(final Client client, final String index, final String type,
-            final String[] supportedFields, final String tagFieldName, final String roleFieldName, final SuggestSettings settings,
-            final ReadingConverter readingConverter, final Normalizer normalizer, final Analyzer analyzer) {
-        return new SuggestIndexer(client, index, type, supportedFields, tagFieldName, roleFieldName, readingConverter, normalizer,
+    protected SuggestIndexer createDefaultIndexer() {
+        return new SuggestIndexer(client, index, type, supportedFields, ngWords, tagFieldName, roleFieldName, readingConverter, normalizer,
                 analyzer, settings);
     }
 

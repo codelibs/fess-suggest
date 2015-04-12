@@ -4,10 +4,11 @@ import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.elasticsearch.common.Nullable;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
-public class SuggestItem {
+public class SuggestItem implements Serializable {
     public enum Kind {
         DOCUMENT("document"), QUERY("query"), USER("user");
 
@@ -29,7 +30,7 @@ public class SuggestItem {
 
     private final long docFreq;
 
-    private final long userBoost;
+    private final float userBoost;
 
     private final String[][] readings;
 
@@ -39,8 +40,8 @@ public class SuggestItem {
 
     private final Kind kind;
 
-    public SuggestItem(final String[] text, final String[][] readings, final long score, @Nullable final String[] tags,
-            @Nullable final String[] roles, final Kind kind) {
+    public SuggestItem(final String[] text, final String[][] readings, final long score, final float userBoost,
+            @Nullable final String[] tags, @Nullable final String[] roles, final Kind kind) {
         this.text = String.join(SuggestConstants.TEXT_SEPARATOR, text);
         this.readings = readings;
         this.tags = tags != null ? tags : new String[] {};
@@ -63,7 +64,7 @@ public class SuggestItem {
         } else if (kind == Kind.USER) {
             this.queryFreq = 0;
             this.docFreq = 1;
-            this.userBoost = score;
+            this.userBoost = userBoost;
         } else {
             this.queryFreq = 0;
             this.docFreq = score;
@@ -73,16 +74,6 @@ public class SuggestItem {
 
     public String getText() {
         return text;
-    }
-
-    public long getScore() {
-        if (kind == Kind.QUERY) {
-            return queryFreq;
-        } else if (kind == Kind.USER) {
-            return userBoost;
-        } else {
-            return docFreq;
-        }
     }
 
     public String[][] getReadings() {
@@ -101,6 +92,18 @@ public class SuggestItem {
         return kind;
     }
 
+    public long getQueryFreq() {
+        return queryFreq;
+    }
+
+    public long getDocFreq() {
+        return docFreq;
+    }
+
+    public float getUserBoost() {
+        return userBoost;
+    }
+
     //TODO 最初に一度つくればいい
     public Map<String, Object> toEmptyMap() {
         Map<String, Object> map = new HashMap<>();
@@ -113,10 +116,10 @@ public class SuggestItem {
         map.put(FieldNames.TAGS, new String[] {});
         map.put(FieldNames.ROLES, new String[] {});
         map.put(FieldNames.KINDS, new String[] {});
-        map.put(FieldNames.SCORE, 0L);
+        map.put(FieldNames.SCORE, 1.0F);
         map.put(FieldNames.QUERY_FREQ, 0L);
         map.put(FieldNames.DOC_FREQ, 0L);
-        map.put(FieldNames.USER_BOOST, 1L);
+        map.put(FieldNames.USER_BOOST, 1.0F);
         return map;
     }
 
@@ -170,6 +173,15 @@ public class SuggestItem {
         params.put("kind", kind.toString());
 
         return params;
+    }
+
+    public boolean isNgWord(String[] ngWords) {
+        for (String ngWord : ngWords) {
+            if (text.contains(ngWord)) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }

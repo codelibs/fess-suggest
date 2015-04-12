@@ -2,6 +2,7 @@ package org.codelibs.fess.suggest.index;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.codelibs.fess.suggest.converter.ReadingConverter;
+import org.codelibs.fess.suggest.entity.ElevateWord;
 import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.codelibs.fess.suggest.index.contents.ContentsParser;
@@ -26,6 +27,7 @@ public class SuggestIndexer {
     protected String[] supportedFields;
     protected String tagFieldName;
     protected String roleFieldName;
+    protected String[] ngWords;
 
     protected ReadingConverter readingConverter;
     protected Normalizer normalizer;
@@ -35,14 +37,15 @@ public class SuggestIndexer {
     protected SuggestWriter suggestWriter;
 
     public SuggestIndexer(final Client client, final String index, final String type, final String[] supportedField,
-            final String tagFieldName, final String roleFieldName, final ReadingConverter readingConverter, final Normalizer normalizer,
-            final Analyzer analyzer, final SuggestSettings settings) {
+            final String[] ngWords, final String tagFieldName, final String roleFieldName, final ReadingConverter readingConverter,
+            final Normalizer normalizer, final Analyzer analyzer, final SuggestSettings settings) {
         this.client = client;
         this.index = index;
         this.type = type;
         this.supportedFields = supportedField;
         this.tagFieldName = tagFieldName;
         this.roleFieldName = roleFieldName;
+        this.ngWords = ngWords;
         this.readingConverter = readingConverter;
         this.normalizer = normalizer;
         this.analyzer = analyzer;
@@ -59,7 +62,15 @@ public class SuggestIndexer {
 
     //TODO return result
     public void index(final SuggestItem[] items) {
-        suggestWriter.write(client, settings, index, type, items);
+        SuggestItem[] array = new SuggestItem[items.length];
+        int size = 0;
+        for (SuggestItem item : items) {
+            if (!item.isNgWord(ngWords)) {
+                array[size++] = item;
+            }
+        }
+        SuggestItem[] newSizeArray = Arrays.copyOf(array, size);
+        suggestWriter.write(client, settings, index, type, newSizeArray);
     }
 
     public void indexFromQueryString(final String queryString) {
@@ -136,6 +147,12 @@ public class SuggestIndexer {
 
         th.start();
         return indexingStatus;
+    }
+
+    public void indexElevateWord(ElevateWord elevateWord) {
+        settings.elevateWord().add(elevateWord);
+        index(new SuggestItem(new String[] { elevateWord.getElevateWord() }, new String[][] { elevateWord.getReadings().toArray(
+                new String[elevateWord.getReadings().size()]) }, 1, elevateWord.getBoost(), null, null, SuggestItem.Kind.USER));
     }
 
     public SuggestIndexer setIndex(String index) {

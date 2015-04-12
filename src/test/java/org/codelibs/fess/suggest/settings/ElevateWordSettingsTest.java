@@ -2,6 +2,7 @@ package org.codelibs.fess.suggest.settings;
 
 import junit.framework.TestCase;
 import org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner;
+import org.codelibs.fess.suggest.entity.ElevateWord;
 
 import java.util.Collections;
 
@@ -40,42 +41,42 @@ public class ElevateWordSettingsTest extends TestCase {
     }
 
     public void test_setAndGet() {
-        ElevateWordSettings.ElevateWord elevateWord1 = new ElevateWordSettings.ElevateWord("a", 1.0f, Collections.singletonList("a"));
-        ElevateWordSettings.ElevateWord elevateWord2 = new ElevateWordSettings.ElevateWord("b", 0.0f, Collections.singletonList("b"));
-        ElevateWordSettings.ElevateWord elevateWord3 = new ElevateWordSettings.ElevateWord("c", 100.0f, Collections.singletonList("c"));
+        ElevateWord elevateWord1 = new ElevateWord("a", 1.0f, Collections.singletonList("a"));
+        ElevateWord elevateWord2 = new ElevateWord("b", 0.0f, Collections.singletonList("b"));
+        ElevateWord elevateWord3 = new ElevateWord("c", 100.0f, Collections.singletonList("c"));
 
-        settings.elevateWord().add(elevateWord1.elevateWord, elevateWord1.boost, elevateWord1.readings);
-        settings.elevateWord().add(elevateWord2.elevateWord, elevateWord2.boost, elevateWord2.readings);
-        settings.elevateWord().add(elevateWord3.elevateWord, elevateWord3.boost, elevateWord3.readings);
+        settings.elevateWord().add(elevateWord1);
+        settings.elevateWord().add(elevateWord2);
+        settings.elevateWord().add(elevateWord3);
 
         assertEquals(3, settings.elevateWord().get().length);
-        assertEquals(elevateWord1.elevateWord, settings.elevateWord().get()[0].getElevateWord());
-        assertEquals(elevateWord1.boost, settings.elevateWord().get()[0].getBoost());
-        assertEquals(elevateWord1.readings.get(0), settings.elevateWord().get()[0].getReadings().get(0));
+        assertEquals(elevateWord1.getElevateWord(), settings.elevateWord().get()[0].getElevateWord());
+        assertEquals(elevateWord1.getBoost(), settings.elevateWord().get()[0].getBoost());
+        assertEquals(elevateWord1.getReadings().get(0), settings.elevateWord().get()[0].getReadings().get(0));
 
-        assertEquals(elevateWord2.elevateWord, settings.elevateWord().get()[1].getElevateWord());
-        assertEquals(elevateWord2.boost, settings.elevateWord().get()[1].getBoost());
-        assertEquals(elevateWord2.readings.get(0), settings.elevateWord().get()[1].getReadings().get(0));
+        assertEquals(elevateWord2.getElevateWord(), settings.elevateWord().get()[1].getElevateWord());
+        assertEquals(elevateWord2.getBoost(), settings.elevateWord().get()[1].getBoost());
+        assertEquals(elevateWord2.getReadings().get(0), settings.elevateWord().get()[1].getReadings().get(0));
 
-        assertEquals(elevateWord3.elevateWord, settings.elevateWord().get()[2].getElevateWord());
-        assertEquals(elevateWord3.boost, settings.elevateWord().get()[2].getBoost());
-        assertEquals(elevateWord3.readings.get(0), settings.elevateWord().get()[2].getReadings().get(0));
+        assertEquals(elevateWord3.getElevateWord(), settings.elevateWord().get()[2].getElevateWord());
+        assertEquals(elevateWord3.getBoost(), settings.elevateWord().get()[2].getBoost());
+        assertEquals(elevateWord3.getReadings().get(0), settings.elevateWord().get()[2].getReadings().get(0));
     }
 
     public void test_delete() {
-        ElevateWordSettings.ElevateWord elevateWord1 = new ElevateWordSettings.ElevateWord("a", 1.0f, Collections.singletonList("a"));
-        ElevateWordSettings.ElevateWord elevateWord2 = new ElevateWordSettings.ElevateWord("b", 0.0f, Collections.singletonList("b"));
-        ElevateWordSettings.ElevateWord elevateWord3 = new ElevateWordSettings.ElevateWord("c", 100.0f, Collections.singletonList("c"));
+        ElevateWord elevateWord1 = new ElevateWord("a", 1.0f, Collections.singletonList("a"));
+        ElevateWord elevateWord2 = new ElevateWord("b", 0.0f, Collections.singletonList("b"));
+        ElevateWord elevateWord3 = new ElevateWord("c", 100.0f, Collections.singletonList("c"));
 
-        settings.elevateWord().add(elevateWord1.elevateWord, elevateWord1.boost, elevateWord1.readings);
-        settings.elevateWord().add(elevateWord2.elevateWord, elevateWord2.boost, elevateWord2.readings);
-        settings.elevateWord().add(elevateWord3.elevateWord, elevateWord3.boost, elevateWord3.readings);
+        settings.elevateWord().add(elevateWord1);
+        settings.elevateWord().add(elevateWord2);
+        settings.elevateWord().add(elevateWord3);
         assertEquals(3, settings.elevateWord().get().length);
 
-        settings.elevateWord().delete(elevateWord2.elevateWord);
+        settings.elevateWord().delete(elevateWord2.getElevateWord());
         assertEquals(2, settings.elevateWord().get().length);
-        assertEquals(elevateWord1.elevateWord, settings.elevateWord().get()[0].getElevateWord());
-        assertEquals(elevateWord3.elevateWord, settings.elevateWord().get()[1].getElevateWord());
+        assertEquals(elevateWord1.getElevateWord(), settings.elevateWord().get()[0].getElevateWord());
+        assertEquals(elevateWord3.getElevateWord(), settings.elevateWord().get()[1].getElevateWord());
 
         settings.elevateWord().deleteAll();
         assertEquals(0, settings.elevateWord().get().length);

@@ -24,7 +24,7 @@ public class DefaultContentsParser implements ContentsParser {
             readings[j] = l.toArray(new String[l.size()]);
         }
 
-        return new SuggestItem(words, readings, 1L, null, //TODO label
+        return new SuggestItem(words, readings, 1L, -1, null, //TODO label
                 null, //TODO role
                 SuggestItem.Kind.QUERY);
     }
@@ -47,7 +47,7 @@ public class DefaultContentsParser implements ContentsParser {
                 readings[j] = l.toArray(new String[l.size()]);
             }
 
-            items.add(new SuggestItem(words, readings, 1L, null, //TODO label
+            items.add(new SuggestItem(words, readings, 1L, -1, null, //TODO label
                     null, //TODO role
                     SuggestItem.Kind.QUERY));
         }
@@ -84,7 +84,7 @@ public class DefaultContentsParser implements ContentsParser {
                         items = new ArrayList<>(text.length() * fields.length / field.length());
                     }
 
-                    items.add(new SuggestItem(words, readings, 1L, null, //TODO label
+                    items.add(new SuggestItem(words, readings, 1L, -1, null, //TODO label
                             null, //TODO role
                             SuggestItem.Kind.DOCUMENT));
                 }

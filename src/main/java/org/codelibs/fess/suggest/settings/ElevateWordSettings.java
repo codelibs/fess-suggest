@@ -1,6 +1,7 @@
 package org.codelibs.fess.suggest.settings;
 
 import org.codelibs.fess.suggest.constants.FieldNames;
+import org.codelibs.fess.suggest.entity.ElevateWord;
 import org.elasticsearch.client.Client;
 
 import java.time.LocalDateTime;
@@ -41,16 +42,16 @@ public class ElevateWordSettings {
         return elevateWords;
     }
 
-    public void add(final String elevateWord, final float boost, final List<String> readings) {
+    public void add(ElevateWord elevateWord) {
         Map<String, Object> source = new HashMap<>();
         source.put(FieldNames.ARRAY_KEY, ELEVATE_WORD_SETTINGD_KEY);
-        source.put(FieldNames.ARRAY_VALUE, elevateWord);
-        source.put(ELEVATE_WORD_BOOST, boost);
-        source.put(ELEVATE_WORD_READING, readings);
+        source.put(FieldNames.ARRAY_VALUE, elevateWord.getElevateWord());
+        source.put(ELEVATE_WORD_BOOST, elevateWord.getBoost());
+        source.put(ELEVATE_WORD_READING, elevateWord.getReadings());
         source.put(FieldNames.TIMESTAMP, LocalDateTime.now());
 
         arraySettings.addToArrayIndex(arraySettings.arraySettingsIndexName, arraySettings.settingsId,
-                arraySettings.createId(ELEVATE_WORD_SETTINGD_KEY, elevateWord), source);
+                arraySettings.createId(ELEVATE_WORD_SETTINGD_KEY, elevateWord.getElevateWord()), source);
     }
 
     public void delete(final String elevateWord) {
@@ -59,30 +60,6 @@ public class ElevateWordSettings {
 
     public void deleteAll() {
         arraySettings.delete(ELEVATE_WORD_SETTINGD_KEY);
-    }
-
-    public static class ElevateWord {
-        protected final String elevateWord;
-        protected final float boost;
-        protected final List<String> readings;
-
-        protected ElevateWord(final String elevateWord, final float boost, final List<String> readings) {
-            this.elevateWord = elevateWord;
-            this.boost = boost;
-            this.readings = readings;
-        }
-
-        public String getElevateWord() {
-            return elevateWord;
-        }
-
-        public float getBoost() {
-            return boost;
-        }
-
-        public List<String> getReadings() {
-            return readings;
-        }
     }
 
 }

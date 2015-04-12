@@ -2,12 +2,14 @@ package org.codelibs.fess.suggest.settings;
 
 import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.exception.SuggesterException;
+import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.indices.IndexMissingException;
 import org.elasticsearch.search.SearchHit;
 
 import java.time.LocalDateTime;
@@ -64,47 +66,51 @@ public class ArraySettings {
         return String.valueOf(("key:" + key + "value:" + value).hashCode());
     }
 
+    @SuppressWarnings("unchecked")
     protected Map<String, Object>[] getFromArrayIndex(final String index, final String type, String key) {
-        SearchResponse response =
-                client.prepareSearch().setIndices(index).setTypes(type).setScroll(TimeValue.timeValueSeconds(10))
-                        .setSearchType(SearchType.SCAN).setQuery(QueryBuilders.matchQuery(FieldNames.ARRAY_KEY, key)).setSize(1000)
-                        .execute().actionGet();
+        try {
+            SearchResponse response =
+                    client.prepareSearch().setIndices(index).setTypes(type).setScroll(TimeValue.timeValueSeconds(10))
+                            .setSearchType(SearchType.SCAN).setQuery(QueryBuilders.matchQuery(FieldNames.ARRAY_KEY, key)).setSize(1000)
+                            .execute().actionGet();
 
-        @SuppressWarnings("unchecked")
-        Map<String, Object>[] array = new Map[(int) response.getHits().getTotalHits()];
+            Map<String, Object>[] array = new Map[(int) response.getHits().getTotalHits()];
 
-        String scrollId = response.getScrollId();
-        int count = 0;
-        SearchResponse searchResponse;
-        while ((searchResponse = client.prepareSearchScroll(scrollId).execute().actionGet()).getHits().getHits().length > 0) {
-            SearchHit[] hits = searchResponse.getHits().getHits();
-            for (SearchHit hit : hits) {
-                array[count++] = hit.getSource();
+            String scrollId = response.getScrollId();
+            int count = 0;
+            SearchResponse searchResponse;
+            while ((searchResponse = client.prepareSearchScroll(scrollId).execute().actionGet()).getHits().getHits().length > 0) {
+                SearchHit[] hits = searchResponse.getHits().getHits();
+                for (SearchHit hit : hits) {
+                    array[count++] = hit.getSource();
+                }
             }
+
+            Arrays.sort(array, (o1, o2) -> {
+                if (o1 == null && o2 == null) {
+                    return 0;
+                } else if (o1 == null) {
+                    return -1;
+                } else if (o2 == null) {
+                    return 1;
+                }
+
+                Object timeObj1 = o1.get(FieldNames.TIMESTAMP);
+                Object timeObj2 = o2.get(FieldNames.TIMESTAMP);
+                if (timeObj1 == null && timeObj2 == null) {
+                    return 0;
+                } else if (timeObj1 == null) {
+                    return -1;
+                } else if (timeObj2 == null) {
+                    return 1;
+                }
+
+                return o1.toString().compareTo(o2.toString());
+            });
+            return array;
+        } catch (IndexMissingException e) {
+            return new Map[] {};
         }
-
-        Arrays.sort(array, (o1, o2) -> {
-            if (o1 == null && o2 == null) {
-                return 0;
-            } else if (o1 == null) {
-                return -1;
-            } else if (o2 == null) {
-                return 1;
-            }
-
-            Object timeObj1 = o1.get(FieldNames.TIMESTAMP);
-            Object timeObj2 = o2.get(FieldNames.TIMESTAMP);
-            if (timeObj1 == null && timeObj2 == null) {
-                return 0;
-            } else if (timeObj1 == null) {
-                return -1;
-            } else if (timeObj2 == null) {
-                return 1;
-            }
-
-            return o1.toString().compareTo(o2.toString());
-        });
-        return array;
     }
 
     protected void addToArrayIndex(final String index, final String type, final String id, final Map<String, Object> source) {
@@ -127,7 +133,8 @@ public class ArraySettings {
 
     protected void deleteFromArray(final String index, final String type, final String id) {
         try {
-            client.prepareDelete().setIndex(index).setType(type).setId(id).setRefresh(true).execute().actionGet();
+            DeleteResponse response = client.prepareDelete().setIndex(index).setType(type).setId(id).setRefresh(true).execute().actionGet();
+            System.out.println(response);
         } catch (Exception e) {
             throw new SuggesterException("Failed to delete from array.", e);
         }

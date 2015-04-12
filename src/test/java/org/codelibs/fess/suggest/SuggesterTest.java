@@ -2,12 +2,14 @@ package org.codelibs.fess.suggest;
 
 import junit.framework.TestCase;
 import org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner;
+import org.codelibs.fess.suggest.entity.ElevateWord;
 import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.fess.suggest.index.SuggestIndexer;
 import org.codelibs.fess.suggest.index.contents.querylog.QueryLogReader;
 import org.codelibs.fess.suggest.request.suggest.SuggestResponse;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -47,7 +49,6 @@ public class SuggesterTest extends TestCase {
         SuggestResponse response = suggester.suggest().setQuery("kensaku").setSuggestDetail(true).execute();
         assertEquals(1, response.getNum());
         assertEquals("検索 エンジン", response.getWords().get(0));
-        assertEquals(1, response.getItems().get(0).getScore());
 
         response = suggester.suggest().setQuery("kensaku　 enj").execute();
         assertEquals(1, response.getNum());
@@ -56,7 +57,6 @@ public class SuggesterTest extends TestCase {
         response = suggester.suggest().setQuery("zenbun").setSuggestDetail(true).execute();
         assertEquals(1, response.getNum());
         assertEquals("全文 検索", response.getWords().get(0));
-        assertEquals(2, response.getItems().get(0).getScore());
     }
 
     public void test_indexFromQueryString() throws Exception {
@@ -136,11 +136,26 @@ public class SuggesterTest extends TestCase {
         SuggestResponse response1 = suggester.suggest().setQuery("かき").setSuggestDetail(true).execute();
         assertEquals(1, response1.getNum());
         assertEquals(1, response1.getTotal());
+        assertEquals("柿", response1.getWords().get(0));
 
         SuggestResponse response2 = suggester.suggest().setQuery("美味しい").setSuggestDetail(true).execute();
         assertEquals(1, response2.getNum());
         assertEquals(1, response2.getTotal());
+        assertEquals("美味しい", response2.getWords().get(0));
+    }
 
+    public void test_indexElevateWord() throws Exception {
+        ElevateWord elevateWord = new ElevateWord("test", 2.0f, Collections.singletonList("test"));
+        suggester.indexer().indexElevateWord(elevateWord);
+        suggester.refresh();
+        SuggestResponse response1 = suggester.suggest().setQuery("tes").setSuggestDetail(true).execute();
+        assertEquals(1, response1.getNum());
+        assertEquals(1, response1.getTotal());
+        assertEquals(2.0f, response1.getItems().get(0).getUserBoost());
+
+        ElevateWord[] elevateWords = suggester.settings().elevateWord().get();
+        assertEquals(1, elevateWords.length);
+        assertEquals("test", elevateWord.getElevateWord());
     }
 
     private SuggestItem[] getItemSet1() {
@@ -151,21 +166,22 @@ public class SuggesterTest extends TestCase {
         readings[1] = new String[] { "enjin", "fuga" };
         String[] tags = new String[] { "tag1", "tag2" };
         String[] roles = new String[] { "role1", "role2", "role3" };
-        queryItems[0] = new SuggestItem(new String[] { "検索", "エンジン" }, readings, 1, tags, roles, SuggestItem.Kind.DOCUMENT);
+        queryItems[0] = new SuggestItem(new String[] { "検索", "エンジン" }, readings, 1, -1, tags, roles, SuggestItem.Kind.DOCUMENT);
 
         String[][] readings2 = new String[2][];
         readings2[0] = new String[] { "zenbun", "fuga" };
         readings2[1] = new String[] { "kensaku", "fuga" };
         String[] tags2 = new String[] { "tag3" };
         String[] roles2 = new String[] { "role1", "role2", "role3", "role4" };
-        queryItems[1] = new SuggestItem(new String[] { "全文", "検索" }, readings2, 1, tags2, roles2, SuggestItem.Kind.DOCUMENT);
+        queryItems[1] = new SuggestItem(new String[] { "全文", "検索" }, readings2, 1, -1, tags2, roles2, SuggestItem.Kind.DOCUMENT);
 
         String[][] readings2Query = new String[2][];
         readings2Query[0] = new String[] { "zenbun", "fuga" };
         readings2Query[1] = new String[] { "kensaku", "fuga" };
         String[] tags2Query = new String[] { "tag3" };
         String[] roles2Query = new String[] { "role1", "role2", "role3", "role4" };
-        queryItems[2] = new SuggestItem(new String[] { "全文", "検索" }, readings2Query, 1, tags2Query, roles2Query, SuggestItem.Kind.QUERY);
+        queryItems[2] =
+                new SuggestItem(new String[] { "全文", "検索" }, readings2Query, 1, -1, tags2Query, roles2Query, SuggestItem.Kind.QUERY);
 
         return queryItems;
     }
