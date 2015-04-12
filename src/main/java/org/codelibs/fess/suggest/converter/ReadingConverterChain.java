@@ -13,6 +13,7 @@ public class ReadingConverterChain implements ReadingConverter {
         Queue<String> queue = new LinkedList<>();
         queue.add(text);
         List<String> convertedTexts = new ArrayList<>(getMaxReadingNum());
+        convertedTexts.add(text);
 
         converters.forEach(converter -> {
             String s;

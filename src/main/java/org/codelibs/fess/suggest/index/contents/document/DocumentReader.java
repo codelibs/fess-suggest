@@ -1,5 +1,7 @@
 package org.codelibs.fess.suggest.index.contents.document;
 
+import java.util.Map;
+
 public interface DocumentReader {
-    String read();
+    Map<String, Object> read();
 }

@@ -22,6 +22,8 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CodingErrorAction;
+import java.util.HashSet;
+import java.util.Set;
 
 public class SuggesterBuilder {
 
@@ -114,7 +116,9 @@ public class SuggesterBuilder {
                 userDictionary = new UserDictionary(reader);
             }
 
-            return new JapaneseAnalyzer(userDictionary, JapaneseTokenizer.Mode.NORMAL, null, null);
+            Set<String> stopTags = new HashSet<>();
+
+            return new JapaneseAnalyzer(userDictionary, JapaneseTokenizer.Mode.NORMAL, null, stopTags);
         } catch (IOException e) {
             throw new SuggesterException("Failed to create default analyzer.", e);
         }

@@ -8,6 +8,8 @@ import org.codelibs.fess.suggest.index.contents.querylog.QueryLogReader;
 import org.codelibs.fess.suggest.request.suggest.SuggestResponse;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner.newConfigs;
@@ -119,6 +121,26 @@ public class SuggesterTest extends TestCase {
         SuggestResponse response2 = suggester.suggest().setQuery("fes").setSuggestDetail(true).execute();
         assertEquals(1, response2.getNum());
         assertEquals(1, response2.getTotal());
+    }
+
+    @SuppressWarnings("unchecked")
+    public void test_indexFromDocument() throws Exception {
+        SuggestSettings settings = suggester.settings();
+        String field = settings.array().get(SuggestSettings.DefaultKeys.SUPPORTED_FIELDS)[0];
+
+        Map<String, Object> document = new HashMap<>();
+        document.put(field, "この柿は美味しい。");
+        suggester.indexer().indexFromDocument(new Map[] { document });
+        suggester.refresh();
+
+        SuggestResponse response1 = suggester.suggest().setQuery("かき").setSuggestDetail(true).execute();
+        assertEquals(1, response1.getNum());
+        assertEquals(1, response1.getTotal());
+
+        SuggestResponse response2 = suggester.suggest().setQuery("美味しい").setSuggestDetail(true).execute();
+        assertEquals(1, response2.getNum());
+        assertEquals(1, response2.getTotal());
+
     }
 
     private SuggestItem[] getItemSet1() {

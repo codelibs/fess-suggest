@@ -3,6 +3,7 @@ package org.codelibs.fess.suggest.index;
 import org.apache.lucene.analysis.Analyzer;
 import org.codelibs.fess.suggest.converter.ReadingConverter;
 import org.codelibs.fess.suggest.entity.SuggestItem;
+import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.codelibs.fess.suggest.index.contents.ContentsParser;
 import org.codelibs.fess.suggest.index.contents.DefaultContentsParser;
 import org.codelibs.fess.suggest.index.contents.document.DocumentReader;
@@ -66,31 +67,15 @@ public class SuggestIndexer {
     }
 
     public void indexFromQueryString(final String[] queryStrings) {
-        final List<SuggestItem> items = new ArrayList<>(queryStrings.length * supportedFields.length);
-        for (String queryString : queryStrings) {
-            items.addAll(contentsParser.parseQueryString(queryString, supportedFields, readingConverter, normalizer));
-        }
-        index(items.toArray(new SuggestItem[items.size()]));
-    }
-
-    public IndexingStatus indexFromDocument(final DocumentReader documentReader) {
-        final IndexingStatus indexingStatus = new IndexingStatus();
-        indexingStatus.running.set(true);
-        indexingStatus.done.set(false);
-
-        //TODO thread pool
-        Thread th = new Thread(() -> {
-            String doc;
-            while ((doc = documentReader.read()) != null) {
-                //TODO
+        try {
+            final List<SuggestItem> items = new ArrayList<>(queryStrings.length * supportedFields.length);
+            for (String queryString : queryStrings) {
+                items.addAll(contentsParser.parseQueryString(queryString, supportedFields, readingConverter, normalizer));
             }
-
-            indexingStatus.running.set(false);
-            indexingStatus.done.set(true);
-        });
-
-        th.start();
-        return indexingStatus;
+            index(items.toArray(new SuggestItem[items.size()]));
+        } catch (Exception e) {
+            throw new SuggesterException("Failed to index from query_string.", e);
+        }
     }
 
     public IndexingStatus indexFromQueryLog(final QueryLogReader queryLogReader) {
@@ -121,57 +106,89 @@ public class SuggestIndexer {
         return indexingStatus;
     }
 
-    public SuggestIndexer index(String index) {
+    public void indexFromDocument(final Map<String, Object>[] documents) {
+        List<SuggestItem> items = new ArrayList<>(documents.length * supportedFields.length * 100); //TODO
+        try {
+            for (Map<String, Object> document : documents) {
+                items.addAll(contentsParser.parseDocument(document, supportedFields, readingConverter, normalizer, analyzer));
+            }
+        } catch (Exception e) {
+            throw new SuggesterException("Failed to index from document", e);
+        }
+        index(items.toArray(new SuggestItem[items.size()]));
+    }
+
+    public IndexingStatus indexFromDocument(final DocumentReader documentReader) {
+        final IndexingStatus indexingStatus = new IndexingStatus();
+        indexingStatus.running.set(true);
+        indexingStatus.done.set(false);
+
+        //TODO thread pool
+        Thread th = new Thread(() -> {
+            Map<String, Object> doc;
+            while ((doc = documentReader.read()) != null) {
+                //TODO
+            }
+
+            indexingStatus.running.set(false);
+            indexingStatus.done.set(true);
+        });
+
+        th.start();
+        return indexingStatus;
+    }
+
+    public SuggestIndexer setIndex(String index) {
         this.index = index;
         return this;
     }
 
-    public SuggestIndexer type(String type) {
+    public SuggestIndexer setType(String type) {
         this.type = type;
         return this;
     }
 
-    public SuggestIndexer supportedFields(String[] supportedFields) {
+    public SuggestIndexer setSupportedFields(String[] supportedFields) {
         this.supportedFields = supportedFields;
         return this;
     }
 
-    public SuggestIndexer tagFieldName(String tagFieldName) {
+    public SuggestIndexer setTagFieldName(String tagFieldName) {
         this.tagFieldName = tagFieldName;
         return this;
     }
 
-    public SuggestIndexer roleFieldName(String roleFieldName) {
+    public SuggestIndexer setRoleFieldName(String roleFieldName) {
         this.roleFieldName = roleFieldName;
         return this;
     }
 
-    public SuggestIndexer readingConverter(ReadingConverter readingConverter) {
+    public SuggestIndexer setReadingConverter(ReadingConverter readingConverter) {
         this.readingConverter = readingConverter;
         return this;
     }
 
-    public SuggestIndexer normalizer(Normalizer normalizer) {
+    public SuggestIndexer setNormalizer(Normalizer normalizer) {
         this.normalizer = normalizer;
         return this;
     }
 
-    public SuggestIndexer analyzer(Analyzer analyzer) {
+    public SuggestIndexer setAnalyzer(Analyzer analyzer) {
         this.analyzer = analyzer;
         return this;
     }
 
-    public SuggestIndexer contentsParser(ContentsParser contentsParser) {
+    public SuggestIndexer setContentsParser(ContentsParser contentsParser) {
         this.contentsParser = contentsParser;
         return this;
     }
 
-    public SuggestIndexer suggestWriter(SuggestWriter suggestWriter) {
+    public SuggestIndexer setSuggestWriter(SuggestWriter suggestWriter) {
         this.suggestWriter = suggestWriter;
         return this;
     }
 
-    public class IndexingStatus {
+    public static class IndexingStatus {
         final protected AtomicBoolean running = new AtomicBoolean(false);
         final protected AtomicBoolean done = new AtomicBoolean(false);
         final protected List<Throwable> errors = Collections.synchronizedList(new ArrayList<>());
