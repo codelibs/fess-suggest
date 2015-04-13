@@ -17,6 +17,7 @@ import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.codelibs.fess.suggest.util.SuggestUtil;
 import org.elasticsearch.client.Client;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -187,6 +188,10 @@ public class SuggestIndexer {
         for (ElevateWord elevateWord : elevateWords) {
             indexElevateWord(elevateWord);
         }
+    }
+
+    public void deleteOldWords(LocalDateTime threshold) {
+        suggestWriter.deleteOldWords(client, settings, index, type, threshold);
     }
 
     public SuggestIndexer setIndex(String index) {

@@ -9,6 +9,7 @@ import org.codelibs.fess.suggest.index.contents.querylog.QueryLogReader;
 import org.codelibs.fess.suggest.request.suggest.SuggestResponse;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -191,6 +192,41 @@ public class SuggesterTest extends TestCase {
         assertEquals(1, response2.getNum());
         SuggestResponse response3 = suggester.suggest().setQuery("fuga").setSuggestDetail(true).execute();
         assertEquals(1, response3.getNum());
+    }
+
+    @SuppressWarnings("unchecked")
+    public void test_deleteOldWords() throws Exception {
+        String field = suggester.settings().array().get(SuggestSettings.DefaultKeys.SUPPORTED_FIELDS)[0];
+        ElevateWord elevateWord = new ElevateWord("test", 2.0f, Collections.singletonList("test"));
+
+        suggester.indexer().indexFromDocument(new Map[] { Collections.singletonMap(field, (Object) "この柿は美味しい。") });
+        suggester.indexer().indexElevateWord(elevateWord);
+        suggester.refresh();
+
+        Thread.sleep(1000);
+        LocalDateTime threshold = LocalDateTime.now();
+        Thread.sleep(1000);
+
+        suggester.indexer().indexFromDocument(new Map[] { Collections.singletonMap(field, (Object) "検索エンジン") });
+        suggester.refresh();
+
+        SuggestResponse response1 = suggester.suggest().setQuery("柿").setSuggestDetail(true).execute();
+        assertEquals(1, response1.getNum());
+        SuggestResponse response2 = suggester.suggest().setQuery("test").setSuggestDetail(true).execute();
+        assertEquals(1, response2.getNum());
+        SuggestResponse response3 = suggester.suggest().setQuery("検索").setSuggestDetail(true).execute();
+        assertEquals(1, response3.getNum());
+
+        suggester.indexer().deleteOldWords(threshold);
+        suggester.refresh();
+
+        SuggestResponse response4 = suggester.suggest().setQuery("柿").setSuggestDetail(true).execute();
+        assertEquals(0, response4.getNum());
+        SuggestResponse response5 = suggester.suggest().setQuery("test").setSuggestDetail(true).execute();
+        assertEquals(1, response5.getNum());
+        SuggestResponse response6 = suggester.suggest().setQuery("検索").setSuggestDetail(true).execute();
+        assertEquals(1, response6.getNum());
+
     }
 
     public void test_addNgWord() throws Exception {
