@@ -145,10 +145,17 @@ public class SuggestIndexer {
         indexingStatus.done.set(false);
 
         //TODO thread pool
+        @SuppressWarnings("unchecked")
         Thread th = new Thread(() -> {
+            final int maxExecuteDocNum = 10;
+            List<Map<String, Object>> docs = new ArrayList<>(maxExecuteDocNum);
             Map<String, Object> doc;
             while ((doc = documentReader.read()) != null) {
-                //TODO
+                docs.add(doc);
+                if (docs.size() >= maxExecuteDocNum) {
+                    indexFromDocument(docs.toArray(new Map[docs.size()]));
+                    docs.clear();
+                }
             }
 
             indexingStatus.running.set(false);
