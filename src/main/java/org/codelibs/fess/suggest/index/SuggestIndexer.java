@@ -1,6 +1,7 @@
 package org.codelibs.fess.suggest.index;
 
 import org.apache.lucene.analysis.Analyzer;
+import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.converter.ReadingConverter;
 import org.codelibs.fess.suggest.entity.ElevateWord;
 import org.codelibs.fess.suggest.entity.SuggestItem;
@@ -13,6 +14,7 @@ import org.codelibs.fess.suggest.index.writer.SuggestIndexWriter;
 import org.codelibs.fess.suggest.index.writer.SuggestWriter;
 import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
+import org.codelibs.fess.suggest.util.SuggestUtil;
 import org.elasticsearch.client.Client;
 
 import java.util.*;
@@ -36,16 +38,16 @@ public class SuggestIndexer {
     protected ContentsParser contentsParser;
     protected SuggestWriter suggestWriter;
 
-    public SuggestIndexer(final Client client, final String index, final String type, final String[] supportedField,
-            final String[] ngWords, final String tagFieldName, final String roleFieldName, final ReadingConverter readingConverter,
+    public SuggestIndexer(final Client client, final String index, final String type, final ReadingConverter readingConverter,
             final Normalizer normalizer, final Analyzer analyzer, final SuggestSettings settings) {
         this.client = client;
         this.index = index;
         this.type = type;
-        this.supportedFields = supportedField;
-        this.tagFieldName = tagFieldName;
-        this.roleFieldName = roleFieldName;
-        this.ngWords = ngWords;
+
+        this.supportedFields = settings.array().get(SuggestSettings.DefaultKeys.SUPPORTED_FIELDS);
+        this.ngWords = settings.ngword().get();
+        this.tagFieldName = settings.getAsString(SuggestSettings.DefaultKeys.TAG_FIELD_NAME, "");
+        this.roleFieldName = settings.getAsString(SuggestSettings.DefaultKeys.ROLE_FIELD_NAME, "");
         this.readingConverter = readingConverter;
         this.normalizer = normalizer;
         this.analyzer = analyzer;
@@ -71,6 +73,14 @@ public class SuggestIndexer {
         }
         SuggestItem[] newSizeArray = Arrays.copyOf(array, size);
         suggestWriter.write(client, settings, index, type, newSizeArray);
+    }
+
+    public void delete(final String id) {
+        suggestWriter.delete(client, settings, index, type, id);
+    }
+
+    public void deleteByQuery(final String queryString) {
+        suggestWriter.deleteByQuery(client, settings, index, type, queryString);
     }
 
     public void indexFromQueryString(final String queryString) {
@@ -149,10 +159,21 @@ public class SuggestIndexer {
         return indexingStatus;
     }
 
+    public void addNgWord(String ngWord) {
+        deleteByQuery(FieldNames.TEXT + ":*\"" + ngWord + "\"*");
+        settings.ngword().add(ngWord);
+        ngWords = settings.ngword().get();
+    }
+
     public void indexElevateWord(ElevateWord elevateWord) {
         settings.elevateWord().add(elevateWord);
         index(new SuggestItem(new String[] { elevateWord.getElevateWord() }, new String[][] { elevateWord.getReadings().toArray(
                 new String[elevateWord.getReadings().size()]) }, 1, elevateWord.getBoost(), null, null, SuggestItem.Kind.USER));
+    }
+
+    public void deleteElevateWord(String elevateWord) {
+        settings.elevateWord().delete(elevateWord);
+        delete(SuggestUtil.createSuggestTextId(elevateWord));
     }
 
     public SuggestIndexer setIndex(String index) {

@@ -2,6 +2,7 @@ package org.codelibs.fess.suggest.entity;
 
 import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
+import org.codelibs.fess.suggest.util.SuggestUtil;
 import org.elasticsearch.common.Nullable;
 
 import java.io.Serializable;
@@ -60,7 +61,7 @@ public class SuggestItem implements Serializable {
         if (kind == Kind.QUERY) {
             this.queryFreq = score;
             this.docFreq = 0;
-            this.userBoost = -1;
+            this.userBoost = 1;
         } else if (kind == Kind.USER) {
             this.queryFreq = 0;
             this.docFreq = 1;
@@ -68,7 +69,7 @@ public class SuggestItem implements Serializable {
         } else {
             this.queryFreq = 0;
             this.docFreq = score;
-            this.userBoost = -1;
+            this.userBoost = 1;
         }
     }
 
@@ -124,7 +125,7 @@ public class SuggestItem implements Serializable {
     }
 
     public String getId() {
-        return String.valueOf(text.hashCode());
+        return SuggestUtil.createSuggestTextId(text);
     }
 
     public String getScript() {

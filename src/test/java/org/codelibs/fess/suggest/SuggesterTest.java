@@ -59,6 +59,21 @@ public class SuggesterTest extends TestCase {
         assertEquals("全文 検索", response.getWords().get(0));
     }
 
+    public void test_delete() throws Exception {
+        SuggestItem[] items = getItemSet1();
+        suggester.indexer().index(items);
+        suggester.refresh();
+
+        SuggestResponse response = suggester.suggest().setQuery("kensaku").setSuggestDetail(true).execute();
+        assertEquals(1, response.getNum());
+        assertEquals("検索 エンジン", response.getWords().get(0));
+
+        suggester.indexer().delete(items[0].getId());
+        suggester.refresh();
+        SuggestResponse response2 = suggester.suggest().setQuery("kensaku").setSuggestDetail(true).execute();
+        assertEquals(0, response2.getNum());
+    }
+
     public void test_indexFromQueryString() throws Exception {
         SuggestSettings settings = suggester.settings();
         String field = settings.array().get(SuggestSettings.DefaultKeys.SUPPORTED_FIELDS)[0];
@@ -156,6 +171,23 @@ public class SuggesterTest extends TestCase {
         ElevateWord[] elevateWords = suggester.settings().elevateWord().get();
         assertEquals(1, elevateWords.length);
         assertEquals("test", elevateWord.getElevateWord());
+    }
+
+    public void test_addNgWord() throws Exception {
+        SuggestItem[] items = getItemSet1();
+        suggester.indexer().index(items);
+        suggester.refresh();
+
+        SuggestResponse response = suggester.suggest().setQuery("kensaku").setSuggestDetail(true).execute();
+        assertEquals(1, response.getNum());
+        assertEquals("検索 エンジン", response.getWords().get(0));
+
+        suggester.indexer().addNgWord("検索");
+        suggester.refresh();
+        SuggestResponse response2 = suggester.suggest().setQuery("kensaku").setSuggestDetail(true).execute();
+        assertEquals(0, response2.getNum());
+
+        assertEquals(1, suggester.settings().ngword().get().length);
     }
 
     private SuggestItem[] getItemSet1() {

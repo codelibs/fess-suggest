@@ -25,4 +25,8 @@ public class SuggestUtil {
         }
         return words.toArray(new String[words.size()]);
     }
+
+    public static String createSuggestTextId(String text) {
+        return String.valueOf(text.hashCode());
+    }
 }

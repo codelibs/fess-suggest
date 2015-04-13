@@ -6,4 +6,8 @@ import org.elasticsearch.client.Client;
 
 public interface SuggestWriter {
     void write(Client client, SuggestSettings settings, String index, String type, SuggestItem[] items);
+
+    void delete(Client client, SuggestSettings settings, String index, String type, String id);
+
+    void deleteByQuery(Client client, SuggestSettings settings, String index, String type, String queryString);
 }
