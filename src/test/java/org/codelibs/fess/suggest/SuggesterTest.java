@@ -173,6 +173,26 @@ public class SuggesterTest extends TestCase {
         assertEquals("test", elevateWord.getElevateWord());
     }
 
+    public void test_restoreElevateWord() throws Exception {
+        ElevateWord elevateWord1 = new ElevateWord("test", 2.0f, Collections.singletonList("test"));
+        ElevateWord elevateWord2 = new ElevateWord("hoge", 2.0f, Collections.singletonList("hoge"));
+        ElevateWord elevateWord3 = new ElevateWord("fuga", 2.0f, Collections.singletonList("fuga"));
+
+        suggester.settings().elevateWord().add(elevateWord1);
+        suggester.settings().elevateWord().add(elevateWord2);
+        suggester.settings().elevateWord().add(elevateWord3);
+
+        suggester.indexer().restoreElevateWord();
+        suggester.refresh();
+
+        SuggestResponse response1 = suggester.suggest().setQuery("tes").setSuggestDetail(true).execute();
+        assertEquals(1, response1.getNum());
+        SuggestResponse response2 = suggester.suggest().setQuery("hoge").setSuggestDetail(true).execute();
+        assertEquals(1, response2.getNum());
+        SuggestResponse response3 = suggester.suggest().setQuery("fuga").setSuggestDetail(true).execute();
+        assertEquals(1, response3.getNum());
+    }
+
     public void test_addNgWord() throws Exception {
         SuggestItem[] items = getItemSet1();
         suggester.indexer().index(items);

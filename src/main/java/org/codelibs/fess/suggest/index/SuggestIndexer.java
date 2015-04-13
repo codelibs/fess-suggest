@@ -167,13 +167,19 @@ public class SuggestIndexer {
 
     public void indexElevateWord(ElevateWord elevateWord) {
         settings.elevateWord().add(elevateWord);
-        index(new SuggestItem(new String[] { elevateWord.getElevateWord() }, new String[][] { elevateWord.getReadings().toArray(
-                new String[elevateWord.getReadings().size()]) }, 1, elevateWord.getBoost(), null, null, SuggestItem.Kind.USER));
+        index(elevateWord.toSuggestItem());
     }
 
     public void deleteElevateWord(String elevateWord) {
         settings.elevateWord().delete(elevateWord);
         delete(SuggestUtil.createSuggestTextId(elevateWord));
+    }
+
+    public void restoreElevateWord() {
+        ElevateWord[] elevateWords = settings.elevateWord().get();
+        for (ElevateWord elevateWord : elevateWords) {
+            indexElevateWord(elevateWord);
+        }
     }
 
     public SuggestIndexer setIndex(String index) {
