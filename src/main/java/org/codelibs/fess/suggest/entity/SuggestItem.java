@@ -6,6 +6,7 @@ import org.codelibs.fess.suggest.util.SuggestUtil;
 import org.elasticsearch.common.Nullable;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -15,7 +16,7 @@ public class SuggestItem implements Serializable {
 
         private final String kind;
 
-        private Kind(String kind) {
+        Kind(String kind) {
             this.kind = kind;
         }
 
@@ -26,6 +27,8 @@ public class SuggestItem implements Serializable {
     }
 
     private final String text;
+
+    private final LocalDateTime timestamp;
 
     private final long queryFreq;
 
@@ -41,6 +44,8 @@ public class SuggestItem implements Serializable {
 
     private final Kind kind;
 
+    private final Map<String, Object> emptySource;
+
     public SuggestItem(final String[] text, final String[][] readings, final long score, final float userBoost,
             @Nullable final String[] tags, @Nullable final String[] roles, final Kind kind) {
         this.text = String.join(SuggestConstants.TEXT_SEPARATOR, text);
@@ -52,9 +57,7 @@ public class SuggestItem implements Serializable {
         } else {
             this.roles = new String[roles.length + 1];
             this.roles[0] = SuggestConstants.DEFAULT_ROLE;
-            for (int i = 0; i < roles.length; i++) {
-                this.roles[i + 1] = roles[i];
-            }
+            System.arraycopy(roles, 0, this.roles, 1, roles.length);
         }
 
         this.kind = kind;
@@ -71,6 +74,9 @@ public class SuggestItem implements Serializable {
             this.docFreq = score;
             this.userBoost = 1;
         }
+
+        timestamp = LocalDateTime.now();
+        emptySource = createEmptyMap();
     }
 
     public String getText() {
@@ -105,8 +111,11 @@ public class SuggestItem implements Serializable {
         return userBoost;
     }
 
-    //TODO 最初に一度つくればいい
     public Map<String, Object> toEmptyMap() {
+        return emptySource;
+    }
+
+    protected Map<String, Object> createEmptyMap() {
         Map<String, Object> map = new HashMap<>();
         map.put(FieldNames.TEXT, "");
 
@@ -121,6 +130,7 @@ public class SuggestItem implements Serializable {
         map.put(FieldNames.QUERY_FREQ, 0L);
         map.put(FieldNames.DOC_FREQ, 0L);
         map.put(FieldNames.USER_BOOST, 1.0F);
+        map.put(FieldNames.TIMESTAMP, LocalDateTime.now());
         return map;
     }
 
@@ -155,7 +165,10 @@ public class SuggestItem implements Serializable {
         script.append("sourceRoles=source.roles; roles.each{ if(!sourceRoles.contains(it)) sourceRoles.add(it);};");
 
         //kind
-        script.append("if(!source.kinds.contains(kind)) {source.kinds.add(kind);}");
+        script.append("if(!source.kinds.contains(kind)) {source.kinds.add(kind);};");
+
+        //timestamp
+        script.append("source['@timestamp']=timestamp;");
 
         return script.toString();
     }
@@ -172,6 +185,7 @@ public class SuggestItem implements Serializable {
         params.put("tags", tags);
         params.put("roles", roles);
         params.put("kind", kind.toString());
+        params.put("timestamp", timestamp);
 
         return params;
     }
