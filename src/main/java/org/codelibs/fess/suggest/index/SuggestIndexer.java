@@ -9,6 +9,7 @@ import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.codelibs.fess.suggest.index.contents.ContentsParser;
 import org.codelibs.fess.suggest.index.contents.DefaultContentsParser;
 import org.codelibs.fess.suggest.index.contents.document.DocumentReader;
+import org.codelibs.fess.suggest.index.contents.querylog.QueryLog;
 import org.codelibs.fess.suggest.index.contents.querylog.QueryLogReader;
 import org.codelibs.fess.suggest.index.writer.SuggestIndexWriter;
 import org.codelibs.fess.suggest.index.writer.SuggestWriter;
@@ -89,15 +90,16 @@ public class SuggestIndexer {
         suggestWriter.deleteByQuery(client, settings, index, type, queryString);
     }
 
-    public void indexFromQueryString(final String queryString) {
-        indexFromQueryString(new String[] { queryString });
+    public void indexFromQueryLog(final QueryLog queryLog) {
+        indexFromQueryLog(new QueryLog[] { queryLog });
     }
 
-    public void indexFromQueryString(final String[] queryStrings) {
+    public void indexFromQueryLog(final QueryLog[] queryLogs) {
         try {
-            final List<SuggestItem> items = new ArrayList<>(queryStrings.length * supportedFields.length);
-            for (String queryString : queryStrings) {
-                items.addAll(contentsParser.parseQueryString(queryString, supportedFields, readingConverter, normalizer));
+            final List<SuggestItem> items = new ArrayList<>(queryLogs.length * supportedFields.length);
+            for (QueryLog queryLog : queryLogs) {
+                items.addAll(contentsParser.parseQueryLog(queryLog, supportedFields, tagFieldName, roleFieldName, readingConverter,
+                        normalizer));
             }
             index(items.toArray(new SuggestItem[items.size()]));
         } catch (Exception e) {
@@ -110,17 +112,17 @@ public class SuggestIndexer {
         indexingStatus.running.set(true);
         indexingStatus.done.set(false);
 
-        Runnable cmd = () -> {
+        Runnable r = () -> {
             int maxNum = 1000;
 
-            List<String> queryStrings = new ArrayList<>(maxNum);
-            String queryString = queryLogReader.read();
-            while (queryString != null) {
-                queryStrings.add(queryString);
-                queryString = queryLogReader.read();
-                if (queryString == null || queryStrings.size() >= maxNum) {
-                    indexFromQueryString(queryStrings.toArray(new String[queryStrings.size()]));
-                    queryStrings.clear();
+            List<QueryLog> queryLogs = new ArrayList<>(maxNum);
+            QueryLog queryLog = queryLogReader.read();
+            while (queryLog != null) {
+                queryLogs.add(queryLog);
+                queryLog = queryLogReader.read();
+                if ((queryLog == null && !queryLogs.isEmpty()) || queryLogs.size() >= maxNum) {
+                    indexFromQueryLog(queryLogs.toArray(new QueryLog[queryLogs.size()]));
+                    queryLogs.clear();
                 }
             }
 
@@ -129,9 +131,9 @@ public class SuggestIndexer {
         };
 
         if (async) {
-            threadPool.execute(cmd);
+            threadPool.execute(r);
         } else {
-            cmd.run();
+            r.run();
         }
 
         return indexingStatus;

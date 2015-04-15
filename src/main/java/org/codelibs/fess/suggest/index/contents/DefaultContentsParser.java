@@ -6,6 +6,7 @@ import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.codelibs.fess.suggest.converter.ReadingConverter;
 import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.fess.suggest.exception.SuggesterException;
+import org.codelibs.fess.suggest.index.contents.querylog.QueryLog;
 import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.util.SuggestUtil;
 
@@ -30,10 +31,32 @@ public class DefaultContentsParser implements ContentsParser {
     }
 
     @Override
-    public List<SuggestItem> parseQueryString(final String queryString, final String[] fields, final ReadingConverter readingConverter,
-            final Normalizer normalizer) throws SuggesterException {
-        final List<SuggestItem> items = new ArrayList<>(fields.length);
+    public List<SuggestItem> parseQueryLog(final QueryLog queryLog, final String[] fields, final String tagFieldName,
+            final String roleFieldName, final ReadingConverter readingConverter, final Normalizer normalizer) throws SuggesterException {
+        final String queryString = queryLog.getQueryString();
+        final String filterQueryString = queryLog.getFilterQueryString();
 
+        final String[] tags1 = SuggestUtil.parseQuery(queryString, tagFieldName);
+        final String[] roles1 = SuggestUtil.parseQuery(queryString, roleFieldName);
+        final String[] tags2 = filterQueryString == null ? new String[0] : SuggestUtil.parseQuery(filterQueryString, tagFieldName);
+        final String[] roles2 = filterQueryString == null ? new String[0] : SuggestUtil.parseQuery(filterQueryString, roleFieldName);
+        final String[] tags = new String[tags1.length + tags2.length];
+        final String[] roles = new String[roles1.length + roles2.length];
+
+        if (tags1.length > 0) {
+            System.arraycopy(tags1, 0, tags, 0, tags1.length);
+        }
+        if (tags2.length > 0) {
+            System.arraycopy(tags2, 0, tags, tags1.length, tags2.length);
+        }
+        if (roles1.length > 0) {
+            System.arraycopy(roles1, 0, roles, 0, roles1.length);
+        }
+        if (roles2.length > 0) {
+            System.arraycopy(roles2, 0, roles, roles1.length, roles2.length);
+        }
+
+        final List<SuggestItem> items = new ArrayList<>(fields.length);
         for (String field : fields) {
             final String[] words = SuggestUtil.parseQuery(queryString, field);
             if (words.length == 0) {
@@ -47,9 +70,7 @@ public class DefaultContentsParser implements ContentsParser {
                 readings[j] = l.toArray(new String[l.size()]);
             }
 
-            items.add(new SuggestItem(words, readings, 1L, -1, null, //TODO label
-                    null, //TODO role
-                    SuggestItem.Kind.QUERY));
+            items.add(new SuggestItem(words, readings, 1L, -1, tags, roles, SuggestItem.Kind.QUERY));
         }
 
         return items;

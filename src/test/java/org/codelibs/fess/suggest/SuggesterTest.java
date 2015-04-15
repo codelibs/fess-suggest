@@ -5,6 +5,7 @@ import org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner;
 import org.codelibs.fess.suggest.entity.ElevateWord;
 import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.fess.suggest.index.SuggestIndexer;
+import org.codelibs.fess.suggest.index.contents.querylog.QueryLog;
 import org.codelibs.fess.suggest.index.contents.querylog.QueryLogReader;
 import org.codelibs.fess.suggest.request.suggest.SuggestResponse;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
@@ -79,7 +80,7 @@ public class SuggesterTest extends TestCase {
         SuggestSettings settings = suggester.settings();
         String field = settings.array().get(SuggestSettings.DefaultKeys.SUPPORTED_FIELDS)[0];
 
-        suggester.indexer().indexFromQueryString(field + ":検索");
+        suggester.indexer().indexFromQueryLog(new QueryLog(field + ":検索", null));
         suggester.refresh();
 
         SuggestResponse responseKanji = suggester.suggest().setQuery("検索").setSuggestDetail(true).execute();
@@ -97,7 +98,7 @@ public class SuggesterTest extends TestCase {
         assertEquals(1, responseAlphabet.getTotal());
         assertEquals("検索", responseAlphabet.getWords().get(0));
 
-        suggester.indexer().indexFromQueryString(field + ":検索 AND " + field + ":ワード");
+        suggester.indexer().indexFromQueryLog(new QueryLog(field + ":検索 AND " + field + ":ワード", null));
         suggester.refresh();
 
         SuggestResponse responseMulti = suggester.suggest().setQuery("けんさく わーど").setSuggestDetail(true).execute();
@@ -116,11 +117,11 @@ public class SuggesterTest extends TestCase {
             String[] queryLogs = new String[] { field + ":検索", field + ":fess", field + ":検索エンジン" };
 
             @Override
-            public String read() {
+            public QueryLog read() {
                 if (count.get() >= queryLogs.length) {
                     return null;
                 }
-                return queryLogs[count.getAndIncrement()];
+                return new QueryLog(queryLogs[count.getAndIncrement()], null);
             }
         };
 
