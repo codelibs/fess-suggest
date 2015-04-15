@@ -24,6 +24,8 @@ import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CodingErrorAction;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 public class SuggesterBuilder {
 
@@ -32,6 +34,9 @@ public class SuggesterBuilder {
     protected ReadingConverter readingConverter;
     protected Normalizer normalizer;
     protected Analyzer analyzer;
+    protected Executor threadPool;
+
+    protected int threadPoolSize = Runtime.getRuntime().availableProcessors();
 
     public SuggesterBuilder settings(SuggestSettings settings) {
         this.settings = settings;
@@ -60,6 +65,16 @@ public class SuggesterBuilder {
         return this;
     }
 
+    public SuggesterBuilder threadPool(Executor threadPool) {
+        this.threadPool = threadPool;
+        return this;
+    }
+
+    public SuggesterBuilder threadPoolSize(int threadPoolSize) {
+        this.threadPoolSize = threadPoolSize;
+        return this;
+    }
+
     public Suggester build(final Client client, final String id) {
         if (settings == null) {
             if (settingsBuilder == null) {
@@ -81,7 +96,11 @@ public class SuggesterBuilder {
             analyzer = createDefaultAnalyzer();
         }
 
-        return new Suggester(client, settings, readingConverter, normalizer, analyzer);
+        if (threadPool == null) {
+            threadPool = Executors.newFixedThreadPool(threadPoolSize);
+        }
+
+        return new Suggester(client, settings, readingConverter, normalizer, analyzer, threadPool);
     }
 
     protected ReadingConverter createDefaultReadingConverter() {

@@ -124,7 +124,7 @@ public class SuggesterTest extends TestCase {
             }
         };
 
-        SuggestIndexer.IndexingStatus status = suggester.indexer().indexFromQueryLog(reader);
+        SuggestIndexer.IndexingStatus status = suggester.indexer().indexFromQueryLog(reader, true);
         while (!status.isDone()) {
             Thread.sleep(1000);
         }

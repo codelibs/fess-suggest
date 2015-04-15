@@ -9,6 +9,8 @@ import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
 import org.elasticsearch.client.Client;
 
+import java.util.concurrent.Executor;
+
 public class Suggester {
     protected final Client client;
     protected final SuggestSettings settings;
@@ -19,8 +21,10 @@ public class Suggester {
     protected final String index;
     protected final String type;
 
+    protected final Executor threadPool;
+
     public Suggester(final Client client, final SuggestSettings settings, final ReadingConverter readingConverter,
-            final Normalizer normalizer, final Analyzer analyzer) {
+            final Normalizer normalizer, final Analyzer analyzer, final Executor threadPool) {
         this.client = client;
         this.settings = settings;
         this.readingConverter = readingConverter;
@@ -28,6 +32,7 @@ public class Suggester {
         this.analyzer = analyzer;
         this.index = settings.getAsString(SuggestSettings.DefaultKeys.INDEX, "");
         this.type = settings.getAsString(SuggestSettings.DefaultKeys.TYPE, "");
+        this.threadPool = threadPool;
 
     }
 
@@ -61,7 +66,7 @@ public class Suggester {
     }
 
     protected SuggestIndexer createDefaultIndexer() {
-        return new SuggestIndexer(client, index, type, readingConverter, normalizer, analyzer, settings);
+        return new SuggestIndexer(client, index, type, readingConverter, normalizer, analyzer, settings, threadPool);
     }
 
 }

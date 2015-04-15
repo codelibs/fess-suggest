@@ -19,6 +19,7 @@ import org.elasticsearch.client.Client;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SuggestIndexer {
@@ -39,8 +40,10 @@ public class SuggestIndexer {
     protected ContentsParser contentsParser;
     protected SuggestWriter suggestWriter;
 
+    protected Executor threadPool;
+
     public SuggestIndexer(final Client client, final String index, final String type, final ReadingConverter readingConverter,
-            final Normalizer normalizer, final Analyzer analyzer, final SuggestSettings settings) {
+            final Normalizer normalizer, final Analyzer analyzer, final SuggestSettings settings, final Executor threadPool) {
         this.client = client;
         this.index = index;
         this.type = type;
@@ -56,6 +59,8 @@ public class SuggestIndexer {
 
         this.contentsParser = new DefaultContentsParser();
         this.suggestWriter = new SuggestIndexWriter();
+
+        this.threadPool = threadPool;
     }
 
     //TODO return result
@@ -100,13 +105,12 @@ public class SuggestIndexer {
         }
     }
 
-    public IndexingStatus indexFromQueryLog(final QueryLogReader queryLogReader) {
+    public IndexingStatus indexFromQueryLog(final QueryLogReader queryLogReader, boolean async) {
         final IndexingStatus indexingStatus = new IndexingStatus();
         indexingStatus.running.set(true);
         indexingStatus.done.set(false);
 
-        //TODO thread pool
-        Thread th = new Thread(() -> {
+        Runnable cmd = () -> {
             int maxNum = 1000;
 
             List<String> queryStrings = new ArrayList<>(maxNum);
@@ -122,9 +126,14 @@ public class SuggestIndexer {
 
             indexingStatus.running.set(false);
             indexingStatus.done.set(true);
-        });
+        };
 
-        th.start();
+        if (async) {
+            threadPool.execute(cmd);
+        } else {
+            cmd.run();
+        }
+
         return indexingStatus;
     }
 
@@ -140,20 +149,19 @@ public class SuggestIndexer {
         index(items.toArray(new SuggestItem[items.size()]));
     }
 
-    public IndexingStatus indexFromDocument(final DocumentReader documentReader) {
+    public IndexingStatus indexFromDocument(final DocumentReader documentReader, final boolean async) {
         final IndexingStatus indexingStatus = new IndexingStatus();
         indexingStatus.running.set(true);
         indexingStatus.done.set(false);
 
-        //TODO thread pool
         @SuppressWarnings("unchecked")
-        Thread th = new Thread(() -> {
-            final int maxExecuteDocNum = 10;
-            List<Map<String, Object>> docs = new ArrayList<>(maxExecuteDocNum);
+        Runnable cmd = () -> {
+            final int maxDocNum = 10;
+            List<Map<String, Object>> docs = new ArrayList<>(maxDocNum);
             Map<String, Object> doc;
             while ((doc = documentReader.read()) != null) {
                 docs.add(doc);
-                if (docs.size() >= maxExecuteDocNum) {
+                if (docs.size() >= maxDocNum) {
                     indexFromDocument(docs.toArray(new Map[docs.size()]));
                     docs.clear();
                 }
@@ -161,9 +169,14 @@ public class SuggestIndexer {
 
             indexingStatus.running.set(false);
             indexingStatus.done.set(true);
-        });
+        };
 
-        th.start();
+        if (async) {
+            threadPool.execute(cmd);
+        } else {
+            cmd.run();
+        }
+
         return indexingStatus;
     }
 
