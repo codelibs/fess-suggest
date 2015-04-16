@@ -123,9 +123,14 @@ public class SuggesterTest extends TestCase {
                 }
                 return new QueryLog(queryLogs[count.getAndIncrement()], null);
             }
+
+            @Override
+            public void close() {
+                //ignore
+            }
         };
 
-        SuggestIndexer.IndexingStatus status = suggester.indexer().indexFromQueryLog(reader, true);
+        SuggestIndexer.IndexingFuture status = suggester.indexer().indexFromQueryLog(reader, true);
         while (!status.isDone()) {
             Thread.sleep(1000);
         }

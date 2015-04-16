@@ -20,7 +20,8 @@ import org.elasticsearch.client.Client;
 
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SuggestIndexer {
@@ -41,10 +42,10 @@ public class SuggestIndexer {
     protected ContentsParser contentsParser;
     protected SuggestWriter suggestWriter;
 
-    protected Executor threadPool;
+    protected ExecutorService threadPool;
 
     public SuggestIndexer(final Client client, final String index, final String type, final ReadingConverter readingConverter,
-            final Normalizer normalizer, final Analyzer analyzer, final SuggestSettings settings, final Executor threadPool) {
+            final Normalizer normalizer, final Analyzer analyzer, final SuggestSettings settings, final ExecutorService threadPool) {
         this.client = client;
         this.index = index;
         this.type = type;
@@ -107,10 +108,9 @@ public class SuggestIndexer {
         }
     }
 
-    public IndexingStatus indexFromQueryLog(final QueryLogReader queryLogReader, boolean async) {
-        final IndexingStatus indexingStatus = new IndexingStatus();
-        indexingStatus.running.set(true);
-        indexingStatus.done.set(false);
+    public IndexingFuture indexFromQueryLog(final QueryLogReader queryLogReader, boolean async) {
+        final IndexingFuture indexingFuture = new IndexingFuture();
+        indexingFuture.started.set(true);
 
         Runnable r = () -> {
             int maxNum = 1000;
@@ -118,6 +118,9 @@ public class SuggestIndexer {
             List<QueryLog> queryLogs = new ArrayList<>(maxNum);
             QueryLog queryLog = queryLogReader.read();
             while (queryLog != null) {
+                if (Thread.currentThread().isInterrupted()) {
+                    break;
+                }
                 queryLogs.add(queryLog);
                 queryLog = queryLogReader.read();
                 if ((queryLog == null && !queryLogs.isEmpty()) || queryLogs.size() >= maxNum) {
@@ -125,18 +128,16 @@ public class SuggestIndexer {
                     queryLogs.clear();
                 }
             }
-
-            indexingStatus.running.set(false);
-            indexingStatus.done.set(true);
+            queryLogReader.close();
         };
 
         if (async) {
-            threadPool.execute(r);
+            indexingFuture.future = threadPool.submit(r);
         } else {
             r.run();
         }
 
-        return indexingStatus;
+        return indexingFuture;
     }
 
     public void indexFromDocument(final Map<String, Object>[] documents) {
@@ -151,35 +152,35 @@ public class SuggestIndexer {
         index(items.toArray(new SuggestItem[items.size()]));
     }
 
-    public IndexingStatus indexFromDocument(final DocumentReader documentReader, final boolean async) {
-        final IndexingStatus indexingStatus = new IndexingStatus();
-        indexingStatus.running.set(true);
-        indexingStatus.done.set(false);
+    public IndexingFuture indexFromDocument(final DocumentReader documentReader, final boolean async) {
+        final IndexingFuture indexingFuture = new IndexingFuture();
+        indexingFuture.started.set(true);
 
         @SuppressWarnings("unchecked")
-        Runnable cmd = () -> {
+        Runnable r = () -> {
             final int maxDocNum = 10;
             List<Map<String, Object>> docs = new ArrayList<>(maxDocNum);
             Map<String, Object> doc;
             while ((doc = documentReader.read()) != null) {
+                if (Thread.currentThread().isInterrupted()) {
+                    break;
+                }
                 docs.add(doc);
                 if (docs.size() >= maxDocNum) {
                     indexFromDocument(docs.toArray(new Map[docs.size()]));
                     docs.clear();
                 }
             }
-
-            indexingStatus.running.set(false);
-            indexingStatus.done.set(true);
+            documentReader.close();
         };
 
         if (async) {
-            threadPool.execute(cmd);
+            indexingFuture.future = threadPool.submit(r);
         } else {
-            cmd.run();
+            r.run();
         }
 
-        return indexingStatus;
+        return indexingFuture;
     }
 
     public void addNgWord(String ngWord) {
@@ -259,17 +260,34 @@ public class SuggestIndexer {
         return this;
     }
 
-    public static class IndexingStatus {
-        final protected AtomicBoolean running = new AtomicBoolean(false);
-        final protected AtomicBoolean done = new AtomicBoolean(false);
+    public static class IndexingFuture {
+        final protected AtomicBoolean started = new AtomicBoolean(false);
         final protected List<Throwable> errors = Collections.synchronizedList(new ArrayList<>());
+        protected volatile Future future = null;
 
         public boolean isStarted() {
-            return running.get() || done.get();
+            return started.get();
         }
 
         public boolean isDone() {
-            return done.get();
+            if (future == null) {
+                return true;
+            }
+            return future.isDone();
+        }
+
+        public boolean isCanceled() {
+            if (future == null) {
+                return false;
+            }
+            return future.isCancelled();
+        }
+
+        public boolean cancel() {
+            if (future == null) {
+                return false;
+            }
+            return future.cancel(true);
         }
 
         public boolean hasError() {

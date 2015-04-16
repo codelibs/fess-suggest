@@ -24,7 +24,7 @@ import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CodingErrorAction;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class SuggesterBuilder {
@@ -34,7 +34,7 @@ public class SuggesterBuilder {
     protected ReadingConverter readingConverter;
     protected Normalizer normalizer;
     protected Analyzer analyzer;
-    protected Executor threadPool;
+    protected ExecutorService threadPool;
 
     protected int threadPoolSize = Runtime.getRuntime().availableProcessors();
 
@@ -65,7 +65,7 @@ public class SuggesterBuilder {
         return this;
     }
 
-    public SuggesterBuilder threadPool(Executor threadPool) {
+    public SuggesterBuilder threadPool(ExecutorService threadPool) {
         this.threadPool = threadPool;
         return this;
     }
