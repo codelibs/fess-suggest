@@ -10,6 +10,7 @@ import org.codelibs.fess.suggest.index.contents.querylog.QueryLog;
 import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.util.SuggestUtil;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -17,17 +18,22 @@ import java.util.Map;
 public class DefaultContentsParser implements ContentsParser {
     @Override
     public SuggestItem parseSearchWords(final String[] words, final String[] fields, final ReadingConverter readingConverter,
-            final Normalizer normalizer) {
-        String[][] readings = new String[words.length][];
-        for (int j = 0; j < words.length; j++) {
-            words[j] = normalizer.normalize(words[j]);
-            List<String> l = readingConverter.convert(words[j]);
-            readings[j] = l.toArray(new String[l.size()]);
+            final Normalizer normalizer) throws SuggesterException {
+        try {
+            String[][] readings = new String[words.length][];
+            for (int j = 0; j < words.length; j++) {
+                words[j] = normalizer.normalize(words[j]);
+                List<String> l = readingConverter.convert(words[j]);
+                readings[j] = l.toArray(new String[l.size()]);
+            }
+
+            return new SuggestItem(words, readings, 1L, -1, null, //TODO label
+                    null, //TODO role
+                    SuggestItem.Kind.QUERY);
+        } catch (IOException e) {
+            throw new SuggesterException("Failed to SuggestItem from search words.", e);
         }
 
-        return new SuggestItem(words, readings, 1L, -1, null, //TODO label
-                null, //TODO role
-                SuggestItem.Kind.QUERY);
     }
 
     @Override
@@ -57,20 +63,24 @@ public class DefaultContentsParser implements ContentsParser {
         }
 
         final List<SuggestItem> items = new ArrayList<>(fields.length);
-        for (String field : fields) {
-            final String[] words = SuggestUtil.parseQuery(queryString, field);
-            if (words.length == 0) {
-                continue;
-            }
+        try {
+            for (String field : fields) {
+                final String[] words = SuggestUtil.parseQuery(queryString, field);
+                if (words.length == 0) {
+                    continue;
+                }
 
-            String[][] readings = new String[words.length][];
-            for (int j = 0; j < words.length; j++) {
-                words[j] = normalizer.normalize(words[j]);
-                List<String> l = readingConverter.convert(words[j]);
-                readings[j] = l.toArray(new String[l.size()]);
-            }
+                String[][] readings = new String[words.length][];
+                for (int j = 0; j < words.length; j++) {
+                    words[j] = normalizer.normalize(words[j]);
+                    List<String> l = readingConverter.convert(words[j]);
+                    readings[j] = l.toArray(new String[l.size()]);
+                }
 
-            items.add(new SuggestItem(words, readings, 1L, -1, tags, roles, SuggestItem.Kind.QUERY));
+                items.add(new SuggestItem(words, readings, 1L, -1, tags, roles, SuggestItem.Kind.QUERY));
+            }
+        } catch (IOException e) {
+            throw new SuggesterException("Failed to create SuggestItem from queryLog.", e);
         }
 
         return items;
@@ -78,7 +88,7 @@ public class DefaultContentsParser implements ContentsParser {
 
     @Override
     public List<SuggestItem> parseDocument(final Map<String, Object> document, final String[] fields,
-            final ReadingConverter readingConverter, final Normalizer normalizer, final Analyzer analyzer) throws Exception {
+            final ReadingConverter readingConverter, final Normalizer normalizer, final Analyzer analyzer) throws SuggesterException {
         List<SuggestItem> items = null;
 
         for (String field : fields) {
@@ -109,6 +119,8 @@ public class DefaultContentsParser implements ContentsParser {
                             null, //TODO role
                             SuggestItem.Kind.DOCUMENT));
                 }
+            } catch (IOException e) {
+                throw new SuggesterException("Failed to create SuggestItem from document.", e);
             }
         }
 

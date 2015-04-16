@@ -31,7 +31,6 @@ public class KatakanaConverter implements ReadingConverter {
     protected TokenizerFactory tokenizerFactory = null;
 
     public KatakanaConverter() {
-        init();
     }
 
     public KatakanaConverter(TokenizerFactory tokenizerFactory) {
@@ -40,10 +39,9 @@ public class KatakanaConverter implements ReadingConverter {
         } else {
             logger.warn("Invalid tokenizerFactory. " + tokenizerFactory.getClass().getName());
         }
-        init();
     }
 
-    protected void init() {
+    public void init() throws IOException {
         if (initialized) {
             return;
         }
@@ -61,24 +59,16 @@ public class KatakanaConverter implements ReadingConverter {
                 args.put("userDictionaryEncoding", encoding);
             }
             JapaneseTokenizerFactory japaneseTokenizerFactory = new JapaneseTokenizerFactory(args);
-            try {
-                japaneseTokenizerFactory.inform(new FilesystemResourceLoader());
-            } catch (Exception e) {
-                logger.warn("Failed to initialize.", e);
-            }
+            japaneseTokenizerFactory.inform(new FilesystemResourceLoader());
             tokenizerFactory = japaneseTokenizerFactory;
         }
         initialized = true;
     }
 
     @Override
-    public List<String> convert(final String text) {
+    public List<String> convert(final String text) throws IOException {
         final List<String> readingList = new ArrayList<>();
-        try {
-            readingList.add(toKatakana(text));
-        } catch (final Exception e) {
-            //TODO
-        }
+        readingList.add(toKatakana(text));
         return readingList;
     }
 
@@ -86,9 +76,10 @@ public class KatakanaConverter implements ReadingConverter {
         final StringBuilder kanaBuf = new StringBuilder();
 
         final Reader rd = new StringReader(inputStr);
-        TokenStream stream = null;
-        try {
-            stream = createTokenStream(rd);
+        try (TokenStream stream = createTokenStream(rd)) {
+            if (stream == null) {
+                throw new IOException("Invalid tokenizer.");
+            }
             stream.reset();
 
             int offset = 0;
@@ -110,10 +101,6 @@ public class KatakanaConverter implements ReadingConverter {
                 }
                 kanaBuf.append(reading);
                 offset += term.length();
-            }
-        } finally {
-            if (stream != null) {
-                stream.close();
             }
         }
 

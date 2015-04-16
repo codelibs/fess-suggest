@@ -75,7 +75,7 @@ public class SuggesterBuilder {
         return this;
     }
 
-    public Suggester build(final Client client, final String id) {
+    public Suggester build(final Client client, final String id) throws SuggesterException {
         if (settings == null) {
             if (settingsBuilder == null) {
                 settingsBuilder = SuggestSettings.builder();
@@ -86,6 +86,11 @@ public class SuggesterBuilder {
 
         if (readingConverter == null) {
             readingConverter = createDefaultReadingConverter();
+        }
+        try {
+            readingConverter.init();
+        } catch (IOException e) {
+            throw new SuggesterException(e);
         }
 
         if (normalizer == null) {

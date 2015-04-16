@@ -1,6 +1,7 @@
 package org.codelibs.fess.suggest.index.writer;
 
 import org.codelibs.fess.suggest.entity.SuggestItem;
+import org.codelibs.fess.suggest.exception.SuggestIndexException;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.update.UpdateRequestBuilder;
@@ -13,7 +14,8 @@ import java.util.Set;
 
 public class SuggestIndexWriter implements SuggestWriter {
     @Override
-    public void write(final Client client, final SuggestSettings settings, final String index, final String type, final SuggestItem[] items) {
+    public void write(final Client client, final SuggestSettings settings, final String index, final String type, final SuggestItem[] items)
+            throws SuggestIndexException {
         Set<String> upsertedIdSet = new HashSet<>();
         BulkRequestBuilder bulkRequestBuilder = client.prepareBulk();
         for (SuggestItem item : items) {
@@ -34,13 +36,14 @@ public class SuggestIndexWriter implements SuggestWriter {
     }
 
     @Override
-    public void delete(final Client client, final SuggestSettings settings, final String index, final String type, final String id) {
+    public void delete(final Client client, final SuggestSettings settings, final String index, final String type, final String id)
+            throws SuggestIndexException {
         client.prepareDelete().setIndex(index).setType(type).setId(id).execute().actionGet();
     }
 
     @Override
     public void deleteByQuery(final Client client, final SuggestSettings settings, final String index, final String type,
-            final String queryString) {
+            final String queryString) throws SuggestIndexException {
         client.prepareDeleteByQuery().setIndices(index).setTypes(type).setQuery(QueryBuilders.queryStringQuery(queryString)).execute()
                 .actionGet();
     }

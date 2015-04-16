@@ -1,6 +1,6 @@
 package org.codelibs.fess.suggest.settings;
 
-import org.codelibs.fess.suggest.exception.SuggesterException;
+import org.codelibs.fess.suggest.exception.SuggestSettingsException;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.collect.Tuple;
@@ -67,7 +67,7 @@ public class SuggestSettings {
             for (String key : initialSettings.keySet()) {
                 Object value = initialSettings.get(key);
                 if (value instanceof Collection) {
-                    ((Collection) value).forEach(element -> arraySettings.add(new Tuple<>(key, element)));
+                    ((Collection<Object>) value).forEach(element -> arraySettings.add(new Tuple<>(key, element)));
                 } else if (value instanceof Object[]) {
                     for (Object element : (Object[]) value) {
                         arraySettings.add(new Tuple<>(key, element));
@@ -164,7 +164,7 @@ public class SuggestSettings {
             client.prepareUpdate().setIndex(settingsIndexName).setType(settingsTypeName).setId(settingsId).setDocAsUpsert(true)
                     .setDoc(key, value).setRefresh(true).execute().actionGet();
         } catch (Exception e) {
-            throw new SuggesterException("Failed to update settings.", e);
+            throw new SuggestSettingsException("Failed to update settings.", e);
         }
     }
 
@@ -173,7 +173,7 @@ public class SuggestSettings {
             client.prepareUpdate().setIndex(settingsIndexName).setType(settingsTypeName).setId(settingsId).setDocAsUpsert(true)
                     .setRefresh(true).setDoc(JsonXContent.contentBuilder().map(map)).execute().actionGet();
         } catch (Exception e) {
-            throw new SuggesterException("Failed to update settings.", e);
+            throw new SuggestSettingsException("Failed to update settings.", e);
         }
     }
 

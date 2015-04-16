@@ -1,5 +1,6 @@
 package org.codelibs.fess.suggest.converter;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -18,6 +19,11 @@ public class KatakanaToAlphabetConverter implements ReadingConverter {
         convertMap = generateConvertMapping();
         fullWidthHalfWidth = Transliterator.getInstance("Fullwidth-Halfwidth");
         anyLower = Transliterator.getInstance("Any-Lower");
+    }
+
+    @Override
+    public void init() throws IOException {
+
     }
 
     @Override

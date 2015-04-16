@@ -168,7 +168,7 @@ public class SuggesterTest extends TestCase {
 
     public void test_indexElevateWord() throws Exception {
         ElevateWord elevateWord = new ElevateWord("test", 2.0f, Collections.singletonList("test"));
-        suggester.indexer().indexElevateWord(elevateWord);
+        suggester.indexer().addElevateWord(elevateWord);
         suggester.refresh();
         SuggestResponse response1 = suggester.suggest().setQuery("tes").setSuggestDetail(true).execute();
         assertEquals(1, response1.getNum());
@@ -206,7 +206,7 @@ public class SuggesterTest extends TestCase {
         ElevateWord elevateWord = new ElevateWord("test", 2.0f, Collections.singletonList("test"));
 
         suggester.indexer().indexFromDocument(new Map[] { Collections.singletonMap(field, (Object) "この柿は美味しい。") });
-        suggester.indexer().indexElevateWord(elevateWord);
+        suggester.indexer().addElevateWord(elevateWord);
         suggester.refresh();
 
         Thread.sleep(1000);

@@ -10,6 +10,7 @@ import org.codelibs.fess.suggest.index.contents.querylog.QueryLog;
 import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.normalizer.NormalizerChain;
 
+import java.io.IOException;
 import java.util.List;
 
 public class DefaultContentsParserTest extends TestCase {
@@ -49,10 +50,11 @@ public class DefaultContentsParserTest extends TestCase {
         assertEquals("role1", item.getRoles()[1]);
     }
 
-    protected ReadingConverter createDefaultReadingConverter() {
+    protected ReadingConverter createDefaultReadingConverter() throws IOException {
         ReadingConverterChain chain = new ReadingConverterChain();
         chain.addConverter(new KatakanaConverter());
         chain.addConverter(new KatakanaToAlphabetConverter());
+        chain.init();
         return chain;
     }
 

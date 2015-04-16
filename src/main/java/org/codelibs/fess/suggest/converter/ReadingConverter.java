@@ -1,5 +1,6 @@
 package org.codelibs.fess.suggest.converter;
 
+import java.io.IOException;
 import java.util.List;
 
 public interface ReadingConverter {
@@ -7,5 +8,7 @@ public interface ReadingConverter {
         return 10;
     }
 
-    List<String> convert(String text);
+    void init() throws IOException;
+
+    List<String> convert(String text) throws IOException;
 }

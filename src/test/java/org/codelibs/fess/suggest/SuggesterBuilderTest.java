@@ -7,6 +7,9 @@ import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.elasticsearch.common.lang3.StringUtils;
 
+import java.io.IOException;
+import java.util.List;
+
 import static org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner.newConfigs;
 
 public class SuggesterBuilderTest extends TestCase {
@@ -49,7 +52,17 @@ public class SuggesterBuilderTest extends TestCase {
         final String settingsTypeName = "test-settings-type";
         final String id = "BuildTest";
 
-        final ReadingConverter converter = (text) -> null;
+        final ReadingConverter converter = new ReadingConverter() {
+            @Override
+            public void init() throws IOException {
+
+            }
+
+            @Override
+            public List<String> convert(String text) throws IOException {
+                return null;
+            }
+        };
 
         final Normalizer normalizer = (text) -> null;
 

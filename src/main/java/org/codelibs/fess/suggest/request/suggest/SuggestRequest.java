@@ -15,6 +15,7 @@ import org.elasticsearch.index.query.*;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.sort.SortOrder;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -118,60 +119,69 @@ public class SuggestRequest extends Request<SuggestResponse> {
 
         builder.addSort(FieldNames.SCORE, SortOrder.DESC);
 
-        SearchResponse searchResponse = builder.execute().actionGet();
+        SearchResponse searchResponse;
+        try {
+            searchResponse = builder.execute().actionGet();
+        } catch (Exception e) {
+            throw new SuggesterException("Failed to search.", e);
+        }
         if (searchResponse.getFailedShards() > 0) {
             throw new SuggesterException("Search failure. Failed shards num:" + searchResponse.getFailedShards());
         }
         return createResponse(searchResponse);
     }
 
-    protected String buildQueryString(final String q) {
-        final String queryString;
-        if (StringUtils.isBlank(query)) {
-            queryString = FieldNames.ID + ":*";
-        } else {
-            List<String> readingList = new ArrayList<>();
+    protected String buildQueryString(final String q) throws SuggesterException {
+        try {
+            final String queryString;
+            if (StringUtils.isBlank(query)) {
+                queryString = FieldNames.ID + ":*";
+            } else {
+                List<String> readingList = new ArrayList<>();
 
-            StringBuilder buf = new StringBuilder(50);
-            String[] queries = q.replaceAll("　", " ").replaceAll(" +", " ").trim().split(" ");
-            for (int i = 0; i < queries.length; i++) {
-                if (i > 0) {
-                    buf.append(_AND_);
-                }
-                final String fieldName = FieldNames.READING_PREFIX + i;
-
-                final String query;
-                if (normalizer == null) {
-                    query = queries[i];
-                } else {
-                    query = normalizer.normalize(queries[i]);
-                }
-
-                if (readingConverter == null) {
-                    readingList.add(query);
-                } else {
-                    readingList = readingConverter.convert(query);
-                }
-
-                final int readingNum = readingList.size();
-                if (queries.length > 1 && readingNum > 1) {
-                    buf.append('(');
-                }
-                for (int readingCount = 0; readingCount < readingNum; readingCount++) {
-                    if (readingCount > 0) {
-                        buf.append(_OR_);
+                StringBuilder buf = new StringBuilder(50);
+                String[] queries = q.replaceAll("　", " ").replaceAll(" +", " ").trim().split(" ");
+                for (int i = 0; i < queries.length; i++) {
+                    if (i > 0) {
+                        buf.append(_AND_);
                     }
-                    buf.append(fieldName).append(':').append(readingList.get(readingCount)).append('*');
-                }
-                if (queries.length > 1 && readingNum > 1) {
-                    buf.append(')');
-                }
-                readingList.clear();
-            }
-            queryString = buf.toString();
-        }
+                    final String fieldName = FieldNames.READING_PREFIX + i;
 
-        return queryString;
+                    final String query;
+                    if (normalizer == null) {
+                        query = queries[i];
+                    } else {
+                        query = normalizer.normalize(queries[i]);
+                    }
+
+                    if (readingConverter == null) {
+                        readingList.add(query);
+                    } else {
+                        readingList = readingConverter.convert(query);
+                    }
+
+                    final int readingNum = readingList.size();
+                    if (queries.length > 1 && readingNum > 1) {
+                        buf.append('(');
+                    }
+                    for (int readingCount = 0; readingCount < readingNum; readingCount++) {
+                        if (readingCount > 0) {
+                            buf.append(_OR_);
+                        }
+                        buf.append(fieldName).append(':').append(readingList.get(readingCount)).append('*');
+                    }
+                    if (queries.length > 1 && readingNum > 1) {
+                        buf.append(')');
+                    }
+                    readingList.clear();
+                }
+                queryString = buf.toString();
+            }
+
+            return queryString;
+        } catch (IOException e) {
+            throw new SuggesterException("Failed to create queryString.", e);
+        }
     }
 
     protected String buildFilterQuery(String fieldName, List<String> words) {

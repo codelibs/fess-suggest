@@ -1,8 +1,7 @@
 package org.codelibs.fess.suggest.settings;
 
 import org.codelibs.fess.suggest.constants.FieldNames;
-import org.codelibs.fess.suggest.exception.SuggesterException;
-import org.elasticsearch.action.delete.DeleteResponse;
+import org.codelibs.fess.suggest.exception.SuggestSettingsException;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.client.Client;
@@ -118,7 +117,7 @@ public class ArraySettings {
             client.prepareUpdate().setIndex(index).setType(type).setId(id).setDocAsUpsert(true)
                     .setDoc(JsonXContent.contentBuilder().map(source)).setRefresh(true).execute().actionGet();
         } catch (Exception e) {
-            throw new SuggesterException("Failed to add to array.", e);
+            throw new SuggestSettingsException("Failed to add to array.", e);
         }
     }
 
@@ -127,16 +126,15 @@ public class ArraySettings {
             client.prepareDeleteByQuery().setIndices(index).setTypes(type).setQuery(QueryBuilders.termQuery(FieldNames.ARRAY_KEY, key))
                     .execute().actionGet();
         } catch (Exception e) {
-            throw new SuggesterException("Failed to delete all from array.", e);
+            throw new SuggestSettingsException("Failed to delete all from array.", e);
         }
     }
 
     protected void deleteFromArray(final String index, final String type, final String id) {
         try {
-            DeleteResponse response = client.prepareDelete().setIndex(index).setType(type).setId(id).setRefresh(true).execute().actionGet();
-            System.out.println(response);
+            client.prepareDelete().setIndex(index).setType(type).setId(id).setRefresh(true).execute().actionGet();
         } catch (Exception e) {
-            throw new SuggesterException("Failed to delete from array.", e);
+            throw new SuggestSettingsException("Failed to delete from array.", e);
         }
     }
 

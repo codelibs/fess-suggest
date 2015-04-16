@@ -5,7 +5,7 @@ import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.converter.ReadingConverter;
 import org.codelibs.fess.suggest.entity.ElevateWord;
 import org.codelibs.fess.suggest.entity.SuggestItem;
-import org.codelibs.fess.suggest.exception.SuggesterException;
+import org.codelibs.fess.suggest.exception.SuggestIndexException;
 import org.codelibs.fess.suggest.index.contents.ContentsParser;
 import org.codelibs.fess.suggest.index.contents.DefaultContentsParser;
 import org.codelibs.fess.suggest.index.contents.document.DocumentReader;
@@ -66,12 +66,12 @@ public class SuggestIndexer {
     }
 
     //TODO return result
-    public void index(final SuggestItem item) {
+    public void index(final SuggestItem item) throws SuggestIndexException {
         index(new SuggestItem[] { item });
     }
 
     //TODO return result
-    public void index(final SuggestItem[] items) {
+    public void index(final SuggestItem[] items) throws SuggestIndexException {
         SuggestItem[] array = new SuggestItem[items.length];
         int size = 0;
         for (SuggestItem item : items) {
@@ -83,19 +83,19 @@ public class SuggestIndexer {
         suggestWriter.write(client, settings, index, type, newSizeArray);
     }
 
-    public void delete(final String id) {
+    public void delete(final String id) throws SuggestIndexException {
         suggestWriter.delete(client, settings, index, type, id);
     }
 
-    public void deleteByQuery(final String queryString) {
+    public void deleteByQuery(final String queryString) throws SuggestIndexException {
         suggestWriter.deleteByQuery(client, settings, index, type, queryString);
     }
 
-    public void indexFromQueryLog(final QueryLog queryLog) {
+    public void indexFromQueryLog(final QueryLog queryLog) throws SuggestIndexException {
         indexFromQueryLog(new QueryLog[] { queryLog });
     }
 
-    public void indexFromQueryLog(final QueryLog[] queryLogs) {
+    public void indexFromQueryLog(final QueryLog[] queryLogs) throws SuggestIndexException {
         try {
             final List<SuggestItem> items = new ArrayList<>(queryLogs.length * supportedFields.length);
             for (QueryLog queryLog : queryLogs) {
@@ -104,7 +104,7 @@ public class SuggestIndexer {
             }
             index(items.toArray(new SuggestItem[items.size()]));
         } catch (Exception e) {
-            throw new SuggesterException("Failed to index from query_string.", e);
+            throw new SuggestIndexException("Failed to index from query_string.", e);
         }
     }
 
@@ -113,22 +113,31 @@ public class SuggestIndexer {
         indexingFuture.started.set(true);
 
         Runnable r = () -> {
-            int maxNum = 1000;
+            try {
+                int maxNum = 1000;
 
-            List<QueryLog> queryLogs = new ArrayList<>(maxNum);
-            QueryLog queryLog = queryLogReader.read();
-            while (queryLog != null) {
-                if (Thread.currentThread().isInterrupted()) {
-                    break;
+                List<QueryLog> queryLogs = new ArrayList<>(maxNum);
+                QueryLog queryLog = queryLogReader.read();
+                while (queryLog != null) {
+                    if (Thread.currentThread().isInterrupted()) {
+                        break;
+                    }
+                    queryLogs.add(queryLog);
+                    queryLog = queryLogReader.read();
+                    if ((queryLog == null && !queryLogs.isEmpty()) || queryLogs.size() >= maxNum) {
+                        try {
+                            indexFromQueryLog(queryLogs.toArray(new QueryLog[queryLogs.size()]));
+                        } catch (SuggestIndexException e) {
+                            indexingFuture.errors().add(e);
+                        }
+                        queryLogs.clear();
+                    }
                 }
-                queryLogs.add(queryLog);
-                queryLog = queryLogReader.read();
-                if ((queryLog == null && !queryLogs.isEmpty()) || queryLogs.size() >= maxNum) {
-                    indexFromQueryLog(queryLogs.toArray(new QueryLog[queryLogs.size()]));
-                    queryLogs.clear();
-                }
+            } catch (Throwable t) {
+                indexingFuture.errors().add(t);
+            } finally {
+                queryLogReader.close();
             }
-            queryLogReader.close();
         };
 
         if (async) {
@@ -140,14 +149,14 @@ public class SuggestIndexer {
         return indexingFuture;
     }
 
-    public void indexFromDocument(final Map<String, Object>[] documents) {
+    public void indexFromDocument(final Map<String, Object>[] documents) throws SuggestIndexException {
         List<SuggestItem> items = new ArrayList<>(documents.length * supportedFields.length * 100); //TODO
         try {
             for (Map<String, Object> document : documents) {
                 items.addAll(contentsParser.parseDocument(document, supportedFields, readingConverter, normalizer, analyzer));
             }
         } catch (Exception e) {
-            throw new SuggesterException("Failed to index from document", e);
+            throw new SuggestIndexException("Failed to index from document", e);
         }
         index(items.toArray(new SuggestItem[items.size()]));
     }
@@ -157,21 +166,30 @@ public class SuggestIndexer {
 
         @SuppressWarnings("unchecked")
         Runnable r = () -> {
-            indexingFuture.started.set(true);
-            final int maxDocNum = 10;
-            List<Map<String, Object>> docs = new ArrayList<>(maxDocNum);
-            Map<String, Object> doc;
-            while ((doc = documentReader.read()) != null) {
-                if (Thread.currentThread().isInterrupted()) {
-                    break;
+            try {
+                indexingFuture.started.set(true);
+                final int maxDocNum = 10;
+                List<Map<String, Object>> docs = new ArrayList<>(maxDocNum);
+                Map<String, Object> doc;
+                while ((doc = documentReader.read()) != null) {
+                    if (Thread.currentThread().isInterrupted()) {
+                        break;
+                    }
+                    docs.add(doc);
+                    if (docs.size() >= maxDocNum) {
+                        try {
+                            indexFromDocument(docs.toArray(new Map[docs.size()]));
+                        } catch (SuggestIndexException e) {
+                            indexingFuture.errors().add(e);
+                        }
+                        docs.clear();
+                    }
                 }
-                docs.add(doc);
-                if (docs.size() >= maxDocNum) {
-                    indexFromDocument(docs.toArray(new Map[docs.size()]));
-                    docs.clear();
-                }
+            } catch (Throwable t) {
+                indexingFuture.errors().add(t);
+            } finally {
+                documentReader.close();
             }
-            documentReader.close();
         };
 
         if (async) {
@@ -183,30 +201,30 @@ public class SuggestIndexer {
         return indexingFuture;
     }
 
-    public void addNgWord(String ngWord) {
+    public void addNgWord(String ngWord) throws SuggestIndexException {
         deleteByQuery(FieldNames.TEXT + ":*\"" + ngWord + "\"*");
         settings.ngword().add(ngWord);
         ngWords = settings.ngword().get();
     }
 
-    public void indexElevateWord(ElevateWord elevateWord) {
+    public void addElevateWord(ElevateWord elevateWord) throws SuggestIndexException {
         settings.elevateWord().add(elevateWord);
         index(elevateWord.toSuggestItem());
     }
 
-    public void deleteElevateWord(String elevateWord) {
+    public void deleteElevateWord(String elevateWord) throws SuggestIndexException {
         settings.elevateWord().delete(elevateWord);
         delete(SuggestUtil.createSuggestTextId(elevateWord));
     }
 
-    public void restoreElevateWord() {
+    public void restoreElevateWord() throws SuggestIndexException {
         ElevateWord[] elevateWords = settings.elevateWord().get();
         for (ElevateWord elevateWord : elevateWords) {
-            indexElevateWord(elevateWord);
+            addElevateWord(elevateWord);
         }
     }
 
-    public void deleteOldWords(LocalDateTime threshold) {
+    public void deleteOldWords(LocalDateTime threshold) throws SuggestIndexException {
         String query = FieldNames.TIMESTAMP + ":[* TO " + threshold.toString() + "] NOT " + FieldNames.KINDS + ':' + SuggestItem.Kind.USER;
         suggestWriter.deleteByQuery(client, settings, index, type, query);
     }
