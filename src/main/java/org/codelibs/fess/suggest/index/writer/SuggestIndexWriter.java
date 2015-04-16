@@ -1,6 +1,5 @@
 package org.codelibs.fess.suggest.index.writer;
 
-import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
@@ -9,7 +8,6 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.script.ScriptService;
 
-import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -45,16 +43,5 @@ public class SuggestIndexWriter implements SuggestWriter {
             final String queryString) {
         client.prepareDeleteByQuery().setIndices(index).setTypes(type).setQuery(QueryBuilders.queryStringQuery(queryString)).execute()
                 .actionGet();
-    }
-
-    @Override
-    public void deleteOldWords(Client client, SuggestSettings settings, String index, String type, LocalDateTime threshold) {
-        client.prepareDeleteByQuery()
-                .setIndices(index)
-                .setTypes(type)
-                .setQuery(
-                        QueryBuilders.boolQuery().must(QueryBuilders.rangeQuery(FieldNames.TIMESTAMP).lte(threshold))
-                                .mustNot(QueryBuilders.queryStringQuery(FieldNames.KINDS + ':' + SuggestItem.Kind.USER.toString())))
-                .execute().actionGet();
     }
 }

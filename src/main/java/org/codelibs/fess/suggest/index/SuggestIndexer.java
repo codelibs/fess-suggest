@@ -154,10 +154,10 @@ public class SuggestIndexer {
 
     public IndexingFuture indexFromDocument(final DocumentReader documentReader, final boolean async) {
         final IndexingFuture indexingFuture = new IndexingFuture();
-        indexingFuture.started.set(true);
 
         @SuppressWarnings("unchecked")
         Runnable r = () -> {
+            indexingFuture.started.set(true);
             final int maxDocNum = 10;
             List<Map<String, Object>> docs = new ArrayList<>(maxDocNum);
             Map<String, Object> doc;
@@ -207,7 +207,8 @@ public class SuggestIndexer {
     }
 
     public void deleteOldWords(LocalDateTime threshold) {
-        suggestWriter.deleteOldWords(client, settings, index, type, threshold);
+        String query = FieldNames.TIMESTAMP + ":[* TO " + threshold.toString() + "] NOT " + FieldNames.KINDS + ':' + SuggestItem.Kind.USER;
+        suggestWriter.deleteByQuery(client, settings, index, type, query);
     }
 
     public SuggestIndexer setIndex(String index) {
