@@ -5,6 +5,7 @@ import org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.entity.ElevateWord;
 import org.codelibs.fess.suggest.entity.SuggestItem;
+import org.codelibs.fess.suggest.index.SuggestIndexResponse;
 import org.codelibs.fess.suggest.index.SuggestIndexer;
 import org.codelibs.fess.suggest.index.contents.querylog.QueryLog;
 import org.codelibs.fess.suggest.index.contents.querylog.QueryLogReader;
@@ -81,7 +82,11 @@ public class SuggesterTest extends TestCase {
         SuggestSettings settings = suggester.settings();
         String field = settings.array().get(SuggestSettings.DefaultKeys.SUPPORTED_FIELDS)[0];
 
-        suggester.indexer().indexFromQueryLog(new QueryLog(field + ":検索", null));
+        SuggestIndexResponse indexResponse = suggester.indexer().indexFromQueryLog(new QueryLog(field + ":検索", null));
+        assertEquals(1, indexResponse.getNumberOfInputDocs());
+        assertEquals(1, indexResponse.getNumberOfSuggestDocs());
+        assertFalse(indexResponse.hasError());
+
         suggester.refresh();
 
         SuggestResponse responseKanji = suggester.suggest().setQuery("検索").addRole("role1").setSuggestDetail(true).execute();
