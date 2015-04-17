@@ -17,7 +17,7 @@ import java.util.Map;
 
 public class DefaultContentsParser implements ContentsParser {
     @Override
-    public SuggestItem parseSearchWords(final String[] words, final String[] fields, final String[] tags, final String roles,
+    public SuggestItem parseSearchWords(final String[] words, final String[] fields, final String[] tags, final String[] roles,
             final ReadingConverter readingConverter, final Normalizer normalizer) throws SuggesterException {
         try {
             String[][] readings = new String[words.length][];
@@ -27,9 +27,7 @@ public class DefaultContentsParser implements ContentsParser {
                 readings[j] = l.toArray(new String[l.size()]);
             }
 
-            return new SuggestItem(words, readings, 1L, -1, null, //TODO label
-                    null, //TODO role
-                    SuggestItem.Kind.QUERY);
+            return new SuggestItem(words, readings, 1L, -1, tags, roles, SuggestItem.Kind.QUERY);
         } catch (IOException e) {
             throw new SuggesterException("Failed to SuggestItem from search words.", e);
         }
