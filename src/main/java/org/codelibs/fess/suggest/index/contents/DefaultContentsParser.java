@@ -17,8 +17,8 @@ import java.util.Map;
 
 public class DefaultContentsParser implements ContentsParser {
     @Override
-    public SuggestItem parseSearchWords(final String[] words, final String[] fields, final ReadingConverter readingConverter,
-            final Normalizer normalizer) throws SuggesterException {
+    public SuggestItem parseSearchWords(final String[] words, final String[] fields, final String[] tags, final String roles,
+            final ReadingConverter readingConverter, final Normalizer normalizer) throws SuggesterException {
         try {
             String[][] readings = new String[words.length][];
             for (int j = 0; j < words.length; j++) {

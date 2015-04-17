@@ -47,7 +47,7 @@ public class DefaultContentsParserTest extends TestCase {
         SuggestItem item = items.get(0);
         assertEquals("検索エンジン", item.getText());
         assertEquals("tag1", item.getTags()[0]);
-        assertEquals("role1", item.getRoles()[1]);
+        assertEquals("role1", item.getRoles()[0]);
     }
 
     protected ReadingConverter createDefaultReadingConverter() throws IOException {

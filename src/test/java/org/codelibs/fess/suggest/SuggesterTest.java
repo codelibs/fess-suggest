@@ -2,6 +2,7 @@ package org.codelibs.fess.suggest;
 
 import junit.framework.TestCase;
 import org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner;
+import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.entity.ElevateWord;
 import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.fess.suggest.index.SuggestIndexer;
@@ -66,7 +67,7 @@ public class SuggesterTest extends TestCase {
         suggester.indexer().index(items);
         suggester.refresh();
 
-        SuggestResponse response = suggester.suggest().setQuery("kensaku").setSuggestDetail(true).execute();
+        SuggestResponse response = suggester.suggest().setQuery("kensaku").addRole("role1").setSuggestDetail(true).execute();
         assertEquals(1, response.getNum());
         assertEquals("検索 エンジン", response.getWords().get(0));
 
@@ -83,7 +84,7 @@ public class SuggesterTest extends TestCase {
         suggester.indexer().indexFromQueryLog(new QueryLog(field + ":検索", null));
         suggester.refresh();
 
-        SuggestResponse responseKanji = suggester.suggest().setQuery("検索").setSuggestDetail(true).execute();
+        SuggestResponse responseKanji = suggester.suggest().setQuery("検索").addRole("role1").setSuggestDetail(true).execute();
         assertEquals(1, responseKanji.getNum());
         assertEquals(1, responseKanji.getTotal());
         assertEquals("検索", responseKanji.getWords().get(0));
@@ -259,21 +260,21 @@ public class SuggesterTest extends TestCase {
         readings[0] = new String[] { "kensaku", "fuga" };
         readings[1] = new String[] { "enjin", "fuga" };
         String[] tags = new String[] { "tag1", "tag2" };
-        String[] roles = new String[] { "role1", "role2", "role3" };
+        String[] roles = new String[] { SuggestConstants.DEFAULT_ROLE, "role1", "role2", "role3" };
         queryItems[0] = new SuggestItem(new String[] { "検索", "エンジン" }, readings, 1, -1, tags, roles, SuggestItem.Kind.DOCUMENT);
 
         String[][] readings2 = new String[2][];
         readings2[0] = new String[] { "zenbun", "fuga" };
         readings2[1] = new String[] { "kensaku", "fuga" };
         String[] tags2 = new String[] { "tag3" };
-        String[] roles2 = new String[] { "role1", "role2", "role3", "role4" };
+        String[] roles2 = new String[] { SuggestConstants.DEFAULT_ROLE, "role1", "role2", "role3", "role4" };
         queryItems[1] = new SuggestItem(new String[] { "全文", "検索" }, readings2, 1, -1, tags2, roles2, SuggestItem.Kind.DOCUMENT);
 
         String[][] readings2Query = new String[2][];
         readings2Query[0] = new String[] { "zenbun", "fuga" };
         readings2Query[1] = new String[] { "kensaku", "fuga" };
         String[] tags2Query = new String[] { "tag3" };
-        String[] roles2Query = new String[] { "role1", "role2", "role3", "role4" };
+        String[] roles2Query = new String[] { SuggestConstants.DEFAULT_ROLE, "role1", "role2", "role3", "role4" };
         queryItems[2] =
                 new SuggestItem(new String[] { "全文", "検索" }, readings2Query, 1, -1, tags2Query, roles2Query, SuggestItem.Kind.QUERY);
 

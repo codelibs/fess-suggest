@@ -55,9 +55,12 @@ public class SuggestItem implements Serializable {
         if (roles == null) {
             this.roles = new String[] { SuggestConstants.DEFAULT_ROLE };
         } else {
-            this.roles = new String[roles.length + 1];
-            this.roles[0] = SuggestConstants.DEFAULT_ROLE;
-            System.arraycopy(roles, 0, this.roles, 1, roles.length);
+            if (roles.length == 0) {
+                this.roles = new String[] { SuggestConstants.DEFAULT_ROLE };
+            } else {
+                this.roles = new String[roles.length];
+                System.arraycopy(roles, 0, this.roles, 0, roles.length);
+            }
         }
 
         this.kind = kind;
