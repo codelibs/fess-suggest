@@ -162,7 +162,7 @@ public class SuggestSettings {
     public void set(String key, Object value) {
         try {
             client.prepareUpdate().setIndex(settingsIndexName).setType(settingsTypeName).setId(settingsId).setDocAsUpsert(true)
-                    .setDoc(key, value).setRefresh(true).execute().actionGet();
+                    .setDoc(key, value).setRefresh(true).setRetryOnConflict(5).execute().actionGet();
         } catch (Exception e) {
             throw new SuggestSettingsException("Failed to update settings.", e);
         }
@@ -171,7 +171,7 @@ public class SuggestSettings {
     public void set(Map<String, Object> map) {
         try {
             client.prepareUpdate().setIndex(settingsIndexName).setType(settingsTypeName).setId(settingsId).setDocAsUpsert(true)
-                    .setRefresh(true).setDoc(JsonXContent.contentBuilder().map(map)).execute().actionGet();
+                    .setRefresh(true).setDoc(JsonXContent.contentBuilder().map(map)).setRetryOnConflict(5).execute().actionGet();
         } catch (Exception e) {
             throw new SuggestSettingsException("Failed to update settings.", e);
         }

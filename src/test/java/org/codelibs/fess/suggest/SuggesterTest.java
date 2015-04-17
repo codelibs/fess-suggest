@@ -7,15 +7,20 @@ import org.codelibs.fess.suggest.entity.ElevateWord;
 import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.fess.suggest.index.SuggestIndexResponse;
 import org.codelibs.fess.suggest.index.SuggestIndexer;
+import org.codelibs.fess.suggest.index.contents.document.ESSourceReader;
 import org.codelibs.fess.suggest.index.contents.querylog.QueryLog;
 import org.codelibs.fess.suggest.index.contents.querylog.QueryLogReader;
 import org.codelibs.fess.suggest.request.suggest.SuggestResponse;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
+import org.elasticsearch.action.bulk.BulkRequestBuilder;
+import org.elasticsearch.action.index.IndexRequestBuilder;
+import org.elasticsearch.client.Client;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner.newConfigs;
@@ -171,6 +176,41 @@ public class SuggesterTest extends TestCase {
         assertEquals(1, response2.getTotal());
         assertEquals("美味しい", response2.getWords().get(0));
     }
+
+    public void test_indexFromDocumentReader() throws Exception {
+        Client client = runner.client();
+        int num = 10000;
+        String indexName = "test";
+        String typeName = "test";
+
+        BulkRequestBuilder bulkRequestBuilder = client.prepareBulk();
+        for (int i = 0; i < num; i++) {
+            Map<String, Object> source = Collections.singletonMap("content", "test" + i);
+            IndexRequestBuilder indexRequestBuilder = new IndexRequestBuilder(client);
+            indexRequestBuilder.setIndex(indexName).setType(typeName).setId(String.valueOf(i)).setCreate(true).setSource(source);
+            bulkRequestBuilder.add(indexRequestBuilder);
+        }
+        bulkRequestBuilder.execute().actionGet();
+        runner.refresh();
+
+        CountDownLatch latch = new CountDownLatch(1);
+        AtomicInteger numObInputDoc = new AtomicInteger(0);
+        ESSourceReader reader = new ESSourceReader(client, suggester.settings(), indexName, typeName);
+
+        SuggestIndexer.IndexingFuture future = suggester.indexer().indexFromDocument(reader, true).done(
+            response -> {
+                numObInputDoc.set(response.getNumberOfInputDocs());
+                latch.countDown();
+            });
+        assertFalse(future.isDone());
+        latch.await();
+        assertTrue(future.isDone());
+        assertEquals(num, numObInputDoc.get());
+
+        SuggestResponse response = suggester.suggest().setQuery("test").setSuggestDetail(true).execute();
+        assertEquals(1, response.getNum());
+    }
+
 
     public void test_indexElevateWord() throws Exception {
         ElevateWord elevateWord = new ElevateWord("test", 2.0f, Collections.singletonList("test"));

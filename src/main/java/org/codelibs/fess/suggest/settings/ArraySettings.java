@@ -78,7 +78,10 @@ public class ArraySettings {
             String scrollId = response.getScrollId();
             int count = 0;
             SearchResponse searchResponse;
-            while ((searchResponse = client.prepareSearchScroll(scrollId).execute().actionGet()).getHits().getHits().length > 0) {
+            while ((searchResponse = client.prepareSearchScroll(scrollId).setScroll(TimeValue.timeValueMinutes(10)).execute().actionGet())
+                    .getHits().getHits().length > 0) {
+                scrollId = searchResponse.getScrollId();
+                System.out.println(scrollId);
                 SearchHit[] hits = searchResponse.getHits().getHits();
                 for (SearchHit hit : hits) {
                     array[count++] = hit.getSource();

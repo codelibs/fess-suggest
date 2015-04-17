@@ -354,13 +354,14 @@ public class SuggestIndexer {
             return response;
         }
 
-        public synchronized void done(Listener listener) {
+        public synchronized IndexingFuture done(Listener listener) {
             if (needExecuteDone.get()) {
                 listener.onResponse(getResponse());
             } else {
                 this.listener = listener;
                 needExecuteDone.set(true);
             }
+            return this;
         }
 
         protected synchronized void executeDone(SuggestIndexResponse response) {
