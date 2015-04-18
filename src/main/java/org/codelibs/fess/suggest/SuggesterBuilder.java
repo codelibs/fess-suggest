@@ -121,7 +121,7 @@ public class SuggesterBuilder {
         NormalizerChain normalizerChain = new NormalizerChain();
         normalizerChain.add(new FullWidthToHalfWidthAlphabetNormalizer());
         normalizerChain.add(new ICUNormalizer("Any-Lower"));
-        return new NormalizerChain();
+        return normalizerChain;
     }
 
     protected Analyzer createDefaultAnalyzer() throws SuggesterException {
