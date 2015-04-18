@@ -197,11 +197,10 @@ public class SuggesterTest extends TestCase {
         AtomicInteger numObInputDoc = new AtomicInteger(0);
         ESSourceReader reader = new ESSourceReader(client, suggester.settings(), indexName, typeName);
 
-        SuggestIndexer.IndexingFuture future = suggester.indexer().indexFromDocument(reader, true).done(
-            response -> {
-                numObInputDoc.set(response.getNumberOfInputDocs());
-                latch.countDown();
-            });
+        SuggestIndexer.IndexingFuture future = suggester.indexer().indexFromDocument(reader, true).done(response -> {
+            numObInputDoc.set(response.getNumberOfInputDocs());
+            latch.countDown();
+        });
         assertFalse(future.isDone());
         latch.await();
         assertTrue(future.isDone());
@@ -210,7 +209,6 @@ public class SuggesterTest extends TestCase {
         SuggestResponse response = suggester.suggest().setQuery("test").setSuggestDetail(true).execute();
         assertEquals(1, response.getNum());
     }
-
 
     public void test_indexElevateWord() throws Exception {
         ElevateWord elevateWord = new ElevateWord("test", 2.0f, Collections.singletonList("test"));

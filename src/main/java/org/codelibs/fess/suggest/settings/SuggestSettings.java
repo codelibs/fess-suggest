@@ -24,7 +24,6 @@ public class SuggestSettings {
 
     protected final String ngWordIndexName;
     protected final String elevateWordIndexName;
-    protected final String arraySettingsIndexName;
 
     public SuggestSettings(final Client client, final String settingsId, final Map<String, Object> initialSettings,
             final String settingsIndexName, final String settingsTypeName) {
@@ -36,7 +35,6 @@ public class SuggestSettings {
 
         this.ngWordIndexName = settingsIndexName + "-ngword";
         this.elevateWordIndexName = settingsIndexName + "-elevateword";
-        this.arraySettingsIndexName = settingsIndexName + "-array";
     }
 
     public void init() {

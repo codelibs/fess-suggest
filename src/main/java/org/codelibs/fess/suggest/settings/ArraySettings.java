@@ -6,11 +6,13 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.indices.IndexMissingException;
 import org.elasticsearch.search.SearchHit;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -25,6 +27,7 @@ public class ArraySettings {
         this.client = client;
         this.arraySettingsIndexName = createArraySettingsIndexName(settingsIndexName);
         this.settingsId = settingsId;
+        createMappingIfEmpty(arraySettingsIndexName, settingsId, client);
     }
 
     public String[] get(String key) {
@@ -70,7 +73,7 @@ public class ArraySettings {
         try {
             SearchResponse response =
                     client.prepareSearch().setIndices(index).setTypes(type).setScroll(TimeValue.timeValueSeconds(10))
-                            .setSearchType(SearchType.SCAN).setQuery(QueryBuilders.matchQuery(FieldNames.ARRAY_KEY, key)).setSize(1000)
+                            .setSearchType(SearchType.SCAN).setQuery(QueryBuilders.termQuery(FieldNames.ARRAY_KEY, key)).setSize(1000)
                             .execute().actionGet();
 
             Map<String, Object>[] array = new Map[(int) response.getHits().getTotalHits()];
@@ -138,6 +141,30 @@ public class ArraySettings {
             client.prepareDelete().setIndex(index).setType(type).setId(id).setRefresh(true).execute().actionGet();
         } catch (Exception e) {
             throw new SuggestSettingsException("Failed to delete from array.", e);
+        }
+    }
+
+    protected void createMappingIfEmpty(String index, String type, Client client) {
+        try {
+            boolean empty;
+            try {
+                empty = client.admin().indices().prepareGetMappings(index).setTypes(type).get().getMappings().isEmpty();
+            } catch (IndexMissingException e) {
+                empty = true;
+                client.admin().indices().prepareCreate(index).execute().actionGet();
+            }
+            if (empty) {
+                client.admin()
+                        .indices()
+                        .preparePutMapping(index)
+                        .setType(type)
+                        .setSource(
+                                XContentFactory.jsonBuilder().startObject().startObject(settingsId).startObject("properties")
+                                        .startObject(FieldNames.ARRAY_KEY).field("type", "string").field("index", "not_analyzed")
+                                        .endObject().endObject().endObject().endObject()).execute().actionGet();
+            }
+        } catch (IOException e) {
+            throw new SuggestSettingsException("Failed to create mappings.");
         }
     }
 
