@@ -12,6 +12,8 @@ import org.codelibs.fess.suggest.converter.KatakanaToAlphabetConverter;
 import org.codelibs.fess.suggest.converter.ReadingConverter;
 import org.codelibs.fess.suggest.converter.ReadingConverterChain;
 import org.codelibs.fess.suggest.exception.SuggesterException;
+import org.codelibs.fess.suggest.normalizer.FullWidthToHalfWidthAlphabetNormalizer;
+import org.codelibs.fess.suggest.normalizer.ICUNormalizer;
 import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.normalizer.NormalizerChain;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
@@ -116,7 +118,9 @@ public class SuggesterBuilder {
     }
 
     protected Normalizer createDefaultNormalizer() {
-        //TODO
+        NormalizerChain normalizerChain = new NormalizerChain();
+        normalizerChain.add(new FullWidthToHalfWidthAlphabetNormalizer());
+        normalizerChain.add(new ICUNormalizer("Any-Lower"));
         return new NormalizerChain();
     }
 
