@@ -16,7 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ContentsGetter {
+public class ContentsCreator {
     HttpClient httpClient = HttpClientBuilder.create().build();
 
     public void create() {
@@ -53,6 +53,8 @@ public class ContentsGetter {
 
     protected List<String> getUrls() {
         List<String> list = new ArrayList<>();
+        list.add("http://fess.sourceforge.jp/ja/");
+        list.add("http://ja.wikipedia.org/wiki/SHIROBAKO");
         list.add("http://wikiwiki.jp/kancolle/?%BB%B0%B7%A8%B2%FE");
         return list;
     }

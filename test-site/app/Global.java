@@ -1,4 +1,5 @@
 import components.ComponentsUtil;
+import controllers.Suggest;
 import org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner;
 import org.codelibs.fess.suggest.Suggester;
 import play.Application;
@@ -10,9 +11,15 @@ import static org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner.newCo
 public class Global extends GlobalSettings {
     @Override
     public void onStart(Application var1) {
-        Logger.info("Start!!!");
+        Logger.info("Start Elasticsearch cluster.");
         esRun();
+        Logger.info("Setup suggest... wait 1min");
         createComponents();
+        Logger.info("Create content index.");
+        Suggest.createContent();
+        Logger.info("Create suggest index.");
+        Suggest.createSuggestFromContent();
+        Logger.info("Finished setup suggest.");
     }
 
     @Override

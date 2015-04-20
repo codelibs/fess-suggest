@@ -4,9 +4,9 @@
 
 # Home page
 # GET     /                           controllers.Application.index()
-GET        /suggest/get         controllers.Suggest.get()
-GET     /suggest/create/content    controllers.Suggest.createContent()
-GET     /suggest/create/suggest/content    controllers.Suggest.createSuggestFromContent()
+GET         /suggest/get                        controllers.Suggest.get()
+GET         /suggest/create/content             controllers.Suggest.createContent()
+GET         /suggest/create/suggest/content     controllers.Suggest.createSuggestFromContent()
 
 
 GET        /                    controllers.Assets.at(path="/public", s="index.html")

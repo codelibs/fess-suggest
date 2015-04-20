@@ -1,7 +1,8 @@
 package controllers;
 
 import components.ComponentsUtil;
-import models.ContentsGetter;
+import models.ContentsCreator;
+import models.SuggestIndex;
 import org.codelibs.fess.suggest.Suggester;
 import org.codelibs.fess.suggest.index.contents.document.DocumentReader;
 import org.codelibs.fess.suggest.index.contents.document.ESSourceReader;
@@ -19,9 +20,8 @@ public class Suggest extends Controller {
         String[] callback = params.get("callback");
         String[] query = params.get("query");
         try {
-            SuggestResponse response = ComponentsUtil.suggester.suggest()
-                .setQuery(query[0])
-                .execute();
+            SuggestIndex suggestIndex = new SuggestIndex();
+            SuggestResponse response = suggestIndex.suggest(query[0]);
 
             XContentBuilder builder  = JsonXContent.contentBuilder()
                 .startObject()
@@ -62,7 +62,7 @@ public class Suggest extends Controller {
 
 
     public static Result createContent() {
-        ContentsGetter getter = new ContentsGetter();
+        ContentsCreator getter = new ContentsCreator();
         getter.create();
         return ok("Finished to create content index;");
     }
