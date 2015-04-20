@@ -1,0 +1,47 @@
+<html>
+<meta charset="utf-8">
+<meta http-equiv="content-style-type" content="text/css"/>
+<meta http-equiv="content-script-type" content="text/javascript"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>fess-suggest-test</title>
+<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css"/>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js"></script>
+<script src="/javascripts/suggestor.js"></script>
+<div class="container">
+    <div class="row" style="margin-top:100px;">
+        <div class="span1" style="text-align:center;">
+            <div class="input">
+                <input type="text" name="query" maxlength="1000" size="50" value="" id="contentQuery" class="query"
+                       autocomplete="off">
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    $('#contentQuery').suggestor({
+        ajaxinfo: {
+            url: 'http://localhost:9000/suggest/get',
+            fn: 'content',
+            num: 10
+        },
+        boxCssInfo: {
+            border: '1px solid rgba(82, 168, 236, 0.5)',
+            '-webkit-box-shadow': '0 1px 1px 0px rgba(0, 0, 0, 0.1), 0 3px 2px 0px rgba(82, 168, 236, 0.2)',
+            '-moz-box-shadow': '0 1px 1px 0px rgba(0, 0, 0, 0.1), 0 3px 2px 0px rgba(82, 168, 236, 0.2)',
+            'box-shadow': '0 1px 1px 0px rgba(0, 0, 0, 0.1), 0 3px 2px 0px rgba(82, 168, 236, 0.2)',
+            'background-color': '#fff',
+            'z-index': '10000'
+        },
+        listSelectedCssInfo: {
+            'background-color': 'rgba(82, 168, 236, 0.1)'
+        },
+        listDeselectedCssInfo: {
+            'background-color': '#ffffff'
+        },
+        minturm: 1,
+        adjustWidthVal: 11,
+        searchForm: $('#searchForm')
+    });
+</script>
+</html>
