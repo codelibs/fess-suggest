@@ -194,13 +194,14 @@ public class SuggestIndexer {
                         indexingFuture.started.set(true);
                         final int maxDocNum = 10;
                         List<Map<String, Object>> docs = new ArrayList<>(maxDocNum);
-                        Map<String, Object> doc;
-                        while ((doc = documentReader.read()) != null) {
+                        Map<String, Object> doc = documentReader.read();
+                        while (doc != null) {
                             if (Thread.currentThread().isInterrupted()) {
                                 break;
                             }
                             docs.add(doc);
-                            if (docs.size() >= maxDocNum) {
+                            doc = documentReader.read();
+                            if (doc == null || docs.size() >= maxDocNum) {
                                 try {
                                     SuggestIndexResponse res = indexFromDocument(docs.toArray(new Map[docs.size()]));
                                     numberOfSuggestDocs += res.getNumberOfSuggestDocs();
