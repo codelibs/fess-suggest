@@ -1,14 +1,13 @@
 package org.codelibs.fess.suggest.index.writer;
 
 import org.codelibs.fess.suggest.entity.SuggestItem;
-import org.codelibs.fess.suggest.exception.SuggestIndexException;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.elasticsearch.client.Client;
 
 public interface SuggestWriter {
-    void write(Client client, SuggestSettings settings, String index, String type, SuggestItem[] items) throws SuggestIndexException;
+    SuggestWriterResult write(Client client, SuggestSettings settings, String index, String type, SuggestItem[] items);
 
-    void delete(Client client, SuggestSettings settings, String index, String type, String id) throws SuggestIndexException;
+    SuggestWriterResult delete(Client client, SuggestSettings settings, String index, String type, String id);
 
-    void deleteByQuery(Client client, SuggestSettings settings, String index, String type, String queryString) throws SuggestIndexException;
+    SuggestWriterResult deleteByQuery(Client client, SuggestSettings settings, String index, String type, String queryString);
 }

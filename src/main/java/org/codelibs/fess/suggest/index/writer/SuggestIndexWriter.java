@@ -3,7 +3,9 @@ package org.codelibs.fess.suggest.index.writer;
 import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.fess.suggest.exception.SuggestIndexException;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
+import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
+import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.update.UpdateRequestBuilder;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -14,8 +16,8 @@ import java.util.Set;
 
 public class SuggestIndexWriter implements SuggestWriter {
     @Override
-    public void write(final Client client, final SuggestSettings settings, final String index, final String type, final SuggestItem[] items)
-            throws SuggestIndexException {
+    public SuggestWriterResult write(final Client client, final SuggestSettings settings, final String index, final String type,
+            final SuggestItem[] items) {
         Set<String> upsertedIdSet = new HashSet<>();
         BulkRequestBuilder bulkRequestBuilder = client.prepareBulk();
         for (SuggestItem item : items) {
@@ -31,20 +33,41 @@ public class SuggestIndexWriter implements SuggestWriter {
             bulkRequestBuilder.add(updateRequestBuilder);
         }
 
-        //TODO return WriteResult?
-        bulkRequestBuilder.execute().actionGet();
+        BulkResponse response = bulkRequestBuilder.execute().actionGet();
+        SuggestWriterResult result = new SuggestWriterResult();
+        if (response.hasFailures()) {
+            for (BulkItemResponse bulkItemResponses : response.getItems()) {
+                if (bulkItemResponses.isFailed()) {
+                    result.addFailure(new SuggestIndexException("Bulk failure. " + bulkItemResponses.getFailureMessage()));
+                }
+            }
+        }
+
+        return result;
     }
 
     @Override
-    public void delete(final Client client, final SuggestSettings settings, final String index, final String type, final String id)
-            throws SuggestIndexException {
-        client.prepareDelete().setIndex(index).setType(type).setId(id).execute().actionGet();
+    public SuggestWriterResult delete(final Client client, final SuggestSettings settings, final String index, final String type,
+            final String id) {
+        SuggestWriterResult result = new SuggestWriterResult();
+        try {
+            client.prepareDelete().setIndex(index).setType(type).setId(id).execute().actionGet();
+        } catch (Exception e) {
+            result.addFailure(e);
+        }
+        return result;
     }
 
     @Override
-    public void deleteByQuery(final Client client, final SuggestSettings settings, final String index, final String type,
-            final String queryString) throws SuggestIndexException {
-        client.prepareDeleteByQuery().setIndices(index).setTypes(type).setQuery(QueryBuilders.queryStringQuery(queryString)).execute()
-                .actionGet();
+    public SuggestWriterResult deleteByQuery(final Client client, final SuggestSettings settings, final String index, final String type,
+            final String queryString) {
+        SuggestWriterResult result = new SuggestWriterResult();
+        try {
+            client.prepareDeleteByQuery().setIndices(index).setTypes(type).setQuery(QueryBuilders.queryStringQuery(queryString)).execute()
+                    .actionGet();
+        } catch (Exception e) {
+            result.addFailure(e);
+        }
+        return result;
     }
 }

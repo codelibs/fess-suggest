@@ -13,6 +13,7 @@ import org.codelibs.fess.suggest.index.contents.querylog.QueryLog;
 import org.codelibs.fess.suggest.index.contents.querylog.QueryLogReader;
 import org.codelibs.fess.suggest.index.writer.SuggestIndexWriter;
 import org.codelibs.fess.suggest.index.writer.SuggestWriter;
+import org.codelibs.fess.suggest.index.writer.SuggestWriterResult;
 import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.codelibs.fess.suggest.util.SuggestUtil;
@@ -82,20 +83,20 @@ public class SuggestIndexer {
         SuggestItem[] newSizeArray = Arrays.copyOf(array, size);
 
         final long start = System.currentTimeMillis();
-        suggestWriter.write(client, settings, index, type, newSizeArray);
-        return new SuggestIndexResponse(items.length, items.length, null, System.currentTimeMillis() - start);
+        SuggestWriterResult result = suggestWriter.write(client, settings, index, type, newSizeArray);
+        return new SuggestIndexResponse(items.length, items.length, result.getFailures(), System.currentTimeMillis() - start);
     }
 
     public SuggestDeleteResponse delete(final String id) throws SuggestIndexException {
         final long start = System.currentTimeMillis();
-        suggestWriter.delete(client, settings, index, type, id);
-        return new SuggestDeleteResponse(null, System.currentTimeMillis() - start);
+        SuggestWriterResult result = suggestWriter.delete(client, settings, index, type, id);
+        return new SuggestDeleteResponse(result.getFailures(), System.currentTimeMillis() - start);
     }
 
     public SuggestDeleteResponse deleteByQuery(final String queryString) throws SuggestIndexException {
         final long start = System.currentTimeMillis();
-        suggestWriter.deleteByQuery(client, settings, index, type, queryString);
-        return new SuggestDeleteResponse(null, System.currentTimeMillis() - start);
+        SuggestWriterResult result = suggestWriter.deleteByQuery(client, settings, index, type, queryString);
+        return new SuggestDeleteResponse(result.getFailures(), System.currentTimeMillis() - start);
     }
 
     public SuggestIndexResponse indexFromQueryLog(final QueryLog queryLog) throws SuggestIndexException {
