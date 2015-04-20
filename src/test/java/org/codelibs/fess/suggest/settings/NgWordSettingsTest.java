@@ -1,19 +1,25 @@
 package org.codelibs.fess.suggest.settings;
 
-import junit.framework.TestCase;
 import org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner;
+import org.codelibs.fess.suggest.Suggester;
+import org.elasticsearch.indices.IndexMissingException;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import static org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner.newConfigs;
+import static org.junit.Assert.*;
 
-public class NgWordSettingsTest extends TestCase {
+public class NgWordSettingsTest {
     String id = "ngwordSettingsTest";
 
-    ElasticsearchClusterRunner runner;
+    static SuggestSettings settings;
 
-    SuggestSettings settings;
+    static ElasticsearchClusterRunner runner;
 
-    @Override
-    public void setUp() throws Exception {
+    @BeforeClass
+    public static void beforeClass() throws Exception {
         runner = new ElasticsearchClusterRunner();
         runner.onBuild((number, settingsBuilder) -> {
             settingsBuilder.put("http.cors.enabled", true);
@@ -22,21 +28,31 @@ public class NgWordSettingsTest extends TestCase {
             settingsBuilder.put("script.groovy.sandbox.enabled", true);
         }).build(newConfigs().ramIndexStore().numOfNode(1));
         runner.ensureYellow();
-
-        settings = SuggestSettings.builder().build(runner.client(), id);
-        settings.init();
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @AfterClass
+    public static void afterClass() throws Exception {
         runner.close();
         runner.clean();
     }
 
+    @Before
+    public void before() throws Exception {
+        try {
+            runner.admin().indices().prepareDelete("_all").execute().actionGet();
+        } catch (IndexMissingException ignore) {
+
+        }
+        runner.refresh();
+        settings = Suggester.builder().build(runner.client(), id).settings();
+    }
+
+    @Test
     public void test_ngWordIndexName() {
         assertEquals(".suggest-ngword", settings.ngword().arraySettings.arraySettingsIndexName);
     }
 
+    @Test
     public void test_validation() {
         try {
             settings.ngword().add("aaaa");
@@ -60,6 +76,7 @@ public class NgWordSettingsTest extends TestCase {
         }
     }
 
+    @Test
     public void test_setAndGetAsArray() {
         String value1 = "a";
         String value2 = "b";
@@ -73,6 +90,7 @@ public class NgWordSettingsTest extends TestCase {
         assertEquals(value3, settings.ngword().get()[2]);
     }
 
+    @Test
     public void test_delete() {
         String value1 = "a";
         String value2 = "b";

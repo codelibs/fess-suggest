@@ -1,25 +1,30 @@
 package org.codelibs.fess.suggest.index.contents.document;
 
-import junit.framework.TestCase;
 import org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner;
 import org.codelibs.fess.suggest.Suggester;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.indices.IndexMissingException;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner.newConfigs;
+import static org.junit.Assert.*;
 
-public class ESSourceReaderTest extends TestCase {
-    Suggester suggester;
+public class ESSourceReaderTest {
+    static Suggester suggester;
 
-    ElasticsearchClusterRunner runner;
+    static ElasticsearchClusterRunner runner;
 
-    @Override
-    public void setUp() throws Exception {
+    @BeforeClass
+    public static void beforeClass() throws Exception {
         runner = new ElasticsearchClusterRunner();
         runner.onBuild((number, settingsBuilder) -> {
             settingsBuilder.put("http.cors.enabled", true);
@@ -28,16 +33,26 @@ public class ESSourceReaderTest extends TestCase {
             settingsBuilder.put("script.groovy.sandbox.enabled", true);
         }).build(newConfigs().ramIndexStore().numOfNode(1));
         runner.ensureYellow();
-
-        suggester = Suggester.builder().build(runner.client(), "SuggesterTest");
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @AfterClass
+    public static void afterClass() throws Exception {
         runner.close();
         runner.clean();
     }
 
+    @Before
+    public void before() throws Exception {
+        try {
+            runner.admin().indices().prepareDelete("_all").execute().actionGet();
+        } catch (IndexMissingException ignore) {
+
+        }
+        runner.refresh();
+        suggester = Suggester.builder().build(runner.client(), "SuggesterTest");
+    }
+
+    @Test
     public void test_Read() throws Exception {
         String indexName = "test-index";
         String typeName = "test-type";
@@ -60,6 +75,7 @@ public class ESSourceReaderTest extends TestCase {
         assertEquals(num, valueSet.size());
     }
 
+    @Test
     public void test_ReadMultiThread() throws Exception {
         int threadNum = new Random().nextInt(20) + 1;
         System.out.println("Thread num:" + threadNum);
@@ -122,6 +138,7 @@ public class ESSourceReaderTest extends TestCase {
         assertEquals(num, valueSet2.size());
     }
 
+    @Test
     public void test_ReadMultiThreadOtherInstance() throws Exception {
         int threadNum = new Random().nextInt(20) + 1;
         System.out.println("Thread num:" + threadNum);

@@ -1,6 +1,5 @@
 package org.codelibs.fess.suggest;
 
-import junit.framework.TestCase;
 import org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.entity.ElevateWord;
@@ -15,6 +14,11 @@ import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.indices.IndexMissingException;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -24,14 +28,15 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner.newConfigs;
+import static org.junit.Assert.*;
 
-public class SuggesterTest extends TestCase {
-    Suggester suggester;
+public class SuggesterTest {
+    static Suggester suggester;
 
-    ElasticsearchClusterRunner runner;
+    static ElasticsearchClusterRunner runner;
 
-    @Override
-    public void setUp() throws Exception {
+    @BeforeClass
+    public static void beforeClass() throws Exception {
         runner = new ElasticsearchClusterRunner();
         runner.onBuild((number, settingsBuilder) -> {
             settingsBuilder.put("http.cors.enabled", true);
@@ -40,16 +45,26 @@ public class SuggesterTest extends TestCase {
             settingsBuilder.put("script.groovy.sandbox.enabled", true);
         }).build(newConfigs().ramIndexStore().numOfNode(1));
         runner.ensureYellow();
-
-        suggester = Suggester.builder().build(runner.client(), "SuggesterTest");
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @AfterClass
+    public static void afterClass() throws Exception {
         runner.close();
         runner.clean();
     }
 
+    @Before
+    public void before() throws Exception {
+        try {
+            runner.admin().indices().prepareDelete("_all").execute().actionGet();
+        } catch (IndexMissingException ignore) {
+
+        }
+        runner.refresh();
+        suggester = Suggester.builder().build(runner.client(), "SuggesterTest");
+    }
+
+    @Test
     public void test_indexAndSuggest() throws Exception {
         SuggestItem[] items = getItemSet1();
         suggester.indexer().index(items);
@@ -68,6 +83,7 @@ public class SuggesterTest extends TestCase {
         assertEquals("全文 検索", response.getWords().get(0));
     }
 
+    @Test
     public void test_delete() throws Exception {
         SuggestItem[] items = getItemSet1();
         suggester.indexer().index(items);
@@ -83,6 +99,7 @@ public class SuggesterTest extends TestCase {
         assertEquals(0, response2.getNum());
     }
 
+    @Test
     public void test_indexFromQueryString() throws Exception {
         SuggestSettings settings = suggester.settings();
         String field = settings.array().get(SuggestSettings.DefaultKeys.SUPPORTED_FIELDS)[0];
@@ -119,6 +136,7 @@ public class SuggesterTest extends TestCase {
         assertEquals("検索 ワード", responseMulti.getWords().get(0));
     }
 
+    @Test
     public void test_indexFromQueryLog() throws Exception {
         SuggestSettings settings = suggester.settings();
         String field = settings.array().get(SuggestSettings.DefaultKeys.SUPPORTED_FIELDS)[0];
@@ -156,6 +174,7 @@ public class SuggesterTest extends TestCase {
         assertEquals(1, response2.getTotal());
     }
 
+    @Test
     @SuppressWarnings("unchecked")
     public void test_indexFromDocument() throws Exception {
         SuggestSettings settings = suggester.settings();
@@ -177,6 +196,7 @@ public class SuggesterTest extends TestCase {
         assertEquals("美味しい", response2.getWords().get(0));
     }
 
+    @Test
     public void test_indexFromDocumentReader() throws Exception {
         Client client = runner.client();
         int num = 10000;
@@ -203,6 +223,7 @@ public class SuggesterTest extends TestCase {
         });
         assertFalse(future.isDone());
         latch.await();
+        Thread.sleep(100);
         assertTrue(future.isDone());
         assertEquals(num, numObInputDoc.get());
 
@@ -210,6 +231,7 @@ public class SuggesterTest extends TestCase {
         assertEquals(1, response.getNum());
     }
 
+    @Test
     public void test_indexElevateWord() throws Exception {
         ElevateWord elevateWord = new ElevateWord("test", 2.0f, Collections.singletonList("test"));
         suggester.indexer().addElevateWord(elevateWord);
@@ -217,13 +239,14 @@ public class SuggesterTest extends TestCase {
         SuggestResponse response1 = suggester.suggest().setQuery("tes").setSuggestDetail(true).execute();
         assertEquals(1, response1.getNum());
         assertEquals(1, response1.getTotal());
-        assertEquals(2.0f, response1.getItems().get(0).getUserBoost());
+        assertEquals(2.0f, response1.getItems().get(0).getUserBoost(), 0);
 
         ElevateWord[] elevateWords = suggester.settings().elevateWord().get();
         assertEquals(1, elevateWords.length);
         assertEquals("test", elevateWord.getElevateWord());
     }
 
+    @Test
     public void test_restoreElevateWord() throws Exception {
         ElevateWord elevateWord1 = new ElevateWord("test", 2.0f, Collections.singletonList("test"));
         ElevateWord elevateWord2 = new ElevateWord("hoge", 2.0f, Collections.singletonList("hoge"));
@@ -244,6 +267,7 @@ public class SuggesterTest extends TestCase {
         assertEquals(1, response3.getNum());
     }
 
+    @Test
     @SuppressWarnings("unchecked")
     public void test_deleteOldWords() throws Exception {
         String field = suggester.settings().array().get(SuggestSettings.DefaultKeys.SUPPORTED_FIELDS)[0];
@@ -279,6 +303,7 @@ public class SuggesterTest extends TestCase {
 
     }
 
+    @Test
     public void test_addNgWord() throws Exception {
         SuggestItem[] items = getItemSet1();
         suggester.indexer().index(items);
