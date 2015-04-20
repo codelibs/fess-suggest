@@ -33,6 +33,8 @@ public class SuggestRequest extends Request<SuggestResponse> {
 
     private final List<String> roles = new ArrayList<>();
 
+    private final List<String> fields = new ArrayList<>();
+
     private boolean suggestDetail = false;
 
     private ReadingConverter readingConverter;
@@ -65,6 +67,10 @@ public class SuggestRequest extends Request<SuggestResponse> {
 
     public void addRole(String role) {
         this.roles.add(role);
+    }
+
+    public void addField(String field) {
+        this.fields.add(field);
     }
 
     public void setSuggestDetail(boolean suggestDetail) {
@@ -106,6 +112,11 @@ public class SuggestRequest extends Request<SuggestResponse> {
         roles.add(SuggestConstants.DEFAULT_ROLE);
         if (!roles.isEmpty()) {
             String fq = buildFilterQuery(FieldNames.ROLES, roles);
+            filterBuilderList.add(FilterBuilders.queryFilter(QueryBuilders.queryStringQuery(fq)));
+        }
+
+        if (!fields.isEmpty()) {
+            String fq = buildFilterQuery(FieldNames.FIELDS, fields);
             filterBuilderList.add(FilterBuilders.queryFilter(QueryBuilders.queryStringQuery(fq)));
         }
 
@@ -216,6 +227,7 @@ public class SuggestRequest extends Request<SuggestResponse> {
                     readings.add(reading.toArray(new String[reading.size()]));
                 }
 
+                List<String> fields = (List) source.get(FieldNames.FIELDS);
                 List<String> tags = (List) source.get(FieldNames.TAGS);
                 List<String> roles = (List) source.get(FieldNames.ROLES);
                 List<String> kinds = (List) source.get(FieldNames.KINDS);
@@ -232,9 +244,9 @@ public class SuggestRequest extends Request<SuggestResponse> {
                     freq = Long.valueOf(source.get(FieldNames.DOC_FREQ).toString());
                 }
 
-                items.add(new SuggestItem(text.split(" "), readings.toArray(new String[readings.size()][]), freq, Float.valueOf(source.get(
-                        FieldNames.USER_BOOST).toString()), tags.toArray(new String[tags.size()]), roles.toArray(new String[tags.size()]),
-                        kind));
+                items.add(new SuggestItem(text.split(" "), readings.toArray(new String[readings.size()][]), fields
+                        .toArray(new String[fields.size()]), freq, Float.valueOf(source.get(FieldNames.USER_BOOST).toString()), tags
+                        .toArray(new String[tags.size()]), roles.toArray(new String[tags.size()]), kind));
             }
         }
 

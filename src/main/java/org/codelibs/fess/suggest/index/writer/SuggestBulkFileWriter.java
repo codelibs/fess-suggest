@@ -1,7 +1,6 @@
 package org.codelibs.fess.suggest.index.writer;
 
 import org.codelibs.fess.suggest.entity.SuggestItem;
-import org.codelibs.fess.suggest.exception.SuggestIndexException;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.elasticsearch.client.Client;
 

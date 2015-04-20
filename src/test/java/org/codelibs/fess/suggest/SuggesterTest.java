@@ -233,7 +233,7 @@ public class SuggesterTest {
 
     @Test
     public void test_indexElevateWord() throws Exception {
-        ElevateWord elevateWord = new ElevateWord("test", 2.0f, Collections.singletonList("test"));
+        ElevateWord elevateWord = new ElevateWord("test", 2.0f, Collections.singletonList("test"), Collections.singletonList("content"));
         suggester.indexer().addElevateWord(elevateWord);
         suggester.refresh();
         SuggestResponse response1 = suggester.suggest().setQuery("tes").setSuggestDetail(true).execute();
@@ -248,9 +248,9 @@ public class SuggesterTest {
 
     @Test
     public void test_restoreElevateWord() throws Exception {
-        ElevateWord elevateWord1 = new ElevateWord("test", 2.0f, Collections.singletonList("test"));
-        ElevateWord elevateWord2 = new ElevateWord("hoge", 2.0f, Collections.singletonList("hoge"));
-        ElevateWord elevateWord3 = new ElevateWord("fuga", 2.0f, Collections.singletonList("fuga"));
+        ElevateWord elevateWord1 = new ElevateWord("test", 2.0f, Collections.singletonList("test"), Collections.singletonList("content"));
+        ElevateWord elevateWord2 = new ElevateWord("hoge", 2.0f, Collections.singletonList("hoge"), Collections.singletonList("content"));
+        ElevateWord elevateWord3 = new ElevateWord("fuga", 2.0f, Collections.singletonList("fuga"), Collections.singletonList("content"));
 
         suggester.settings().elevateWord().add(elevateWord1);
         suggester.settings().elevateWord().add(elevateWord2);
@@ -271,7 +271,7 @@ public class SuggesterTest {
     @SuppressWarnings("unchecked")
     public void test_deleteOldWords() throws Exception {
         String field = suggester.settings().array().get(SuggestSettings.DefaultKeys.SUPPORTED_FIELDS)[0];
-        ElevateWord elevateWord = new ElevateWord("test", 2.0f, Collections.singletonList("test"));
+        ElevateWord elevateWord = new ElevateWord("test", 2.0f, Collections.singletonList("test"), Collections.singletonList("content"));
 
         suggester.indexer().indexFromDocument(new Map[] { Collections.singletonMap(field, (Object) "この柿は美味しい。") });
         suggester.indexer().addElevateWord(elevateWord);
@@ -329,14 +329,18 @@ public class SuggesterTest {
         readings[1] = new String[] { "enjin", "fuga" };
         String[] tags = new String[] { "tag1", "tag2" };
         String[] roles = new String[] { SuggestConstants.DEFAULT_ROLE, "role1", "role2", "role3" };
-        queryItems[0] = new SuggestItem(new String[] { "検索", "エンジン" }, readings, 1, -1, tags, roles, SuggestItem.Kind.DOCUMENT);
+        queryItems[0] =
+                new SuggestItem(new String[] { "検索", "エンジン" }, readings, new String[] { "content" }, 1, -1, tags, roles,
+                        SuggestItem.Kind.DOCUMENT);
 
         String[][] readings2 = new String[2][];
         readings2[0] = new String[] { "zenbun", "fuga" };
         readings2[1] = new String[] { "kensaku", "fuga" };
         String[] tags2 = new String[] { "tag3" };
         String[] roles2 = new String[] { SuggestConstants.DEFAULT_ROLE, "role1", "role2", "role3", "role4" };
-        queryItems[1] = new SuggestItem(new String[] { "全文", "検索" }, readings2, 1, -1, tags2, roles2, SuggestItem.Kind.DOCUMENT);
+        queryItems[1] =
+                new SuggestItem(new String[] { "全文", "検索" }, readings2, new String[] { "content" }, 1, -1, tags2, roles2,
+                        SuggestItem.Kind.DOCUMENT);
 
         String[][] readings2Query = new String[2][];
         readings2Query[0] = new String[] { "zenbun", "fuga" };
@@ -344,7 +348,8 @@ public class SuggesterTest {
         String[] tags2Query = new String[] { "tag3" };
         String[] roles2Query = new String[] { SuggestConstants.DEFAULT_ROLE, "role1", "role2", "role3", "role4" };
         queryItems[2] =
-                new SuggestItem(new String[] { "全文", "検索" }, readings2Query, 1, -1, tags2Query, roles2Query, SuggestItem.Kind.QUERY);
+                new SuggestItem(new String[] { "全文", "検索" }, readings2Query, new String[] { "content" }, 1, -1, tags2Query, roles2Query,
+                        SuggestItem.Kind.QUERY);
 
         return queryItems;
     }

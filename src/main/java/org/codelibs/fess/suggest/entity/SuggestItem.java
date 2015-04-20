@@ -38,6 +38,8 @@ public class SuggestItem implements Serializable {
 
     private final String[][] readings;
 
+    private final String[] fields;
+
     private final String[] tags;
 
     private final String[] roles;
@@ -46,10 +48,11 @@ public class SuggestItem implements Serializable {
 
     private final Map<String, Object> emptySource;
 
-    public SuggestItem(final String[] text, final String[][] readings, final long score, final float userBoost,
+    public SuggestItem(final String[] text, final String[][] readings, final String[] fields, final long score, final float userBoost,
             @Nullable final String[] tags, @Nullable final String[] roles, final Kind kind) {
         this.text = String.join(SuggestConstants.TEXT_SEPARATOR, text);
         this.readings = readings;
+        this.fields = fields;
         this.tags = tags != null ? tags : new String[] {};
 
         if (roles == null || roles.length == 0) {
@@ -122,6 +125,7 @@ public class SuggestItem implements Serializable {
             map.put(FieldNames.READING_PREFIX + i, new String[] {});
         }
 
+        map.put(FieldNames.FIELDS, new String[] {});
         map.put(FieldNames.TAGS, new String[] {});
         map.put(FieldNames.ROLES, new String[] {});
         map.put(FieldNames.KINDS, new String[] {});
@@ -151,6 +155,9 @@ public class SuggestItem implements Serializable {
             script.append("source[\"reading_").append(i).append("\"]").append("=reading").append(i).append(';');
         }
 
+        //fields
+        script.append("sourceFields=source.fields; fields.each{ if(!sourceFields.contains(it)) sourceFields.add(it);};");
+
         //score
         script.append("source.queryFreq+=queryFreq;");
         script.append("source.docFreq+=docFreq;");
@@ -178,6 +185,7 @@ public class SuggestItem implements Serializable {
         for (int i = 0; i < readings.length; i++) {
             params.put("reading" + i, readings[i]);
         }
+        params.put("fields", fields);
         params.put("queryFreq", queryFreq);
         params.put("docFreq", docFreq);
         params.put("userBoost", userBoost);

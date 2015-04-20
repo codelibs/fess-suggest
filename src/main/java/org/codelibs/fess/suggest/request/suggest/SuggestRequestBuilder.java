@@ -42,6 +42,11 @@ public class SuggestRequestBuilder extends RequestBuilder<SuggestRequest, Sugges
         return this;
     }
 
+    public SuggestRequestBuilder addField(String field) {
+        request.addField(field);
+        return this;
+    }
+
     public SuggestRequestBuilder setSuggestDetail(boolean suggestDetail) {
         request.setSuggestDetail(suggestDetail);
         return this;

@@ -13,6 +13,7 @@ public class ElevateWordSettings {
     public static final String ELEVATE_WORD_SETTINGD_KEY = "elevateword";
     public static final String ELEVATE_WORD_BOOST = "boost";
     public static final String ELEVATE_WORD_READING = "reading";
+    public static final String ELEVATE_WORD_FIELDS = "fields";
 
     protected ArraySettings arraySettings;
 
@@ -35,8 +36,10 @@ public class ElevateWordSettings {
             Object elevateWord = sourceArray[i].get(FieldNames.ARRAY_VALUE);
             Object boost = sourceArray[i].get(ELEVATE_WORD_BOOST);
             Object readings = sourceArray[i].get(ELEVATE_WORD_READING);
-            if (elevateWord != null && boost != null && readings != null) {
-                elevateWords[i] = new ElevateWord(elevateWord.toString(), Float.parseFloat(boost.toString()), (List) readings);
+            Object fields = sourceArray[i].get(ELEVATE_WORD_FIELDS);
+            if (elevateWord != null && boost != null && readings != null && fields != null) {
+                elevateWords[i] =
+                        new ElevateWord(elevateWord.toString(), Float.parseFloat(boost.toString()), (List) readings, (List) fields);
             }
         }
         return elevateWords;
@@ -48,6 +51,7 @@ public class ElevateWordSettings {
         source.put(FieldNames.ARRAY_VALUE, elevateWord.getElevateWord());
         source.put(ELEVATE_WORD_BOOST, elevateWord.getBoost());
         source.put(ELEVATE_WORD_READING, elevateWord.getReadings());
+        source.put(ELEVATE_WORD_FIELDS, elevateWord.getFields());
         source.put(FieldNames.TIMESTAMP, LocalDateTime.now());
 
         arraySettings.addToArrayIndex(arraySettings.arraySettingsIndexName, arraySettings.settingsId,
