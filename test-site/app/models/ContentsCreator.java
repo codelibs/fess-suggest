@@ -16,7 +16,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 public class ContentsCreator {
 
-    int max = 20;
+    int max = 5;
 
     public void create() {
         RequestConfig.Builder requestBuilder = RequestConfig.custom();
