@@ -54,7 +54,7 @@ public class Suggest extends Controller {
             suggester.settings(),
             ComponentsUtil.contentIndexName,
             ComponentsUtil.contentTypeName);
-        suggester.indexer().indexFromDocument(reader, false);
+        suggester.indexer().indexFromDocument(reader, false, 3);
         suggester.refresh();
         return ok("Finished to create suggest from content");
     }
