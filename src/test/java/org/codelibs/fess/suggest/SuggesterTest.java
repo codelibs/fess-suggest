@@ -205,7 +205,7 @@ public class SuggesterTest {
 
         BulkRequestBuilder bulkRequestBuilder = client.prepareBulk();
         for (int i = 0; i < num; i++) {
-            Map<String, Object> source = Collections.singletonMap("content", "test" + i);
+            Map<String, Object> source = Collections.singletonMap("content", "test");
             IndexRequestBuilder indexRequestBuilder = new IndexRequestBuilder(client);
             indexRequestBuilder.setIndex(indexName).setType(typeName).setId(String.valueOf(i)).setCreate(true).setSource(source);
             bulkRequestBuilder.add(indexRequestBuilder);

@@ -2,9 +2,6 @@ package org.codelibs.fess.suggest;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.ja.JapaneseAnalyzer;
-import org.apache.lucene.analysis.ja.JapaneseTokenizer;
-import org.apache.lucene.analysis.ja.dict.UserDictionary;
 import org.apache.lucene.util.IOUtils;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.converter.KatakanaConverter;
@@ -18,6 +15,9 @@ import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.normalizer.NormalizerChain;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.codelibs.fess.suggest.settings.SuggestSettingsBuilder;
+import org.codelibs.neologd.ipadic.lucene.analysis.ja.JapaneseAnalyzer;
+import org.codelibs.neologd.ipadic.lucene.analysis.ja.JapaneseTokenizer;
+import org.codelibs.neologd.ipadic.lucene.analysis.ja.dict.UserDictionary;
 import org.elasticsearch.client.Client;
 
 import java.io.*;

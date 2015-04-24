@@ -193,6 +193,11 @@
             <artifactId>lucene-analyzers-kuromoji</artifactId>
             <version>${lucene.version}</version>
         </dependency>
+		<dependency>
+			<groupId>org.codelibs</groupId>
+			<artifactId>elasticsearch-analysis-kuromoji-neologd</artifactId>
+			<version>1.5.0</version>
+		</dependency>
         <dependency>
             <groupId>org.codehaus.groovy</groupId>
             <artifactId>groovy-all</artifactId>
