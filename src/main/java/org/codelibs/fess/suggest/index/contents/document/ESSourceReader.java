@@ -19,6 +19,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class ESSourceReader implements DocumentReader {
     protected final Queue<Map<String, Object>> queue = new ConcurrentLinkedQueue<>();
     protected final AtomicBoolean isFinished = new AtomicBoolean(false);
+    protected final Random random = new Random();
 
     protected final Client client;
     protected final SuggestSettings settings;
@@ -29,13 +30,18 @@ public class ESSourceReader implements DocumentReader {
     protected int maxRetryCount = 5;
 
     public final String scrollIdKey;
-    public final String execStatusKey;
+    public final String lock1Key;
+    public final String lock2Key;
+    public final String execFlgKey;
 
     public static final String KEY_SCROLL_ID_PREFIX = "ESSourceReader.scrollID.";
-    public static final String KEY_EXEC_STATUS_PREFIX = "ESSourceReader.status.";
+    public static final String KEY_LOCK1_PREFIX = "ESSourceReader.lock1.";
+    public static final String KEY_LOCK2_PREFIX = "ESSourceReader.locl2.";
+    public static final String KEY_EXEC_FLG_PREFIX = "ESSourceReader.exec.";
     public static final String VALUE_EXEC = "executing";
     public static final String VALUE_IDLE = "idle";
-    public static final String VALUE_FINISH = "finish";
+
+    public static final long WAIT_TIMEOUT = 60 * 1000;
 
     public ESSourceReader(final Client client, final SuggestSettings settings, final String indexName, final String typeName) {
         this.client = client;
@@ -44,75 +50,58 @@ public class ESSourceReader implements DocumentReader {
         this.typeName = typeName;
 
         this.scrollIdKey = KEY_SCROLL_ID_PREFIX + indexName + '_' + typeName;
-        this.execStatusKey = KEY_EXEC_STATUS_PREFIX + indexName + '_' + typeName;
+        this.lock1Key = KEY_LOCK1_PREFIX + indexName + '_' + typeName;
+        this.lock2Key = KEY_LOCK2_PREFIX + indexName + '_' + typeName;
+        this.execFlgKey = KEY_EXEC_FLG_PREFIX + indexName + '_' + typeName;
 
-        String status = settings.getAsString(execStatusKey, VALUE_IDLE);
-        if (VALUE_FINISH.equals(status)) {
-            settings.set(execStatusKey, VALUE_IDLE);
-        }
-
+        settings.set(execFlgKey, VALUE_EXEC);
     }
 
     @Override
     public Map<String, Object> read() {
         if (!isFinished.get() && queue.isEmpty()) {
-            boolean execOthers = false;
+            try {
+                waiLock();
 
-            // wait for other process...
-            int idleCount = 0;
-            while (true) {
-                String status = settings.getAsString(execStatusKey, VALUE_IDLE);
-                if (VALUE_IDLE.equals(status)) {
-                    if (++idleCount > 3) {
-                        break;
-                    }
-                } else if (VALUE_EXEC.equals(status)) {
-                    execOthers = true;
-                    idleCount = 0;
-                } else {
+                final String execFlg = settings.getAsString(execFlgKey, VALUE_IDLE);
+                if (VALUE_IDLE.equals(execFlg)) {
+                    isFinished.set(true);
                     return null;
                 }
 
-                try {
-                    Random random = new Random();
-                    Thread.sleep(100 + random.nextInt(1000));
-                } catch (InterruptedException e) {
-                    return null;
-                }
-            }
-            settings.set(execStatusKey, VALUE_EXEC);
-
-            String scrollId = settings.getAsString(scrollIdKey, "");
-            if (StringUtils.isBlank(scrollId)) {
-                if (execOthers) {
-                    return null;
-                }
-                scrollId = createNewScroll();
-            }
-
-            for (int i = 0; i < maxRetryCount; i++) {
-                try {
-                    SearchResponse response =
-                            client.prepareSearchScroll(scrollId).setScroll(TimeValue.timeValueMinutes(1)).execute().actionGet();
-                    scrollId = response.getScrollId();
-                    if (scrollId == null) {
-                        isFinished.set(true);
-                    }
-                    settings.set(scrollIdKey, scrollId);
-                    settings.set(execStatusKey, VALUE_IDLE);
-                    SearchHit[] hits = response.getHits().getHits();
-                    for (SearchHit hit : hits) {
-                        queue.add(hit.sourceAsMap());
-                    }
-                    break;
-                } catch (Exception e) {
+                String scrollId = settings.getAsString(scrollIdKey, "");
+                if (StringUtils.isBlank(scrollId)) {
                     scrollId = createNewScroll();
                 }
-            }
-            if (queue.isEmpty()) {
-                settings.set(execStatusKey, VALUE_FINISH);
-                settings.set(scrollIdKey, "");
+
+                for (int i = 0; i < maxRetryCount; i++) {
+                    try {
+                        SearchResponse response =
+                                client.prepareSearchScroll(scrollId).setScroll(TimeValue.timeValueMinutes(1)).execute().actionGet();
+                        scrollId = response.getScrollId();
+                        if (scrollId == null) {
+                            isFinished.set(true);
+                        }
+                        settings.set(scrollIdKey, scrollId);
+                        SearchHit[] hits = response.getHits().getHits();
+                        for (SearchHit hit : hits) {
+                            queue.add(hit.sourceAsMap());
+                        }
+                        break;
+                    } catch (Exception e) {
+                        scrollId = createNewScroll();
+                    }
+                }
+                if (queue.isEmpty()) {
+                    settings.set(execFlgKey, VALUE_IDLE);
+                    settings.set(scrollIdKey, "");
+                    isFinished.set(true);
+                }
+            } catch (InterruptedException ignore) {
                 isFinished.set(true);
+                queue.clear();
+            } finally {
+                clearLock();
             }
         }
 
@@ -121,7 +110,9 @@ public class ESSourceReader implements DocumentReader {
 
     @Override
     public void close() {
-
+        isFinished.set(true);
+        queue.clear();
+        clearLock();
     }
 
     public void setScrollSize(final int scrollSize) {
@@ -133,5 +124,56 @@ public class ESSourceReader implements DocumentReader {
                 client.prepareSearch().setIndices(indexName).setTypes(typeName).setScroll(new Scroll(TimeValue.timeValueMinutes(1)))
                         .setSearchType(SearchType.SCAN).setQuery(QueryBuilders.matchAllQuery()).setSize(scrollSize).execute().actionGet();
         return response.getScrollId();
+    }
+
+    protected void waiLock() throws InterruptedException {
+        final String id = String.valueOf(random.nextInt());
+
+        // wait for other process...
+        long time = System.currentTimeMillis();
+        int idleCount = 0;
+        while (true) {
+            if (Thread.currentThread().isInterrupted()) {
+                throw new InterruptedException();
+            }
+
+            final String execFlg = settings.getAsString(execFlgKey, VALUE_IDLE);
+            if (VALUE_IDLE.equals(execFlg)) {
+                break;
+            }
+
+            final String lock1 = settings.getAsString(lock1Key, "");
+            if (StringUtils.isBlank(lock1) || id.equals(lock1)) {
+                settings.set(lock1Key, id);
+                idleCount++;
+                if (idleCount > 3) {
+                    final String lock2 = settings.getAsString(lock2Key, "");
+                    if (StringUtils.isBlank(lock2) || id.equals(lock2)) {
+                        settings.set(lock2Key, id);
+                        final String lock1_2 = settings.getAsString(lock1Key, "");
+                        final String lock2_2 = settings.getAsString(lock2Key, "");
+                        if (id.equals(lock1_2) && id.equals(lock2_2)) {
+                            break;
+                        }
+                    }
+                    idleCount = 0;
+                }
+            } else {
+                idleCount = 0;
+            }
+
+            if (System.currentTimeMillis() - time > WAIT_TIMEOUT) {
+                clearLock();
+                time = System.currentTimeMillis();
+            }
+
+            Thread.sleep(10 + random.nextInt(100));
+        }
+
+    }
+
+    protected void clearLock() {
+        settings.set(lock1Key, "");
+        settings.set(lock2Key, "");
     }
 }
