@@ -182,7 +182,7 @@ public class SuggestIndexer {
     }
 
     @SuppressWarnings("unchecked")
-    public IndexingFuture indexFromDocument(final DocumentReader documentReader, final boolean async) {
+    public IndexingFuture indexFromDocument(final DocumentReader documentReader, final boolean async, final int maxDocNum) {
         final IndexingFuture indexingFuture = new IndexingFuture();
 
         Runnable r =
@@ -193,7 +193,6 @@ public class SuggestIndexer {
 
                     try {
                         indexingFuture.started.set(true);
-                        final int maxDocNum = 10;
                         List<Map<String, Object>> docs = new ArrayList<>(maxDocNum);
                         Map<String, Object> doc = documentReader.read();
                         while (doc != null) {

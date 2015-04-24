@@ -217,7 +217,7 @@ public class SuggesterTest {
         AtomicInteger numObInputDoc = new AtomicInteger(0);
         ESSourceReader reader = new ESSourceReader(client, suggester.settings(), indexName, typeName);
 
-        SuggestIndexer.IndexingFuture future = suggester.indexer().indexFromDocument(reader, true).done(response -> {
+        SuggestIndexer.IndexingFuture future = suggester.indexer().indexFromDocument(reader, true, 1).done(response -> {
             numObInputDoc.set(response.getNumberOfInputDocs());
             latch.countDown();
         });
