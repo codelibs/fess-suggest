@@ -9,6 +9,7 @@ import org.codelibs.fess.suggest.index.contents.document.ESSourceReader;
 import org.codelibs.fess.suggest.request.suggest.SuggestResponse;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
+import play.Logger;
 import play.mvc.Controller;
 import play.mvc.Result;
 
@@ -49,14 +50,16 @@ public class Suggest extends Controller {
     }
 
     public static Result createSuggestFromContent() {
-        Suggester suggester = ComponentsUtil.suggester;
-        DocumentReader reader = new ESSourceReader(ComponentsUtil.runner.client(),
-            suggester.settings(),
-            ComponentsUtil.contentIndexName,
-            ComponentsUtil.contentTypeName);
-        suggester.indexer().indexFromDocument(reader, false, 3);
-        suggester.refresh();
-        return ok("Finished to create suggest from content");
+        try {
+            long start = System.currentTimeMillis();
+            SuggestIndex suggestIndex = new SuggestIndex();
+            suggestIndex.index();
+            Logger.info("index took: " + ((System.currentTimeMillis() - start) / 1000) + "sec");
+            return ok("Finished to create suggest from content");
+        } catch (Exception e){
+            Logger.error("Failed to create suggest index. ", e);
+            return internalServerError();
+        }
     }
 
 

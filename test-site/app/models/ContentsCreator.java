@@ -16,7 +16,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 public class ContentsCreator {
 
-    int max = 5;
+    int max = 10;
 
     public void create() {
         RequestConfig.Builder requestBuilder = RequestConfig.custom();
@@ -72,6 +72,9 @@ public class ContentsCreator {
             h = h.substring(linkPos + tag.length());
             final int endpos = h.indexOf('"');
             String url = h.substring(0, endpos);
+            if(url.contains("#")) {
+                continue;
+            }
             if(url.startsWith("http")) {
                 queue.add(url);
             } else if(url.startsWith("//")) {

@@ -206,6 +206,7 @@ public class SuggestIndexer {
                                     SuggestIndexResponse res = indexFromDocument(docs.toArray(new Map[docs.size()]));
                                     numberOfSuggestDocs += res.getNumberOfSuggestDocs();
                                     numberOfInputDocs += res.getNumberOfInputDocs();
+                                    client.admin().indices().prepareRefresh(index).execute().actionGet();
                                 } catch (SuggestIndexException e) {
                                     indexingFuture.errors().add(e);
                                 }
