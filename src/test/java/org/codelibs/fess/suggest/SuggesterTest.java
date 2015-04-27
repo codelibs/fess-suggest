@@ -70,15 +70,15 @@ public class SuggesterTest {
         suggester.indexer().index(items);
         suggester.refresh();
 
-        SuggestResponse response = suggester.suggest().setQuery("kensaku").setSuggestDetail(true).execute();
+        SuggestResponse response = suggester.suggest().setQuery("kensaku").setSuggestDetail(true).execute().getResponse();
         assertEquals(1, response.getNum());
         assertEquals("検索 エンジン", response.getWords().get(0));
 
-        response = suggester.suggest().setQuery("kensaku　 enj").execute();
+        response = suggester.suggest().setQuery("kensaku　 enj").execute().getResponse();
         assertEquals(1, response.getNum());
         assertEquals("検索 エンジン", response.getWords().get(0));
 
-        response = suggester.suggest().setQuery("zenbun").setSuggestDetail(true).execute();
+        response = suggester.suggest().setQuery("zenbun").setSuggestDetail(true).execute().getResponse();
         assertEquals(1, response.getNum());
         assertEquals("全文 検索", response.getWords().get(0));
     }
@@ -89,13 +89,13 @@ public class SuggesterTest {
         suggester.indexer().index(items);
         suggester.refresh();
 
-        SuggestResponse response = suggester.suggest().setQuery("kensaku").addRole("role1").setSuggestDetail(true).execute();
+        SuggestResponse response = suggester.suggest().setQuery("kensaku").addRole("role1").setSuggestDetail(true).execute().getResponse();
         assertEquals(1, response.getNum());
         assertEquals("検索 エンジン", response.getWords().get(0));
 
         suggester.indexer().delete(items[0].getId());
         suggester.refresh();
-        SuggestResponse response2 = suggester.suggest().setQuery("kensaku").setSuggestDetail(true).execute();
+        SuggestResponse response2 = suggester.suggest().setQuery("kensaku").setSuggestDetail(true).execute().getResponse();
         assertEquals(0, response2.getNum());
     }
 
@@ -111,17 +111,17 @@ public class SuggesterTest {
 
         suggester.refresh();
 
-        SuggestResponse responseKanji = suggester.suggest().setQuery("検索").addRole("role1").setSuggestDetail(true).execute();
+        SuggestResponse responseKanji = suggester.suggest().setQuery("検索").addRole("role1").setSuggestDetail(true).execute().getResponse();
         assertEquals(1, responseKanji.getNum());
         assertEquals(1, responseKanji.getTotal());
         assertEquals("検索", responseKanji.getWords().get(0));
 
-        SuggestResponse responseKana = suggester.suggest().setQuery("けん").setSuggestDetail(true).execute();
+        SuggestResponse responseKana = suggester.suggest().setQuery("けん").setSuggestDetail(true).execute().getResponse();
         assertEquals(1, responseKana.getNum());
         assertEquals(1, responseKana.getTotal());
         assertEquals("検索", responseKana.getWords().get(0));
 
-        SuggestResponse responseAlphabet = suggester.suggest().setQuery("kensa").setSuggestDetail(true).execute();
+        SuggestResponse responseAlphabet = suggester.suggest().setQuery("kensa").setSuggestDetail(true).execute().getResponse();
         assertEquals(1, responseAlphabet.getNum());
         assertEquals(1, responseAlphabet.getTotal());
         assertEquals("検索", responseAlphabet.getWords().get(0));
@@ -129,7 +129,7 @@ public class SuggesterTest {
         suggester.indexer().indexFromQueryLog(new QueryLog(field + ":検索 AND " + field + ":ワード", null));
         suggester.refresh();
 
-        SuggestResponse responseMulti = suggester.suggest().setQuery("けんさく わーど").setSuggestDetail(true).execute();
+        SuggestResponse responseMulti = suggester.suggest().setQuery("けんさく わーど").setSuggestDetail(true).execute().getResponse();
 
         assertEquals(1, responseMulti.getNum());
         assertEquals(1, responseMulti.getTotal());
@@ -165,11 +165,11 @@ public class SuggesterTest {
         }
         suggester.refresh();
 
-        SuggestResponse response1 = suggester.suggest().setQuery("けん").setSuggestDetail(true).execute();
+        SuggestResponse response1 = suggester.suggest().setQuery("けん").setSuggestDetail(true).execute().getResponse();
         assertEquals(2, response1.getNum());
         assertEquals(2, response1.getTotal());
 
-        SuggestResponse response2 = suggester.suggest().setQuery("fes").setSuggestDetail(true).execute();
+        SuggestResponse response2 = suggester.suggest().setQuery("fes").setSuggestDetail(true).execute().getResponse();
         assertEquals(1, response2.getNum());
         assertEquals(1, response2.getTotal());
     }
@@ -185,12 +185,12 @@ public class SuggesterTest {
         suggester.indexer().indexFromDocument(new Map[] { document });
         suggester.refresh();
 
-        SuggestResponse response1 = suggester.suggest().setQuery("かき").setSuggestDetail(true).execute();
+        SuggestResponse response1 = suggester.suggest().setQuery("かき").setSuggestDetail(true).execute().getResponse();
         assertEquals(1, response1.getNum());
         assertEquals(1, response1.getTotal());
         assertEquals("柿", response1.getWords().get(0));
 
-        SuggestResponse response2 = suggester.suggest().setQuery("美味しい").setSuggestDetail(true).execute();
+        SuggestResponse response2 = suggester.suggest().setQuery("美味しい").setSuggestDetail(true).execute().getResponse();
         assertEquals(1, response2.getNum());
         assertEquals(1, response2.getTotal());
         assertEquals("美味しい", response2.getWords().get(0));
@@ -227,7 +227,7 @@ public class SuggesterTest {
         assertTrue(future.isDone());
         assertEquals(num, numObInputDoc.get());
 
-        SuggestResponse response = suggester.suggest().setQuery("test").setSuggestDetail(true).execute();
+        SuggestResponse response = suggester.suggest().setQuery("test").setSuggestDetail(true).execute().getResponse();
         assertEquals(1, response.getNum());
     }
 
@@ -236,7 +236,7 @@ public class SuggesterTest {
         ElevateWord elevateWord = new ElevateWord("test", 2.0f, Collections.singletonList("test"), Collections.singletonList("content"));
         suggester.indexer().addElevateWord(elevateWord);
         suggester.refresh();
-        SuggestResponse response1 = suggester.suggest().setQuery("tes").setSuggestDetail(true).execute();
+        SuggestResponse response1 = suggester.suggest().setQuery("tes").setSuggestDetail(true).execute().getResponse();
         assertEquals(1, response1.getNum());
         assertEquals(1, response1.getTotal());
         assertEquals(2.0f, response1.getItems().get(0).getUserBoost(), 0);
@@ -259,11 +259,11 @@ public class SuggesterTest {
         suggester.indexer().restoreElevateWord();
         suggester.refresh();
 
-        SuggestResponse response1 = suggester.suggest().setQuery("tes").setSuggestDetail(true).execute();
+        SuggestResponse response1 = suggester.suggest().setQuery("tes").setSuggestDetail(true).execute().getResponse();
         assertEquals(1, response1.getNum());
-        SuggestResponse response2 = suggester.suggest().setQuery("hoge").setSuggestDetail(true).execute();
+        SuggestResponse response2 = suggester.suggest().setQuery("hoge").setSuggestDetail(true).execute().getResponse();
         assertEquals(1, response2.getNum());
-        SuggestResponse response3 = suggester.suggest().setQuery("fuga").setSuggestDetail(true).execute();
+        SuggestResponse response3 = suggester.suggest().setQuery("fuga").setSuggestDetail(true).execute().getResponse();
         assertEquals(1, response3.getNum());
     }
 
@@ -284,21 +284,21 @@ public class SuggesterTest {
         suggester.indexer().indexFromDocument(new Map[] { Collections.singletonMap(field, (Object) "検索エンジン") });
         suggester.refresh();
 
-        SuggestResponse response1 = suggester.suggest().setQuery("柿").setSuggestDetail(true).execute();
+        SuggestResponse response1 = suggester.suggest().setQuery("柿").setSuggestDetail(true).execute().getResponse();
         assertEquals(1, response1.getNum());
-        SuggestResponse response2 = suggester.suggest().setQuery("test").setSuggestDetail(true).execute();
+        SuggestResponse response2 = suggester.suggest().setQuery("test").setSuggestDetail(true).execute().getResponse();
         assertEquals(1, response2.getNum());
-        SuggestResponse response3 = suggester.suggest().setQuery("検索").setSuggestDetail(true).execute();
+        SuggestResponse response3 = suggester.suggest().setQuery("検索").setSuggestDetail(true).execute().getResponse();
         assertEquals(1, response3.getNum());
 
         suggester.indexer().deleteOldWords(threshold);
         suggester.refresh();
 
-        SuggestResponse response4 = suggester.suggest().setQuery("柿").setSuggestDetail(true).execute();
+        SuggestResponse response4 = suggester.suggest().setQuery("柿").setSuggestDetail(true).execute().getResponse();
         assertEquals(0, response4.getNum());
-        SuggestResponse response5 = suggester.suggest().setQuery("test").setSuggestDetail(true).execute();
+        SuggestResponse response5 = suggester.suggest().setQuery("test").setSuggestDetail(true).execute().getResponse();
         assertEquals(1, response5.getNum());
-        SuggestResponse response6 = suggester.suggest().setQuery("検索").setSuggestDetail(true).execute();
+        SuggestResponse response6 = suggester.suggest().setQuery("検索").setSuggestDetail(true).execute().getResponse();
         assertEquals(1, response6.getNum());
 
     }
@@ -309,13 +309,13 @@ public class SuggesterTest {
         suggester.indexer().index(items);
         suggester.refresh();
 
-        SuggestResponse response = suggester.suggest().setQuery("kensaku").setSuggestDetail(true).execute();
+        SuggestResponse response = suggester.suggest().setQuery("kensaku").setSuggestDetail(true).execute().getResponse();
         assertEquals(1, response.getNum());
         assertEquals("検索 エンジン", response.getWords().get(0));
 
         suggester.indexer().addNgWord("検索");
         suggester.refresh();
-        SuggestResponse response2 = suggester.suggest().setQuery("kensaku").setSuggestDetail(true).execute();
+        SuggestResponse response2 = suggester.suggest().setQuery("kensaku").setSuggestDetail(true).execute().getResponse();
         assertEquals(0, response2.getNum());
 
         assertEquals(1, suggester.settings().ngword().get().length);

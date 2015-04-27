@@ -1,6 +1,7 @@
 package org.codelibs.fess.suggest.request.suggest;
 
 import org.apache.commons.lang.StringUtils;
+import org.codelibs.fess.suggest.concurrent.SuggestFuture;
 import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.converter.ReadingConverter;
@@ -8,6 +9,7 @@ import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.request.Request;
+import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
@@ -91,7 +93,7 @@ public class SuggestRequest extends Request<SuggestResponse> {
     }
 
     @Override
-    protected SuggestResponse processRequest(Client client) throws SuggesterException {
+    protected void processRequest(final Client client, final SuggestFuture<SuggestResponse> future) throws SuggesterException {
         SearchRequestBuilder builder = client.prepareSearch(index);
         if (StringUtils.isNotBlank(type)) {
             builder.setTypes(type);
@@ -130,16 +132,21 @@ public class SuggestRequest extends Request<SuggestResponse> {
 
         builder.addSort(FieldNames.SCORE, SortOrder.DESC);
 
-        SearchResponse searchResponse;
-        try {
-            searchResponse = builder.execute().actionGet();
-        } catch (Exception e) {
-            throw new SuggesterException("Failed to search.", e);
-        }
-        if (searchResponse.getFailedShards() > 0) {
-            throw new SuggesterException("Search failure. Failed shards num:" + searchResponse.getFailedShards());
-        }
-        return createResponse(searchResponse);
+        builder.execute(new ActionListener<SearchResponse>() {
+            @Override
+            public void onResponse(SearchResponse searchResponse) {
+                if (searchResponse.getFailedShards() > 0) {
+                    future.resolve(null, new SuggesterException("Search failure. Failed shards num:" + searchResponse.getFailedShards()));
+                } else {
+                    future.resolve(createResponse(searchResponse), null);
+                }
+            }
+
+            @Override
+            public void onFailure(Throwable e) {
+                future.resolve(null, new SuggesterException(e.getMessage(), e));
+            }
+        });
     }
 
     protected String buildQueryString(final String q) throws SuggesterException {
