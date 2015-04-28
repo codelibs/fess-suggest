@@ -58,7 +58,7 @@ public class ESSourceReaderTest {
         String typeName = "test-type";
         Client client = runner.client();
         SuggestSettings settings = suggester.settings();
-        int num = 100000;
+        int num = 10000;
 
         addDocument(indexName, typeName, client, num);
 

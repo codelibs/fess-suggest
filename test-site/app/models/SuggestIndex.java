@@ -20,7 +20,7 @@ public class SuggestIndex {
             suggester.settings(),
             ComponentsUtil.contentIndexName,
             ComponentsUtil.contentTypeName);
-        suggester.indexer().indexFromDocument(reader, false, 2);
+        suggester.indexer().indexFromDocument(reader, 2, 100).getResponse();
         suggester.refresh();
     }
 }

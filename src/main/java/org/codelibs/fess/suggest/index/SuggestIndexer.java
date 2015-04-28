@@ -1,6 +1,7 @@
 package org.codelibs.fess.suggest.index;
 
 import org.apache.lucene.analysis.Analyzer;
+import org.codelibs.fess.suggest.concurrent.SuggestIndexFuture;
 import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.converter.ReadingConverter;
 import org.codelibs.fess.suggest.entity.ElevateWord;
@@ -22,8 +23,6 @@ import org.elasticsearch.client.Client;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SuggestIndexer {
     protected final Client client;
@@ -118,51 +117,45 @@ public class SuggestIndexer {
         }
     }
 
-    public IndexingFuture indexFromQueryLog(final QueryLogReader queryLogReader, boolean async) {
-        final IndexingFuture indexingFuture = new IndexingFuture();
-        indexingFuture.started.set(true);
+    public SuggestIndexFuture indexFromQueryLog(final QueryLogReader queryLogReader, final int docPerReq, final long requestInterval) {
+        final SuggestIndexFuture indexingFuture = new SuggestIndexFuture();
 
-        Runnable r =
-                () -> {
-                    final long start = System.currentTimeMillis();
-                    int numberOfSuggestDocs = 0;
-                    int numberOfInputDocs = 0;
-                    try {
-                        int maxNum = 1000;
+        indexingFuture.future =
+                threadPool
+                        .submit(() -> {
+                            final long start = System.currentTimeMillis();
+                            int numberOfSuggestDocs = 0;
+                            int numberOfInputDocs = 0;
+                            try {
+                                List<Throwable> errors = new ArrayList<>();
 
-                        List<QueryLog> queryLogs = new ArrayList<>(maxNum);
-                        QueryLog queryLog = queryLogReader.read();
-                        while (queryLog != null) {
-                            if (Thread.currentThread().isInterrupted()) {
-                                break;
-                            }
-                            queryLogs.add(queryLog);
-                            queryLog = queryLogReader.read();
-                            if ((queryLog == null && !queryLogs.isEmpty()) || queryLogs.size() >= maxNum) {
-                                try {
-                                    SuggestIndexResponse res = indexFromQueryLog(queryLogs.toArray(new QueryLog[queryLogs.size()]));
-                                    numberOfSuggestDocs += res.getNumberOfSuggestDocs();
-                                    numberOfInputDocs += res.getNumberOfInputDocs();
-                                } catch (SuggestIndexException e) {
-                                    indexingFuture.errors().add(e);
+                                List<QueryLog> queryLogs = new ArrayList<>(docPerReq);
+                                QueryLog queryLog = queryLogReader.read();
+                                while (queryLog != null) {
+                                    if (Thread.currentThread().isInterrupted()) {
+                                        break;
+                                    }
+                                    queryLogs.add(queryLog);
+                                    queryLog = queryLogReader.read();
+                                    if ((queryLog == null && !queryLogs.isEmpty()) || queryLogs.size() >= docPerReq) {
+                                        SuggestIndexResponse res = indexFromQueryLog(queryLogs.toArray(new QueryLog[queryLogs.size()]));
+                                        errors.addAll(res.getErrors());
+                                        numberOfSuggestDocs += res.getNumberOfSuggestDocs();
+                                        numberOfInputDocs += res.getNumberOfInputDocs();
+                                        queryLogs.clear();
+
+                                        Thread.sleep(requestInterval);
+                                    }
                                 }
-                                queryLogs.clear();
+                                indexingFuture.resolve(
+                                        new SuggestIndexResponse(numberOfSuggestDocs, numberOfInputDocs, errors, System.currentTimeMillis()
+                                                - start), null);
+                            } catch (Throwable t) {
+                                indexingFuture.resolve(null, new SuggestIndexException(t));
+                            } finally {
+                                queryLogReader.close();
                             }
-                        }
-                    } catch (Throwable t) {
-                        indexingFuture.errors().add(t);
-                    } finally {
-                        queryLogReader.close();
-                        indexingFuture.executeDone(new SuggestIndexResponse(numberOfSuggestDocs, numberOfInputDocs, indexingFuture.errors,
-                                System.currentTimeMillis() - start));
-                    }
-                };
-
-        if (async) {
-            indexingFuture.future = threadPool.submit(r);
-        } else {
-            r.run();
-        }
+                        });
 
         return indexingFuture;
     }
@@ -182,51 +175,46 @@ public class SuggestIndexer {
     }
 
     @SuppressWarnings("unchecked")
-    public IndexingFuture indexFromDocument(final DocumentReader documentReader, final boolean async, final int maxDocNum) {
-        final IndexingFuture indexingFuture = new IndexingFuture();
+    public SuggestIndexFuture indexFromDocument(final DocumentReader documentReader, final int docPerReq, final long requestInterval) {
+        final SuggestIndexFuture indexingFuture = new SuggestIndexFuture();
 
-        Runnable r =
-                () -> {
-                    final long start = System.currentTimeMillis();
-                    int numberOfSuggestDocs = 0;
-                    int numberOfInputDocs = 0;
+        indexingFuture.future =
+                threadPool
+                        .submit(() -> {
+                            final long start = System.currentTimeMillis();
+                            int numberOfSuggestDocs = 0;
+                            int numberOfInputDocs = 0;
 
-                    try {
-                        indexingFuture.started.set(true);
-                        List<Map<String, Object>> docs = new ArrayList<>(maxDocNum);
-                        Map<String, Object> doc = documentReader.read();
-                        while (doc != null) {
-                            if (Thread.currentThread().isInterrupted()) {
-                                break;
-                            }
-                            docs.add(doc);
-                            doc = documentReader.read();
-                            if (doc == null || docs.size() >= maxDocNum) {
-                                try {
-                                    SuggestIndexResponse res = indexFromDocument(docs.toArray(new Map[docs.size()]));
-                                    numberOfSuggestDocs += res.getNumberOfSuggestDocs();
-                                    numberOfInputDocs += res.getNumberOfInputDocs();
-                                    client.admin().indices().prepareRefresh(index).execute().actionGet();
-                                } catch (SuggestIndexException e) {
-                                    indexingFuture.errors().add(e);
+                            try {
+                                List<Throwable> errors = new ArrayList<>();
+                                List<Map<String, Object>> docs = new ArrayList<>(docPerReq);
+                                Map<String, Object> doc = documentReader.read();
+                                while (doc != null) {
+                                    if (Thread.currentThread().isInterrupted()) {
+                                        break;
+                                    }
+                                    docs.add(doc);
+                                    doc = documentReader.read();
+                                    if (doc == null || docs.size() >= docPerReq) {
+                                        SuggestIndexResponse res = indexFromDocument(docs.toArray(new Map[docs.size()]));
+                                        errors.addAll(res.getErrors());
+                                        numberOfSuggestDocs += res.getNumberOfSuggestDocs();
+                                        numberOfInputDocs += res.getNumberOfInputDocs();
+                                        client.admin().indices().prepareRefresh(index).execute().actionGet();
+                                        docs.clear();
+
+                                        Thread.sleep(requestInterval);
+                                    }
                                 }
-                                docs.clear();
+                                indexingFuture.resolve(
+                                        new SuggestIndexResponse(numberOfSuggestDocs, numberOfInputDocs, errors, System.currentTimeMillis()
+                                                - start), null);
+                            } catch (Throwable t) {
+                                indexingFuture.resolve(null, new SuggestIndexException(t));
+                            } finally {
+                                documentReader.close();
                             }
-                        }
-                    } catch (Throwable t) {
-                        indexingFuture.errors().add(t);
-                    } finally {
-                        documentReader.close();
-                        indexingFuture.executeDone(new SuggestIndexResponse(numberOfSuggestDocs, numberOfInputDocs, indexingFuture.errors,
-                                System.currentTimeMillis() - start));
-                    }
-                };
-
-        if (async) {
-            indexingFuture.future = threadPool.submit(r);
-        } else {
-            r.run();
-        }
+                        });
 
         return indexingFuture;
     }
@@ -320,63 +308,4 @@ public class SuggestIndexer {
         return this;
     }
 
-    public static class IndexingFuture {
-        final protected AtomicBoolean started = new AtomicBoolean(false);
-        final protected List<Throwable> errors = Collections.synchronizedList(new ArrayList<>());
-        protected volatile Future future = null;
-        protected volatile Listener listener = null;
-        protected final AtomicBoolean needExecuteDone = new AtomicBoolean(false);
-        protected volatile SuggestIndexResponse response = null;
-
-        public boolean isStarted() {
-            return started.get();
-        }
-
-        public boolean isDone() {
-            return future == null || future.isDone();
-        }
-
-        public boolean isCanceled() {
-            return future != null && future.isCancelled();
-        }
-
-        public boolean cancel() {
-            return future != null && future.cancel(true);
-        }
-
-        public boolean hasError() {
-            return errors.size() > 0;
-        }
-
-        public List<Throwable> errors() {
-            return errors;
-        }
-
-        public SuggestIndexResponse getResponse() {
-            return response;
-        }
-
-        public synchronized IndexingFuture done(Listener listener) {
-            if (needExecuteDone.get()) {
-                listener.onResponse(getResponse());
-            } else {
-                this.listener = listener;
-                needExecuteDone.set(true);
-            }
-            return this;
-        }
-
-        protected synchronized void executeDone(SuggestIndexResponse response) {
-            this.response = response;
-            if (needExecuteDone.get() && listener != null) {
-                this.listener.onResponse(getResponse());
-            } else {
-                needExecuteDone.set(true);
-            }
-        }
-    }
-
-    public interface Listener {
-        void onResponse(SuggestIndexResponse response);
-    }
 }

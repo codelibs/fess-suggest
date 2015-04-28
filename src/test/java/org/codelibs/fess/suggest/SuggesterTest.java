@@ -5,7 +5,6 @@ import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.entity.ElevateWord;
 import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.fess.suggest.index.SuggestIndexResponse;
-import org.codelibs.fess.suggest.index.SuggestIndexer;
 import org.codelibs.fess.suggest.index.contents.document.ESSourceReader;
 import org.codelibs.fess.suggest.index.contents.querylog.QueryLog;
 import org.codelibs.fess.suggest.index.contents.querylog.QueryLogReader;
@@ -159,10 +158,7 @@ public class SuggesterTest {
             }
         };
 
-        SuggestIndexer.IndexingFuture status = suggester.indexer().indexFromQueryLog(reader, true);
-        while (!status.isDone()) {
-            Thread.sleep(1000);
-        }
+        suggester.indexer().indexFromQueryLog(reader, 10, 100).getResponse();
         suggester.refresh();
 
         SuggestResponse response1 = suggester.suggest().setQuery("けん").setSuggestDetail(true).execute().getResponse();
@@ -217,14 +213,11 @@ public class SuggesterTest {
         AtomicInteger numObInputDoc = new AtomicInteger(0);
         ESSourceReader reader = new ESSourceReader(client, suggester.settings(), indexName, typeName);
 
-        SuggestIndexer.IndexingFuture future = suggester.indexer().indexFromDocument(reader, true, 1).done(response -> {
+        suggester.indexer().indexFromDocument(reader, 1000, 100).done(response -> {
             numObInputDoc.set(response.getNumberOfInputDocs());
             latch.countDown();
-        });
-        assertFalse(future.isDone());
+        }).error(t -> fail());
         latch.await();
-        Thread.sleep(100);
-        assertTrue(future.isDone());
         assertEquals(num, numObInputDoc.get());
 
         SuggestResponse response = suggester.suggest().setQuery("test").setSuggestDetail(true).execute().getResponse();

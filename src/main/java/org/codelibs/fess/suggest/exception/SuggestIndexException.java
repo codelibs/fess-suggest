@@ -1,6 +1,6 @@
 package org.codelibs.fess.suggest.exception;
 
-public class SuggestIndexException extends Exception {
+public class SuggestIndexException extends SuggesterException {
     public SuggestIndexException(String msg) {
         super(msg);
     }

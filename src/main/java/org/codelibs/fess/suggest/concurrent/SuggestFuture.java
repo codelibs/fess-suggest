@@ -4,10 +4,8 @@ import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.codelibs.fess.suggest.request.Response;
 
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SuggestFuture<T extends Response> {
-    final protected AtomicBoolean started = new AtomicBoolean(false);
 
     protected volatile SuggesterException failure = null;
     protected volatile ResponseListener<T> listener = null;
