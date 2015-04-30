@@ -10,7 +10,7 @@ Library for suggest.
 
 ```java
 String suggestId = "id";
-Suggester suggester = Suggester.builder().build(runner.client(), suggestId);
+Suggester suggester = Suggester.builder().build(client, suggestId);
 
 ```
 
