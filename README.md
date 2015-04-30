@@ -1,3 +1,4 @@
+
 fess-suggest
 ============
 
@@ -5,13 +6,32 @@ Library for suggest.
 
 ## Usage
 
-### Suggest.
+### Create suggester instance
 
 ```java
-SuggestResponse response = suggester.suggest().setQuery("kensaku").execute();
+String suggestId = "id";
+Suggester suggester = Suggester.builder().build(runner.client(), suggestId);
+
 ```
 
-### Add suggest document.
+### Suggest
+
+```java
+SuggestResponse response = suggester.suggest().setQuery("kensaku").execute().getResponse();
+```
+
+### Suggest async
+
+```
+suggester.suggest().setQuery("kensaku").execute()
+  .done(
+    response -> {}
+  ).error(
+    t -> {}
+  );
+```
+
+### Add suggest document
 
 ```java
 String[][] readings = new String[2][];
@@ -22,14 +42,20 @@ String[] roles = new String[] { "role1", "role2", "role3" };
 suggester.indexer().index(new SuggestItem(new String[] { "検索", "エンジン" }, readings, 1, tags, roles, SuggestItem.Kind.DOCUMENT));
 ```
 
-### Add suggest documents by
+### Add suggest documents from source of index
 
 ```java
-suggester.indexer().indexFromQueryLog(new QueryLogReader {
-  @Override
-  public String read() {
-    //any logic for getting queryString from query log
-    return queryString;
-  }
-});
+DocumentReader reader = new ESSourceReader(
+    client,
+    suggester.settings(),
+    "contentIndexName",
+    "contentTypeName");
+suggester.indexer().indexFromDocument(reader, 2, 100).getResponse();
+```
+
+### Add suggest document from queryLog
+
+```java
+QueryLog queryLog = new QueryLog("field1:value1", null);
+suggester.indexer().indexFromQueryLog(queryLog);
 ```
