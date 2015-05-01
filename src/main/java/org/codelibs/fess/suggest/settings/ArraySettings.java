@@ -1,6 +1,7 @@
 package org.codelibs.fess.suggest.settings;
 
 import org.codelibs.fess.suggest.constants.FieldNames;
+import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.exception.SuggestSettingsException;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
@@ -74,7 +75,7 @@ public class ArraySettings {
             SearchResponse response =
                     client.prepareSearch().setIndices(index).setTypes(type).setScroll(TimeValue.timeValueSeconds(10))
                             .setSearchType(SearchType.SCAN).setQuery(QueryBuilders.termQuery(FieldNames.ARRAY_KEY, key)).setSize(1000)
-                            .execute().actionGet();
+                            .execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
 
             Map<String, Object>[] array = new Map[(int) response.getHits().getTotalHits()];
 
@@ -121,7 +122,8 @@ public class ArraySettings {
     protected void addToArrayIndex(final String index, final String type, final String id, final Map<String, Object> source) {
         try {
             client.prepareUpdate().setIndex(index).setType(type).setId(id).setDocAsUpsert(true)
-                    .setDoc(JsonXContent.contentBuilder().map(source)).setRefresh(true).execute().actionGet();
+                    .setDoc(JsonXContent.contentBuilder().map(source)).setRefresh(true).execute()
+                    .actionGet(SuggestConstants.ACTION_TIMEOUT);
         } catch (Exception e) {
             throw new SuggestSettingsException("Failed to add to array.", e);
         }
@@ -130,7 +132,7 @@ public class ArraySettings {
     protected void deleteKeyFromArray(final String index, final String type, final String key) {
         try {
             client.prepareDeleteByQuery().setIndices(index).setTypes(type).setQuery(QueryBuilders.termQuery(FieldNames.ARRAY_KEY, key))
-                    .execute().actionGet();
+                    .execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
         } catch (Exception e) {
             throw new SuggestSettingsException("Failed to delete all from array.", e);
         }
@@ -138,7 +140,8 @@ public class ArraySettings {
 
     protected void deleteFromArray(final String index, final String type, final String id) {
         try {
-            client.prepareDelete().setIndex(index).setType(type).setId(id).setRefresh(true).execute().actionGet();
+            client.prepareDelete().setIndex(index).setType(type).setId(id).setRefresh(true).execute()
+                    .actionGet(SuggestConstants.ACTION_TIMEOUT);
         } catch (Exception e) {
             throw new SuggestSettingsException("Failed to delete from array.", e);
         }
@@ -151,7 +154,7 @@ public class ArraySettings {
                 empty = client.admin().indices().prepareGetMappings(index).setTypes(type).get().getMappings().isEmpty();
             } catch (IndexMissingException e) {
                 empty = true;
-                client.admin().indices().prepareCreate(index).execute().actionGet();
+                client.admin().indices().prepareCreate(index).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
             }
             if (empty) {
                 client.admin()
@@ -161,7 +164,8 @@ public class ArraySettings {
                         .setSource(
                                 XContentFactory.jsonBuilder().startObject().startObject(settingsId).startObject("properties")
                                         .startObject(FieldNames.ARRAY_KEY).field("type", "string").field("index", "not_analyzed")
-                                        .endObject().endObject().endObject().endObject()).execute().actionGet();
+                                        .endObject().endObject().endObject().endObject()).execute()
+                        .actionGet(SuggestConstants.ACTION_TIMEOUT);
             }
         } catch (IOException e) {
             throw new SuggestSettingsException("Failed to create mappings.");

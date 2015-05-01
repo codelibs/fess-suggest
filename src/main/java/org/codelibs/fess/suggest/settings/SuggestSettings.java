@@ -1,5 +1,6 @@
 package org.codelibs.fess.suggest.settings;
 
+import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.exception.SuggestSettingsException;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.Client;
@@ -49,7 +50,8 @@ public class SuggestSettings {
         boolean doCreate = false;
         try {
             GetResponse getResponse =
-                    client.prepareGet().setIndex(settingsIndexName).setType(settingsTypeName).setId(settingsId).execute().actionGet();
+                    client.prepareGet().setIndex(settingsIndexName).setType(settingsTypeName).setId(settingsId).execute()
+                            .actionGet(SuggestConstants.ACTION_TIMEOUT);
 
             if (!getResponse.isExists()) {
                 doCreate = true;
@@ -84,7 +86,8 @@ public class SuggestSettings {
 
     public Object get(String key) {
         GetResponse getResponse =
-                client.prepareGet().setIndex(settingsIndexName).setType(settingsTypeName).setId(settingsId).execute().actionGet();
+                client.prepareGet().setIndex(settingsIndexName).setType(settingsTypeName).setId(settingsId).execute()
+                        .actionGet(SuggestConstants.ACTION_TIMEOUT);
         if (!getResponse.isExists()) {
             return null;
         }
@@ -160,7 +163,7 @@ public class SuggestSettings {
     public void set(String key, Object value) {
         try {
             client.prepareUpdate().setIndex(settingsIndexName).setType(settingsTypeName).setId(settingsId).setDocAsUpsert(true)
-                    .setDoc(key, value).setRefresh(true).setRetryOnConflict(5).execute().actionGet();
+                    .setDoc(key, value).setRefresh(true).setRetryOnConflict(5).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
         } catch (Exception e) {
             throw new SuggestSettingsException("Failed to update settings.", e);
         }
@@ -169,7 +172,8 @@ public class SuggestSettings {
     public void set(Map<String, Object> map) {
         try {
             client.prepareUpdate().setIndex(settingsIndexName).setType(settingsTypeName).setId(settingsId).setDocAsUpsert(true)
-                    .setRefresh(true).setDoc(JsonXContent.contentBuilder().map(map)).setRetryOnConflict(5).execute().actionGet();
+                    .setRefresh(true).setDoc(JsonXContent.contentBuilder().map(map)).setRetryOnConflict(5).execute()
+                    .actionGet(SuggestConstants.ACTION_TIMEOUT);
         } catch (Exception e) {
             throw new SuggestSettingsException("Failed to update settings.", e);
         }

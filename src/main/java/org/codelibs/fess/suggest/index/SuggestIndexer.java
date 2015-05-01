@@ -3,6 +3,7 @@ package org.codelibs.fess.suggest.index;
 import org.apache.lucene.analysis.Analyzer;
 import org.codelibs.fess.suggest.concurrent.SuggestIndexFuture;
 import org.codelibs.fess.suggest.constants.FieldNames;
+import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.converter.ReadingConverter;
 import org.codelibs.fess.suggest.entity.ElevateWord;
 import org.codelibs.fess.suggest.entity.SuggestItem;
@@ -200,7 +201,7 @@ public class SuggestIndexer {
                                         errors.addAll(res.getErrors());
                                         numberOfSuggestDocs += res.getNumberOfSuggestDocs();
                                         numberOfInputDocs += res.getNumberOfInputDocs();
-                                        client.admin().indices().prepareRefresh(index).execute().actionGet();
+                                        client.admin().indices().prepareRefresh(index).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
                                         docs.clear();
 
                                         Thread.sleep(requestInterval);

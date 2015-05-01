@@ -1,9 +1,11 @@
 package org.codelibs.fess.suggest.concurrent;
 
+import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.codelibs.fess.suggest.request.Response;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public class SuggestFuture<T extends Response> {
 
@@ -23,7 +25,7 @@ public class SuggestFuture<T extends Response> {
                 latch = new CountDownLatch(1);
             }
             try {
-                latch.await();
+                latch.await(SuggestConstants.ACTION_TIMEOUT, TimeUnit.MILLISECONDS);
             } catch (InterruptedException e) {
                 throw new SuggesterException(e);
             }

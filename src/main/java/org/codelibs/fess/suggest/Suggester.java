@@ -1,6 +1,7 @@
 package org.codelibs.fess.suggest;
 
 import org.apache.lucene.analysis.Analyzer;
+import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.converter.ReadingConverter;
 import org.codelibs.fess.suggest.index.SuggestIndexer;
 import org.codelibs.fess.suggest.normalizer.Normalizer;
@@ -41,7 +42,7 @@ public class Suggester {
     }
 
     public RefreshResponse refresh() {
-        return client.admin().indices().prepareRefresh(index).execute().actionGet();
+        return client.admin().indices().prepareRefresh(index).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
     }
 
     public void shutdown() {

@@ -1,5 +1,6 @@
 package org.codelibs.fess.suggest.index.contents.document;
 
+import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
@@ -77,7 +78,8 @@ public class ESSourceReader implements DocumentReader {
                 for (int i = 0; i < maxRetryCount; i++) {
                     try {
                         SearchResponse response =
-                                client.prepareSearchScroll(scrollId).setScroll(TimeValue.timeValueMinutes(1)).execute().actionGet();
+                                client.prepareSearchScroll(scrollId).setScroll(TimeValue.timeValueMinutes(1)).execute()
+                                        .actionGet(SuggestConstants.ACTION_TIMEOUT);
                         scrollId = response.getScrollId();
                         if (scrollId == null) {
                             isFinished.set(true);
@@ -122,7 +124,8 @@ public class ESSourceReader implements DocumentReader {
     protected String createNewScroll() {
         SearchResponse response =
                 client.prepareSearch().setIndices(indexName).setTypes(typeName).setScroll(new Scroll(TimeValue.timeValueMinutes(1)))
-                        .setSearchType(SearchType.SCAN).setQuery(QueryBuilders.matchAllQuery()).setSize(scrollSize).execute().actionGet();
+                        .setSearchType(SearchType.SCAN).setQuery(QueryBuilders.matchAllQuery()).setSize(scrollSize).execute()
+                        .actionGet(SuggestConstants.ACTION_TIMEOUT);
         return response.getScrollId();
     }
 

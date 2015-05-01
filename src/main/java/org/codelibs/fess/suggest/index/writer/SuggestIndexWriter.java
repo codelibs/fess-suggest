@@ -1,5 +1,6 @@
 package org.codelibs.fess.suggest.index.writer;
 
+import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.fess.suggest.exception.SuggestIndexException;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
@@ -33,7 +34,7 @@ public class SuggestIndexWriter implements SuggestWriter {
             bulkRequestBuilder.add(updateRequestBuilder);
         }
 
-        BulkResponse response = bulkRequestBuilder.execute().actionGet();
+        BulkResponse response = bulkRequestBuilder.execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
         SuggestWriterResult result = new SuggestWriterResult();
         if (response.hasFailures()) {
             for (BulkItemResponse bulkItemResponses : response.getItems()) {
@@ -51,7 +52,7 @@ public class SuggestIndexWriter implements SuggestWriter {
             final String id) {
         SuggestWriterResult result = new SuggestWriterResult();
         try {
-            client.prepareDelete().setIndex(index).setType(type).setId(id).execute().actionGet();
+            client.prepareDelete().setIndex(index).setType(type).setId(id).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
         } catch (Exception e) {
             result.addFailure(e);
         }
@@ -64,7 +65,7 @@ public class SuggestIndexWriter implements SuggestWriter {
         SuggestWriterResult result = new SuggestWriterResult();
         try {
             client.prepareDeleteByQuery().setIndices(index).setTypes(type).setQuery(QueryBuilders.queryStringQuery(queryString)).execute()
-                    .actionGet();
+                    .actionGet(SuggestConstants.ACTION_TIMEOUT);
         } catch (Exception e) {
             result.addFailure(e);
         }
