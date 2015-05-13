@@ -195,8 +195,8 @@
         </dependency>
 		<dependency>
 			<groupId>org.codelibs</groupId>
-			<artifactId>elasticsearch-analysis-kuromoji-neologd</artifactId>
-			<version>1.5.0</version>
+			<artifactId>lucene-analyzers-kuromoji-ipadic-neologd</artifactId>
+			<version>4.10.4-20150501</version>
 		</dependency>
         <dependency>
             <groupId>org.codehaus.groovy</groupId>
