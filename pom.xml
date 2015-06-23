@@ -194,9 +194,15 @@
             <version>${lucene.version}</version>
         </dependency>
 		<dependency>
+			<groupId>org.apache.lucene</groupId>
+			<artifactId>lucene-queryparser</artifactId>
+			<version>${lucene.version}</version>
+		</dependency>
+		<dependency>
 			<groupId>org.codelibs</groupId>
 			<artifactId>lucene-analyzers-kuromoji-ipadic-neologd</artifactId>
 			<version>4.10.4-20150501</version>
+			<scope>provided</scope>
 		</dependency>
         <dependency>
             <groupId>org.codehaus.groovy</groupId>
