@@ -31,7 +31,6 @@ public class DefaultContentsParser implements ContentsParser {
         } catch (IOException e) {
             throw new SuggesterException("Failed to SuggestItem from search words.", e);
         }
-
     }
 
     @Override

@@ -15,6 +15,7 @@ import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.normalizer.NormalizerChain;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.codelibs.fess.suggest.settings.SuggestSettingsBuilder;
+import org.codelibs.fess.suggest.util.SuggestUtil;
 import org.codelibs.neologd.ipadic.lucene.analysis.ja.JapaneseAnalyzer;
 import org.codelibs.neologd.ipadic.lucene.analysis.ja.JapaneseTokenizer;
 import org.codelibs.neologd.ipadic.lucene.analysis.ja.dict.UserDictionary;
@@ -87,7 +88,7 @@ public class SuggesterBuilder {
         settings.init();
 
         if (readingConverter == null) {
-            readingConverter = createDefaultReadingConverter();
+            readingConverter = SuggestUtil.createDefaultReadingConverter();
         }
         try {
             readingConverter.init();
@@ -96,11 +97,11 @@ public class SuggesterBuilder {
         }
 
         if (normalizer == null) {
-            normalizer = createDefaultNormalizer();
+            normalizer = SuggestUtil.createDefaultNormalizer();
         }
 
         if (analyzer == null) {
-            analyzer = createDefaultAnalyzer();
+            analyzer = SuggestUtil.createDefaultAnalyzer();
         }
 
         if (threadPool == null) {
@@ -109,47 +110,4 @@ public class SuggesterBuilder {
 
         return new Suggester(client, settings, readingConverter, normalizer, analyzer, threadPool);
     }
-
-    protected ReadingConverter createDefaultReadingConverter() {
-        ReadingConverterChain chain = new ReadingConverterChain();
-        chain.addConverter(new KatakanaConverter());
-        chain.addConverter(new KatakanaToAlphabetConverter());
-        return chain;
-    }
-
-    protected Normalizer createDefaultNormalizer() {
-        NormalizerChain normalizerChain = new NormalizerChain();
-        normalizerChain.add(new FullWidthToHalfWidthAlphabetNormalizer());
-        normalizerChain.add(new ICUNormalizer("Any-Lower"));
-        return normalizerChain;
-    }
-
-    protected Analyzer createDefaultAnalyzer() throws SuggesterException {
-        try {
-            final UserDictionary userDictionary;
-            final String userDictionaryPath = System.getProperty(SuggestConstants.USER_DICT_PATH);
-            if (StringUtils.isBlank(userDictionaryPath) || !new File(userDictionaryPath).exists()) {
-                userDictionary = null;
-            } else {
-                InputStream stream = new FileInputStream(new File(userDictionaryPath));
-                String encoding = System.getProperty(SuggestConstants.USER_DICT_ENCODING);
-                if (encoding == null) {
-                    encoding = IOUtils.UTF_8;
-                }
-
-                CharsetDecoder decoder =
-                        Charset.forName(encoding).newDecoder().onMalformedInput(CodingErrorAction.REPORT)
-                                .onUnmappableCharacter(CodingErrorAction.REPORT);
-                InputStreamReader reader = new InputStreamReader(stream, decoder);
-                userDictionary = new UserDictionary(reader);
-            }
-
-            Set<String> stopTags = new HashSet<>();
-
-            return new JapaneseAnalyzer(userDictionary, JapaneseTokenizer.Mode.NORMAL, null, stopTags);
-        } catch (IOException e) {
-            throw new SuggesterException("Failed to create default analyzer.", e);
-        }
-    }
-
 }
