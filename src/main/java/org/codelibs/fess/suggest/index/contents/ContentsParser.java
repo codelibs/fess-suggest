@@ -11,8 +11,8 @@ import java.util.List;
 import java.util.Map;
 
 public interface ContentsParser {
-    SuggestItem parseSearchWords(String[] words, String[] fields, String[] tags, String roles[], ReadingConverter readingConverter,
-            Normalizer normalizer) throws SuggesterException;
+    SuggestItem parseSearchWords(String[] words, String[][] readings, String[] fields, String[] tags, String roles[], long score,
+            ReadingConverter readingConverter, Normalizer normalizer) throws SuggesterException;
 
     List<SuggestItem> parseQueryLog(QueryLog queryLog, String[] fields, String tagFieldName, String roleFieldName,
             ReadingConverter readingConverter, Normalizer normalizer) throws SuggesterException;

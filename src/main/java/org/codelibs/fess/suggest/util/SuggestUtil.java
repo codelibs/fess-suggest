@@ -1,5 +1,7 @@
 package org.codelibs.fess.suggest.util;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang.StringUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser;
@@ -34,6 +36,8 @@ public class SuggestUtil {
     private static final int MAX_QUERY_TERM_NUM = 5;
     private static final int MAX_QUERY_TERM_LENGTH = 48;
 
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+
     private SuggestUtil() {
     }
 
@@ -44,18 +48,18 @@ public class SuggestUtil {
     public static String[] parseQuery(final String q, final String field) {
         final List<String> keywords = getKeywords(q, new String[] { field });
         if (MAX_QUERY_TERM_NUM < keywords.size()) {
-            return null;
+            return new String[0];
         }
         for (final String k : keywords) {
             if (MAX_QUERY_TERM_LENGTH < k.length()) {
-                return null;
+                return new String[0];
             }
         }
         return keywords.toArray(new String[keywords.size()]);
     }
 
     public static List<String> getKeywords(final String q, final String[] fields) {
-        final List<String> keywords = new ArrayList<String>();
+        final List<String> keywords = new ArrayList<>();
         final List<TermQuery> termQueryList;
         try {
             StandardQueryParser parser = new StandardQueryParser();
@@ -70,13 +74,10 @@ public class SuggestUtil {
             if (0 == text.length()) {
                 continue;
             }
-            // duplicate
-            //String entry = field + QUERY_FIELD_SEPARATOR + text;
-            String entry = text;
-            if (keywords.contains(entry)) {
+            if (keywords.contains(text)) {
                 continue;
             }
-            keywords.add(entry);
+            keywords.add(text);
         }
         return keywords;
     }
@@ -85,7 +86,7 @@ public class SuggestUtil {
         if (query instanceof BooleanQuery) {
             final BooleanQuery booleanQuery = (BooleanQuery) query;
             final BooleanClause[] clauses = booleanQuery.getClauses();
-            final List<TermQuery> queryList = new ArrayList<TermQuery>();
+            final List<TermQuery> queryList = new ArrayList<>();
             for (final BooleanClause clause : clauses) {
                 final Query q = clause.getQuery();
                 if (q instanceof BooleanQuery) {
@@ -104,7 +105,7 @@ public class SuggestUtil {
             final TermQuery termQuery = (TermQuery) query;
             for (final String field : fields) {
                 if (field.equals(termQuery.getTerm().field())) {
-                    final List<TermQuery> queryList = new ArrayList<TermQuery>(1);
+                    final List<TermQuery> queryList = new ArrayList<>(1);
                     queryList.add(termQuery);
                     return queryList;
                 }
@@ -113,9 +114,39 @@ public class SuggestUtil {
         return Collections.emptyList();
     }
 
-    public static String createBulkLine(String index, String type, SuggestItem item) {
-        //TODO
-        return null;
+    public static String createBulkLine(String index, String type, SuggestItem item) throws SuggesterException {
+        final Map<String, Object> firstLineMap = new HashMap<>();
+        final Map<String, Object> firstLineInnerMap = new HashMap<>();
+        firstLineInnerMap.put("_index", index);
+        firstLineInnerMap.put("_type", type);
+        firstLineInnerMap.put("_id", item.getId());
+        firstLineMap.put("index", firstLineInnerMap);
+
+        final Map<String, Object> secondLine = new HashMap<>();
+
+        secondLine.put("text", item.getText());
+
+        //reading
+        String[][] readings = item.getReadings();
+        for (int i = 0; i < readings.length; i++) {
+            secondLine.put("reading_" + i, readings[i]);
+        }
+
+        secondLine.put("fields", item.getFields());
+        secondLine.put("queryFreq", item.getQueryFreq());
+        secondLine.put("docFreq", item.getDocFreq());
+        secondLine.put("userBoost", item.getUserBoost());
+        secondLine.put("score", (item.getQueryFreq() + item.getDocFreq()) * item.getUserBoost());
+        secondLine.put("tags", item.getTags());
+        secondLine.put("roles", item.getRoles());
+        secondLine.put("kinds", item.getKind());
+        secondLine.put("@timestamp", item.getTimestamp());
+
+        try {
+            return objectMapper.writeValueAsString(firstLineMap) + '\n' + objectMapper.writeValueAsString(secondLine);
+        } catch (JsonProcessingException e) {
+            throw new SuggesterException(e);
+        }
     }
 
     public static ReadingConverter createDefaultReadingConverter() {
@@ -159,5 +190,4 @@ public class SuggestUtil {
             throw new SuggesterException("Failed to create default analyzer.", e);
         }
     }
-
 }

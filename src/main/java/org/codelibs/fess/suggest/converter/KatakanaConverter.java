@@ -18,11 +18,8 @@ import org.apache.lucene.analysis.util.TokenizerFactory;
 
 import com.ibm.icu.text.Transliterator;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class KatakanaConverter implements ReadingConverter {
-    private static final Logger logger = LoggerFactory.getLogger(KatakanaConverter.class);
 
     private final Transliterator transliterator = Transliterator.getInstance("Hiragana-Katakana");
 
@@ -36,8 +33,6 @@ public class KatakanaConverter implements ReadingConverter {
     public KatakanaConverter(TokenizerFactory tokenizerFactory) {
         if (isEnableTokenizer(tokenizerFactory)) {
             this.tokenizerFactory = tokenizerFactory;
-        } else {
-            logger.warn("Invalid tokenizerFactory. " + tokenizerFactory.getClass().getName());
         }
     }
 

@@ -37,7 +37,7 @@ public class SuggestRequest extends Request<SuggestResponse> {
 
     private final List<String> fields = new ArrayList<>();
 
-    private boolean suggestDetail = false;
+    private boolean suggestDetail = true;
 
     private ReadingConverter readingConverter;
 

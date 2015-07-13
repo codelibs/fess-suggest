@@ -17,17 +17,25 @@ import java.util.Map;
 
 public class DefaultContentsParser implements ContentsParser {
     @Override
-    public SuggestItem parseSearchWords(final String[] words, final String[] fields, final String[] tags, final String[] roles,
-            final ReadingConverter readingConverter, final Normalizer normalizer) throws SuggesterException {
+    public SuggestItem parseSearchWords(final String[] words, final String[][] readings, final String[] fields, final String[] tags,
+            final String[] roles, final long score, final ReadingConverter readingConverter, final Normalizer normalizer)
+            throws SuggesterException {
         try {
-            String[][] readings = new String[words.length][];
-            for (int j = 0; j < words.length; j++) {
-                words[j] = normalizer.normalize(words[j]);
-                List<String> l = readingConverter.convert(words[j]);
-                readings[j] = l.toArray(new String[l.size()]);
-            }
+            String[][] readingArray = new String[words.length][];
+            for (int i = 0; i < words.length; i++) {
+                words[i] = normalizer.normalize(words[i]);
+                List<String> l = readingConverter.convert(words[i]);
+                if (readings != null && readings.length > i && readings[i].length > 0) {
+                    for (final String reading : readings[i]) {
+                        if (!l.contains(reading)) {
+                            l.add(reading);
+                        }
+                    }
+                }
 
-            return new SuggestItem(words, readings, fields, 1L, -1, tags, roles, SuggestItem.Kind.QUERY);
+                readingArray[i] = l.toArray(new String[l.size()]);
+            }
+            return new SuggestItem(words, readingArray, fields, score, -1, tags, roles, SuggestItem.Kind.QUERY);
         } catch (IOException e) {
             throw new SuggesterException("Failed to SuggestItem from search words.", e);
         }

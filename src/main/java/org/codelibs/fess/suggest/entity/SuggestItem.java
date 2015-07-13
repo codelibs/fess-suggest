@@ -97,6 +97,10 @@ public class SuggestItem implements Serializable {
         return roles;
     }
 
+    public String[] getFields() {
+        return fields;
+    }
+
     public Kind getKind() {
         return kind;
     }
@@ -111,6 +115,10 @@ public class SuggestItem implements Serializable {
 
     public float getUserBoost() {
         return userBoost;
+    }
+
+    public LocalDateTime getTimestamp() {
+        return timestamp;
     }
 
     public Map<String, Object> toEmptyMap() {
