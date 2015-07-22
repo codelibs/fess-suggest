@@ -264,6 +264,7 @@ public class SuggestRequest extends Request<SuggestResponse> {
         if (value instanceof String) {
             List<String> list = new ArrayList<>();
             list.add(value.toString());
+            return list;
         } else if (value instanceof List) {
             @SuppressWarnings("unchecked")
             List<String> list = (List<String>) value;
