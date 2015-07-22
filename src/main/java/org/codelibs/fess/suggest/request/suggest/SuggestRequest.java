@@ -230,14 +230,14 @@ public class SuggestRequest extends Request<SuggestResponse> {
                 Object readingObj;
                 List<String[]> readings = new ArrayList<>();
                 while ((readingObj = source.get(FieldNames.READING_PREFIX + readingCount++)) != null) {
-                    List<String> reading = (List) readingObj;
+                    List<String> reading = getAsList(readingObj);
                     readings.add(reading.toArray(new String[reading.size()]));
                 }
 
-                List<String> fields = (List) source.get(FieldNames.FIELDS);
-                List<String> tags = (List) source.get(FieldNames.TAGS);
-                List<String> roles = (List) source.get(FieldNames.ROLES);
-                List<String> kinds = (List) source.get(FieldNames.KINDS);
+                List<String> fields = getAsList(source.get(FieldNames.FIELDS));
+                List<String> tags = getAsList(source.get(FieldNames.TAGS));
+                List<String> roles = getAsList(source.get(FieldNames.ROLES));
+                List<String> kinds = getAsList(source.get(FieldNames.KINDS));
                 SuggestItem.Kind kind;
                 long freq;
                 if (SuggestItem.Kind.USER.toString().equals(kinds.get(0))) {
@@ -258,5 +258,17 @@ public class SuggestRequest extends Request<SuggestResponse> {
         }
 
         return new SuggestResponse(searchResponse.getTookInMillis(), words, searchResponse.getHits().totalHits(), items);
+    }
+
+    private List<String> getAsList(Object value) {
+        if (value instanceof String) {
+            List<String> list = new ArrayList<>();
+            list.add(value.toString());
+        } else if (value instanceof List) {
+            @SuppressWarnings("unchecked")
+            List<String> list = (List<String>) value;
+            return list;
+        }
+        throw new IllegalArgumentException("The value should be String or List, but " + value);
     }
 }
