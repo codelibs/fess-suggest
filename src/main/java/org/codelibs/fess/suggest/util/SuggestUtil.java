@@ -2,6 +2,7 @@ package org.codelibs.fess.suggest.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser;
@@ -42,7 +43,7 @@ public class SuggestUtil {
     }
 
     public static String createSuggestTextId(String text) {
-        return String.valueOf(text.hashCode());
+        return DigestUtils.md5Hex(text);
     }
 
     public static String[] parseQuery(final String q, final String field) {
