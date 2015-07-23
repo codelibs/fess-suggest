@@ -14,6 +14,8 @@ import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.index.query.*;
+import org.elasticsearch.index.query.functionscore.FunctionScoreQueryBuilder;
+import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.sort.SortOrder;
 
@@ -102,7 +104,15 @@ public class SuggestRequest extends Request<SuggestResponse> {
 
         // set query.
         String q = buildQueryString(query);
-        builder.setQuery(QueryBuilders.queryStringQuery(q).analyzeWildcard(false).defaultOperator(QueryStringQueryBuilder.Operator.AND));
+
+        if (!query.contains(" ") && !query.contains("　")) {
+            builder.setQuery(buildFunctionScoreQuery(query, q));
+            builder.addSort("_score", SortOrder.DESC);
+        } else {
+            builder.setQuery(QueryBuilders.queryStringQuery(q).analyzeWildcard(false).defaultOperator(QueryStringQueryBuilder.Operator.AND));
+        }
+
+        builder.addSort(FieldNames.SCORE, SortOrder.DESC);
 
         //set filter query.
         List<FilterBuilder> filterBuilderList = new ArrayList<>();
@@ -130,8 +140,6 @@ public class SuggestRequest extends Request<SuggestResponse> {
             builder.setPostFilter(andFilterBuilder.cache(true));
         }
 
-        builder.addSort(FieldNames.SCORE, SortOrder.DESC);
-
         builder.execute(new ActionListener<SearchResponse>() {
             @Override
             public void onResponse(SearchResponse searchResponse) {
@@ -151,8 +159,10 @@ public class SuggestRequest extends Request<SuggestResponse> {
 
     protected String buildQueryString(final String q) throws SuggesterException {
         try {
+            final boolean prefixQuery = !q.endsWith(" ") && !q.endsWith("　");
+
             final String queryString;
-            if (StringUtils.isBlank(query)) {
+            if (StringUtils.isBlank(q)) {
                 queryString = FieldNames.ID + ":*";
             } else {
                 List<String> readingList = new ArrayList<>();
@@ -186,7 +196,11 @@ public class SuggestRequest extends Request<SuggestResponse> {
                         if (readingCount > 0) {
                             buf.append(_OR_);
                         }
-                        buf.append(fieldName).append(':').append(readingList.get(readingCount)).append('*');
+                        buf.append(fieldName).append(':').append(readingList.get(readingCount));
+
+                        if (i + 1 == queries.length && prefixQuery) {
+                            buf.append('*');
+                        }
                     }
                     if (queries.length > 1 && readingNum > 1) {
                         buf.append(')');
@@ -213,6 +227,21 @@ public class SuggestRequest extends Request<SuggestResponse> {
             }
         }
         return buf.toString();
+    }
+
+    protected QueryBuilder buildFunctionScoreQuery(final String query, final String queryString) {
+        FunctionScoreQueryBuilder functionScoreQueryBuilder =
+                QueryBuilders.functionScoreQuery(QueryBuilders.queryStringQuery(queryString).analyzeWildcard(false)
+                    .defaultOperator(QueryStringQueryBuilder.Operator.AND));
+
+        FilterBuilder textScoreFilterBuiler =
+                FilterBuilders.queryFilter(QueryBuilders.queryStringQuery(FieldNames.TEXT + ":" + query + '*').analyzeWildcard(false)
+                    .defaultOperator(QueryStringQueryBuilder.Operator.AND));
+        functionScoreQueryBuilder.add(textScoreFilterBuiler, ScoreFunctionBuilders.weightFactorFunction(10));
+
+        functionScoreQueryBuilder.add(ScoreFunctionBuilders.fieldValueFactorFunction("score").factor(1.0F));
+
+        return functionScoreQueryBuilder;
     }
 
     @SuppressWarnings("unchecked")

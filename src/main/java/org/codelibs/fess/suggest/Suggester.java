@@ -3,12 +3,15 @@ package org.codelibs.fess.suggest;
 import org.apache.lucene.analysis.Analyzer;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.converter.ReadingConverter;
+import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.codelibs.fess.suggest.index.SuggestIndexer;
 import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.request.suggest.SuggestRequestBuilder;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
+import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.common.xcontent.XContentFactory;
 
 import java.util.concurrent.ExecutorService;
 
@@ -34,7 +37,6 @@ public class Suggester {
         this.index = settings.getAsString(SuggestSettings.DefaultKeys.INDEX, "");
         this.type = settings.getAsString(SuggestSettings.DefaultKeys.TYPE, "");
         this.threadPool = threadPool;
-
     }
 
     public SuggestRequestBuilder suggest() {
@@ -47,6 +49,30 @@ public class Suggester {
 
     public void shutdown() {
         threadPool.shutdownNow();
+    }
+
+    public boolean createIndexIfNothing() throws SuggesterException {
+        try {
+            boolean created = false;
+            IndicesExistsResponse response =
+                    client.admin().indices().prepareExists(index).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
+            if (!response.isExists()) {
+                client.admin()
+                        .indices()
+                        .prepareCreate(index)
+                        .addMapping(
+                                "_default_",
+                                XContentFactory.jsonBuilder().startObject().startArray("dynamic_templates").startObject()
+                                        .startObject("not_analyzed").field("match", "*").field("match_mapping_type", "string")
+                                        .startObject("mapping").field("type", "string").field("index", "not_analyzed").endObject()
+                                        .endObject().endObject().endArray().endObject()).execute()
+                        .actionGet(SuggestConstants.ACTION_TIMEOUT);
+                created = true;
+            }
+            return created;
+        } catch (Exception e) {
+            throw new SuggesterException("Failed to create index.", e);
+        }
     }
 
     public SuggestIndexer indexer() {

@@ -50,6 +50,7 @@ public class ESSourceReaderTest {
         }
         runner.refresh();
         suggester = Suggester.builder().build(runner.client(), "SuggesterTest");
+        suggester.createIndexIfNothing();
     }
 
     @Test
