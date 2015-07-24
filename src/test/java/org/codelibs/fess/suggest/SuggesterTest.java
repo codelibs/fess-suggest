@@ -22,6 +22,7 @@ import org.junit.Test;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -223,6 +224,18 @@ public class SuggesterTest {
 
         SuggestResponse response = suggester.suggest().setQuery("test").setSuggestDetail(true).execute().getResponse();
         assertEquals(1, response.getNum());
+    }
+
+    @Test
+    public void test_indexFromSearchWord() throws Exception {
+        SuggestIndexResponse indexResponse = suggester.indexer().indexFromSearchWord("検索　エンジン", null, null, null, 1);
+        indexResponse.getErrors();
+        suggester.refresh();
+
+        final SuggestResponse response = suggester.suggest().setQuery("検索").setSuggestDetail(true).execute().getResponse();
+        final List<SuggestItem> items = response.getItems();
+        assertEquals(1, response.getNum());
+        assertEquals("検索 エンジン", items.get(0).getText());
     }
 
     @Test

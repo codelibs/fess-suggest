@@ -10,14 +10,14 @@ import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.ja.JapaneseTokenizerFactory;
-import org.apache.lucene.analysis.ja.tokenattributes.ReadingAttribute;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.util.FilesystemResourceLoader;
 import org.apache.lucene.analysis.util.TokenizerFactory;
 
 import com.ibm.icu.text.Transliterator;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
+import org.codelibs.neologd.ipadic.lucene.analysis.ja.JapaneseTokenizerFactory;
+import org.codelibs.neologd.ipadic.lucene.analysis.ja.tokenattributes.ReadingAttribute;
 
 public class KatakanaConverter implements ReadingConverter {
 

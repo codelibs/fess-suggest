@@ -220,6 +220,19 @@ public class SuggestIndexer {
         return indexingFuture;
     }
 
+    public SuggestIndexResponse indexFromSearchWord(final String searchWord, final String[] fields, final String[] tags,
+            final String[] roles, final int num) throws SuggestIndexException {
+        long start = System.currentTimeMillis();
+        final String[] words = searchWord.replace("　", " ").replaceAll(" +", " ").trim().split(" ");
+        try {
+            final SuggestItem item = contentsParser.parseSearchWords(words, null, fields, tags, roles, num, readingConverter, normalizer);
+            SuggestIndexResponse response = index(item);
+            return new SuggestIndexResponse(1, 1, response.getErrors(), System.currentTimeMillis() - start);
+        } catch (Exception e) {
+            throw new SuggestIndexException("Failed to index from document", e);
+        }
+    }
+
     public SuggestDeleteResponse addNgWord(String ngWord) throws SuggestIndexException {
         settings.ngword().add(ngWord);
         ngWords = settings.ngword().get();

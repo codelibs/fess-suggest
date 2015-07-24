@@ -232,11 +232,11 @@ public class SuggestRequest extends Request<SuggestResponse> {
     protected QueryBuilder buildFunctionScoreQuery(final String query, final String queryString) {
         FunctionScoreQueryBuilder functionScoreQueryBuilder =
                 QueryBuilders.functionScoreQuery(QueryBuilders.queryStringQuery(queryString).analyzeWildcard(false)
-                    .defaultOperator(QueryStringQueryBuilder.Operator.AND));
+                        .defaultOperator(QueryStringQueryBuilder.Operator.AND));
 
         FilterBuilder textScoreFilterBuiler =
                 FilterBuilders.queryFilter(QueryBuilders.queryStringQuery(FieldNames.TEXT + ":" + query + '*').analyzeWildcard(false)
-                    .defaultOperator(QueryStringQueryBuilder.Operator.AND));
+                        .defaultOperator(QueryStringQueryBuilder.Operator.AND));
         functionScoreQueryBuilder.add(textScoreFilterBuiler, ScoreFunctionBuilders.weightFactorFunction(10));
 
         functionScoreQueryBuilder.add(ScoreFunctionBuilders.fieldValueFactorFunction("score").factor(1.0F));
