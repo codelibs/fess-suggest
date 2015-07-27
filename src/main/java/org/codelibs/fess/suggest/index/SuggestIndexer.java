@@ -239,6 +239,10 @@ public class SuggestIndexer {
         return deleteByQuery(FieldNames.TEXT + ":*\"" + ngWord + "\"*");
     }
 
+    public void deleteNgWord(String ngWord) throws SuggestIndexException {
+        settings.ngword().delete(ngWord);
+    }
+
     public SuggestIndexResponse addElevateWord(ElevateWord elevateWord) throws SuggestIndexException {
         settings.elevateWord().add(elevateWord);
         return index(elevateWord.toSuggestItem());

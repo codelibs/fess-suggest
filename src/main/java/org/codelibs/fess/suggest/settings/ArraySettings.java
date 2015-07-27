@@ -1,5 +1,6 @@
 package org.codelibs.fess.suggest.settings;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.exception.SuggestSettingsException;
@@ -66,7 +67,7 @@ public class ArraySettings {
     }
 
     protected String createId(final String key, final Object value) {
-        return String.valueOf(("key:" + key + "value:" + value).hashCode());
+        return DigestUtils.md5Hex("key:" + key + "value:" + value);
     }
 
     @SuppressWarnings("unchecked")
