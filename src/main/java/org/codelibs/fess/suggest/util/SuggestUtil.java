@@ -1,9 +1,5 @@
 package org.codelibs.fess.suggest.util;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.lang.StringUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser;
 import org.apache.lucene.queryparser.flexible.standard.config.StandardQueryConfigHandler;
@@ -26,6 +22,8 @@ import org.codelibs.fess.suggest.normalizer.NormalizerChain;
 import org.codelibs.neologd.ipadic.lucene.analysis.ja.JapaneseAnalyzer;
 import org.codelibs.neologd.ipadic.lucene.analysis.ja.JapaneseTokenizer;
 import org.codelibs.neologd.ipadic.lucene.analysis.ja.dict.UserDictionary;
+import org.elasticsearch.common.base.Strings;
+import org.elasticsearch.common.xcontent.json.JsonXContent;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -37,13 +35,15 @@ public class SuggestUtil {
     private static final int MAX_QUERY_TERM_NUM = 5;
     private static final int MAX_QUERY_TERM_LENGTH = 48;
 
-    private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final Base64.Encoder encoder = Base64.getEncoder();
+
+    //private static final ObjectMapper objectMapper = new ObjectMapper();
 
     private SuggestUtil() {
     }
 
     public static String createSuggestTextId(String text) {
-        return DigestUtils.md5Hex(text);
+        return encoder.encodeToString(text.getBytes());
     }
 
     public static String[] parseQuery(final String q, final String field) {
@@ -144,8 +144,8 @@ public class SuggestUtil {
         secondLine.put("@timestamp", item.getTimestamp());
 
         try {
-            return objectMapper.writeValueAsString(firstLineMap) + '\n' + objectMapper.writeValueAsString(secondLine);
-        } catch (JsonProcessingException e) {
+            return JsonXContent.contentBuilder().map(firstLineMap).string() + '\n' + JsonXContent.contentBuilder().map(secondLine).string();
+        } catch (IOException e) {
             throw new SuggesterException(e);
         }
     }
@@ -168,7 +168,7 @@ public class SuggestUtil {
         try {
             final UserDictionary userDictionary;
             final String userDictionaryPath = System.getProperty(SuggestConstants.USER_DICT_PATH);
-            if (StringUtils.isBlank(userDictionaryPath) || !new File(userDictionaryPath).exists()) {
+            if (Strings.isNullOrEmpty(userDictionaryPath) || !new File(userDictionaryPath).exists()) {
                 userDictionary = null;
             } else {
                 InputStream stream = new FileInputStream(new File(userDictionaryPath));

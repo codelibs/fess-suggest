@@ -1,6 +1,5 @@
 package org.codelibs.fess.suggest.settings;
 
-import org.apache.commons.codec.digest.DigestUtils;
 import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.exception.SuggestSettingsException;
@@ -17,6 +16,7 @@ import org.elasticsearch.search.SearchHit;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,6 +24,8 @@ public class ArraySettings {
     protected final Client client;
     protected final String arraySettingsIndexName;
     protected final String settingsId;
+
+    private static final Base64.Encoder encoder = Base64.getEncoder();
 
     protected ArraySettings(final Client client, final String settingsIndexName, final String settingsId) {
         this.client = client;
@@ -67,7 +69,7 @@ public class ArraySettings {
     }
 
     protected String createId(final String key, final Object value) {
-        return DigestUtils.md5Hex("key:" + key + "value:" + value);
+        return encoder.encodeToString(("key:" + key + "value:" + value).getBytes());
     }
 
     @SuppressWarnings("unchecked")

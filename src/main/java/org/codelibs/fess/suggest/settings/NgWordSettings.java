@@ -1,7 +1,7 @@
 package org.codelibs.fess.suggest.settings;
 
-import org.apache.commons.lang.StringUtils;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.common.base.Strings;
 
 public class NgWordSettings {
     public static final String NG_WORD_SETTINGD_KEY = "ngword";
@@ -38,7 +38,7 @@ public class NgWordSettings {
     }
 
     protected String getValidationError(String ngWord) {
-        if (StringUtils.isBlank(ngWord)) {
+        if (Strings.isNullOrEmpty(ngWord)) {
             return "ngWord was empty.";
         }
         if (ngWord.contains(" ") || ngWord.contains("  ")) {

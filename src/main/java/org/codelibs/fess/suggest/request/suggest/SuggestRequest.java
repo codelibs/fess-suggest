@@ -1,6 +1,5 @@
 package org.codelibs.fess.suggest.request.suggest;
 
-import org.apache.commons.lang.StringUtils;
 import org.codelibs.fess.suggest.concurrent.SuggestFuture;
 import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
@@ -13,6 +12,7 @@ import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.common.base.Strings;
 import org.elasticsearch.index.query.*;
 import org.elasticsearch.index.query.functionscore.FunctionScoreQueryBuilder;
 import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders;
@@ -97,7 +97,7 @@ public class SuggestRequest extends Request<SuggestResponse> {
     @Override
     protected void processRequest(final Client client, final SuggestFuture<SuggestResponse> future) throws SuggesterException {
         SearchRequestBuilder builder = client.prepareSearch(index);
-        if (StringUtils.isNotBlank(type)) {
+        if (Strings.isNullOrEmpty(type)) {
             builder.setTypes(type);
         }
         builder.setSize(size);
@@ -162,7 +162,7 @@ public class SuggestRequest extends Request<SuggestResponse> {
             final boolean prefixQuery = !q.endsWith(" ") && !q.endsWith("　");
 
             final String queryString;
-            if (StringUtils.isBlank(q)) {
+            if (Strings.isNullOrEmpty(q)) {
                 queryString = FieldNames.ID + ":*";
             } else {
                 List<String> readingList = new ArrayList<>();

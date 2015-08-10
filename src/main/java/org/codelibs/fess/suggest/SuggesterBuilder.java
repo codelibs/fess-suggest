@@ -1,32 +1,15 @@
 package org.codelibs.fess.suggest;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.util.IOUtils;
-import org.codelibs.fess.suggest.constants.SuggestConstants;
-import org.codelibs.fess.suggest.converter.KatakanaConverter;
-import org.codelibs.fess.suggest.converter.KatakanaToAlphabetConverter;
 import org.codelibs.fess.suggest.converter.ReadingConverter;
-import org.codelibs.fess.suggest.converter.ReadingConverterChain;
 import org.codelibs.fess.suggest.exception.SuggesterException;
-import org.codelibs.fess.suggest.normalizer.FullWidthToHalfWidthAlphabetNormalizer;
-import org.codelibs.fess.suggest.normalizer.ICUNormalizer;
 import org.codelibs.fess.suggest.normalizer.Normalizer;
-import org.codelibs.fess.suggest.normalizer.NormalizerChain;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.codelibs.fess.suggest.settings.SuggestSettingsBuilder;
 import org.codelibs.fess.suggest.util.SuggestUtil;
-import org.codelibs.neologd.ipadic.lucene.analysis.ja.JapaneseAnalyzer;
-import org.codelibs.neologd.ipadic.lucene.analysis.ja.JapaneseTokenizer;
-import org.codelibs.neologd.ipadic.lucene.analysis.ja.dict.UserDictionary;
 import org.elasticsearch.client.Client;
 
 import java.io.*;
-import java.nio.charset.Charset;
-import java.nio.charset.CharsetDecoder;
-import java.nio.charset.CodingErrorAction;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
