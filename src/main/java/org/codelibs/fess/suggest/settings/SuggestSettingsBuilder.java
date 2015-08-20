@@ -1,6 +1,7 @@
 package org.codelibs.fess.suggest.settings;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import org.elasticsearch.client.Client;
@@ -12,16 +13,13 @@ public class SuggestSettingsBuilder {
 
     protected Map<String, Object> initialSettings = new HashMap<>();
 
-    public SuggestSettingsBuilder() {
-    }
-
     public SuggestSettingsBuilder setSettingsIndexName(final String settingsIndexName) {
-        this.settingsIndexName = settingsIndexName.toLowerCase();
+        this.settingsIndexName = settingsIndexName.toLowerCase(Locale.ENGLISH);
         return this;
     }
 
     public SuggestSettingsBuilder setSettingsTypeName(final String settingsTypeName) {
-        this.settingsTypeName = settingsTypeName.toLowerCase();
+        this.settingsTypeName = settingsTypeName.toLowerCase(Locale.ENGLISH);
         return this;
     }
 

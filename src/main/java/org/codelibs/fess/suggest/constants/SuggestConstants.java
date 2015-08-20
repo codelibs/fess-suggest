@@ -1,6 +1,6 @@
 package org.codelibs.fess.suggest.constants;
 
-public class SuggestConstants {
+public final class SuggestConstants {
     private SuggestConstants() {
     }
 

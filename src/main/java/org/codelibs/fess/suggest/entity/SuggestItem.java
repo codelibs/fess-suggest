@@ -154,7 +154,7 @@ public class SuggestItem implements Serializable {
     }
 
     public String getScript() {
-        final StringBuilder script = new StringBuilder(100);
+        final StringBuilder script = new StringBuilder(1000);
 
         // define vars
         script.append("def source=ctx._source;");

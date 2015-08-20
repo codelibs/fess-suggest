@@ -73,7 +73,6 @@ public class ArraySettings {
         return encoder.encodeToString(("key:" + key + "value:" + value).getBytes(CoreLibConstants.CHARSET_UTF_8));
     }
 
-    @SuppressWarnings("unchecked")
     protected Map<String, Object>[] getFromArrayIndex(final String index, final String type, final String key) {
         try {
             final SearchResponse response =
@@ -81,6 +80,7 @@ public class ArraySettings {
                             .setSearchType(SearchType.SCAN).setQuery(QueryBuilders.termQuery(FieldNames.ARRAY_KEY, key)).setSize(1000)
                             .execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
 
+            @SuppressWarnings("unchecked")
             final Map<String, Object>[] array = new Map[(int) response.getHits().getTotalHits()];
 
             String scrollId = response.getScrollId();
@@ -89,7 +89,6 @@ public class ArraySettings {
             while ((searchResponse = client.prepareSearchScroll(scrollId).setScroll(TimeValue.timeValueMinutes(10)).execute().actionGet())
                     .getHits().getHits().length > 0) {
                 scrollId = searchResponse.getScrollId();
-                System.out.println(scrollId);
                 final SearchHit[] hits = searchResponse.getHits().getHits();
                 for (final SearchHit hit : hits) {
                     array[count++] = hit.getSource();
@@ -119,7 +118,7 @@ public class ArraySettings {
             });
             return array;
         } catch (final IndexMissingException e) {
-            return new Map[] {};
+            return new Map[0];
         }
     }
 

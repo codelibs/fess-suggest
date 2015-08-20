@@ -28,6 +28,7 @@ public class KatakanaConverter implements ReadingConverter {
     protected TokenizerFactory tokenizerFactory = null;
 
     public KatakanaConverter() {
+        // nothing
     }
 
     public KatakanaConverter(final TokenizerFactory tokenizerFactory) {

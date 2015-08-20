@@ -1,6 +1,6 @@
 package org.codelibs.fess.suggest.constants;
 
-public class FieldNames {
+public final class FieldNames {
     public static final String ID = "id";
     public static final String TEXT = "text";
     public static final String READING_PREFIX = "reading_";

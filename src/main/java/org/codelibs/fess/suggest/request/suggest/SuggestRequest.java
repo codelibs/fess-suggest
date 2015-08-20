@@ -278,10 +278,10 @@ public class SuggestRequest extends Request<SuggestResponse> {
                     freq = 0;
                 } else if (SuggestItem.Kind.QUERY.toString().equals(kinds.get(0))) {
                     kind = SuggestItem.Kind.QUERY;
-                    freq = Long.valueOf(source.get(FieldNames.QUERY_FREQ).toString());
+                    freq = Long.parseLong(source.get(FieldNames.QUERY_FREQ).toString());
                 } else {
                     kind = SuggestItem.Kind.DOCUMENT;
-                    freq = Long.valueOf(source.get(FieldNames.DOC_FREQ).toString());
+                    freq = Long.parseLong(source.get(FieldNames.DOC_FREQ).toString());
                 }
 
                 items.add(new SuggestItem(text.split(" "), readings.toArray(new String[readings.size()][]), fields

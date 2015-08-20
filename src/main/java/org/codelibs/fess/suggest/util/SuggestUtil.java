@@ -43,13 +43,11 @@ import org.codelibs.neologd.ipadic.lucene.analysis.ja.dict.UserDictionary;
 import org.elasticsearch.common.base.Strings;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
 
-public class SuggestUtil {
+public final class SuggestUtil {
     private static final int MAX_QUERY_TERM_NUM = 5;
     private static final int MAX_QUERY_TERM_LENGTH = 48;
 
     private static final Base64.Encoder encoder = Base64.getEncoder();
-
-    //private static final ObjectMapper objectMapper = new ObjectMapper();
 
     private SuggestUtil() {
     }

@@ -31,12 +31,10 @@ public class SuggestRequestFuture<T extends Response> implements SuggestFuture<T
                 throw failure;
             }
             return response;
+        } catch (final SuggesterException t) {
+            throw t;
         } catch (final Throwable t) {
-            if (t instanceof SuggesterException) {
-                throw (SuggesterException) t;
-            } else {
-                throw new SuggesterException("Failed to process a request.", t);
-            }
+            throw new SuggesterException("Failed to process a request.", t);
         }
     }
 

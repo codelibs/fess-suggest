@@ -46,7 +46,11 @@ public class SuggestIndexFuture implements SuggestFuture<SuggestIndexResponse> {
     public SuggestFuture<SuggestIndexResponse> done(final Consumer<SuggestIndexResponse> consumer) {
         processFuture();
         if (response != null) {
-            consumer.accept(response);
+            try {
+                consumer.accept(response);
+            } catch (Throwable t) {
+                failure = t;
+            }
         }
         return this;
     }

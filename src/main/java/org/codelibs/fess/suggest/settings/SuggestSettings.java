@@ -238,5 +238,8 @@ public class SuggestSettings {
         public static final String SUPPORTED_FIELDS = "supportedFields";
         public static final String TAG_FIELD_NAME = "tagFieldName";
         public static final String ROLE_FIELD_NAME = "roleFieldName";
+
+        private DefaultKeys() {
+        }
     }
 }

@@ -4,22 +4,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SuggestDeleteResponse {
-    protected final boolean hasError;
     protected final List<Throwable> errors = new ArrayList<>();
     protected final long took;
 
     protected SuggestDeleteResponse(final List<Throwable> errors, final long took) {
         this.took = took;
-        if (errors == null || errors.isEmpty()) {
-            hasError = false;
-        } else {
-            hasError = true;
-            errors.forEach(this.errors::add);
+        if (errors != null && !errors.isEmpty()) {
+            this.errors.addAll(errors);
         }
     }
 
     public boolean hasError() {
-        return hasError;
+        return !errors.isEmpty();
     }
 
     public List<Throwable> getErrors() {
