@@ -1,5 +1,22 @@
 package org.codelibs.fess.suggest.util;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CodingErrorAction;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser;
 import org.apache.lucene.queryparser.flexible.standard.config.StandardQueryConfigHandler;
@@ -8,6 +25,7 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.IOUtils;
+import org.codelibs.core.CoreLibConstants;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.converter.KatakanaConverter;
 import org.codelibs.fess.suggest.converter.KatakanaToAlphabetConverter;
@@ -25,12 +43,6 @@ import org.codelibs.neologd.ipadic.lucene.analysis.ja.dict.UserDictionary;
 import org.elasticsearch.common.base.Strings;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
 
-import java.io.*;
-import java.nio.charset.Charset;
-import java.nio.charset.CharsetDecoder;
-import java.nio.charset.CodingErrorAction;
-import java.util.*;
-
 public class SuggestUtil {
     private static final int MAX_QUERY_TERM_NUM = 5;
     private static final int MAX_QUERY_TERM_LENGTH = 48;
@@ -42,8 +54,8 @@ public class SuggestUtil {
     private SuggestUtil() {
     }
 
-    public static String createSuggestTextId(String text) {
-        return encoder.encodeToString(text.getBytes());
+    public static String createSuggestTextId(final String text) {
+        return encoder.encodeToString(text.getBytes(CoreLibConstants.CHARSET_UTF_8));
     }
 
     public static String[] parseQuery(final String q, final String field) {
@@ -63,15 +75,15 @@ public class SuggestUtil {
         final List<String> keywords = new ArrayList<>();
         final List<TermQuery> termQueryList;
         try {
-            StandardQueryParser parser = new StandardQueryParser();
+            final StandardQueryParser parser = new StandardQueryParser();
             parser.setDefaultOperator(StandardQueryConfigHandler.Operator.AND);
 
             termQueryList = getTermQueryList(parser.parse(q, "default"), fields);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             return keywords;
         }
         for (final TermQuery tq : termQueryList) {
-            String text = tq.getTerm().text();
+            final String text = tq.getTerm().text();
             if (0 == text.length()) {
                 continue;
             }
@@ -115,7 +127,7 @@ public class SuggestUtil {
         return Collections.emptyList();
     }
 
-    public static String createBulkLine(String index, String type, SuggestItem item) throws SuggesterException {
+    public static String createBulkLine(final String index, final String type, final SuggestItem item) {
         final Map<String, Object> firstLineMap = new HashMap<>();
         final Map<String, Object> firstLineInnerMap = new HashMap<>();
         firstLineInnerMap.put("_index", index);
@@ -128,7 +140,7 @@ public class SuggestUtil {
         secondLine.put("text", item.getText());
 
         //reading
-        String[][] readings = item.getReadings();
+        final String[][] readings = item.getReadings();
         for (int i = 0; i < readings.length; i++) {
             secondLine.put("reading_" + i, readings[i]);
         }
@@ -145,49 +157,49 @@ public class SuggestUtil {
 
         try {
             return JsonXContent.contentBuilder().map(firstLineMap).string() + '\n' + JsonXContent.contentBuilder().map(secondLine).string();
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new SuggesterException(e);
         }
     }
 
     public static ReadingConverter createDefaultReadingConverter() {
-        ReadingConverterChain chain = new ReadingConverterChain();
+        final ReadingConverterChain chain = new ReadingConverterChain();
         chain.addConverter(new KatakanaConverter());
         chain.addConverter(new KatakanaToAlphabetConverter());
         return chain;
     }
 
     public static Normalizer createDefaultNormalizer() {
-        NormalizerChain normalizerChain = new NormalizerChain();
+        final NormalizerChain normalizerChain = new NormalizerChain();
         normalizerChain.add(new FullWidthToHalfWidthAlphabetNormalizer());
         normalizerChain.add(new ICUNormalizer("Any-Lower"));
         return normalizerChain;
     }
 
-    public static Analyzer createDefaultAnalyzer() throws SuggesterException {
+    public static Analyzer createDefaultAnalyzer() {
         try {
             final UserDictionary userDictionary;
             final String userDictionaryPath = System.getProperty(SuggestConstants.USER_DICT_PATH);
             if (Strings.isNullOrEmpty(userDictionaryPath) || !new File(userDictionaryPath).exists()) {
                 userDictionary = null;
             } else {
-                InputStream stream = new FileInputStream(new File(userDictionaryPath));
+                final InputStream stream = new FileInputStream(new File(userDictionaryPath));
                 String encoding = System.getProperty(SuggestConstants.USER_DICT_ENCODING);
                 if (encoding == null) {
                     encoding = IOUtils.UTF_8;
                 }
 
-                CharsetDecoder decoder =
+                final CharsetDecoder decoder =
                         Charset.forName(encoding).newDecoder().onMalformedInput(CodingErrorAction.REPORT)
                                 .onUnmappableCharacter(CodingErrorAction.REPORT);
-                InputStreamReader reader = new InputStreamReader(stream, decoder);
+                final InputStreamReader reader = new InputStreamReader(stream, decoder);
                 userDictionary = new UserDictionary(reader);
             }
 
-            Set<String> stopTags = new HashSet<>();
+            final Set<String> stopTags = new HashSet<>();
 
             return new JapaneseAnalyzer(userDictionary, JapaneseTokenizer.Mode.NORMAL, null, stopTags);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new SuggesterException("Failed to create default analyzer.", e);
         }
     }

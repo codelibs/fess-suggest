@@ -1,22 +1,26 @@
 package org.codelibs.fess.suggest.entity;
 
-import org.codelibs.fess.suggest.constants.FieldNames;
-import org.codelibs.fess.suggest.constants.SuggestConstants;
-import org.codelibs.fess.suggest.util.SuggestUtil;
-import org.elasticsearch.common.Nullable;
-
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.codelibs.core.lang.StringUtil;
+import org.codelibs.fess.suggest.constants.FieldNames;
+import org.codelibs.fess.suggest.constants.SuggestConstants;
+import org.codelibs.fess.suggest.util.SuggestUtil;
+import org.elasticsearch.common.Nullable;
+
 public class SuggestItem implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
     public enum Kind {
         DOCUMENT("document"), QUERY("query"), USER("user");
 
         private final String kind;
 
-        Kind(String kind) {
+        Kind(final String kind) {
             this.kind = kind;
         }
 
@@ -126,8 +130,8 @@ public class SuggestItem implements Serializable {
     }
 
     protected Map<String, Object> createEmptyMap() {
-        Map<String, Object> map = new HashMap<>();
-        map.put(FieldNames.TEXT, "");
+        final Map<String, Object> map = new HashMap<>();
+        map.put(FieldNames.TEXT, StringUtil.EMPTY);
 
         for (int i = 0; i < readings.length; i++) {
             map.put(FieldNames.READING_PREFIX + i, new String[] {});
@@ -150,7 +154,7 @@ public class SuggestItem implements Serializable {
     }
 
     public String getScript() {
-        StringBuilder script = new StringBuilder(100);
+        final StringBuilder script = new StringBuilder(100);
 
         // define vars
         script.append("def source=ctx._source;");
@@ -188,7 +192,7 @@ public class SuggestItem implements Serializable {
     }
 
     public Map<String, Object> getScriptParams() {
-        Map<String, Object> params = new HashMap<>();
+        final Map<String, Object> params = new HashMap<>();
         params.put("text", text);
         for (int i = 0; i < readings.length; i++) {
             params.put("reading" + i, readings[i]);
@@ -205,9 +209,9 @@ public class SuggestItem implements Serializable {
         return params;
     }
 
-    public boolean isNgWord(String[] ngWords) {
-        for (String ngWord : ngWords) {
-            if (text.contains(ngWord)) {
+    public boolean isNgWord(final String[] badWords) {
+        for (final String badWord : badWords) {
+            if (text.contains(badWord)) {
                 return true;
             }
         }

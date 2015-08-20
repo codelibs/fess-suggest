@@ -12,12 +12,12 @@ import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.util.FilesystemResourceLoader;
 import org.apache.lucene.analysis.util.TokenizerFactory;
-
-import com.ibm.icu.text.Transliterator;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.neologd.ipadic.lucene.analysis.ja.JapaneseTokenizerFactory;
 import org.codelibs.neologd.ipadic.lucene.analysis.ja.tokenattributes.ReadingAttribute;
 import org.elasticsearch.common.base.Strings;
+
+import com.ibm.icu.text.Transliterator;
 
 public class KatakanaConverter implements ReadingConverter {
 
@@ -30,12 +30,13 @@ public class KatakanaConverter implements ReadingConverter {
     public KatakanaConverter() {
     }
 
-    public KatakanaConverter(TokenizerFactory tokenizerFactory) {
+    public KatakanaConverter(final TokenizerFactory tokenizerFactory) {
         if (isEnableTokenizer(tokenizerFactory)) {
             this.tokenizerFactory = tokenizerFactory;
         }
     }
 
+    @Override
     public void init() throws IOException {
         if (initialized) {
             return;
@@ -43,8 +44,8 @@ public class KatakanaConverter implements ReadingConverter {
 
         if (tokenizerFactory == null) {
             final String path = System.getProperty(SuggestConstants.USER_DICT_PATH);
-            String encoding = System.getProperty(SuggestConstants.USER_DICT_ENCODING);
-            Map<String, String> args = new HashMap<>();
+            final String encoding = System.getProperty(SuggestConstants.USER_DICT_ENCODING);
+            final Map<String, String> args = new HashMap<>();
             args.put("mode", "normal");
             args.put("discardPunctuation", "false");
             if (Strings.isNullOrEmpty(path)) {
@@ -53,7 +54,7 @@ public class KatakanaConverter implements ReadingConverter {
             if (Strings.isNullOrEmpty(encoding)) {
                 args.put("userDictionaryEncoding", encoding);
             }
-            JapaneseTokenizerFactory japaneseTokenizerFactory = new JapaneseTokenizerFactory(args);
+            final JapaneseTokenizerFactory japaneseTokenizerFactory = new JapaneseTokenizerFactory(args);
             japaneseTokenizerFactory.inform(new FilesystemResourceLoader());
             tokenizerFactory = japaneseTokenizerFactory;
         }
@@ -102,11 +103,11 @@ public class KatakanaConverter implements ReadingConverter {
         return kanaBuf.toString();
     }
 
-    protected boolean isEnableTokenizer(TokenizerFactory factory) {
+    protected boolean isEnableTokenizer(final TokenizerFactory factory) {
         return factory instanceof JapaneseTokenizerFactory;
     }
 
-    private TokenStream createTokenStream(Reader rd) {
+    private TokenStream createTokenStream(final Reader rd) {
         if (tokenizerFactory instanceof JapaneseTokenizerFactory) {
             return tokenizerFactory.create(rd);
         } else {
@@ -114,7 +115,7 @@ public class KatakanaConverter implements ReadingConverter {
         }
     }
 
-    protected String getReadingFromAttribute(TokenStream stream) {
+    protected String getReadingFromAttribute(final TokenStream stream) {
         if (tokenizerFactory instanceof JapaneseTokenizerFactory) {
             final ReadingAttribute rdAttr = stream.getAttribute(ReadingAttribute.class);
             return rdAttr.getReading();

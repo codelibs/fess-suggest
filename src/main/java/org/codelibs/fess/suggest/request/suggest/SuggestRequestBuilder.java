@@ -6,48 +6,48 @@ import org.codelibs.fess.suggest.request.RequestBuilder;
 import org.elasticsearch.client.Client;
 
 public class SuggestRequestBuilder extends RequestBuilder<SuggestRequest, SuggestResponse> {
-    public SuggestRequestBuilder(Client client, ReadingConverter readingConverter, Normalizer normalizer) {
+    public SuggestRequestBuilder(final Client client, final ReadingConverter readingConverter, final Normalizer normalizer) {
         super(client, new SuggestRequest());
         request.setReadingConverter(readingConverter);
         request.setNormalizer(normalizer);
     }
 
-    public SuggestRequestBuilder setIndex(String index) {
+    public SuggestRequestBuilder setIndex(final String index) {
         request.setIndex(index);
         return this;
     }
 
-    public SuggestRequestBuilder setType(String type) {
+    public SuggestRequestBuilder setType(final String type) {
         request.setType(type);
         return this;
     }
 
-    public SuggestRequestBuilder setSize(int size) {
+    public SuggestRequestBuilder setSize(final int size) {
         request.setSize(size);
         return this;
     }
 
-    public SuggestRequestBuilder setQuery(String query) {
+    public SuggestRequestBuilder setQuery(final String query) {
         request.setQuery(query);
         return this;
     }
 
-    public SuggestRequestBuilder addTag(String tag) {
+    public SuggestRequestBuilder addTag(final String tag) {
         request.addTag(tag);
         return this;
     }
 
-    public SuggestRequestBuilder addRole(String role) {
+    public SuggestRequestBuilder addRole(final String role) {
         request.addRole(role);
         return this;
     }
 
-    public SuggestRequestBuilder addField(String field) {
+    public SuggestRequestBuilder addField(final String field) {
         request.addField(field);
         return this;
     }
 
-    public SuggestRequestBuilder setSuggestDetail(boolean suggestDetail) {
+    public SuggestRequestBuilder setSuggestDetail(final boolean suggestDetail) {
         request.setSuggestDetail(suggestDetail);
         return this;
     }

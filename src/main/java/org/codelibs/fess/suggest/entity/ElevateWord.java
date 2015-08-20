@@ -4,6 +4,9 @@ import java.io.Serializable;
 import java.util.List;
 
 public class ElevateWord implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
     protected final String elevateWord;
     protected final float boost;
     protected final List<String> readings;

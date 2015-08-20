@@ -1,15 +1,18 @@
 package org.codelibs.fess.suggest.exception;
 
-public class SuggesterException extends Exception {
-    public SuggesterException(String msg) {
+public class SuggesterException extends RuntimeException {
+
+    private static final long serialVersionUID = 1L;
+
+    public SuggesterException(final String msg) {
         super(msg);
     }
 
-    public SuggesterException(Throwable cause) {
+    public SuggesterException(final Throwable cause) {
         super(cause);
     }
 
-    public SuggesterException(String msg, Throwable cause) {
+    public SuggesterException(final String msg, final Throwable cause) {
         super(msg, cause);
     }
 }

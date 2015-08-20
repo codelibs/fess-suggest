@@ -1,15 +1,18 @@
 package org.codelibs.fess.suggest.exception;
 
 public class SuggestSettingsException extends RuntimeException {
-    public SuggestSettingsException(String msg) {
+
+    private static final long serialVersionUID = 1L;
+
+    public SuggestSettingsException(final String msg) {
         super(msg);
     }
 
-    public SuggestSettingsException(Throwable cause) {
+    public SuggestSettingsException(final Throwable cause) {
         super(cause);
     }
 
-    public SuggestSettingsException(String msg, Throwable cause) {
+    public SuggestSettingsException(final String msg, final Throwable cause) {
         super(msg, cause);
     }
 }

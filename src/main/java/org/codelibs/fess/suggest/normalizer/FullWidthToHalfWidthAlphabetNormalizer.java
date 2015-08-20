@@ -3,17 +3,19 @@ package org.codelibs.fess.suggest.normalizer;
 public class FullWidthToHalfWidthAlphabetNormalizer implements Normalizer {
     @Override
     public String normalize(final String text) {
-        final StringBuilder sb = new StringBuilder(text);
-        for (int i = 0; i < sb.length(); i++) {
-            final char c = sb.charAt(i);
+        final char[] chars = new char[text.length()];
+        for (int i = 0; i < chars.length; i++) {
+            final char c = text.charAt(i);
             if (c >= 'ａ' && c <= 'ｚ') {
-                sb.setCharAt(i, (char) (c - 'ａ' + 'a'));
+                chars[i] = (char) (c - 'ａ' + 'a');
             } else if (c >= 'Ａ' && c <= 'Ｚ') {
-                sb.setCharAt(i, (char) (c - 'Ａ' + 'A'));
+                chars[i] = (char) (c - 'Ａ' + 'A');
             } else if (c >= '１' && c <= '０') {
-                sb.setCharAt(i, (char) (c - '１' + '1'));
+                chars[i] = (char) (c - '１' + '1');
+            } else {
+                chars[i] = c;
             }
         }
-        return sb.toString();
+        return new String(chars);
     }
 }

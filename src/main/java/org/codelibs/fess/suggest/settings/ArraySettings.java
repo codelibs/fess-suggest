@@ -1,5 +1,13 @@
 package org.codelibs.fess.suggest.settings;
 
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.codelibs.core.CoreLibConstants;
 import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.exception.SuggestSettingsException;
@@ -12,13 +20,6 @@ import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.indices.IndexMissingException;
 import org.elasticsearch.search.SearchHit;
-
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
 
 public class ArraySettings {
     protected final Client client;
@@ -34,12 +35,12 @@ public class ArraySettings {
         createMappingIfEmpty(arraySettingsIndexName, settingsId, client);
     }
 
-    public String[] get(String key) {
-        Map<String, Object> sourceArray[] = getFromArrayIndex(arraySettingsIndexName, settingsId, key);
+    public String[] get(final String key) {
+        final Map<String, Object> sourceArray[] = getFromArrayIndex(arraySettingsIndexName, settingsId, key);
 
-        String[] valueArray = new String[sourceArray.length];
+        final String[] valueArray = new String[sourceArray.length];
         for (int i = 0; i < valueArray.length; i++) {
-            Object value = sourceArray[i].get(FieldNames.ARRAY_VALUE);
+            final Object value = sourceArray[i].get(FieldNames.ARRAY_VALUE);
             if (value != null) {
                 valueArray[i] = value.toString();
             }
@@ -48,7 +49,7 @@ public class ArraySettings {
     }
 
     public void add(final String key, final Object value) {
-        Map<String, Object> source = new HashMap<>();
+        final Map<String, Object> source = new HashMap<>();
         source.put(FieldNames.ARRAY_KEY, key);
         source.put(FieldNames.ARRAY_VALUE, value);
         source.put(FieldNames.TIMESTAMP, LocalDateTime.now());
@@ -69,18 +70,18 @@ public class ArraySettings {
     }
 
     protected String createId(final String key, final Object value) {
-        return encoder.encodeToString(("key:" + key + "value:" + value).getBytes());
+        return encoder.encodeToString(("key:" + key + "value:" + value).getBytes(CoreLibConstants.CHARSET_UTF_8));
     }
 
     @SuppressWarnings("unchecked")
-    protected Map<String, Object>[] getFromArrayIndex(final String index, final String type, String key) {
+    protected Map<String, Object>[] getFromArrayIndex(final String index, final String type, final String key) {
         try {
-            SearchResponse response =
+            final SearchResponse response =
                     client.prepareSearch().setIndices(index).setTypes(type).setScroll(TimeValue.timeValueSeconds(10))
                             .setSearchType(SearchType.SCAN).setQuery(QueryBuilders.termQuery(FieldNames.ARRAY_KEY, key)).setSize(1000)
                             .execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
 
-            Map<String, Object>[] array = new Map[(int) response.getHits().getTotalHits()];
+            final Map<String, Object>[] array = new Map[(int) response.getHits().getTotalHits()];
 
             String scrollId = response.getScrollId();
             int count = 0;
@@ -89,8 +90,8 @@ public class ArraySettings {
                     .getHits().getHits().length > 0) {
                 scrollId = searchResponse.getScrollId();
                 System.out.println(scrollId);
-                SearchHit[] hits = searchResponse.getHits().getHits();
-                for (SearchHit hit : hits) {
+                final SearchHit[] hits = searchResponse.getHits().getHits();
+                for (final SearchHit hit : hits) {
                     array[count++] = hit.getSource();
                 }
             }
@@ -104,8 +105,8 @@ public class ArraySettings {
                     return 1;
                 }
 
-                Object timeObj1 = o1.get(FieldNames.TIMESTAMP);
-                Object timeObj2 = o2.get(FieldNames.TIMESTAMP);
+                final Object timeObj1 = o1.get(FieldNames.TIMESTAMP);
+                final Object timeObj2 = o2.get(FieldNames.TIMESTAMP);
                 if (timeObj1 == null && timeObj2 == null) {
                     return 0;
                 } else if (timeObj1 == null) {
@@ -117,7 +118,7 @@ public class ArraySettings {
                 return o1.toString().compareTo(o2.toString());
             });
             return array;
-        } catch (IndexMissingException e) {
+        } catch (final IndexMissingException e) {
             return new Map[] {};
         }
     }
@@ -127,7 +128,7 @@ public class ArraySettings {
             client.prepareUpdate().setIndex(index).setType(type).setId(id).setDocAsUpsert(true)
                     .setDoc(JsonXContent.contentBuilder().map(source)).setRefresh(true).execute()
                     .actionGet(SuggestConstants.ACTION_TIMEOUT);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new SuggestSettingsException("Failed to add to array.", e);
         }
     }
@@ -136,7 +137,7 @@ public class ArraySettings {
         try {
             client.prepareDeleteByQuery().setIndices(index).setTypes(type).setQuery(QueryBuilders.termQuery(FieldNames.ARRAY_KEY, key))
                     .execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new SuggestSettingsException("Failed to delete all from array.", e);
         }
     }
@@ -145,17 +146,17 @@ public class ArraySettings {
         try {
             client.prepareDelete().setIndex(index).setType(type).setId(id).setRefresh(true).execute()
                     .actionGet(SuggestConstants.ACTION_TIMEOUT);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new SuggestSettingsException("Failed to delete from array.", e);
         }
     }
 
-    protected void createMappingIfEmpty(String index, String type, Client client) {
+    protected void createMappingIfEmpty(final String index, final String type, final Client client) {
         try {
             boolean empty;
             try {
                 empty = client.admin().indices().prepareGetMappings(index).setTypes(type).get().getMappings().isEmpty();
-            } catch (IndexMissingException e) {
+            } catch (final IndexMissingException e) {
                 empty = true;
                 client.admin().indices().prepareCreate(index).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
             }
@@ -170,7 +171,7 @@ public class ArraySettings {
                                         .endObject().endObject().endObject().endObject()).execute()
                         .actionGet(SuggestConstants.ACTION_TIMEOUT);
             }
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new SuggestSettingsException("Failed to create mappings.");
         }
     }

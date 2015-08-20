@@ -1,5 +1,11 @@
 package org.codelibs.fess.suggest.settings;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.exception.SuggestSettingsException;
 import org.elasticsearch.action.get.GetResponse;
@@ -7,8 +13,6 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.indices.IndexMissingException;
-
-import java.util.*;
 
 public class SuggestSettings {
     protected final String settingsId;
@@ -23,7 +27,7 @@ public class SuggestSettings {
 
     protected boolean initialized = false;
 
-    protected final String ngWordIndexName;
+    protected final String badWordIndexName;
     protected final String elevateWordIndexName;
 
     public SuggestSettings(final Client client, final String settingsId, final Map<String, Object> initialSettings,
@@ -34,7 +38,7 @@ public class SuggestSettings {
         this.settingsTypeName = settingsTypeName;
         this.initialSettings = initialSettings;
 
-        this.ngWordIndexName = settingsIndexName + "-ngword";
+        this.badWordIndexName = settingsIndexName + "-badword";
         this.elevateWordIndexName = settingsIndexName + "-elevateword";
     }
 
@@ -46,56 +50,57 @@ public class SuggestSettings {
         initialize(initialSettings);
     }
 
-    private void initialize(Map<String, Object> initialSettings) {
+    private void initialize(final Map<String, Object> initialSettings) {
         boolean doCreate = false;
         try {
-            GetResponse getResponse =
+            final GetResponse getResponse =
                     client.prepareGet().setIndex(settingsIndexName).setType(settingsTypeName).setId(settingsId).execute()
                             .actionGet(SuggestConstants.ACTION_TIMEOUT);
 
             if (!getResponse.isExists()) {
                 doCreate = true;
             }
-        } catch (IndexMissingException e) {
+        } catch (final IndexMissingException e) {
             doCreate = true;
         }
 
         if (doCreate) {
-            List<Tuple<String, Object>> arraySettings = new ArrayList<>();
+            final List<Tuple<String, Object>> arraySettings = new ArrayList<>();
 
-            Map<String, Object> defaultSettings = defaultSettings();
-            for (String key : initialSettings.keySet()) {
-                Object value = initialSettings.get(key);
+            final Map<String, Object> defaultSettings = defaultSettings();
+            initialSettings.forEach((key, value) -> {
                 if (value instanceof Collection) {
-                    ((Collection<Object>) value).forEach(element -> arraySettings.add(new Tuple<>(key, element)));
+                    @SuppressWarnings("unchecked")
+                    Collection<Object> collection = (Collection<Object>) value;
+                    collection.forEach(element -> arraySettings.add(new Tuple<>(key, element)));
                 } else if (value instanceof Object[]) {
-                    for (Object element : (Object[]) value) {
+                    for (final Object element : (Object[]) value) {
                         arraySettings.add(new Tuple<>(key, element));
                     }
                 } else {
-                    defaultSettings.put(key, initialSettings.get(key));
+                    defaultSettings.put(key, value);
                 }
-            }
+            });
             set(defaultSettings);
 
-            List<Tuple<String, Object>> defaultArraySettings = defaultArraySettings();
+            final List<Tuple<String, Object>> defaultArraySettings = defaultArraySettings();
             defaultArraySettings.addAll(arraySettings);
             defaultArraySettings.forEach(t -> array().add(t.v1(), t.v2()));
         }
     }
 
-    public Object get(String key) {
-        GetResponse getResponse =
+    public Object get(final String key) {
+        final GetResponse getResponse =
                 client.prepareGet().setIndex(settingsIndexName).setType(settingsTypeName).setId(settingsId).execute()
                         .actionGet(SuggestConstants.ACTION_TIMEOUT);
         if (!getResponse.isExists()) {
             return null;
         }
-        Map<String, Object> map = getResponse.getSource();
+        final Map<String, Object> map = getResponse.getSource();
         return map.get(key);
     }
 
-    public String getAsString(String key, String defaultValue) {
+    public String getAsString(final String key, final String defaultValue) {
         final Object obj = get(key);
 
         final String value;
@@ -108,7 +113,7 @@ public class SuggestSettings {
         return value;
     }
 
-    public int getAsInt(String key, int defaultValue) {
+    public int getAsInt(final String key, final int defaultValue) {
         final Object obj = get(key);
 
         final int value;
@@ -121,7 +126,7 @@ public class SuggestSettings {
         return value;
     }
 
-    public long getAsLong(String key, long defaultValue) {
+    public long getAsLong(final String key, final long defaultValue) {
         final Object obj = get(key);
 
         final long value;
@@ -134,7 +139,7 @@ public class SuggestSettings {
         return value;
     }
 
-    public float getAsFloat(String key, float defaultValue) {
+    public float getAsFloat(final String key, final float defaultValue) {
         final Object obj = get(key);
 
         final float value;
@@ -147,7 +152,7 @@ public class SuggestSettings {
         return value;
     }
 
-    public boolean getAsBoolean(String key, boolean defaultValue) {
+    public boolean getAsBoolean(final String key, final boolean defaultValue) {
         final Object obj = get(key);
 
         final boolean value;
@@ -160,22 +165,22 @@ public class SuggestSettings {
         return value;
     }
 
-    public void set(String key, Object value) {
+    public void set(final String key, final Object value) {
         try {
             client.prepareUpdate().setIndex(settingsIndexName).setType(settingsTypeName).setId(settingsId).setDocAsUpsert(true)
                     .setDoc(key, value).setRefresh(true).setRetryOnConflict(5).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
-        } catch (Exception e) {
-            throw new SuggestSettingsException("Failed to update settings.", e);
+        } catch (final Exception e) {
+            throw new SuggestSettingsException("Failed to update suggestSettings.", e);
         }
     }
 
-    public void set(Map<String, Object> map) {
+    public void set(final Map<String, Object> map) {
         try {
             client.prepareUpdate().setIndex(settingsIndexName).setType(settingsTypeName).setId(settingsId).setDocAsUpsert(true)
                     .setRefresh(true).setDoc(JsonXContent.contentBuilder().map(map)).setRetryOnConflict(5).execute()
                     .actionGet(SuggestConstants.ACTION_TIMEOUT);
-        } catch (Exception e) {
-            throw new SuggestSettingsException("Failed to update settings.", e);
+        } catch (final Exception e) {
+            throw new SuggestSettingsException("Failed to update suggestSettings.", e);
         }
     }
 
@@ -183,8 +188,8 @@ public class SuggestSettings {
         return new ArraySettings(client, settingsIndexName, settingsId);
     }
 
-    public NgWordSettings ngword() {
-        return new NgWordSettings(client, settingsIndexName, settingsId);
+    public BadWordSettings badword() {
+        return new BadWordSettings(client, settingsIndexName, settingsId);
     }
 
     public ElevateWordSettings elevateWord() {
@@ -208,7 +213,7 @@ public class SuggestSettings {
     }
 
     private Map<String, Object> defaultSettings() {
-        Map<String, Object> defaultSettings = new HashMap<>();
+        final Map<String, Object> defaultSettings = new HashMap<>();
         defaultSettings.put(DefaultKeys.INDEX, (settingsId + "-suggest").toLowerCase());
         defaultSettings.put(DefaultKeys.TYPE, "doc");
         defaultSettings.put(DefaultKeys.SUPPORTED_FIELDS, new String[] { "content" });
@@ -218,7 +223,7 @@ public class SuggestSettings {
     }
 
     private List<Tuple<String, Object>> defaultArraySettings() {
-        List<Tuple<String, Object>> tuples = new ArrayList<>();
+        final List<Tuple<String, Object>> tuples = new ArrayList<>();
         tuples.add(new Tuple<>(DefaultKeys.SUPPORTED_FIELDS, "content"));
         return tuples;
     }

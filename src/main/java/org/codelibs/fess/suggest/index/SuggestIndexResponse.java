@@ -1,9 +1,9 @@
 package org.codelibs.fess.suggest.index;
 
-import org.codelibs.fess.suggest.request.Response;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import org.codelibs.fess.suggest.request.Response;
 
 public class SuggestIndexResponse implements Response {
     protected final int numberOfSuggestDocs;

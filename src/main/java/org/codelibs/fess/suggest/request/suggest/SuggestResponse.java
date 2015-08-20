@@ -1,9 +1,9 @@
 package org.codelibs.fess.suggest.request.suggest;
 
+import java.util.List;
+
 import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.fess.suggest.request.Response;
-
-import java.util.List;
 
 public class SuggestResponse implements Response {
     protected final long tookMs;

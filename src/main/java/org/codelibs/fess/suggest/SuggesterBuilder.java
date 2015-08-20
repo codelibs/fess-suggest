@@ -1,5 +1,9 @@
 package org.codelibs.fess.suggest;
 
+import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import org.apache.lucene.analysis.Analyzer;
 import org.codelibs.fess.suggest.converter.ReadingConverter;
 import org.codelibs.fess.suggest.exception.SuggesterException;
@@ -8,10 +12,6 @@ import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.codelibs.fess.suggest.settings.SuggestSettingsBuilder;
 import org.codelibs.fess.suggest.util.SuggestUtil;
 import org.elasticsearch.client.Client;
-
-import java.io.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class SuggesterBuilder {
 
@@ -24,44 +24,44 @@ public class SuggesterBuilder {
 
     protected int threadPoolSize = Runtime.getRuntime().availableProcessors();
 
-    public SuggesterBuilder settings(SuggestSettings settings) {
+    public SuggesterBuilder settings(final SuggestSettings settings) {
         this.settings = settings;
         this.settingsBuilder = null;
         return this;
     }
 
-    public SuggesterBuilder settings(SuggestSettingsBuilder settingsBuilder) {
+    public SuggesterBuilder settings(final SuggestSettingsBuilder settingsBuilder) {
         this.settingsBuilder = settingsBuilder;
         this.settings = null;
         return this;
     }
 
-    public SuggesterBuilder readingConverter(ReadingConverter readingConverter) {
+    public SuggesterBuilder readingConverter(final ReadingConverter readingConverter) {
         this.readingConverter = readingConverter;
         return this;
     }
 
-    public SuggesterBuilder normalizer(Normalizer normalizer) {
+    public SuggesterBuilder normalizer(final Normalizer normalizer) {
         this.normalizer = normalizer;
         return this;
     }
 
-    public SuggesterBuilder analyzer(Analyzer analyzer) {
+    public SuggesterBuilder analyzer(final Analyzer analyzer) {
         this.analyzer = analyzer;
         return this;
     }
 
-    public SuggesterBuilder threadPool(ExecutorService threadPool) {
+    public SuggesterBuilder threadPool(final ExecutorService threadPool) {
         this.threadPool = threadPool;
         return this;
     }
 
-    public SuggesterBuilder threadPoolSize(int threadPoolSize) {
+    public SuggesterBuilder threadPoolSize(final int threadPoolSize) {
         this.threadPoolSize = threadPoolSize;
         return this;
     }
 
-    public Suggester build(final Client client, final String id) throws SuggesterException {
+    public Suggester build(final Client client, final String id) {
         if (settings == null) {
             if (settingsBuilder == null) {
                 settingsBuilder = SuggestSettings.builder();
@@ -75,7 +75,7 @@ public class SuggesterBuilder {
         }
         try {
             readingConverter.init();
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new SuggesterException(e);
         }
 

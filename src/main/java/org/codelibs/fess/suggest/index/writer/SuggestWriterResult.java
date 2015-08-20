@@ -7,7 +7,7 @@ import java.util.List;
 public class SuggestWriterResult {
     protected List<Throwable> failures = Collections.synchronizedList(new ArrayList<>());
 
-    public void addFailure(Throwable t) {
+    public void addFailure(final Throwable t) {
         failures.add(t);
     }
 

@@ -228,7 +228,7 @@ public class SuggesterTest {
 
     @Test
     public void test_indexFromSearchWord() throws Exception {
-        SuggestIndexResponse indexResponse = suggester.indexer().indexFromSearchWord("検索　エンジン", null, null, null, 1);
+        SuggestIndexResponse indexResponse = suggester.indexer().indexFromSearchWord("検索　 エンジン", null, null, null, 1);
         indexResponse.getErrors();
         suggester.refresh();
 
@@ -320,12 +320,12 @@ public class SuggesterTest {
         assertEquals(1, response.getNum());
         assertEquals("検索 エンジン", response.getWords().get(0));
 
-        suggester.indexer().addNgWord("検索");
+        suggester.indexer().addBadWord("検索");
         suggester.refresh();
         SuggestResponse response2 = suggester.suggest().setQuery("kensaku").setSuggestDetail(true).execute().getResponse();
         assertEquals(0, response2.getNum());
 
-        assertEquals(1, suggester.settings().ngword().get().length);
+        assertEquals(1, suggester.settings().badword().get().length);
     }
 
     private SuggestItem[] getItemSet1() {

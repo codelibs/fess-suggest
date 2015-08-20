@@ -1,6 +1,9 @@
 package org.codelibs.fess.suggest;
 
+import java.util.concurrent.ExecutorService;
+
 import org.apache.lucene.analysis.Analyzer;
+import org.codelibs.core.lang.StringUtil;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.converter.ReadingConverter;
 import org.codelibs.fess.suggest.exception.SuggesterException;
@@ -13,11 +16,9 @@ import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.xcontent.XContentFactory;
 
-import java.util.concurrent.ExecutorService;
-
 public class Suggester {
     protected final Client client;
-    protected final SuggestSettings settings;
+    protected final SuggestSettings suggestSettings;
     protected final ReadingConverter readingConverter;
     protected final Normalizer normalizer;
     protected final Analyzer analyzer;
@@ -30,12 +31,12 @@ public class Suggester {
     public Suggester(final Client client, final SuggestSettings settings, final ReadingConverter readingConverter,
             final Normalizer normalizer, final Analyzer analyzer, final ExecutorService threadPool) {
         this.client = client;
-        this.settings = settings;
+        this.suggestSettings = settings;
         this.readingConverter = readingConverter;
         this.normalizer = normalizer;
         this.analyzer = analyzer;
-        this.index = settings.getAsString(SuggestSettings.DefaultKeys.INDEX, "");
-        this.type = settings.getAsString(SuggestSettings.DefaultKeys.TYPE, "");
+        this.index = settings.getAsString(SuggestSettings.DefaultKeys.INDEX, StringUtil.EMPTY);
+        this.type = settings.getAsString(SuggestSettings.DefaultKeys.TYPE, StringUtil.EMPTY);
         this.threadPool = threadPool;
     }
 
@@ -51,10 +52,10 @@ public class Suggester {
         threadPool.shutdownNow();
     }
 
-    public boolean createIndexIfNothing() throws SuggesterException {
+    public boolean createIndexIfNothing() {
         try {
             boolean created = false;
-            IndicesExistsResponse response =
+            final IndicesExistsResponse response =
                     client.admin().indices().prepareExists(index).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
             if (!response.isExists()) {
                 client.admin()
@@ -70,7 +71,7 @@ public class Suggester {
                 created = true;
             }
             return created;
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new SuggesterException("Failed to create index.", e);
         }
     }
@@ -85,7 +86,7 @@ public class Suggester {
 
     //getter
     public SuggestSettings settings() {
-        return settings;
+        return suggestSettings;
     }
 
     public ReadingConverter getReadingConverter() {
@@ -97,7 +98,7 @@ public class Suggester {
     }
 
     protected SuggestIndexer createDefaultIndexer() {
-        return new SuggestIndexer(client, index, type, readingConverter, normalizer, analyzer, settings, threadPool);
+        return new SuggestIndexer(client, index, type, readingConverter, normalizer, analyzer, suggestSettings, threadPool);
     }
 
 }

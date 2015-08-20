@@ -1,18 +1,20 @@
 package org.codelibs.fess.suggest.concurrent;
 
-import org.codelibs.fess.suggest.exception.SuggesterException;
-import org.codelibs.fess.suggest.request.suggest.SuggestResponse;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 
-import static org.junit.Assert.*;
+import org.codelibs.fess.suggest.exception.SuggesterException;
+import org.codelibs.fess.suggest.request.suggest.SuggestResponse;
+import org.junit.Test;
 
 public class SuggestFutureTest {
     @Test
     public void test_doneBeforeResolve() throws Exception {
-        final SuggestFuture<SuggestResponse> future = new SuggestFuture<>();
+        final SuggestFuture<SuggestResponse> future = new SuggestRequestFuture<>();
 
         Thread th = new Thread(() -> {
             try {
@@ -30,7 +32,7 @@ public class SuggestFutureTest {
 
     @Test
     public void test_doneAfterResolve() throws Exception {
-        final SuggestFuture<SuggestResponse> future = new SuggestFuture<>();
+        final SuggestFuture<SuggestResponse> future = new SuggestRequestFuture<>();
 
         Thread th = new Thread(() -> {
             future.resolve(new SuggestResponse(0, Collections.emptyList(), 0, null), null);
@@ -46,7 +48,7 @@ public class SuggestFutureTest {
 
     @Test
     public void test_getResponseBeforeResolve() throws Exception {
-        final SuggestFuture<SuggestResponse> future = new SuggestFuture<>();
+        final SuggestFuture<SuggestResponse> future = new SuggestRequestFuture<>();
 
         Thread th = new Thread(() -> {
             try {
@@ -62,7 +64,7 @@ public class SuggestFutureTest {
 
     @Test
     public void test_getResponseAfterResolve() throws Exception {
-        final SuggestFuture<SuggestResponse> future = new SuggestFuture<>();
+        final SuggestFuture<SuggestResponse> future = new SuggestRequestFuture<>();
 
         Thread th = new Thread(() -> {
             future.resolve(new SuggestResponse(0, Collections.emptyList(), 0, null), null);
@@ -76,7 +78,7 @@ public class SuggestFutureTest {
 
     @Test
     public void test_getResponseWithException() throws Exception {
-        final SuggestFuture<SuggestResponse> future = new SuggestFuture<>();
+        final SuggestFuture<SuggestResponse> future = new SuggestRequestFuture<>();
 
         Thread th = new Thread(() -> {
             try {

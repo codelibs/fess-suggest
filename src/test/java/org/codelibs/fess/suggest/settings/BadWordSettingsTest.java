@@ -11,8 +11,8 @@ import org.junit.Test;
 import static org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner.newConfigs;
 import static org.junit.Assert.*;
 
-public class NgWordSettingsTest {
-    String id = "ngwordSettingsTest";
+public class BadWordSettingsTest {
+    String id = "badwordSettingsTest";
 
     static SuggestSettings settings;
 
@@ -48,28 +48,28 @@ public class NgWordSettingsTest {
     }
 
     @Test
-    public void test_ngWordIndexName() {
-        assertEquals(".suggest-ngword", settings.ngword().arraySettings.arraySettingsIndexName);
+    public void test_badWordIndexName() {
+        assertEquals(".suggest-badword", settings.badword().arraySettings.arraySettingsIndexName);
     }
 
     @Test
     public void test_validation() {
         try {
-            settings.ngword().add("aaaa");
+            settings.badword().add("aaaa");
             assertTrue(true);
         } catch (IllegalArgumentException e) {
             fail();
         }
 
         try {
-            settings.ngword().add("");
+            settings.badword().add("");
             fail();
         } catch (IllegalArgumentException e) {
             assertTrue(true);
         }
 
         try {
-            settings.ngword().add("aaaa bbb");
+            settings.badword().add("aaaa bbb");
             fail();
         } catch (IllegalArgumentException e) {
             assertTrue(true);
@@ -81,13 +81,13 @@ public class NgWordSettingsTest {
         String value1 = "a";
         String value2 = "b";
         String value3 = "c";
-        settings.ngword().add(value1);
-        settings.ngword().add(value2);
-        settings.ngword().add(value3);
-        assertEquals(3, settings.ngword().get().length);
-        assertEquals(value1, settings.ngword().get()[0]);
-        assertEquals(value2, settings.ngword().get()[1]);
-        assertEquals(value3, settings.ngword().get()[2]);
+        settings.badword().add(value1);
+        settings.badword().add(value2);
+        settings.badword().add(value3);
+        assertEquals(3, settings.badword().get().length);
+        assertEquals(value1, settings.badword().get()[0]);
+        assertEquals(value2, settings.badword().get()[1]);
+        assertEquals(value3, settings.badword().get()[2]);
     }
 
     @Test
@@ -95,21 +95,21 @@ public class NgWordSettingsTest {
         String value1 = "a";
         String value2 = "b";
         String value3 = "c";
-        settings.ngword().add(value1);
-        settings.ngword().add(value2);
-        settings.ngword().add(value3);
-        assertEquals(3, settings.ngword().get().length);
-        assertEquals(value1, settings.ngword().get()[0]);
-        assertEquals(value2, settings.ngword().get()[1]);
-        assertEquals(value3, settings.ngword().get()[2]);
+        settings.badword().add(value1);
+        settings.badword().add(value2);
+        settings.badword().add(value3);
+        assertEquals(3, settings.badword().get().length);
+        assertEquals(value1, settings.badword().get()[0]);
+        assertEquals(value2, settings.badword().get()[1]);
+        assertEquals(value3, settings.badword().get()[2]);
 
-        settings.ngword().delete(value2);
-        assertEquals(2, settings.ngword().get().length);
-        assertEquals(value1, settings.ngword().get()[0]);
-        assertEquals(value3, settings.ngword().get()[1]);
+        settings.badword().delete(value2);
+        assertEquals(2, settings.badword().get().length);
+        assertEquals(value1, settings.badword().get()[0]);
+        assertEquals(value3, settings.badword().get()[1]);
 
-        settings.ngword().deleteAll();
-        assertEquals(0, settings.ngword().get().length);
+        settings.badword().deleteAll();
+        assertEquals(0, settings.badword().get().length);
     }
 
 }

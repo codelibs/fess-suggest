@@ -1,5 +1,10 @@
 package org.codelibs.fess.suggest.index.contents;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
@@ -10,21 +15,15 @@ import org.codelibs.fess.suggest.index.contents.querylog.QueryLog;
 import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.util.SuggestUtil;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 public class DefaultContentsParser implements ContentsParser {
     @Override
     public SuggestItem parseSearchWords(final String[] words, final String[][] readings, final String[] fields, final String[] tags,
-            final String[] roles, final long score, final ReadingConverter readingConverter, final Normalizer normalizer)
-            throws SuggesterException {
+            final String[] roles, final long score, final ReadingConverter readingConverter, final Normalizer normalizer) {
         try {
-            String[][] readingArray = new String[words.length][];
+            final String[][] readingArray = new String[words.length][];
             for (int i = 0; i < words.length; i++) {
                 words[i] = normalizer.normalize(words[i]);
-                List<String> l = readingConverter.convert(words[i]);
+                final List<String> l = readingConverter.convert(words[i]);
                 if (readings != null && readings.length > i && readings[i].length > 0) {
                     for (final String reading : readings[i]) {
                         if (!l.contains(reading)) {
@@ -36,14 +35,14 @@ public class DefaultContentsParser implements ContentsParser {
                 readingArray[i] = l.toArray(new String[l.size()]);
             }
             return new SuggestItem(words, readingArray, fields, score, -1, tags, roles, SuggestItem.Kind.QUERY);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new SuggesterException("Failed to SuggestItem from search words.", e);
         }
     }
 
     @Override
     public List<SuggestItem> parseQueryLog(final QueryLog queryLog, final String[] fields, final String tagFieldName,
-            final String roleFieldName, final ReadingConverter readingConverter, final Normalizer normalizer) throws SuggesterException {
+            final String roleFieldName, final ReadingConverter readingConverter, final Normalizer normalizer) {
         final String queryString = queryLog.getQueryString();
         final String filterQueryString = queryLog.getFilterQueryString();
 
@@ -69,22 +68,22 @@ public class DefaultContentsParser implements ContentsParser {
 
         final List<SuggestItem> items = new ArrayList<>(fields.length);
         try {
-            for (String field : fields) {
+            for (final String field : fields) {
                 final String[] words = SuggestUtil.parseQuery(queryString, field);
                 if (words.length == 0) {
                     continue;
                 }
 
-                String[][] readings = new String[words.length][];
+                final String[][] readings = new String[words.length][];
                 for (int j = 0; j < words.length; j++) {
                     words[j] = normalizer.normalize(words[j]);
-                    List<String> l = readingConverter.convert(words[j]);
+                    final List<String> l = readingConverter.convert(words[j]);
                     readings[j] = l.toArray(new String[l.size()]);
                 }
 
                 items.add(new SuggestItem(words, readings, new String[] { field }, 1L, -1, tags, roles, SuggestItem.Kind.QUERY));
             }
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new SuggesterException("Failed to create SuggestItem from queryLog.", e);
         }
 
@@ -93,26 +92,26 @@ public class DefaultContentsParser implements ContentsParser {
 
     @Override
     public List<SuggestItem> parseDocument(final Map<String, Object> document, final String[] fields,
-            final ReadingConverter readingConverter, final Normalizer normalizer, final Analyzer analyzer) throws SuggesterException {
+            final ReadingConverter readingConverter, final Normalizer normalizer, final Analyzer analyzer) {
         List<SuggestItem> items = null;
 
-        for (String field : fields) {
-            Object textObj = document.get(field);
+        for (final String field : fields) {
+            final Object textObj = document.get(field);
             if (textObj == null) {
                 continue;
             }
-            String text = textObj.toString();
+            final String text = textObj.toString();
 
             try (TokenStream stream = analyzer.tokenStream(field, text)) {
                 stream.reset();
                 while (stream.incrementToken()) {
-                    CharTermAttribute charTermAttribute = stream.getAttribute(CharTermAttribute.class);
-                    String[] words = new String[] { charTermAttribute.toString() };
+                    final CharTermAttribute charTermAttribute = stream.getAttribute(CharTermAttribute.class);
+                    final String[] words = new String[] { charTermAttribute.toString() };
 
-                    String[][] readings = new String[words.length][];
+                    final String[][] readings = new String[words.length][];
                     for (int j = 0; j < words.length; j++) {
                         words[j] = normalizer.normalize(words[j]);
-                        List<String> l = readingConverter.convert(words[j]);
+                        final List<String> l = readingConverter.convert(words[j]);
                         readings[j] = l.toArray(new String[l.size()]);
                     }
 
@@ -124,7 +123,7 @@ public class DefaultContentsParser implements ContentsParser {
                             null, //TODO role
                             SuggestItem.Kind.DOCUMENT));
                 }
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 throw new SuggesterException("Failed to create SuggestItem from document.", e);
             }
         }

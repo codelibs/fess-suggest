@@ -1,5 +1,12 @@
 package org.codelibs.fess.suggest.index.contents.document;
 
+import java.util.Map;
+import java.util.Queue;
+import java.util.Random;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.codelibs.core.lang.StringUtil;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.elasticsearch.action.search.SearchResponse;
@@ -10,12 +17,6 @@ import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.Scroll;
 import org.elasticsearch.search.SearchHit;
-
-import java.util.Map;
-import java.util.Queue;
-import java.util.Random;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ESSourceReader implements DocumentReader {
     protected final Queue<Map<String, Object>> queue = new ConcurrentLinkedQueue<>();
@@ -70,14 +71,14 @@ public class ESSourceReader implements DocumentReader {
                     return null;
                 }
 
-                String scrollId = settings.getAsString(scrollIdKey, "");
+                String scrollId = settings.getAsString(scrollIdKey, StringUtil.EMPTY);
                 if (StringUtils.isBlank(scrollId)) {
                     scrollId = createNewScroll();
                 }
 
                 for (int i = 0; i < maxRetryCount; i++) {
                     try {
-                        SearchResponse response =
+                        final SearchResponse response =
                                 client.prepareSearchScroll(scrollId).setScroll(TimeValue.timeValueMinutes(1)).execute()
                                         .actionGet(SuggestConstants.ACTION_TIMEOUT);
                         scrollId = response.getScrollId();
@@ -85,21 +86,21 @@ public class ESSourceReader implements DocumentReader {
                             isFinished.set(true);
                         }
                         settings.set(scrollIdKey, scrollId);
-                        SearchHit[] hits = response.getHits().getHits();
-                        for (SearchHit hit : hits) {
+                        final SearchHit[] hits = response.getHits().getHits();
+                        for (final SearchHit hit : hits) {
                             queue.add(hit.sourceAsMap());
                         }
                         break;
-                    } catch (Exception e) {
+                    } catch (final Exception e) {
                         scrollId = createNewScroll();
                     }
                 }
                 if (queue.isEmpty()) {
                     settings.set(execFlgKey, VALUE_IDLE);
-                    settings.set(scrollIdKey, "");
+                    settings.set(scrollIdKey, StringUtil.EMPTY);
                     isFinished.set(true);
                 }
-            } catch (InterruptedException ignore) {
+            } catch (final InterruptedException ignore) {
                 isFinished.set(true);
                 queue.clear();
             } finally {
@@ -122,7 +123,7 @@ public class ESSourceReader implements DocumentReader {
     }
 
     protected String createNewScroll() {
-        SearchResponse response =
+        final SearchResponse response =
                 client.prepareSearch().setIndices(indexName).setTypes(typeName).setScroll(new Scroll(TimeValue.timeValueMinutes(1)))
                         .setSearchType(SearchType.SCAN).setQuery(QueryBuilders.matchAllQuery()).setSize(scrollSize).execute()
                         .actionGet(SuggestConstants.ACTION_TIMEOUT);
@@ -145,16 +146,16 @@ public class ESSourceReader implements DocumentReader {
                 break;
             }
 
-            final String lock1 = settings.getAsString(lock1Key, "");
+            final String lock1 = settings.getAsString(lock1Key, StringUtil.EMPTY);
             if (StringUtils.isBlank(lock1) || id.equals(lock1)) {
                 settings.set(lock1Key, id);
                 idleCount++;
                 if (idleCount > 3) {
-                    final String lock2 = settings.getAsString(lock2Key, "");
+                    final String lock2 = settings.getAsString(lock2Key, StringUtil.EMPTY);
                     if (StringUtils.isBlank(lock2) || id.equals(lock2)) {
                         settings.set(lock2Key, id);
-                        final String lock1_2 = settings.getAsString(lock1Key, "");
-                        final String lock2_2 = settings.getAsString(lock2Key, "");
+                        final String lock1_2 = settings.getAsString(lock1Key, StringUtil.EMPTY);
+                        final String lock2_2 = settings.getAsString(lock2Key, StringUtil.EMPTY);
                         if (id.equals(lock1_2) && id.equals(lock2_2)) {
                             break;
                         }
@@ -176,7 +177,7 @@ public class ESSourceReader implements DocumentReader {
     }
 
     protected void clearLock() {
-        settings.set(lock1Key, "");
-        settings.set(lock2Key, "");
+        settings.set(lock1Key, StringUtil.EMPTY);
+        settings.set(lock2Key, StringUtil.EMPTY);
     }
 }

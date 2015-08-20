@@ -6,17 +6,20 @@ import org.elasticsearch.client.Client;
 
 public class SuggestBulkFileWriter implements SuggestWriter {
     @Override
-    public SuggestWriterResult write(Client client, SuggestSettings settings, String index, String type, SuggestItem[] items) {
+    public SuggestWriterResult write(final Client client, final SuggestSettings settings, final String index, final String type,
+            final SuggestItem[] items) {
         throw new UnsupportedOperationException("not yet.");
     }
 
     @Override
-    public SuggestWriterResult delete(Client client, SuggestSettings settings, String index, String type, String id) {
+    public SuggestWriterResult delete(final Client client, final SuggestSettings settings, final String index, final String type,
+            final String id) {
         throw new UnsupportedOperationException("not yet.");
     }
 
     @Override
-    public SuggestWriterResult deleteByQuery(Client client, SuggestSettings settings, String index, String type, String queryString) {
+    public SuggestWriterResult deleteByQuery(final Client client, final SuggestSettings settings, final String index, final String type,
+            final String queryString) {
         throw new UnsupportedOperationException("deleteByQuery is unsupported.");
     }
 }

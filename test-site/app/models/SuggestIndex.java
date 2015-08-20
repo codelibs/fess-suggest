@@ -8,13 +8,13 @@ import org.codelibs.fess.suggest.index.contents.document.ESSourceReader;
 import org.codelibs.fess.suggest.request.suggest.SuggestResponse;
 
 public class SuggestIndex {
-    public SuggestResponse suggest(String query) throws SuggesterException {
+    public SuggestResponse suggest(String query) {
         return ComponentsUtil.suggester.suggest()
             .setQuery(query)
             .execute().getResponse();
     }
 
-    public void index() throws SuggesterException {
+    public void index() {
         Suggester suggester = ComponentsUtil.suggester;
         DocumentReader reader = new ESSourceReader(ComponentsUtil.runner.client(),
             suggester.settings(),

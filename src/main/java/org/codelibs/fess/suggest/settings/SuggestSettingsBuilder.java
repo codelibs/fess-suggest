@@ -1,14 +1,14 @@
 package org.codelibs.fess.suggest.settings;
 
-import org.elasticsearch.client.Client;
-
 import java.util.HashMap;
 import java.util.Map;
+
+import org.elasticsearch.client.Client;
 
 public class SuggestSettingsBuilder {
     protected String settingsIndexName = ".suggest";
 
-    protected String settingsTypeName = "settings";
+    protected String settingsTypeName = "suggestSettings";
 
     protected Map<String, Object> initialSettings = new HashMap<>();
 
@@ -20,12 +20,12 @@ public class SuggestSettingsBuilder {
         return this;
     }
 
-    public SuggestSettingsBuilder setSettingsTypeName(String settingsTypeName) {
+    public SuggestSettingsBuilder setSettingsTypeName(final String settingsTypeName) {
         this.settingsTypeName = settingsTypeName.toLowerCase();
         return this;
     }
 
-    public SuggestSettingsBuilder addInitialSettings(String key, Object value) {
+    public SuggestSettingsBuilder addInitialSettings(final String key, final Object value) {
         initialSettings.put(key, value);
         return this;
     }

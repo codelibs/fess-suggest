@@ -1,5 +1,10 @@
 package org.codelibs.fess.suggest.request.suggest;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import org.codelibs.fess.suggest.concurrent.SuggestFuture;
 import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
@@ -13,16 +18,16 @@ import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.base.Strings;
-import org.elasticsearch.index.query.*;
+import org.elasticsearch.index.query.AndFilterBuilder;
+import org.elasticsearch.index.query.FilterBuilder;
+import org.elasticsearch.index.query.FilterBuilders;
+import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.QueryStringQueryBuilder;
 import org.elasticsearch.index.query.functionscore.FunctionScoreQueryBuilder;
 import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.sort.SortOrder;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 public class SuggestRequest extends Request<SuggestResponse> {
     private String index = null;
@@ -49,43 +54,43 @@ public class SuggestRequest extends Request<SuggestResponse> {
 
     private static final String _OR_ = " OR ";
 
-    public void setIndex(String index) {
+    public void setIndex(final String index) {
         this.index = index;
     }
 
-    public void setType(String type) {
+    public void setType(final String type) {
         this.type = type;
     }
 
-    public void setSize(int size) {
+    public void setSize(final int size) {
         this.size = size;
     }
 
-    public void setQuery(String query) {
+    public void setQuery(final String query) {
         this.query = query;
     }
 
-    public void addTag(String tag) {
+    public void addTag(final String tag) {
         this.tags.add(tag);
     }
 
-    public void addRole(String role) {
+    public void addRole(final String role) {
         this.roles.add(role);
     }
 
-    public void addField(String field) {
+    public void addField(final String field) {
         this.fields.add(field);
     }
 
-    public void setSuggestDetail(boolean suggestDetail) {
+    public void setSuggestDetail(final boolean suggestDetail) {
         this.suggestDetail = suggestDetail;
     }
 
-    public void setReadingConverter(ReadingConverter readingConverter) {
+    public void setReadingConverter(final ReadingConverter readingConverter) {
         this.readingConverter = readingConverter;
     }
 
-    public void setNormalizer(Normalizer normalizer) {
+    public void setNormalizer(final Normalizer normalizer) {
         this.normalizer = normalizer;
     }
 
@@ -95,15 +100,15 @@ public class SuggestRequest extends Request<SuggestResponse> {
     }
 
     @Override
-    protected void processRequest(final Client client, final SuggestFuture<SuggestResponse> future) throws SuggesterException {
-        SearchRequestBuilder builder = client.prepareSearch(index);
+    protected void processRequest(final Client client, final SuggestFuture<SuggestResponse> future) {
+        final SearchRequestBuilder builder = client.prepareSearch(index);
         if (Strings.isNullOrEmpty(type)) {
             builder.setTypes(type);
         }
         builder.setSize(size);
 
         // set query.
-        String q = buildQueryString(query);
+        final String q = buildQueryString(query);
 
         if (!query.contains(" ") && !query.contains("　")) {
             builder.setQuery(buildFunctionScoreQuery(query, q));
@@ -115,34 +120,34 @@ public class SuggestRequest extends Request<SuggestResponse> {
         builder.addSort(FieldNames.SCORE, SortOrder.DESC);
 
         //set filter query.
-        List<FilterBuilder> filterBuilderList = new ArrayList<>();
+        final List<FilterBuilder> filterBuilderList = new ArrayList<>();
         if (!tags.isEmpty()) {
-            String fq = buildFilterQuery(FieldNames.TAGS, tags);
+            final String fq = buildFilterQuery(FieldNames.TAGS, tags);
             filterBuilderList.add(FilterBuilders.queryFilter(QueryBuilders.queryStringQuery(fq)));
         }
 
         roles.add(SuggestConstants.DEFAULT_ROLE);
         if (!roles.isEmpty()) {
-            String fq = buildFilterQuery(FieldNames.ROLES, roles);
+            final String fq = buildFilterQuery(FieldNames.ROLES, roles);
             filterBuilderList.add(FilterBuilders.queryFilter(QueryBuilders.queryStringQuery(fq)));
         }
 
         if (!fields.isEmpty()) {
-            String fq = buildFilterQuery(FieldNames.FIELDS, fields);
+            final String fq = buildFilterQuery(FieldNames.FIELDS, fields);
             filterBuilderList.add(FilterBuilders.queryFilter(QueryBuilders.queryStringQuery(fq)));
         }
 
         if (filterBuilderList.size() == 1) {
             builder.setPostFilter(filterBuilderList.get(0));
         } else if (filterBuilderList.size() > 1) {
-            AndFilterBuilder andFilterBuilder = new AndFilterBuilder();
+            final AndFilterBuilder andFilterBuilder = new AndFilterBuilder();
             filterBuilderList.forEach(andFilterBuilder::add);
             builder.setPostFilter(andFilterBuilder.cache(true));
         }
 
         builder.execute(new ActionListener<SearchResponse>() {
             @Override
-            public void onResponse(SearchResponse searchResponse) {
+            public void onResponse(final SearchResponse searchResponse) {
                 if (searchResponse.getFailedShards() > 0) {
                     future.resolve(null, new SuggesterException("Search failure. Failed shards num:" + searchResponse.getFailedShards()));
                 } else {
@@ -151,13 +156,13 @@ public class SuggestRequest extends Request<SuggestResponse> {
             }
 
             @Override
-            public void onFailure(Throwable e) {
+            public void onFailure(final Throwable e) {
                 future.resolve(null, new SuggesterException(e.getMessage(), e));
             }
         });
     }
 
-    protected String buildQueryString(final String q) throws SuggesterException {
+    protected String buildQueryString(final String q) {
         try {
             final boolean prefixQuery = !q.endsWith(" ") && !q.endsWith("　");
 
@@ -167,8 +172,8 @@ public class SuggestRequest extends Request<SuggestResponse> {
             } else {
                 List<String> readingList = new ArrayList<>();
 
-                StringBuilder buf = new StringBuilder(50);
-                String[] queries = q.replaceAll("　", " ").replaceAll(" +", " ").trim().split(" ");
+                final StringBuilder buf = new StringBuilder(50);
+                final String[] queries = q.replaceAll("　", " ").replaceAll(" +", " ").trim().split(" ");
                 for (int i = 0; i < queries.length; i++) {
                     if (i > 0) {
                         buf.append(_AND_);
@@ -211,13 +216,13 @@ public class SuggestRequest extends Request<SuggestResponse> {
             }
 
             return queryString;
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new SuggesterException("Failed to create queryString.", e);
         }
     }
 
-    protected String buildFilterQuery(String fieldName, List<String> words) {
-        StringBuilder buf = new StringBuilder(20);
+    protected String buildFilterQuery(final String fieldName, final List<String> words) {
+        final StringBuilder buf = new StringBuilder(20);
         if (!words.isEmpty()) {
             for (int i = 0; i < words.size(); i++) {
                 if (i > 0) {
@@ -230,11 +235,11 @@ public class SuggestRequest extends Request<SuggestResponse> {
     }
 
     protected QueryBuilder buildFunctionScoreQuery(final String query, final String queryString) {
-        FunctionScoreQueryBuilder functionScoreQueryBuilder =
+        final FunctionScoreQueryBuilder functionScoreQueryBuilder =
                 QueryBuilders.functionScoreQuery(QueryBuilders.queryStringQuery(queryString).analyzeWildcard(false)
                         .defaultOperator(QueryStringQueryBuilder.Operator.AND));
 
-        FilterBuilder textScoreFilterBuiler =
+        final FilterBuilder textScoreFilterBuiler =
                 FilterBuilders.queryFilter(QueryBuilders.queryStringQuery(FieldNames.TEXT + ":" + query + '*').analyzeWildcard(false)
                         .defaultOperator(QueryStringQueryBuilder.Operator.AND));
         functionScoreQueryBuilder.add(textScoreFilterBuiler, ScoreFunctionBuilders.weightFactorFunction(10));
@@ -244,29 +249,28 @@ public class SuggestRequest extends Request<SuggestResponse> {
         return functionScoreQueryBuilder;
     }
 
-    @SuppressWarnings("unchecked")
-    protected SuggestResponse createResponse(SearchResponse searchResponse) {
-        SearchHit[] hits = searchResponse.getHits().getHits();
-        List<String> words = new ArrayList<>();
-        List<SuggestItem> items = new ArrayList<>();
-        for (SearchHit hit : hits) {
-            Map<String, Object> source = hit.sourceAsMap();
-            String text = source.get(FieldNames.TEXT).toString();
+    protected SuggestResponse createResponse(final SearchResponse searchResponse) {
+        final SearchHit[] hits = searchResponse.getHits().getHits();
+        final List<String> words = new ArrayList<>();
+        final List<SuggestItem> items = new ArrayList<>();
+        for (final SearchHit hit : hits) {
+            final Map<String, Object> source = hit.sourceAsMap();
+            final String text = source.get(FieldNames.TEXT).toString();
             words.add(text);
 
             if (suggestDetail) {
                 int readingCount = 0;
                 Object readingObj;
-                List<String[]> readings = new ArrayList<>();
+                final List<String[]> readings = new ArrayList<>();
                 while ((readingObj = source.get(FieldNames.READING_PREFIX + readingCount++)) != null) {
-                    List<String> reading = getAsList(readingObj);
+                    final List<String> reading = getAsList(readingObj);
                     readings.add(reading.toArray(new String[reading.size()]));
                 }
 
-                List<String> fields = getAsList(source.get(FieldNames.FIELDS));
-                List<String> tags = getAsList(source.get(FieldNames.TAGS));
-                List<String> roles = getAsList(source.get(FieldNames.ROLES));
-                List<String> kinds = getAsList(source.get(FieldNames.KINDS));
+                final List<String> fields = getAsList(source.get(FieldNames.FIELDS));
+                final List<String> tags = getAsList(source.get(FieldNames.TAGS));
+                final List<String> roles = getAsList(source.get(FieldNames.ROLES));
+                final List<String> kinds = getAsList(source.get(FieldNames.KINDS));
                 SuggestItem.Kind kind;
                 long freq;
                 if (SuggestItem.Kind.USER.toString().equals(kinds.get(0))) {
@@ -289,14 +293,14 @@ public class SuggestRequest extends Request<SuggestResponse> {
         return new SuggestResponse(searchResponse.getTookInMillis(), words, searchResponse.getHits().totalHits(), items);
     }
 
-    private List<String> getAsList(Object value) {
+    private List<String> getAsList(final Object value) {
         if (value instanceof String) {
-            List<String> list = new ArrayList<>();
+            final List<String> list = new ArrayList<>();
             list.add(value.toString());
             return list;
         } else if (value instanceof List) {
             @SuppressWarnings("unchecked")
-            List<String> list = (List<String>) value;
+            final List<String> list = (List<String>) value;
             return list;
         }
         throw new IllegalArgumentException("The value should be String or List, but " + value);

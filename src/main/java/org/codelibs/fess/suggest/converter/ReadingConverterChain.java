@@ -7,26 +7,26 @@ import java.util.List;
 import java.util.Queue;
 
 public class ReadingConverterChain implements ReadingConverter {
-    private List<ReadingConverter> converters = new ArrayList<>();
+    private final List<ReadingConverter> converters = new ArrayList<>();
 
     @Override
     public void init() throws IOException {
-        for (ReadingConverter converter : converters) {
+        for (final ReadingConverter converter : converters) {
             converter.init();
         }
     }
 
     @Override
-    public List<String> convert(String text) throws IOException {
-        Queue<String> queue = new LinkedList<>();
+    public List<String> convert(final String text) throws IOException {
+        final Queue<String> queue = new LinkedList<>();
         queue.add(text);
-        List<String> convertedTexts = new ArrayList<>(getMaxReadingNum());
+        final List<String> convertedTexts = new ArrayList<>(getMaxReadingNum());
         convertedTexts.add(text);
 
-        for (ReadingConverter converter : converters) {
+        for (final ReadingConverter converter : converters) {
             String s;
             while ((s = queue.poll()) != null && convertedTexts.size() <= getMaxReadingNum()) {
-                List<String> results = converter.convert(s);
+                final List<String> results = converter.convert(s);
                 convertedTexts.addAll(results);
             }
             queue.addAll(convertedTexts);
@@ -35,7 +35,7 @@ public class ReadingConverterChain implements ReadingConverter {
         return convertedTexts;
     }
 
-    public void addConverter(ReadingConverter converter) {
+    public void addConverter(final ReadingConverter converter) {
         converters.add(converter);
     }
 }
