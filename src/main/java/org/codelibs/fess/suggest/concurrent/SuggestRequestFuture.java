@@ -1,6 +1,8 @@
 package org.codelibs.fess.suggest.concurrent;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import org.codelibs.fess.suggest.exception.SuggesterException;
@@ -10,10 +12,18 @@ public class SuggestRequestFuture<T extends Response> implements SuggestFuture<T
 
     protected volatile T response = null;
     protected volatile Throwable failure = null;
-    protected CountDownLatch latch;
+    protected final AtomicBoolean got = new AtomicBoolean(false);
+    protected final CountDownLatch latch;
+    protected final CountDownLatch doneLatch;
+    protected final CountDownLatch errorLatch;
+
+    protected Consumer<T> doneConsumer;
+    protected Consumer<Throwable> errorConsumer;
 
     public SuggestRequestFuture() {
         latch = new CountDownLatch(1);
+        doneLatch = new CountDownLatch(1);
+        errorLatch = new CountDownLatch(1);
     }
 
     @Override
@@ -21,10 +31,29 @@ public class SuggestRequestFuture<T extends Response> implements SuggestFuture<T
         this.response = response;
         this.failure = failure;
         latch.countDown();
+
+        if (got.get()) {
+            return;
+        }
+
+        try {
+            if (response != null) {
+                doneLatch.await(10, TimeUnit.SECONDS);
+                if (doneConsumer != null) {
+                    doneConsumer.accept(response);
+                }
+            } else if (failure != null) {
+                errorLatch.await(10, TimeUnit.SECONDS);
+                if (errorConsumer != null) {
+                    errorConsumer.accept(failure);
+                }
+            }
+        } catch (InterruptedException ignore) {}
     }
 
     @Override
     public T getResponse() {
+        got.set(true);
         try {
             latch.await();
             if (failure != null) {
@@ -40,28 +69,15 @@ public class SuggestRequestFuture<T extends Response> implements SuggestFuture<T
 
     @Override
     public SuggestFuture<T> done(final Consumer<T> consumer) {
-        try {
-            latch.await();
-            if (response != null) {
-                consumer.accept(response);
-            }
-        } catch (final InterruptedException e) {
-            failure = e;
-        }
-
+        doneConsumer = consumer;
+        doneLatch.countDown();
         return this;
     }
 
     @Override
     public SuggestFuture<T> error(final Consumer<Throwable> consumer) {
-        try {
-            latch.await();
-            if (failure != null) {
-                consumer.accept(failure);
-            }
-        } catch (final InterruptedException e) {
-            consumer.accept(e);
-        }
+        errorConsumer = consumer;
+        errorLatch.countDown();
         return this;
     }
 

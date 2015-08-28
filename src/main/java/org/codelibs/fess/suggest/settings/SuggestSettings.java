@@ -214,7 +214,7 @@ public class SuggestSettings {
 
     private Map<String, Object> defaultSettings() {
         final Map<String, Object> defaultSettings = new HashMap<>();
-        defaultSettings.put(DefaultKeys.INDEX, (settingsId + "-suggest").toLowerCase());
+        defaultSettings.put(DefaultKeys.INDEX, (settingsId + ".suggest").toLowerCase());
         defaultSettings.put(DefaultKeys.TYPE, "doc");
         defaultSettings.put(DefaultKeys.SUPPORTED_FIELDS, new String[] { "content" });
         defaultSettings.put(DefaultKeys.TAG_FIELD_NAME, "label");
