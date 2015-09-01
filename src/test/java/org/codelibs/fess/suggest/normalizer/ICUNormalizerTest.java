@@ -13,8 +13,12 @@ public class ICUNormalizerTest extends TestCase {
 
     public void test_AnyLower() {
         ICUNormalizer normalizer = new ICUNormalizer("Any-Lower");
-
         assertEquals("abcd", normalizer.normalize("ABCD"));
+    }
+
+    public void test_HalfwidthFullwidth() {
+        ICUNormalizer normalizer = new ICUNormalizer("Halfwidth-Fullwidth");
+        assertEquals("ケンサク", normalizer.normalize("ｹﾝｻｸ"));
     }
 
 }

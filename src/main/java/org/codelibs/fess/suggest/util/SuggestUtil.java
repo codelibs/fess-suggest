@@ -171,6 +171,7 @@ public final class SuggestUtil {
         final NormalizerChain normalizerChain = new NormalizerChain();
         normalizerChain.add(new FullWidthToHalfWidthAlphabetNormalizer());
         normalizerChain.add(new ICUNormalizer("Any-Lower"));
+        normalizerChain.add(new ICUNormalizer("Halfwidth-Fullwidth"));
         return normalizerChain;
     }
 
