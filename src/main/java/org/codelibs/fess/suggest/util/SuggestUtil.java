@@ -33,10 +33,7 @@ import org.codelibs.fess.suggest.converter.ReadingConverter;
 import org.codelibs.fess.suggest.converter.ReadingConverterChain;
 import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.fess.suggest.exception.SuggesterException;
-import org.codelibs.fess.suggest.normalizer.FullWidthToHalfWidthAlphabetNormalizer;
-import org.codelibs.fess.suggest.normalizer.ICUNormalizer;
-import org.codelibs.fess.suggest.normalizer.Normalizer;
-import org.codelibs.fess.suggest.normalizer.NormalizerChain;
+import org.codelibs.fess.suggest.normalizer.*;
 import org.codelibs.neologd.ipadic.lucene.analysis.ja.JapaneseAnalyzer;
 import org.codelibs.neologd.ipadic.lucene.analysis.ja.JapaneseTokenizer;
 import org.codelibs.neologd.ipadic.lucene.analysis.ja.dict.UserDictionary;
@@ -169,7 +166,7 @@ public final class SuggestUtil {
 
     public static Normalizer createDefaultNormalizer() {
         final NormalizerChain normalizerChain = new NormalizerChain();
-        normalizerChain.add(new ICUNormalizer("Halfwidth-Fullwidth"));
+        normalizerChain.add(new HankakuKanaToZenkakuKana());
         normalizerChain.add(new FullWidthToHalfWidthAlphabetNormalizer());
         normalizerChain.add(new ICUNormalizer("Any-Lower"));
         return normalizerChain;
