@@ -10,6 +10,6 @@ public class DefaultNormalizerTest {
     @Test
     public void test_normalize() throws Exception {
         Normalizer normalizer = SuggestUtil.createDefaultNormalizer();
-        assertEquals(",.*[]「」abcケンサクabcdけんさく", normalizer.normalize(",.*[]「」ＡBCｹﾝｻｸabcdけんさく"));
+        assertEquals(",.*[]「」abcケンサクabcdけんさくガギグゲゴ", normalizer.normalize(",.*[]「」ＡBCｹﾝｻｸabcdけんさくｶﾞｷﾞｸﾞｹﾞｺﾞ"));
     }
 }

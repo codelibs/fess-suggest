@@ -57,7 +57,7 @@ public class HankakuKanaToZenkakuKana implements Normalizer {
 
     public static char mergeChar(char c1, char c2) {
         if (c2 == 'ﾞ') {
-            if ("ｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾊﾋﾌﾍﾎ".indexOf(c1) > 0) {
+            if ("ｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾊﾋﾌﾍﾎ".indexOf(c1) >= 0) {
                 switch (c1) {
                 case 'ｶ':
                     return 'ガ';
