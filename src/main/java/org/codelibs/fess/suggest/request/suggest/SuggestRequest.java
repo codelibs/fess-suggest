@@ -110,7 +110,7 @@ public class SuggestRequest extends Request<SuggestResponse> {
         // set query.
         final String q = buildQueryString(query);
 
-        if (!query.contains(" ") && !query.contains("　")) {
+        if (!Strings.isNullOrEmpty(query) && !query.contains(" ") && !query.contains("　")) {
             builder.setQuery(buildFunctionScoreQuery(query, q));
             builder.addSort("_score", SortOrder.DESC);
         } else {
@@ -164,12 +164,12 @@ public class SuggestRequest extends Request<SuggestResponse> {
 
     protected String buildQueryString(final String q) {
         try {
-            final boolean prefixQuery = !q.endsWith(" ") && !q.endsWith("　");
 
             final String queryString;
             if (Strings.isNullOrEmpty(q)) {
-                queryString = FieldNames.ID + ":*";
+                queryString = "*:*";
             } else {
+                final boolean prefixQuery = !q.endsWith(" ") && !q.endsWith("　");
                 List<String> readingList = new ArrayList<>();
 
                 final StringBuilder buf = new StringBuilder(50);

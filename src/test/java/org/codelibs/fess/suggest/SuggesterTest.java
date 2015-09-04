@@ -82,6 +82,10 @@ public class SuggesterTest {
         response = suggester.suggest().setQuery("zenbun").setSuggestDetail(true).execute().getResponse();
         assertEquals(1, response.getNum());
         assertEquals("全文 検索", response.getWords().get(0));
+
+        SuggestResponse response2 = suggester.suggest().setSuggestDetail(true).execute().getResponse();
+        assertEquals(2, response2.getNum());
+
     }
 
     @Test
