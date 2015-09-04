@@ -16,8 +16,8 @@ public abstract class Request<T extends Response> {
         final SuggestFuture<T> future = new SuggestRequestFuture<>();
         try {
             processRequest(client, future);
-        } catch (final Throwable e) {
-            future.resolve(null, new SuggesterException(e));
+        } catch (final Exception e) {
+            throw new SuggesterException(e);
         }
         return future;
     }
