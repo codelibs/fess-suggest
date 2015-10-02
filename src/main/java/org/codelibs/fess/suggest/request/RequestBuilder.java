@@ -1,6 +1,6 @@
 package org.codelibs.fess.suggest.request;
 
-import org.codelibs.fess.suggest.concurrent.SuggestFuture;
+import org.codelibs.fess.suggest.concurrent.Deferred;
 import org.elasticsearch.client.Client;
 
 public abstract class RequestBuilder<Req extends Request<Res>, Res extends Response> {
@@ -12,7 +12,7 @@ public abstract class RequestBuilder<Req extends Request<Res>, Res extends Respo
         this.request = request;
     }
 
-    public SuggestFuture<Res> execute() {
+    public Deferred<Res>.Promise execute() {
         return request.execute(client);
     }
 }

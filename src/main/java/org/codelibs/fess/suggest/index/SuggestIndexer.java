@@ -9,8 +9,7 @@ import java.util.stream.Stream;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.codelibs.core.lang.StringUtil;
-import org.codelibs.core.misc.Pair;
-import org.codelibs.fess.suggest.concurrent.SuggestIndexFuture;
+import org.codelibs.fess.suggest.concurrent.Deferred;
 import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.converter.ReadingConverter;
@@ -119,8 +118,10 @@ public class SuggestIndexer {
     }
 
     // TODO replace queryLogReader with lambda reader
-    public SuggestIndexFuture indexFromQueryLog(final QueryLogReader queryLogReader, final int docPerReq, final long requestInterval) {
-        return new SuggestIndexFuture(threadPool.submit(() -> {
+    public Deferred<SuggestIndexResponse>.Promise indexFromQueryLog(final QueryLogReader queryLogReader, final int docPerReq,
+            final long requestInterval) {
+        final Deferred<SuggestIndexResponse> deferred = new Deferred<>();
+        threadPool.execute(() -> {
             final long start = System.currentTimeMillis();
             int numberOfSuggestDocs = 0;
             int numberOfInputDocs = 0;
@@ -145,14 +146,15 @@ public class SuggestIndexer {
                         Thread.sleep(requestInterval);
                     }
                 }
-                return new Pair<SuggestIndexResponse, Throwable>(new SuggestIndexResponse(numberOfSuggestDocs, numberOfInputDocs, errors,
-                        System.currentTimeMillis() - start), null);
+                deferred.resolve(new SuggestIndexResponse(numberOfSuggestDocs, numberOfInputDocs, errors, System.currentTimeMillis()
+                        - start));
             } catch (final Throwable t) {
-                return new Pair<SuggestIndexResponse, Throwable>(null, t);
+                deferred.reject(t);
             } finally {
                 queryLogReader.close();
             }
-        }));
+        });
+        return deferred.promise();
     }
 
     public SuggestIndexResponse indexFromDocument(final Map<String, Object>[] documents) {
@@ -172,8 +174,10 @@ public class SuggestIndexer {
     }
 
     // TODO replace documentReader with lambda reader
-    public SuggestIndexFuture indexFromDocument(final DocumentReader documentReader, final int docPerReq, final long requestInterval) {
-        return new SuggestIndexFuture(threadPool.submit(() -> {
+    public Deferred<SuggestIndexResponse>.Promise indexFromDocument(final DocumentReader documentReader, final int docPerReq,
+            final long requestInterval) {
+        final Deferred<SuggestIndexResponse> deferred = new Deferred<>();
+        threadPool.execute(() -> {
             final long start = System.currentTimeMillis();
             int numberOfSuggestDocs = 0;
             int numberOfInputDocs = 0;
@@ -199,14 +203,15 @@ public class SuggestIndexer {
                         Thread.sleep(requestInterval);
                     }
                 }
-                return new Pair<SuggestIndexResponse, Throwable>(new SuggestIndexResponse(numberOfSuggestDocs, numberOfInputDocs, errors,
-                        System.currentTimeMillis() - start), null);
+                deferred.resolve(new SuggestIndexResponse(numberOfSuggestDocs, numberOfInputDocs, errors, System.currentTimeMillis()
+                        - start));
             } catch (final Throwable t) {
-                return new Pair<SuggestIndexResponse, Throwable>(null, t);
+                deferred.reject(t);
             } finally {
                 documentReader.close();
             }
-        }));
+        });
+        return deferred.promise();
     }
 
     public SuggestIndexResponse indexFromSearchWord(final String searchWord, final String[] fields, final String[] tags,

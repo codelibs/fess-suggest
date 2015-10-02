@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.codelibs.fess.suggest.concurrent.SuggestFuture;
+import org.codelibs.fess.suggest.concurrent.Deferred;
 import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.converter.ReadingConverter;
@@ -100,7 +100,7 @@ public class SuggestRequest extends Request<SuggestResponse> {
     }
 
     @Override
-    protected void processRequest(final Client client, final SuggestFuture<SuggestResponse> future) {
+    protected void processRequest(final Client client, final Deferred<SuggestResponse> deferred) {
         final SearchRequestBuilder builder = client.prepareSearch(index);
         if (Strings.isNullOrEmpty(type)) {
             builder.setTypes(type);
@@ -149,15 +149,15 @@ public class SuggestRequest extends Request<SuggestResponse> {
             @Override
             public void onResponse(final SearchResponse searchResponse) {
                 if (searchResponse.getFailedShards() > 0) {
-                    future.resolve(null, new SuggesterException("Search failure. Failed shards num:" + searchResponse.getFailedShards()));
+                    deferred.reject(new SuggesterException("Search failure. Failed shards num:" + searchResponse.getFailedShards()));
                 } else {
-                    future.resolve(createResponse(searchResponse), null);
+                    deferred.resolve(createResponse(searchResponse));
                 }
             }
 
             @Override
             public void onFailure(final Throwable e) {
-                future.resolve(null, new SuggesterException(e.getMessage(), e));
+                deferred.reject(new SuggesterException(e.getMessage(), e));
             }
         });
     }

@@ -6,93 +6,92 @@ import static org.junit.Assert.fail;
 
 import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.codelibs.fess.suggest.request.suggest.SuggestResponse;
 import org.junit.Test;
 
-public class SuggestFutureTest {
+public class DeferredTest {
     @Test
     public void test_doneBeforeResolve() throws Exception {
-        final SuggestFuture<SuggestResponse> future = new SuggestRequestFuture<>();
+        final Deferred<SuggestResponse> deferred = new Deferred<>();
 
         Thread th = new Thread(() -> {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException ignore) {}
-            future.resolve(new SuggestResponse(0, Collections.emptyList(), 0, null), null);
+            deferred.resolve(new SuggestResponse(0, Collections.emptyList(), 0, null));
         });
         th.start();
 
         final CountDownLatch latch = new CountDownLatch(1);
-        future.done(response -> latch.countDown());
-        latch.await();
-        assertTrue(true);
+        deferred.promise().done(response -> latch.countDown());
+        assertTrue(latch.await(10, TimeUnit.SECONDS));
     }
 
     @Test
     public void test_doneAfterResolve() throws Exception {
-        final SuggestFuture<SuggestResponse> future = new SuggestRequestFuture<>();
+        final Deferred<SuggestResponse> deferred = new Deferred<>();
 
         Thread th = new Thread(() -> {
-            future.resolve(new SuggestResponse(0, Collections.emptyList(), 0, null), null);
+            deferred.resolve(new SuggestResponse(0, Collections.emptyList(), 0, null));
         });
         th.start();
 
         Thread.sleep(1000);
         final CountDownLatch latch = new CountDownLatch(1);
-        future.done(response -> latch.countDown());
-        latch.await();
-        assertTrue(true);
+        deferred.promise().done(response -> latch.countDown());
+        assertTrue(latch.await(10, TimeUnit.SECONDS));
     }
 
     @Test
     public void test_getResponseBeforeResolve() throws Exception {
-        final SuggestFuture<SuggestResponse> future = new SuggestRequestFuture<>();
+        final Deferred<SuggestResponse> deferred = new Deferred<>();
 
         Thread th = new Thread(() -> {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException ignore) {}
-            future.resolve(new SuggestResponse(0, Collections.emptyList(), 0, null), null);
+            deferred.resolve(new SuggestResponse(0, Collections.emptyList(), 0, null));
         });
         th.start();
 
-        SuggestResponse response = future.getResponse();
+        SuggestResponse response = deferred.promise().getResponse(10, TimeUnit.SECONDS);
         assertEquals(0, response.getNum());
     }
 
     @Test
     public void test_getResponseAfterResolve() throws Exception {
-        final SuggestFuture<SuggestResponse> future = new SuggestRequestFuture<>();
+        final Deferred<SuggestResponse> deferred = new Deferred<>();
 
         Thread th = new Thread(() -> {
-            future.resolve(new SuggestResponse(0, Collections.emptyList(), 0, null), null);
+            deferred.resolve(new SuggestResponse(0, Collections.emptyList(), 0, null));
         });
         th.start();
 
         Thread.sleep(1000);
-        SuggestResponse response = future.getResponse();
+        SuggestResponse response = deferred.promise().getResponse(10, TimeUnit.SECONDS);
         assertEquals(0, response.getNum());
     }
 
     @Test
     public void test_getResponseWithException() throws Exception {
-        final SuggestFuture<SuggestResponse> future = new SuggestRequestFuture<>();
+        final Deferred<SuggestResponse> deferred = new Deferred<>();
 
         Thread th = new Thread(() -> {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException ignore) {}
-            future.resolve(null, new SuggesterException("test"));
+            deferred.reject(new SuggesterException("test"));
         });
         th.start();
 
         try {
-            future.getResponse();
+            deferred.promise().getResponse(10, TimeUnit.SECONDS);
             fail();
         } catch (SuggesterException e) {
-            assertEquals("test", e.getMessage());
+            assertEquals("org.codelibs.fess.suggest.exception.SuggesterException: test", e.getMessage());
         }
     }
 
