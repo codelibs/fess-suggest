@@ -71,7 +71,7 @@ public class SuggesterBuilder {
         settings.init();
 
         if (readingConverter == null) {
-            readingConverter = SuggestUtil.createDefaultReadingConverter();
+            readingConverter = SuggestUtil.createDefaultReadingConverter(client, settings);
         }
         try {
             readingConverter.init();
@@ -80,7 +80,7 @@ public class SuggesterBuilder {
         }
 
         if (normalizer == null) {
-            normalizer = SuggestUtil.createDefaultNormalizer();
+            normalizer = SuggestUtil.createDefaultNormalizer(client, settings);
         }
 
         if (analyzer == null) {

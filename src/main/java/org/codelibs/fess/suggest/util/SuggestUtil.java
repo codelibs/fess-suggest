@@ -27,16 +27,15 @@ import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.IOUtils;
 import org.codelibs.core.CoreLibConstants;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
-import org.codelibs.fess.suggest.converter.KatakanaConverter;
-import org.codelibs.fess.suggest.converter.KatakanaToAlphabetConverter;
-import org.codelibs.fess.suggest.converter.ReadingConverter;
-import org.codelibs.fess.suggest.converter.ReadingConverterChain;
+import org.codelibs.fess.suggest.converter.*;
 import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.codelibs.fess.suggest.normalizer.*;
+import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.codelibs.neologd.ipadic.lucene.analysis.ja.JapaneseAnalyzer;
 import org.codelibs.neologd.ipadic.lucene.analysis.ja.JapaneseTokenizer;
 import org.codelibs.neologd.ipadic.lucene.analysis.ja.dict.UserDictionary;
+import org.elasticsearch.client.Client;
 import org.elasticsearch.common.base.Strings;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
 
@@ -157,18 +156,21 @@ public final class SuggestUtil {
         }
     }
 
-    public static ReadingConverter createDefaultReadingConverter() {
+    public static ReadingConverter createDefaultReadingConverter(final Client client, final SuggestSettings settings) {
         final ReadingConverterChain chain = new ReadingConverterChain();
-        chain.addConverter(new KatakanaConverter());
+        chain.addConverter(new AnalyzerConverter(client, settings));
         chain.addConverter(new KatakanaToAlphabetConverter());
         return chain;
     }
 
-    public static Normalizer createDefaultNormalizer() {
+    public static Normalizer createDefaultNormalizer(final Client client, final SuggestSettings settings) {
         final NormalizerChain normalizerChain = new NormalizerChain();
+        normalizerChain.add(new AnalyzerNormalizer(client, settings));
+        /*
         normalizerChain.add(new HankakuKanaToZenkakuKana());
         normalizerChain.add(new FullWidthToHalfWidthAlphabetNormalizer());
         normalizerChain.add(new ICUNormalizer("Any-Lower"));
+        */
         return normalizerChain;
     }
 

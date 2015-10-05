@@ -48,6 +48,7 @@ public class SuggestSettings {
         }
         initialized = true;
         initialize(initialSettings);
+        new AnalyzerSettings(client, settingsIndexName).init();
     }
 
     private void initialize(final Map<String, Object> initialSettings) {
@@ -186,6 +187,10 @@ public class SuggestSettings {
 
     public ArraySettings array() {
         return new ArraySettings(client, settingsIndexName, settingsId);
+    }
+
+    public AnalyzerSettings analyzer() {
+        return new AnalyzerSettings(client, settingsIndexName);
     }
 
     public BadWordSettings badword() {

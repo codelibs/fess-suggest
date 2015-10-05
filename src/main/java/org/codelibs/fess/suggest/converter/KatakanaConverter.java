@@ -21,7 +21,7 @@ import com.ibm.icu.text.Transliterator;
 
 public class KatakanaConverter implements ReadingConverter {
 
-    private final Transliterator transliterator = Transliterator.getInstance("Hiragana-Katakana");
+    protected final Transliterator transliterator = Transliterator.getInstance("Hiragana-Katakana");
 
     protected volatile boolean initialized = false;
 
