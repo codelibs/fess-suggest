@@ -21,7 +21,7 @@ public class DeferredTest {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException ignore) {}
-            deferred.resolve(new SuggestResponse(0, Collections.emptyList(), 0, null));
+            deferred.resolve(new SuggestResponse("", 0, Collections.emptyList(), 0, null));
         });
         th.start();
 
@@ -35,7 +35,7 @@ public class DeferredTest {
         final Deferred<SuggestResponse> deferred = new Deferred<>();
 
         Thread th = new Thread(() -> {
-            deferred.resolve(new SuggestResponse(0, Collections.emptyList(), 0, null));
+            deferred.resolve(new SuggestResponse("", 0, Collections.emptyList(), 0, null));
         });
         th.start();
 
@@ -85,7 +85,7 @@ public class DeferredTest {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException ignore) {}
-            deferred.resolve(new SuggestResponse(0, Collections.emptyList(), 0, null));
+            deferred.resolve(new SuggestResponse("", 0, Collections.emptyList(), 0, null));
         });
         th.start();
 
@@ -98,7 +98,7 @@ public class DeferredTest {
         final Deferred<SuggestResponse> deferred = new Deferred<>();
 
         Thread th = new Thread(() -> {
-            deferred.resolve(new SuggestResponse(0, Collections.emptyList(), 0, null));
+            deferred.resolve(new SuggestResponse("", 0, Collections.emptyList(), 0, null));
         });
         th.start();
 

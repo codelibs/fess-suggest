@@ -253,7 +253,16 @@ public class SuggestRequest extends Request<SuggestResponse> {
         final SearchHit[] hits = searchResponse.getHits().getHits();
         final List<String> words = new ArrayList<>();
         final List<SuggestItem> items = new ArrayList<>();
+
+        final String index;
+        if (hits.length > 0) {
+            index = hits[0].index();
+        } else {
+            index = SuggestConstants.EMPTY_STRING;
+        }
+
         for (final SearchHit hit : hits) {
+
             final Map<String, Object> source = hit.sourceAsMap();
             final String text = source.get(FieldNames.TEXT).toString();
             words.add(text);
@@ -290,7 +299,7 @@ public class SuggestRequest extends Request<SuggestResponse> {
             }
         }
 
-        return new SuggestResponse(searchResponse.getTookInMillis(), words, searchResponse.getHits().totalHits(), items);
+        return new SuggestResponse(index, searchResponse.getTookInMillis(), words, searchResponse.getHits().totalHits(), items);
     }
 
     private List<String> getAsList(final Object value) {
