@@ -3,6 +3,7 @@ package org.codelibs.fess.suggest.entity;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.codelibs.core.lang.StringUtil;
@@ -56,7 +57,7 @@ public class SuggestItem implements Serializable {
             @Nullable final String[] tags, @Nullable final String[] roles, final Kind kind) {
         this.text = String.join(SuggestConstants.TEXT_SEPARATOR, text);
         this.readings = readings;
-        this.fields = fields;
+        this.fields = fields != null ? fields : new String[] {};
         this.tags = tags != null ? tags : new String[] {};
 
         if (roles == null || roles.length == 0) {
@@ -151,6 +152,110 @@ public class SuggestItem implements Serializable {
 
     public String getId() {
         return SuggestUtil.createSuggestTextId(text);
+    }
+
+    public Map<String, Object> getSource() {
+        final Map<String, Object> map = new HashMap<>();
+        map.put(FieldNames.TEXT, text);
+
+        for (int i = 0; i < readings.length; i++) {
+            map.put(FieldNames.READING_PREFIX + i, readings[i]);
+        }
+
+        map.put(FieldNames.FIELDS, fields);
+        map.put(FieldNames.TAGS, tags);
+        map.put(FieldNames.ROLES, roles);
+        map.put(FieldNames.KINDS, new String[] { kind.toString() });
+        map.put(FieldNames.QUERY_FREQ, queryFreq);
+        map.put(FieldNames.DOC_FREQ, docFreq);
+        map.put(FieldNames.USER_BOOST, userBoost);
+        map.put(FieldNames.SCORE, (queryFreq + docFreq) * userBoost);
+        map.put(FieldNames.TIMESTAMP, timestamp);
+        return map;
+    }
+
+    public Map<String, Object> getUpdatedSource(final Map<String, Object> existingSource) {
+        final Map<String, Object> map = new HashMap<>();
+        map.put(FieldNames.TEXT, text);
+
+        for (int i = 0; i < readings.length; i++) {
+            map.put(FieldNames.READING_PREFIX + i, readings[i]);
+        }
+
+        final Object fieldsObj = existingSource.get(FieldNames.FIELDS);
+        if (fieldsObj == null) {
+            map.put(FieldNames.FIELDS, fields);
+        } else {
+            @SuppressWarnings("unchecked")
+            final List<String> existingValues = (List) fieldsObj;
+            concatValues(existingValues, fields);
+            map.put(FieldNames.FIELDS, existingValues);
+        }
+
+        final Object tagsObj = existingSource.get(FieldNames.TAGS);
+        if (tagsObj == null) {
+            map.put(FieldNames.TAGS, tags);
+        } else {
+            @SuppressWarnings("unchecked")
+            final List<String> existingValues = (List) tagsObj;
+            concatValues(existingValues, tags);
+            map.put(FieldNames.TAGS, existingValues);
+        }
+
+        final Object rolesObj = existingSource.get(FieldNames.ROLES);
+        if (rolesObj == null) {
+            map.put(FieldNames.ROLES, rolesObj);
+        } else {
+            @SuppressWarnings("unchecked")
+            final List<String> existingFields = (List) rolesObj;
+            concatValues(existingFields, roles);
+            map.put(FieldNames.ROLES, existingFields);
+        }
+
+        final Object kindsObj = existingSource.get(FieldNames.KINDS);
+        if (kindsObj == null) {
+            map.put(FieldNames.KINDS, new String[] { kind.toString() });
+        } else {
+            @SuppressWarnings("unchecked")
+            final List<String> existingFields = (List) kindsObj;
+            concatValues(existingFields, kind.toString());
+            map.put(FieldNames.KINDS, existingFields);
+        }
+
+        final long updatedQueryFreq;
+        final Object queryFreqObj = existingSource.get(FieldNames.QUERY_FREQ);
+        if (queryFreqObj == null) {
+            updatedQueryFreq = queryFreq;
+        } else {
+            @SuppressWarnings("unchecked")
+            final Long existingValue = Long.parseLong(queryFreqObj.toString());
+            updatedQueryFreq = queryFreq + existingValue;
+        }
+        map.put(FieldNames.QUERY_FREQ, updatedQueryFreq);
+
+        final long updatedDocFreq;
+        final Object docFreqObj = existingSource.get(FieldNames.DOC_FREQ);
+        if (docFreqObj == null) {
+            updatedDocFreq = docFreq;
+        } else {
+            @SuppressWarnings("unchecked")
+            final Long existingValue = Long.parseLong(docFreqObj.toString());
+            updatedDocFreq = docFreq + existingValue;
+        }
+        map.put(FieldNames.DOC_FREQ, updatedDocFreq);
+
+        map.put(FieldNames.USER_BOOST, userBoost);
+        map.put(FieldNames.SCORE, (updatedQueryFreq + updatedDocFreq) * userBoost);
+        map.put(FieldNames.TIMESTAMP, timestamp);
+        return map;
+    }
+
+    protected void concatValues(final List<String> dest, final String... newValues) {
+        for (final String value : newValues) {
+            if (!dest.contains(value)) {
+                dest.add(value);
+            }
+        }
     }
 
     public String getScript() {

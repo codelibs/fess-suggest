@@ -1,8 +1,5 @@
 package org.codelibs.fess.suggest.index.writer;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.fess.suggest.exception.SuggestIndexException;
@@ -10,28 +7,30 @@ import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
-import org.elasticsearch.action.update.UpdateRequestBuilder;
+import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.script.ScriptService;
 
 public class SuggestIndexWriter implements SuggestWriter {
     @Override
     public SuggestWriterResult write(final Client client, final SuggestSettings settings, final String index, final String type,
             final SuggestItem[] items) {
-        final Set<String> upsertedIdSet = new HashSet<>();
         final BulkRequestBuilder bulkRequestBuilder = client.prepareBulk();
         for (final SuggestItem item : items) {
-            final UpdateRequestBuilder updateRequestBuilder = new UpdateRequestBuilder(client, index, type, item.getId());
-            updateRequestBuilder.setScript(item.getScript(), ScriptService.ScriptType.INLINE);
-            updateRequestBuilder.setScriptParams(item.getScriptParams());
-            final String itemId = item.getId();
-            if (!upsertedIdSet.contains(itemId)) {
-                updateRequestBuilder.setScriptedUpsert(true);
-                updateRequestBuilder.setUpsert(item.toEmptyMap());
-                upsertedIdSet.add(itemId);
+            final GetResponse getResponse =
+                    client.prepareGet().setIndex(index).setType(type).setId(item.getId()).get(TimeValue.timeValueSeconds(30));
+            if (getResponse.isExists()) {
+                final IndexRequestBuilder indexRequestBuilder = new IndexRequestBuilder(client, index);
+                indexRequestBuilder.setType(type).setId(item.getId()).setCreate(true)
+                        .setSource(item.getUpdatedSource(getResponse.getSourceAsMap()));
+                bulkRequestBuilder.add(indexRequestBuilder);
+            } else {
+                final IndexRequestBuilder indexRequestBuilder = new IndexRequestBuilder(client, index);
+                indexRequestBuilder.setType(type).setId(item.getId()).setCreate(true).setSource(item.getSource());
+                bulkRequestBuilder.add(indexRequestBuilder);
             }
-            bulkRequestBuilder.add(updateRequestBuilder);
         }
 
         final BulkResponse response = bulkRequestBuilder.execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
@@ -71,4 +70,5 @@ public class SuggestIndexWriter implements SuggestWriter {
         }
         return result;
     }
+
 }
