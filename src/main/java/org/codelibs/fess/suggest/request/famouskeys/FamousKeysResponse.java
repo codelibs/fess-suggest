@@ -16,9 +16,10 @@ public class FamousKeysResponse implements Response {
 
     protected final long total;
 
-    protected final SuggestItem[] items;
+    protected final List<SuggestItem> items;
 
-    public FamousKeysResponse(final String index, final long tookMs, final List<String> words, final long total, final SuggestItem[] items) {
+    public FamousKeysResponse(final String index, final long tookMs, final List<String> words, final long total,
+            final List<SuggestItem> items) {
         this.index = index;
         this.tookMs = tookMs;
         this.words = words;
@@ -47,7 +48,7 @@ public class FamousKeysResponse implements Response {
         return total;
     }
 
-    public SuggestItem[] getItems() {
+    public List<SuggestItem> getItems() {
         return items;
     }
 }

@@ -189,7 +189,6 @@ public class FamousKeysRequest extends Request<FamousKeysResponse> {
             }
         }
 
-        return new FamousKeysResponse(index, searchResponse.getTookInMillis(), words, searchResponse.getHits().totalHits(),
-                items.toArray(new SuggestItem[items.size()]));
+        return new FamousKeysResponse(index, searchResponse.getTookInMillis(), words, searchResponse.getHits().totalHits(), items);
     }
 }
