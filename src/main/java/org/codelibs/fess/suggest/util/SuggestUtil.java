@@ -201,4 +201,17 @@ public final class SuggestUtil {
             throw new SuggesterException("Failed to create default analyzer.", e);
         }
     }
+
+    public static List<String> getAsList(final Object value) {
+        if (value instanceof String) {
+            final List<String> list = new ArrayList<>();
+            list.add(value.toString());
+            return list;
+        } else if (value instanceof List) {
+            @SuppressWarnings("unchecked")
+            final List<String> list = (List<String>) value;
+            return list;
+        }
+        throw new IllegalArgumentException("The value should be String or List, but " + value.getClass());
+    }
 }

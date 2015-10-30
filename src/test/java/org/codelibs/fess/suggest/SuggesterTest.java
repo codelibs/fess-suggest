@@ -84,7 +84,6 @@ public class SuggesterTest {
 
         SuggestResponse response2 = suggester.suggest().setSuggestDetail(true).execute().getResponse();
         assertEquals(2, response2.getNum());
-
     }
 
     @Test

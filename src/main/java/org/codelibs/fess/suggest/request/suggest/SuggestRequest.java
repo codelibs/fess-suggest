@@ -13,6 +13,7 @@ import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.request.Request;
+import org.codelibs.fess.suggest.util.SuggestUtil;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
@@ -272,14 +273,14 @@ public class SuggestRequest extends Request<SuggestResponse> {
                 Object readingObj;
                 final List<String[]> readings = new ArrayList<>();
                 while ((readingObj = source.get(FieldNames.READING_PREFIX + readingCount++)) != null) {
-                    final List<String> reading = getAsList(readingObj);
+                    final List<String> reading = SuggestUtil.getAsList(readingObj);
                     readings.add(reading.toArray(new String[reading.size()]));
                 }
 
-                final List<String> fields = getAsList(source.get(FieldNames.FIELDS));
-                final List<String> tags = getAsList(source.get(FieldNames.TAGS));
-                final List<String> roles = getAsList(source.get(FieldNames.ROLES));
-                final List<String> kinds = getAsList(source.get(FieldNames.KINDS));
+                final List<String> fields = SuggestUtil.getAsList(source.get(FieldNames.FIELDS));
+                final List<String> tags = SuggestUtil.getAsList(source.get(FieldNames.TAGS));
+                final List<String> roles = SuggestUtil.getAsList(source.get(FieldNames.ROLES));
+                final List<String> kinds = SuggestUtil.getAsList(source.get(FieldNames.KINDS));
                 SuggestItem.Kind kind;
                 long freq;
                 if (SuggestItem.Kind.USER.toString().equals(kinds.get(0))) {
@@ -300,18 +301,5 @@ public class SuggestRequest extends Request<SuggestResponse> {
         }
 
         return new SuggestResponse(index, searchResponse.getTookInMillis(), words, searchResponse.getHits().totalHits(), items);
-    }
-
-    private List<String> getAsList(final Object value) {
-        if (value instanceof String) {
-            final List<String> list = new ArrayList<>();
-            list.add(value.toString());
-            return list;
-        } else if (value instanceof List) {
-            @SuppressWarnings("unchecked")
-            final List<String> list = (List<String>) value;
-            return list;
-        }
-        throw new IllegalArgumentException("The value should be String or List, but " + value);
     }
 }

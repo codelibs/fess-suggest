@@ -1,5 +1,6 @@
 package org.codelibs.fess.suggest.request.famouskeys;
 
+import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.fess.suggest.request.Response;
 
 import java.util.List;
@@ -15,12 +16,15 @@ public class FamousKeysResponse implements Response {
 
     protected final long total;
 
-    public FamousKeysResponse(final String index, final long tookMs, final List<String> words, final long total) {
+    protected final SuggestItem[] items;
+
+    public FamousKeysResponse(final String index, final long tookMs, final List<String> words, final long total, final SuggestItem[] items) {
         this.index = index;
         this.tookMs = tookMs;
         this.words = words;
         this.num = words.size();
         this.total = total;
+        this.items = items;
     }
 
     public String getIndex() {
@@ -41,5 +45,9 @@ public class FamousKeysResponse implements Response {
 
     public long getTotal() {
         return total;
+    }
+
+    public SuggestItem[] getItems() {
+        return items;
     }
 }

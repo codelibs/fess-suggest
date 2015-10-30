@@ -3,8 +3,10 @@ package org.codelibs.fess.suggest.request.famouskeys;
 import org.codelibs.fess.suggest.concurrent.Deferred;
 import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
+import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.codelibs.fess.suggest.request.Request;
+import org.codelibs.fess.suggest.util.SuggestUtil;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
@@ -38,6 +40,8 @@ public class FamousKeysRequest extends Request<FamousKeysResponse> {
 
     private int windowSize = 20;
 
+    private boolean detail = true;
+
     public void setIndex(final String index) {
         this.index = index;
     }
@@ -68,6 +72,10 @@ public class FamousKeysRequest extends Request<FamousKeysResponse> {
 
     public void addField(final String field) {
         this.fields.add(field);
+    }
+
+    public void setDetail(final boolean detail) {
+        this.detail = detail;
     }
 
     @Override
@@ -135,6 +143,7 @@ public class FamousKeysRequest extends Request<FamousKeysResponse> {
     protected FamousKeysResponse createResponse(final SearchResponse searchResponse) {
         final SearchHit[] hits = searchResponse.getHits().getHits();
         final List<String> words = new ArrayList<>();
+        final List<SuggestItem> items = new ArrayList<>();
 
         final String index;
         if (hits.length > 0) {
@@ -147,8 +156,40 @@ public class FamousKeysRequest extends Request<FamousKeysResponse> {
             final Map<String, Object> source = hit.sourceAsMap();
             final String text = source.get(FieldNames.TEXT).toString();
             words.add(text);
+
+            if (detail) {
+                int readingCount = 0;
+                Object readingObj;
+                final List<String[]> readings = new ArrayList<>();
+                while ((readingObj = source.get(FieldNames.READING_PREFIX + readingCount++)) != null) {
+                    final List<String> reading = SuggestUtil.getAsList(readingObj);
+                    readings.add(reading.toArray(new String[reading.size()]));
+                }
+
+                final List<String> fields = SuggestUtil.getAsList(source.get(FieldNames.FIELDS));
+                final List<String> tags = SuggestUtil.getAsList(source.get(FieldNames.TAGS));
+                final List<String> roles = SuggestUtil.getAsList(source.get(FieldNames.ROLES));
+                final List<String> kinds = SuggestUtil.getAsList(source.get(FieldNames.KINDS));
+                SuggestItem.Kind kind;
+                long freq;
+                if (SuggestItem.Kind.USER.toString().equals(kinds.get(0))) {
+                    kind = SuggestItem.Kind.USER;
+                    freq = 0;
+                } else if (SuggestItem.Kind.QUERY.toString().equals(kinds.get(0))) {
+                    kind = SuggestItem.Kind.QUERY;
+                    freq = Long.parseLong(source.get(FieldNames.QUERY_FREQ).toString());
+                } else {
+                    kind = SuggestItem.Kind.DOCUMENT;
+                    freq = Long.parseLong(source.get(FieldNames.DOC_FREQ).toString());
+                }
+
+                items.add(new SuggestItem(text.split(" "), readings.toArray(new String[readings.size()][]), fields
+                        .toArray(new String[fields.size()]), freq, Float.valueOf(source.get(FieldNames.USER_BOOST).toString()), tags
+                        .toArray(new String[tags.size()]), roles.toArray(new String[tags.size()]), kind));
+            }
         }
 
-        return new FamousKeysResponse(index, searchResponse.getTookInMillis(), words, searchResponse.getHits().totalHits());
+        return new FamousKeysResponse(index, searchResponse.getTookInMillis(), words, searchResponse.getHits().totalHits(),
+                items.toArray(new SuggestItem[items.size()]));
     }
 }
