@@ -81,6 +81,7 @@ public class Suggester {
                 } catch (IndexAlreadyExistsException ignore) {}
                 created = true;
             }
+
             return created;
         } catch (final Exception e) {
             throw new SuggesterException("Failed to create index.", e);

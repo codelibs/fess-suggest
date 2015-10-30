@@ -36,7 +36,7 @@ public class FamousKeysRequest extends Request<FamousKeysResponse> {
 
     private String seed = String.valueOf(System.currentTimeMillis());
 
-    private int windowSize = 100;
+    private int windowSize = 20;
 
     public void setIndex(final String index) {
         this.index = index;
