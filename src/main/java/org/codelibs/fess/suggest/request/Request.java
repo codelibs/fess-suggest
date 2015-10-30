@@ -21,7 +21,7 @@ public abstract class Request<T extends Response> {
         return deferred.promise();
     }
 
-    protected abstract void processRequest(Client client, Deferred<T> future);
+    protected abstract void processRequest(Client client, Deferred<T> deferred);
 
     protected abstract String getValidationError();
 }

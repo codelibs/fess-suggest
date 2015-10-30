@@ -8,6 +8,7 @@ import org.codelibs.fess.suggest.index.SuggestIndexResponse;
 import org.codelibs.fess.suggest.index.contents.document.ESSourceReader;
 import org.codelibs.fess.suggest.index.contents.querylog.QueryLog;
 import org.codelibs.fess.suggest.index.contents.querylog.QueryLogReader;
+import org.codelibs.fess.suggest.request.famouskeys.FamousKeysResponse;
 import org.codelibs.fess.suggest.request.suggest.SuggestResponse;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
@@ -20,12 +21,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner.newConfigs;
@@ -333,6 +330,31 @@ public class SuggesterTest {
         assertEquals(1, suggester.settings().badword().get().length);
     }
 
+    @Test
+    public void test_famousKeys() throws Exception {
+        SuggestItem[] items = getFamousItemSet2();
+        suggester.indexer().index(items);
+        suggester.refresh();
+
+        FamousKeysResponse response = suggester.famousKeys().setSize(2).execute().getResponse();
+
+        assertEquals(5, response.getTotal());
+
+        for (int i = 0; i < 5; i++) {
+            boolean find = false;
+            final String checkStr = "クエリー" + i;
+            for (int j = 0; j < 1000; j++) {
+                if (response.getWords().contains(checkStr)) {
+                    find = true;
+                    break;
+                }
+                response = suggester.famousKeys().setSize(2).execute().getResponse();
+            }
+
+            assertTrue(find);
+        }
+    }
+
     private SuggestItem[] getItemSet1() {
         SuggestItem[] queryItems = new SuggestItem[3];
 
@@ -349,7 +371,7 @@ public class SuggesterTest {
         readings2[0] = new String[] { "zenbun", "fuga" };
         readings2[1] = new String[] { "kensaku", "fuga" };
         String[] tags2 = new String[] { "tag3" };
-        String[] roles2 = new String[] { SuggestConstants.DEFAULT_ROLE, "role1", "role2", "role3", "role4" };
+        String[] roles2 = new String[] { SuggestConstants.DEFAULT_ROLE, "role4" };
         queryItems[1] =
                 new SuggestItem(new String[] { "全文", "検索" }, readings2, new String[] { "content" }, 1, -1, tags2, roles2,
                         SuggestItem.Kind.DOCUMENT);
@@ -357,12 +379,47 @@ public class SuggesterTest {
         String[][] readings2Query = new String[2][];
         readings2Query[0] = new String[] { "zenbun", "fuga" };
         readings2Query[1] = new String[] { "kensaku", "fuga" };
-        String[] tags2Query = new String[] { "tag3" };
-        String[] roles2Query = new String[] { SuggestConstants.DEFAULT_ROLE, "role1", "role2", "role3", "role4" };
+        String[] tags2Query = new String[] { "tag4" };
+        String[] roles2Query = new String[] { SuggestConstants.DEFAULT_ROLE, "role5" };
         queryItems[2] =
                 new SuggestItem(new String[] { "全文", "検索" }, readings2Query, new String[] { "content" }, 1, -1, tags2Query, roles2Query,
                         SuggestItem.Kind.QUERY);
 
         return queryItems;
+    }
+
+    private SuggestItem[] getFamousItemSet2() {
+        List<SuggestItem> items = new ArrayList<>();
+
+        for (int i = 0; i < 10; i++) {
+            String[][] readings = new String[2][];
+            readings[0] = new String[] { "fuga" };
+            readings[1] = new String[] { "fuga" };
+            String[] tags = new String[] { "tag1", "tag2" };
+            String[] roles = new String[] { SuggestConstants.DEFAULT_ROLE, "role1", "role2", "role3" };
+            items.add(new SuggestItem(new String[] { "ドキュメント" + i }, readings, new String[] { "content" }, 15 + i, -1, tags, roles,
+                    SuggestItem.Kind.DOCUMENT));
+        }
+
+        for (int i = 0; i < 5; i++) {
+            String[][] readings = new String[2][];
+            readings[0] = new String[] { "fuga" };
+            String[] tags = new String[] { "tag1", "tag2" };
+            String[] roles = new String[] { SuggestConstants.DEFAULT_ROLE, "role1", "role2", "role3" };
+            items.add(new SuggestItem(new String[] { "クエリー" + i }, readings, new String[] { "content" }, 15 + i, -1, tags, roles,
+                    SuggestItem.Kind.QUERY));
+        }
+
+        for (int i = 0; i < 5; i++) {
+            String[][] readings = new String[2][];
+            readings[0] = new String[] { "fuga" };
+            readings[1] = new String[] { "enjin" };
+            String[] tags = new String[] { "tag1", "tag2" };
+            String[] roles = new String[] { SuggestConstants.DEFAULT_ROLE, "role1", "role2", "role3" };
+            items.add(new SuggestItem(new String[] { "マルチワード" + i, "fuga" }, readings, new String[] { "content" }, 15 + i, -1, tags, roles,
+                    SuggestItem.Kind.QUERY));
+        }
+
+        return items.toArray(new SuggestItem[items.size()]);
     }
 }
