@@ -38,6 +38,7 @@ public class SuggesterTest {
         runner = new ElasticsearchClusterRunner();
         runner.onBuild((number, settingsBuilder) -> {
             settingsBuilder.put("http.cors.enabled", true);
+            settingsBuilder.put("index.number_of_shards", 1);
             settingsBuilder.put("index.number_of_replicas", 0);
             settingsBuilder.put("script.disable_dynamic", false);
             settingsBuilder.put("script.groovy.sandbox.enabled", true);
@@ -341,6 +342,7 @@ public class SuggesterTest {
         assertEquals(5, response.getTotal());
 
         for (int i = 0; i < 5; i++) {
+            assertEquals(2, response.getNum());
             boolean find = false;
             final String checkStr = "クエリー" + i;
             for (int j = 0; j < 1000; j++) {
@@ -351,7 +353,11 @@ public class SuggesterTest {
                 response = suggester.famousKeys().setSize(2).execute().getResponse();
             }
 
-            assertTrue(find);
+            if (find) {
+                assertTrue(find);
+            } else {
+                fail();
+            }
         }
     }
 

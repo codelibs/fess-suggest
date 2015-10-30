@@ -37,4 +37,14 @@ public class FamousKeysRequestBuilder extends RequestBuilder<FamousKeysRequest, 
         request.addField(field);
         return this;
     }
+
+    public FamousKeysRequestBuilder setSeed(final String seed) {
+        request.setSeed(seed);
+        return this;
+    }
+
+    public FamousKeysRequestBuilder setWindowSize(final int windowSize) {
+        request.setWindowSize(windowSize);
+        return this;
+    }
 }
