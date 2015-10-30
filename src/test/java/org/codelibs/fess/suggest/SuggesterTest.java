@@ -61,7 +61,6 @@ public class SuggesterTest {
         }
         runner.refresh();
         suggester = Suggester.builder().build(runner.client(), "SuggesterTest");
-        suggester.createIndexIfNothing();
     }
 
     @Test

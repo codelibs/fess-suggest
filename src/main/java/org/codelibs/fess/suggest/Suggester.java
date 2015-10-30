@@ -16,6 +16,7 @@ import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRespon
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.indices.IndexAlreadyExistsException;
 
 public class Suggester {
     protected final Client client;
@@ -63,16 +64,21 @@ public class Suggester {
             final IndicesExistsResponse response =
                     client.admin().indices().prepareExists(index).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
             if (!response.isExists()) {
-                client.admin()
-                        .indices()
-                        .prepareCreate(index)
-                        .addMapping(
-                                "_default_",
-                                XContentFactory.jsonBuilder().startObject().startArray("dynamic_templates").startObject()
-                                        .startObject("not_analyzed").field("match", "*").field("match_mapping_type", "string")
-                                        .startObject("mapping").field("type", "string").field("index", "not_analyzed").endObject()
-                                        .endObject().endObject().endArray().endObject()).execute()
-                        .actionGet(SuggestConstants.ACTION_TIMEOUT);
+                try {
+                    client.admin()
+                            .indices()
+                            .prepareCreate(index)
+                            .addMapping(
+                                    "_default_",
+                                    XContentFactory.jsonBuilder().startObject().startArray("dynamic_templates").startObject()
+                                            .startObject("not_analyzed").field("match", "*").field("match_mapping_type", "string")
+                                            .startObject("mapping").field("type", "string").field("index", "not_analyzed").endObject()
+                                            .endObject().endObject().endArray().endObject()).execute()
+                            .actionGet(SuggestConstants.ACTION_TIMEOUT);
+
+                    client.admin().cluster().prepareHealth().setWaitForYellowStatus().execute()
+                            .actionGet(SuggestConstants.ACTION_TIMEOUT * 10);
+                } catch (IndexAlreadyExistsException ignore) {}
                 created = true;
             }
             return created;
