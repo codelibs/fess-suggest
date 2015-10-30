@@ -91,8 +91,6 @@ public class SuggesterBuilder {
             threadPool = Executors.newFixedThreadPool(threadPoolSize);
         }
 
-        final Suggester suggester = new Suggester(client, settings, readingConverter, normalizer, analyzer, threadPool);
-        suggester.createIndexIfNothing();
-        return suggester;
+        return new Suggester(client, settings, readingConverter, normalizer, analyzer, threadPool);
     }
 }
