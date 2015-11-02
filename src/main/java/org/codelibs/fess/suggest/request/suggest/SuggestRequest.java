@@ -28,6 +28,7 @@ import org.elasticsearch.index.query.QueryStringQueryBuilder;
 import org.elasticsearch.index.query.functionscore.FunctionScoreQueryBuilder;
 import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
 
 public class SuggestRequest extends Request<SuggestResponse> {
@@ -114,11 +115,12 @@ public class SuggestRequest extends Request<SuggestResponse> {
         if (!Strings.isNullOrEmpty(query) && !query.contains(" ") && !query.contains("　")) {
             builder.setQuery(buildFunctionScoreQuery(query, q));
             builder.addSort("_score", SortOrder.DESC);
+
         } else {
             builder.setQuery(QueryBuilders.queryStringQuery(q).analyzeWildcard(false).defaultOperator(QueryStringQueryBuilder.Operator.AND));
         }
 
-        builder.addSort(FieldNames.SCORE, SortOrder.DESC);
+        builder.addSort(SortBuilders.fieldSort(FieldNames.SCORE).missing(0).order(SortOrder.DESC));
 
         //set filter query.
         final List<FilterBuilder> filterBuilderList = new ArrayList<>();
