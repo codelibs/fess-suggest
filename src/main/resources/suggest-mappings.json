@@ -1,0 +1,52 @@
+{
+  "dynamic_templates": [
+    {
+      "not_analyzed": {
+        "mapping": {
+          "index": "not_analyzed",
+          "type": "string"
+        },
+        "match": "*",
+        "match_mapping_type": "string"
+      }
+    }
+  ],
+  "properties": {
+    "@timestamp": {
+      "type": "date",
+      "format": "dateOptionalTime"
+    },
+    "docFreq": {
+      "type": "long"
+    },
+    "fields": {
+      "type": "string",
+      "index": "not_analyzed"
+    },
+    "kinds": {
+      "type": "string",
+      "index": "not_analyzed"
+    },
+    "queryFreq": {
+      "type": "long"
+    },
+    "roles": {
+      "type": "string",
+      "index": "not_analyzed"
+    },
+    "score": {
+      "type": "double"
+    },
+    "tags": {
+      "type": "string",
+      "index": "not_analyzed"
+    },
+    "text": {
+      "type": "string",
+      "index": "not_analyzed"
+    },
+    "userBoost": {
+      "type": "double"
+    }
+  }
+}
