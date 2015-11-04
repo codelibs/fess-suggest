@@ -1,11 +1,11 @@
-package org.codelibs.fess.suggest.request.famouskeys;
+package org.codelibs.fess.suggest.request.popularwords;
 
 import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.fess.suggest.request.Response;
 
 import java.util.List;
 
-public class FamousKeysResponse implements Response {
+public class PopularWordsResponse implements Response {
     protected final String index;
 
     protected final long tookMs;
@@ -18,7 +18,7 @@ public class FamousKeysResponse implements Response {
 
     protected final List<SuggestItem> items;
 
-    public FamousKeysResponse(final String index, final long tookMs, final List<String> words, final long total,
+    public PopularWordsResponse(final String index, final long tookMs, final List<String> words, final long total,
             final List<SuggestItem> items) {
         this.index = index;
         this.tookMs = tookMs;

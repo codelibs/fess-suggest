@@ -1,4 +1,4 @@
-package org.codelibs.fess.suggest.request.famouskeys;
+package org.codelibs.fess.suggest.request.popularwords;
 
 import org.codelibs.fess.suggest.concurrent.Deferred;
 import org.codelibs.fess.suggest.constants.FieldNames;
@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class FamousKeysRequest extends Request<FamousKeysResponse> {
+public class PopularWordsRequest extends Request<PopularWordsResponse> {
     private String index = null;
 
     private String type = null;
@@ -79,7 +79,7 @@ public class FamousKeysRequest extends Request<FamousKeysResponse> {
     }
 
     @Override
-    protected void processRequest(final Client client, final Deferred<FamousKeysResponse> deferred) {
+    protected void processRequest(final Client client, final Deferred<PopularWordsResponse> deferred) {
         final SearchRequestBuilder builder = client.prepareSearch(index);
         if (!Strings.isNullOrEmpty(type)) {
             builder.setTypes(type);
@@ -140,7 +140,7 @@ public class FamousKeysRequest extends Request<FamousKeysResponse> {
                 .setQueryWeight(0).setRescoreQueryWeight(1);
     }
 
-    protected FamousKeysResponse createResponse(final SearchResponse searchResponse) {
+    protected PopularWordsResponse createResponse(final SearchResponse searchResponse) {
         final SearchHit[] hits = searchResponse.getHits().getHits();
         final List<String> words = new ArrayList<>();
         final List<SuggestItem> items = new ArrayList<>();
@@ -189,6 +189,6 @@ public class FamousKeysRequest extends Request<FamousKeysResponse> {
             }
         }
 
-        return new FamousKeysResponse(index, searchResponse.getTookInMillis(), words, searchResponse.getHits().totalHits(), items);
+        return new PopularWordsResponse(index, searchResponse.getTookInMillis(), words, searchResponse.getHits().totalHits(), items);
     }
 }

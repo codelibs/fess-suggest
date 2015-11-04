@@ -11,7 +11,7 @@ import org.codelibs.fess.suggest.converter.ReadingConverter;
 import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.codelibs.fess.suggest.index.SuggestIndexer;
 import org.codelibs.fess.suggest.normalizer.Normalizer;
-import org.codelibs.fess.suggest.request.famouskeys.FamousKeysRequestBuilder;
+import org.codelibs.fess.suggest.request.popularwords.PopularWordsRequestBuilder;
 import org.codelibs.fess.suggest.request.suggest.SuggestRequestBuilder;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
@@ -47,8 +47,8 @@ public class Suggester {
         return new SuggestRequestBuilder(client, readingConverter, normalizer).setIndex(index).setType(type);
     }
 
-    public FamousKeysRequestBuilder famousKeys() {
-        return new FamousKeysRequestBuilder(client).setIndex(index).setType(type);
+    public PopularWordsRequestBuilder popularWords() {
+        return new PopularWordsRequestBuilder(client).setIndex(index).setType(type);
     }
 
     public RefreshResponse refresh() {

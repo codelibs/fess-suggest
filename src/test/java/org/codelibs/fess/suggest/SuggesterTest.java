@@ -8,7 +8,7 @@ import org.codelibs.fess.suggest.index.SuggestIndexResponse;
 import org.codelibs.fess.suggest.index.contents.document.ESSourceReader;
 import org.codelibs.fess.suggest.index.contents.querylog.QueryLog;
 import org.codelibs.fess.suggest.index.contents.querylog.QueryLogReader;
-import org.codelibs.fess.suggest.request.famouskeys.FamousKeysResponse;
+import org.codelibs.fess.suggest.request.popularwords.PopularWordsResponse;
 import org.codelibs.fess.suggest.request.suggest.SuggestResponse;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
@@ -331,12 +331,12 @@ public class SuggesterTest {
     }
 
     @Test
-    public void test_famousKeys() throws Exception {
-        SuggestItem[] items = getFamousItemSet2();
+    public void test_popularWords() throws Exception {
+        SuggestItem[] items = getPopularWordsItemSet2();
         suggester.indexer().index(items);
         suggester.refresh();
 
-        FamousKeysResponse response = suggester.famousKeys().setSize(2).execute().getResponse();
+        PopularWordsResponse response = suggester.popularWords().setSize(2).execute().getResponse();
 
         assertEquals(5, response.getTotal());
 
@@ -349,7 +349,7 @@ public class SuggesterTest {
                     find = true;
                     break;
                 }
-                response = suggester.famousKeys().setSize(2).execute().getResponse();
+                response = suggester.popularWords().setSize(2).execute().getResponse();
             }
 
             if (find) {
@@ -393,7 +393,7 @@ public class SuggesterTest {
         return queryItems;
     }
 
-    private SuggestItem[] getFamousItemSet2() {
+    private SuggestItem[] getPopularWordsItemSet2() {
         List<SuggestItem> items = new ArrayList<>();
 
         for (int i = 0; i < 10; i++) {
