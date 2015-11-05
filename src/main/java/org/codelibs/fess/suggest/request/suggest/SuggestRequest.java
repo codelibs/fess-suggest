@@ -120,7 +120,7 @@ public class SuggestRequest extends Request<SuggestResponse> {
             builder.setQuery(QueryBuilders.queryStringQuery(q).analyzeWildcard(false).defaultOperator(QueryStringQueryBuilder.Operator.AND));
         }
 
-        builder.addSort(SortBuilders.fieldSort(FieldNames.SCORE).missing(0).order(SortOrder.DESC));
+        builder.addSort(SortBuilders.fieldSort(FieldNames.SCORE).unmappedType("double").missing(0).order(SortOrder.DESC));
 
         //set filter query.
         final List<FilterBuilder> filterBuilderList = new ArrayList<>();
