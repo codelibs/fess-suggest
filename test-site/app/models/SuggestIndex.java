@@ -1,6 +1,6 @@
 package models;
 
-import components.ComponentsUtil;
+import components.*;
 import org.codelibs.fess.suggest.Suggester;
 import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.codelibs.fess.suggest.index.contents.document.DocumentReader;

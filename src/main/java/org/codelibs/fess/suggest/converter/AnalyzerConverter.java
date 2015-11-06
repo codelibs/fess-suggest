@@ -46,8 +46,10 @@ public class AnalyzerConverter implements ReadingConverter {
             final String term = termTokenList.get(i).getTerm();
             String reading = readingTokenList.get(i).getTerm();
             if (Strings.isNullOrEmpty(reading)) {
-                reading = transliterator.transliterate(term);
+                reading = term;
             }
+            reading = transliterator.transliterate(reading);
+
             final int pos = text.substring(offset).indexOf(term);
             if (pos > 0) {
                 final String tmp = text.substring(offset, offset + pos);

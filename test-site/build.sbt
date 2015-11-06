@@ -21,7 +21,7 @@ libraryDependencies ++= Seq(
 
 libraryDependencies += "org.codelibs" % "elasticsearch-cluster-runner" % "1.5.0.1"
 
-libraryDependencies += "org.codelibs" % "elasticsearch-fess-suggest" % "1.7.0-SNAPSHOT"
+libraryDependencies += "org.codelibs" % "elasticsearch-fess-suggest" % "1.7.3-SNAPSHOT"
 
 libraryDependencies += "org.codelibs" % "elasticsearch-analysis-kuromoji-neologd" % "1.5.1"
 

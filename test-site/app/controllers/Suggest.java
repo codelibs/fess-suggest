@@ -1,11 +1,6 @@
 package controllers;
 
-import components.ComponentsUtil;
-import models.ContentsCreator;
-import models.SuggestIndex;
-import org.codelibs.fess.suggest.Suggester;
-import org.codelibs.fess.suggest.index.contents.document.DocumentReader;
-import org.codelibs.fess.suggest.index.contents.document.ESSourceReader;
+import models.*;
 import org.codelibs.fess.suggest.request.suggest.SuggestResponse;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.json.JsonXContent;

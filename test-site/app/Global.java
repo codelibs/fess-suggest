@@ -1,5 +1,6 @@
-import components.ComponentsUtil;
-import controllers.Suggest;
+
+import components.*;
+import controllers.*;
 import org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner;
 import org.codelibs.fess.suggest.Suggester;
 import play.Application;
@@ -46,6 +47,7 @@ public class Global extends GlobalSettings {
             ComponentsUtil.contentIndexName = "test-content";
             ComponentsUtil.contentTypeName = "test";
             ComponentsUtil.suggester = Suggester.builder().build(ComponentsUtil.runner.client(), "test");
+            ComponentsUtil.suggester.createIndexIfNothing();
         } catch (Exception e) {
             Logger.error("Failed to create components.", e);
         }
