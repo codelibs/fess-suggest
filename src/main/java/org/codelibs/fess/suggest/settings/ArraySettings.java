@@ -11,14 +11,15 @@ import org.codelibs.core.CoreLibConstants;
 import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.exception.SuggestSettingsException;
+import org.codelibs.fess.suggest.util.SuggestUtil;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
+import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.indices.IndexMissingException;
 import org.elasticsearch.search.SearchHit;
 
 public class ArraySettings {
@@ -117,7 +118,7 @@ public class ArraySettings {
                 return o1.toString().compareTo(o2.toString());
             });
             return array;
-        } catch (final IndexMissingException e) {
+        } catch (final IndexNotFoundException e) {
             return new Map[0];
         }
     }
@@ -134,8 +135,7 @@ public class ArraySettings {
 
     protected void deleteKeyFromArray(final String index, final String type, final String key) {
         try {
-            client.prepareDeleteByQuery().setIndices(index).setTypes(type).setQuery(QueryBuilders.termQuery(FieldNames.ARRAY_KEY, key))
-                    .execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
+            SuggestUtil.deleteByQuery(client, index, type, QueryBuilders.termQuery(FieldNames.ARRAY_KEY, key));
         } catch (final Exception e) {
             throw new SuggestSettingsException("Failed to delete all from array.", e);
         }
@@ -155,7 +155,7 @@ public class ArraySettings {
             boolean empty;
             try {
                 empty = client.admin().indices().prepareGetMappings(index).setTypes(type).get().getMappings().isEmpty();
-            } catch (final IndexMissingException e) {
+            } catch (final IndexNotFoundException e) {
                 empty = true;
                 client.admin().indices().prepareCreate(index).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
             }

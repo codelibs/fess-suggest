@@ -52,7 +52,7 @@ public class DefaultContentsParserTest extends TestCase {
 
     protected ReadingConverter createDefaultReadingConverter() throws IOException {
         ReadingConverterChain chain = new ReadingConverterChain();
-        chain.addConverter(new KatakanaConverter());
+        //chain.addConverter(new KatakanaConverter());
         chain.addConverter(new KatakanaToAlphabetConverter());
         chain.init();
         return chain;

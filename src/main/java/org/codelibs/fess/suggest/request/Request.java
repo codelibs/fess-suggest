@@ -1,14 +1,14 @@
 package org.codelibs.fess.suggest.request;
 
+import com.google.common.base.Strings;
 import org.codelibs.fess.suggest.concurrent.Deferred;
 import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.common.lang3.StringUtils;
 
 public abstract class Request<T extends Response> {
     public Deferred<T>.Promise execute(final Client client) {
         final String error = getValidationError();
-        if (StringUtils.isNotBlank(error)) {
+        if (!Strings.isNullOrEmpty(error)) {
             throw new IllegalArgumentException(error);
         }
 

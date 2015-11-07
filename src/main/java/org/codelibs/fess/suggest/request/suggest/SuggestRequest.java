@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.google.common.base.Strings;
 import org.codelibs.fess.suggest.concurrent.Deferred;
 import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
@@ -18,10 +19,7 @@ import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.common.base.Strings;
-import org.elasticsearch.index.query.AndFilterBuilder;
-import org.elasticsearch.index.query.FilterBuilder;
-import org.elasticsearch.index.query.FilterBuilders;
+import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.QueryStringQueryBuilder;
@@ -112,40 +110,42 @@ public class SuggestRequest extends Request<SuggestResponse> {
         // set query.
         final String q = buildQueryString(query);
 
-        if (!Strings.isNullOrEmpty(query) && !query.contains(" ") && !query.contains("　")) {
-            builder.setQuery(buildFunctionScoreQuery(query, q));
-            builder.addSort("_score", SortOrder.DESC);
+        final QueryBuilder queryBuilder;
 
+        if (!Strings.isNullOrEmpty(query) && !query.contains(" ") && !query.contains("　")) {
+            queryBuilder = buildFunctionScoreQuery(query, q);
+            builder.addSort("_score", SortOrder.DESC);
         } else {
-            builder.setQuery(QueryBuilders.queryStringQuery(q).analyzeWildcard(false).defaultOperator(QueryStringQueryBuilder.Operator.AND));
+            queryBuilder = QueryBuilders.queryStringQuery(q).analyzeWildcard(false).defaultOperator(QueryStringQueryBuilder.Operator.AND);
         }
 
         builder.addSort(SortBuilders.fieldSort(FieldNames.SCORE).unmappedType("double").missing(0).order(SortOrder.DESC));
 
         //set filter query.
-        final List<FilterBuilder> filterBuilderList = new ArrayList<>();
+        final List<QueryBuilder> filterList = new ArrayList<>(10);
         if (!tags.isEmpty()) {
             final String fq = buildFilterQuery(FieldNames.TAGS, tags);
-            filterBuilderList.add(FilterBuilders.queryFilter(QueryBuilders.queryStringQuery(fq)));
+            filterList.add(QueryBuilders.queryStringQuery(fq));
         }
 
         roles.add(SuggestConstants.DEFAULT_ROLE);
         if (!roles.isEmpty()) {
             final String fq = buildFilterQuery(FieldNames.ROLES, roles);
-            filterBuilderList.add(FilterBuilders.queryFilter(QueryBuilders.queryStringQuery(fq)));
+            filterList.add(QueryBuilders.queryStringQuery(fq));
         }
 
         if (!fields.isEmpty()) {
             final String fq = buildFilterQuery(FieldNames.FIELDS, fields);
-            filterBuilderList.add(FilterBuilders.queryFilter(QueryBuilders.queryStringQuery(fq)));
+            filterList.add(QueryBuilders.queryStringQuery(fq));
         }
 
-        if (filterBuilderList.size() == 1) {
-            builder.setPostFilter(filterBuilderList.get(0));
-        } else if (filterBuilderList.size() > 1) {
-            final AndFilterBuilder andFilterBuilder = new AndFilterBuilder();
-            filterBuilderList.forEach(andFilterBuilder::add);
-            builder.setPostFilter(andFilterBuilder.cache(true));
+        if (filterList.size() > 0) {
+            final BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
+            boolQueryBuilder.must(queryBuilder);
+            filterList.forEach(boolQueryBuilder::filter);
+            builder.setQuery(boolQueryBuilder);
+        } else {
+            builder.setQuery(queryBuilder);
         }
 
         builder.execute(new ActionListener<SearchResponse>() {
@@ -242,10 +242,8 @@ public class SuggestRequest extends Request<SuggestResponse> {
                 QueryBuilders.functionScoreQuery(QueryBuilders.queryStringQuery(queryString).analyzeWildcard(false)
                         .defaultOperator(QueryStringQueryBuilder.Operator.AND));
 
-        final FilterBuilder textScoreFilterBuiler =
-                FilterBuilders.queryFilter(QueryBuilders.queryStringQuery(FieldNames.TEXT + ":" + query + '*').analyzeWildcard(false)
-                        .defaultOperator(QueryStringQueryBuilder.Operator.AND));
-        functionScoreQueryBuilder.add(textScoreFilterBuiler, ScoreFunctionBuilders.weightFactorFunction(2));
+        functionScoreQueryBuilder.add(QueryBuilders.queryStringQuery(FieldNames.TEXT + ":" + query + '*').analyzeWildcard(false)
+                .defaultOperator(QueryStringQueryBuilder.Operator.AND), ScoreFunctionBuilders.weightFactorFunction(2));
 
         functionScoreQueryBuilder.add(ScoreFunctionBuilders.fieldValueFactorFunction("score").factor(1.0F));
 

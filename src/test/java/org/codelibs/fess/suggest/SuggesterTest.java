@@ -12,9 +12,9 @@ import org.codelibs.fess.suggest.request.popularwords.PopularWordsResponse;
 import org.codelibs.fess.suggest.request.suggest.SuggestResponse;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
+import org.elasticsearch.action.index.IndexAction;
 import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.indices.IndexMissingException;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -40,9 +40,9 @@ public class SuggesterTest {
             settingsBuilder.put("http.cors.enabled", true);
             settingsBuilder.put("index.number_of_shards", 1);
             settingsBuilder.put("index.number_of_replicas", 0);
-            settingsBuilder.put("script.disable_dynamic", false);
-            settingsBuilder.put("script.groovy.sandbox.enabled", true);
-        }).build(newConfigs().ramIndexStore().numOfNode(1));
+            settingsBuilder.putArray("discovery.zen.ping.unicast.hosts", "localhost:9301-9399");
+            settingsBuilder.put("plugin.types", "org.codelibs.elasticsearch.kuromoji.neologd.KuromojiNeologdPlugin");
+        }).build(newConfigs().clusterName("SuggesterTest").numOfNode(1));
         runner.ensureYellow();
     }
 
@@ -54,11 +54,7 @@ public class SuggesterTest {
 
     @Before
     public void before() throws Exception {
-        try {
-            runner.admin().indices().prepareDelete("_all").execute().actionGet();
-        } catch (IndexMissingException ignore) {
-
-        }
+        runner.admin().indices().prepareDelete("_all").execute().actionGet();
         runner.refresh();
         suggester = Suggester.builder().build(runner.client(), "SuggesterTest");
         suggester.createIndexIfNothing();
@@ -206,7 +202,7 @@ public class SuggesterTest {
         BulkRequestBuilder bulkRequestBuilder = client.prepareBulk();
         for (int i = 0; i < num; i++) {
             Map<String, Object> source = Collections.singletonMap("content", "test");
-            IndexRequestBuilder indexRequestBuilder = new IndexRequestBuilder(client);
+            IndexRequestBuilder indexRequestBuilder = new IndexRequestBuilder(client, IndexAction.INSTANCE);
             indexRequestBuilder.setIndex(indexName).setType(typeName).setId(String.valueOf(i)).setCreate(true).setSource(source);
             bulkRequestBuilder.add(indexRequestBuilder);
         }
@@ -220,7 +216,11 @@ public class SuggesterTest {
         suggester.indexer().indexFromDocument(reader, 1000, 100).done(response -> {
             numObInputDoc.set(response.getNumberOfInputDocs());
             latch.countDown();
-        }).error(t -> fail());
+        }).error(t -> {
+            t.printStackTrace();
+            latch.countDown();
+            fail();
+        });
         latch.await();
         assertEquals(num, numObInputDoc.get());
 

@@ -1,7 +1,7 @@
 package org.codelibs.fess.suggest.settings;
 
+import com.google.common.base.Strings;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.common.base.Strings;
 
 public class BadWordSettings {
     public static final String BAD_WORD_SETTINGD_KEY = "badword";

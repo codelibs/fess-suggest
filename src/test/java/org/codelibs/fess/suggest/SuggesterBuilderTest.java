@@ -1,11 +1,11 @@
 package org.codelibs.fess.suggest;
 
+import com.google.common.base.Strings;
 import junit.framework.TestCase;
 import org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner;
 import org.codelibs.fess.suggest.converter.ReadingConverter;
 import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
-import org.elasticsearch.common.lang3.StringUtils;
 
 import java.io.IOException;
 import java.util.List;
@@ -21,9 +21,9 @@ public class SuggesterBuilderTest extends TestCase {
         runner.onBuild((number, settingsBuilder) -> {
             settingsBuilder.put("http.cors.enabled", true);
             settingsBuilder.put("index.number_of_replicas", 0);
-            settingsBuilder.put("script.disable_dynamic", false);
-            settingsBuilder.put("script.groovy.sandbox.enabled", true);
-        }).build(newConfigs().ramIndexStore().numOfNode(1));
+            settingsBuilder.putArray("discovery.zen.ping.unicast.hosts", "localhost:9301-9399");
+            settingsBuilder.put("plugin.types", "org.codelibs.elasticsearch.kuromoji.neologd.KuromojiNeologdPlugin");
+        }).build(newConfigs().clusterName("SuggesterBuilderTest").numOfNode(1));
         runner.ensureYellow();
     }
 
@@ -43,8 +43,8 @@ public class SuggesterBuilderTest extends TestCase {
         assertNotNull(suggester.getNormalizer());
         assertNotNull(suggester.getReadingConverter());
         assertNotNull(suggester.settings());
-        assertTrue(StringUtils.isNotBlank(suggester.index));
-        assertTrue(StringUtils.isNotBlank(suggester.type));
+        assertTrue(!Strings.isNullOrEmpty(suggester.index));
+        assertTrue(!Strings.isNullOrEmpty(suggester.type));
     }
 
     public void test_buildWithParameters() throws Exception {

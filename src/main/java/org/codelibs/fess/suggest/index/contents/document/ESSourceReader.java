@@ -6,13 +6,13 @@ import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.google.common.base.Strings;
 import org.codelibs.core.lang.StringUtil;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.common.lang3.StringUtils;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.Scroll;
@@ -36,10 +36,10 @@ public class ESSourceReader implements DocumentReader {
     public final String lock2Key;
     public final String execFlgKey;
 
-    public static final String KEY_SCROLL_ID_PREFIX = "ESSourceReader.scrollID.";
-    public static final String KEY_LOCK1_PREFIX = "ESSourceReader.lock1.";
-    public static final String KEY_LOCK2_PREFIX = "ESSourceReader.locl2.";
-    public static final String KEY_EXEC_FLG_PREFIX = "ESSourceReader.exec.";
+    public static final String KEY_SCROLL_ID_PREFIX = "ESSourceReader_scrollID_";
+    public static final String KEY_LOCK1_PREFIX = "ESSourceReader_lock1_";
+    public static final String KEY_LOCK2_PREFIX = "ESSourceReader_locl2_";
+    public static final String KEY_EXEC_FLG_PREFIX = "ESSourceReader_exec_";
     public static final String VALUE_EXEC = "executing";
     public static final String VALUE_IDLE = "idle";
 
@@ -72,7 +72,7 @@ public class ESSourceReader implements DocumentReader {
                 }
 
                 String scrollId = settings.getAsString(scrollIdKey, StringUtil.EMPTY);
-                if (StringUtils.isBlank(scrollId)) {
+                if (Strings.isNullOrEmpty(scrollId)) {
                     scrollId = createNewScroll();
                 }
 
@@ -147,12 +147,12 @@ public class ESSourceReader implements DocumentReader {
             }
 
             final String lock1 = settings.getAsString(lock1Key, StringUtil.EMPTY);
-            if (StringUtils.isBlank(lock1) || id.equals(lock1)) {
+            if (Strings.isNullOrEmpty(lock1) || id.equals(lock1)) {
                 settings.set(lock1Key, id);
                 idleCount++;
                 if (idleCount > 3) {
                     final String lock2 = settings.getAsString(lock2Key, StringUtil.EMPTY);
-                    if (StringUtils.isBlank(lock2) || id.equals(lock2)) {
+                    if (Strings.isNullOrEmpty(lock2) || id.equals(lock2)) {
                         settings.set(lock2Key, id);
                         final String lock1_2 = settings.getAsString(lock1Key, StringUtil.EMPTY);
                         final String lock2_2 = settings.getAsString(lock2Key, StringUtil.EMPTY);

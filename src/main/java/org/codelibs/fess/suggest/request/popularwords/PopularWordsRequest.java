@@ -1,5 +1,6 @@
 package org.codelibs.fess.suggest.request.popularwords;
 
+import com.google.common.base.Strings;
 import org.codelibs.fess.suggest.concurrent.Deferred;
 import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
@@ -11,7 +12,6 @@ import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.common.base.Strings;
 import org.elasticsearch.common.lucene.search.function.CombineFunction;
 import org.elasticsearch.index.query.*;
 import org.elasticsearch.index.query.functionscore.FunctionScoreQueryBuilder;
@@ -113,6 +113,7 @@ public class PopularWordsRequest extends Request<PopularWordsResponse> {
     protected QueryBuilder buildQuery() {
         final BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery();
         queryBuilder.must(QueryBuilders.matchAllQuery());
+        queryBuilder.must(QueryBuilders.missingQuery(FieldNames.READING_PREFIX + 1));
         if (tags.size() > 0) {
             queryBuilder.must(QueryBuilders.termsQuery(FieldNames.TAGS, tags));
         }
@@ -125,10 +126,10 @@ public class PopularWordsRequest extends Request<PopularWordsResponse> {
             queryBuilder.must(QueryBuilders.termsQuery(FieldNames.FIELDS, fields));
         }
 
-        final BoolFilterBuilder filterBuilder = FilterBuilders.boolFilter();
-        filterBuilder.mustNot(FilterBuilders.existsFilter(FieldNames.READING_PREFIX + 1));
+        final BoolQueryBuilder filterBuilder = QueryBuilders.boolQuery();
+        filterBuilder.filter(QueryBuilders.missingQuery(FieldNames.READING_PREFIX + 1));
 
-        final FunctionScoreQueryBuilder functionScoreQueryBuilder = QueryBuilders.functionScoreQuery(queryBuilder, filterBuilder);
+        final FunctionScoreQueryBuilder functionScoreQueryBuilder = QueryBuilders.functionScoreQuery(queryBuilder);
         functionScoreQueryBuilder.boostMode(CombineFunction.REPLACE).add(
                 ScoreFunctionBuilders.fieldValueFactorFunction(FieldNames.QUERY_FREQ));
 

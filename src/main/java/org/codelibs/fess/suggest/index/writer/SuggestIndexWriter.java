@@ -4,10 +4,12 @@ import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.fess.suggest.exception.SuggestIndexException;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
+import org.codelibs.fess.suggest.util.SuggestUtil;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.action.index.IndexAction;
 import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
@@ -24,12 +26,12 @@ public class SuggestIndexWriter implements SuggestWriter {
             final GetResponse getResponse =
                     client.prepareGet().setIndex(index).setType(type).setId(item.getId()).get(TimeValue.timeValueSeconds(30));
             if (getResponse.isExists()) {
-                final IndexRequestBuilder indexRequestBuilder = new IndexRequestBuilder(client, index);
+                final IndexRequestBuilder indexRequestBuilder = new IndexRequestBuilder(client, IndexAction.INSTANCE, index);
                 indexRequestBuilder.setType(type).setId(item.getId()).setCreate(true)
                         .setSource(item.getUpdatedSource(getResponse.getSourceAsMap()));
                 bulkRequestBuilder.add(indexRequestBuilder);
             } else {
-                final IndexRequestBuilder indexRequestBuilder = new IndexRequestBuilder(client, index);
+                final IndexRequestBuilder indexRequestBuilder = new IndexRequestBuilder(client, IndexAction.INSTANCE, index);
                 indexRequestBuilder.setType(type).setId(item.getId()).setCreate(true).setSource(item.getSource());
                 bulkRequestBuilder.add(indexRequestBuilder);
             }
@@ -65,8 +67,7 @@ public class SuggestIndexWriter implements SuggestWriter {
             final String queryString) {
         final SuggestWriterResult result = new SuggestWriterResult();
         try {
-            client.prepareDeleteByQuery().setIndices(index).setTypes(type).setQuery(QueryBuilders.queryStringQuery(queryString)).execute()
-                    .actionGet(SuggestConstants.ACTION_TIMEOUT);
+            SuggestUtil.deleteByQuery(client, index, type, QueryBuilders.queryStringQuery(queryString));
         } catch (final Exception e) {
             result.addFailure(e);
         }

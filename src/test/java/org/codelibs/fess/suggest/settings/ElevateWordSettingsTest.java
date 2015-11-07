@@ -3,7 +3,7 @@ package org.codelibs.fess.suggest.settings;
 import org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner;
 import org.codelibs.fess.suggest.Suggester;
 import org.codelibs.fess.suggest.entity.ElevateWord;
-import org.elasticsearch.indices.IndexMissingException;
+import org.elasticsearch.index.IndexNotFoundException;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -27,9 +27,9 @@ public class ElevateWordSettingsTest {
         runner.onBuild((number, settingsBuilder) -> {
             settingsBuilder.put("http.cors.enabled", true);
             settingsBuilder.put("index.number_of_replicas", 0);
-            settingsBuilder.put("script.disable_dynamic", false);
-            settingsBuilder.put("script.groovy.sandbox.enabled", true);
-        }).build(newConfigs().ramIndexStore().numOfNode(1));
+            settingsBuilder.putArray("discovery.zen.ping.unicast.hosts", "localhost:9301-9399");
+            settingsBuilder.put("plugin.types", "org.codelibs.elasticsearch.kuromoji.neologd.KuromojiNeologdPlugin");
+        }).build(newConfigs().clusterName("ElevateWordSettingsTest").numOfNode(1));
         runner.ensureYellow();
     }
 
@@ -43,7 +43,7 @@ public class ElevateWordSettingsTest {
     public void before() throws Exception {
         try {
             runner.admin().indices().prepareDelete("_all").execute().actionGet();
-        } catch (IndexMissingException ignore) {
+        } catch (IndexNotFoundException ignore) {
 
         }
         runner.refresh();

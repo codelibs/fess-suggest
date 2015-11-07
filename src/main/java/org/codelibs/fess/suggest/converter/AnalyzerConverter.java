@@ -1,11 +1,11 @@
 package org.codelibs.fess.suggest.converter;
 
+import com.google.common.base.Strings;
 import com.ibm.icu.text.Transliterator;
 import org.codelibs.fess.suggest.settings.AnalyzerSettings;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.elasticsearch.action.admin.indices.analyze.AnalyzeResponse;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.common.base.Strings;
 
 import java.io.IOException;
 import java.util.ArrayList;

@@ -4,9 +4,10 @@ import org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner;
 import org.codelibs.fess.suggest.Suggester;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
+import org.elasticsearch.action.index.IndexAction;
 import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.indices.IndexMissingException;
+import org.elasticsearch.index.IndexNotFoundException;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -29,9 +30,9 @@ public class ESSourceReaderTest {
         runner.onBuild((number, settingsBuilder) -> {
             settingsBuilder.put("http.cors.enabled", true);
             settingsBuilder.put("index.number_of_replicas", 0);
-            settingsBuilder.put("script.disable_dynamic", false);
-            settingsBuilder.put("script.groovy.sandbox.enabled", true);
-        }).build(newConfigs().ramIndexStore().numOfNode(1));
+            settingsBuilder.putArray("discovery.zen.ping.unicast.hosts", "localhost:9301-9399");
+            settingsBuilder.put("plugin.types", "org.codelibs.elasticsearch.kuromoji.neologd.KuromojiNeologdPlugin");
+        }).build(newConfigs().clusterName("ESSourceReaderTest").numOfNode(1));
         runner.ensureYellow();
     }
 
@@ -45,7 +46,7 @@ public class ESSourceReaderTest {
     public void before() throws Exception {
         try {
             runner.admin().indices().prepareDelete("_all").execute().actionGet();
-        } catch (IndexMissingException ignore) {
+        } catch (IndexNotFoundException ignore) {
 
         }
         runner.refresh();
@@ -207,7 +208,7 @@ public class ESSourceReaderTest {
         BulkRequestBuilder bulkRequestBuilder = client.prepareBulk();
         for (int i = 0; i < num; i++) {
             Map<String, Object> source = Collections.singletonMap("field1", "test" + i);
-            IndexRequestBuilder indexRequestBuilder = new IndexRequestBuilder(client);
+            IndexRequestBuilder indexRequestBuilder = new IndexRequestBuilder(client, IndexAction.INSTANCE);
             indexRequestBuilder.setIndex(indexName).setType(typeName).setId(String.valueOf(i)).setCreate(true).setSource(source);
             bulkRequestBuilder.add(indexRequestBuilder);
         }

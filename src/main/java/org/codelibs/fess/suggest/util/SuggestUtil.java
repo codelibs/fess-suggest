@@ -16,7 +16,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 
+import com.google.common.base.Strings;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser;
 import org.apache.lucene.queryparser.flexible.standard.config.StandardQueryConfigHandler;
@@ -35,9 +37,16 @@ import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.codelibs.neologd.ipadic.lucene.analysis.ja.JapaneseAnalyzer;
 import org.codelibs.neologd.ipadic.lucene.analysis.ja.JapaneseTokenizer;
 import org.codelibs.neologd.ipadic.lucene.analysis.ja.dict.UserDictionary;
+import org.elasticsearch.action.bulk.BulkRequestBuilder;
+import org.elasticsearch.action.bulk.BulkResponse;
+import org.elasticsearch.action.delete.DeleteRequest;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.common.base.Strings;
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
+import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.search.SearchHit;
 
 public final class SuggestUtil {
     private static final int MAX_QUERY_TERM_NUM = 5;
@@ -191,7 +200,8 @@ public final class SuggestUtil {
                         Charset.forName(encoding).newDecoder().onMalformedInput(CodingErrorAction.REPORT)
                                 .onUnmappableCharacter(CodingErrorAction.REPORT);
                 final InputStreamReader reader = new InputStreamReader(stream, decoder);
-                userDictionary = new UserDictionary(reader);
+                //userDictionary = new UserDictionary();
+                userDictionary = null;
             }
 
             final Set<String> stopTags = new HashSet<>();
@@ -213,5 +223,34 @@ public final class SuggestUtil {
             return list;
         }
         throw new IllegalArgumentException("The value should be String or List, but " + value.getClass());
+    }
+
+    public static boolean deleteByQuery(final Client client, final String index, final String type, final QueryBuilder queryBuilder) {
+        try {
+            final SearchResponse scanResponse =
+                    client.prepareSearch(index).setTypes(type).setQuery(queryBuilder).setSearchType(SearchType.SCAN).setSize(500)
+                            .setScroll(TimeValue.timeValueSeconds(10)).execute().actionGet();
+
+            String scrollId = scanResponse.getScrollId();
+            SearchResponse searchResponse;
+            while ((searchResponse = client.prepareSearchScroll(scrollId).setScroll(TimeValue.timeValueSeconds(10)).execute().actionGet())
+                    .getHits().getHits().length > 0) {
+                scrollId = searchResponse.getScrollId();
+                final SearchHit[] hits = searchResponse.getHits().getHits();
+
+                final BulkRequestBuilder bulkRequestBuiler = client.prepareBulk();
+                Stream.of(hits).map(SearchHit::getId).forEach(id -> bulkRequestBuiler.add(new DeleteRequest(index, type, id)));
+
+                final BulkResponse bulkResponse = bulkRequestBuiler.execute().actionGet();
+                if (bulkResponse.hasFailures()) {
+                    throw new SuggesterException(bulkResponse.buildFailureMessage());
+                }
+            }
+            client.admin().indices().prepareRefresh(index).execute().actionGet();
+        } catch (Exception e) {
+            throw new SuggesterException("Failed to exec delete by query.", e);
+        }
+
+        return true;
     }
 }

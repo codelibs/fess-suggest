@@ -12,7 +12,7 @@ import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
-import org.elasticsearch.indices.IndexMissingException;
+import org.elasticsearch.index.IndexNotFoundException;
 
 public class SuggestSettings {
     protected final String settingsId;
@@ -61,7 +61,7 @@ public class SuggestSettings {
             if (!getResponse.isExists()) {
                 doCreate = true;
             }
-        } catch (final IndexMissingException e) {
+        } catch (final IndexNotFoundException e) {
             doCreate = true;
         }
 

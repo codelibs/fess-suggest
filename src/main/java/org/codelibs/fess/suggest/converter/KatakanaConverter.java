@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.google.common.base.Strings;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.util.FilesystemResourceLoader;
@@ -15,7 +16,6 @@ import org.apache.lucene.analysis.util.TokenizerFactory;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.neologd.ipadic.lucene.analysis.ja.JapaneseTokenizerFactory;
 import org.codelibs.neologd.ipadic.lucene.analysis.ja.tokenattributes.ReadingAttribute;
-import org.elasticsearch.common.base.Strings;
 
 import com.ibm.icu.text.Transliterator;
 
@@ -56,7 +56,7 @@ public class KatakanaConverter implements ReadingConverter {
                 args.put("userDictionaryEncoding", encoding);
             }
             final JapaneseTokenizerFactory japaneseTokenizerFactory = new JapaneseTokenizerFactory(args);
-            japaneseTokenizerFactory.inform(new FilesystemResourceLoader());
+            // TODO japaneseTokenizerFactory.inform(new FilesystemResourceLoader());
             tokenizerFactory = japaneseTokenizerFactory;
         }
         initialized = true;
@@ -110,7 +110,7 @@ public class KatakanaConverter implements ReadingConverter {
 
     private TokenStream createTokenStream(final Reader rd) {
         if (tokenizerFactory instanceof JapaneseTokenizerFactory) {
-            return tokenizerFactory.create(rd);
+            return tokenizerFactory.create();
         } else {
             return null;
         }
