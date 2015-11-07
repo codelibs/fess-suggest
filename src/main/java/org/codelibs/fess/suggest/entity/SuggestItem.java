@@ -2,6 +2,7 @@ package org.codelibs.fess.suggest.entity;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,27 +32,32 @@ public class SuggestItem implements Serializable {
         }
     }
 
-    private final String text;
+    private String text;
 
-    private final LocalDateTime timestamp;
+    private LocalDateTime timestamp;
 
-    private final long queryFreq;
+    private long queryFreq;
 
-    private final long docFreq;
+    private long docFreq;
 
-    private final float userBoost;
+    private float userBoost;
 
-    private final String[][] readings;
+    private String[][] readings;
 
-    private final String[] fields;
+    private String[] fields;
 
-    private final String[] tags;
+    private String[] tags;
 
-    private final String[] roles;
+    private String[] roles;
 
-    private final Kind kind;
+    private Kind kind;
 
-    private final Map<String, Object> emptySource;
+    private Map<String, Object> emptySource;
+
+    private String id;
+
+    private SuggestItem() {
+    }
 
     public SuggestItem(final String[] text, final String[][] readings, final String[] fields, final long score, final float userBoost,
             @Nullable final String[] tags, @Nullable final String[] roles, final Kind kind) {
@@ -82,8 +88,10 @@ public class SuggestItem implements Serializable {
             this.userBoost = 1;
         }
 
-        timestamp = LocalDateTime.now();
-        emptySource = createEmptyMap();
+        this.timestamp = LocalDateTime.now();
+        this.emptySource = createEmptyMap();
+
+        this.id = SuggestUtil.createSuggestTextId(this.text);
     }
 
     public String getText() {
@@ -151,7 +159,7 @@ public class SuggestItem implements Serializable {
     }
 
     public String getId() {
-        return SuggestUtil.createSuggestTextId(text);
+        return id;
     }
 
     public Map<String, Object> getSource() {
@@ -256,6 +264,73 @@ public class SuggestItem implements Serializable {
                 dest.add(value);
             }
         }
+    }
+
+    public static SuggestItem merge(final SuggestItem item1, final SuggestItem item2) {
+        if (!item1.getId().equals(item2.getId())) {
+            throw new IllegalArgumentException("Item id is mismatch.");
+        }
+
+        final SuggestItem mergedItem = new SuggestItem();
+
+        mergedItem.id = item1.getId();
+        mergedItem.text = item1.getText();
+
+        mergedItem.readings = new String[mergedItem.text.split(SuggestConstants.TEXT_SEPARATOR).length][];
+        for (int i = 0; i < mergedItem.readings.length; i++) {
+            final List<String> list = new ArrayList<>(item1.getReadings()[i].length + item2.getReadings()[i].length);
+            for (final String reading : item1.getReadings()[i]) {
+                list.add(reading);
+            }
+            for (final String reading : item2.getReadings()[i]) {
+                if (!list.contains(reading)) {
+                    list.add(reading);
+                }
+            }
+            mergedItem.readings[i] = list.toArray(new String[list.size()]);
+        }
+
+        final List<String> fieldList = new ArrayList<>(item1.getFields().length + item2.getFields().length);
+        for (final String field : item1.getFields()) {
+            fieldList.add(field);
+        }
+        for (final String field : item2.getFields()) {
+            if (!fieldList.contains(field)) {
+                fieldList.add(field);
+            }
+        }
+        mergedItem.fields = fieldList.toArray(new String[fieldList.size()]);
+
+        final List<String> tagList = new ArrayList<>(item1.getTags().length + item2.getTags().length);
+        for (final String tag : item1.getTags()) {
+            tagList.add(tag);
+        }
+        for (final String tag : item2.getTags()) {
+            if (!tagList.contains(tag)) {
+                tagList.add(tag);
+            }
+        }
+        mergedItem.tags = tagList.toArray(new String[tagList.size()]);
+
+        final List<String> roleList = new ArrayList<>(item1.getRoles().length + item2.getRoles().length);
+        for (final String role : item1.getRoles()) {
+            roleList.add(role);
+        }
+        for (final String role : item2.getRoles()) {
+            if (!roleList.contains(role)) {
+                roleList.add(role);
+            }
+        }
+        mergedItem.roles = roleList.toArray(new String[roleList.size()]);
+
+        mergedItem.kind = item2.kind;
+        mergedItem.timestamp = item2.timestamp;
+        mergedItem.queryFreq = item1.queryFreq + item2.queryFreq;
+        mergedItem.docFreq = item1.docFreq + item2.docFreq;
+        mergedItem.userBoost = item2.userBoost;
+        mergedItem.emptySource = item2.emptySource;
+
+        return mergedItem;
     }
 
     public String getScript() {

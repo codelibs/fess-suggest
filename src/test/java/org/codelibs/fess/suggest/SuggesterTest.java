@@ -351,12 +351,7 @@ public class SuggesterTest {
                 }
                 response = suggester.popularWords().setSize(2).execute().getResponse();
             }
-
-            if (find) {
-                assertTrue(find);
-            } else {
-                fail();
-            }
+            assertTrue(find);
         }
     }
 
