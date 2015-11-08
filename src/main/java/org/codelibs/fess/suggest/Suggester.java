@@ -6,6 +6,7 @@ import java.util.concurrent.ExecutorService;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.codelibs.core.lang.StringUtil;
+import org.codelibs.fess.suggest.analysis.SuggestAnalyzer;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.converter.ReadingConverter;
 import org.codelibs.fess.suggest.exception.SuggesterException;
@@ -24,7 +25,7 @@ public class Suggester {
     protected final SuggestSettings suggestSettings;
     protected final ReadingConverter readingConverter;
     protected final Normalizer normalizer;
-    protected final Analyzer analyzer;
+    protected final SuggestAnalyzer analyzer;
 
     protected final String index;
     protected final String type;
@@ -32,7 +33,7 @@ public class Suggester {
     protected final ExecutorService threadPool;
 
     public Suggester(final Client client, final SuggestSettings settings, final ReadingConverter readingConverter,
-            final Normalizer normalizer, final Analyzer analyzer, final ExecutorService threadPool) {
+            final Normalizer normalizer, final SuggestAnalyzer analyzer, final ExecutorService threadPool) {
         this.client = client;
         this.suggestSettings = settings;
         this.readingConverter = readingConverter;

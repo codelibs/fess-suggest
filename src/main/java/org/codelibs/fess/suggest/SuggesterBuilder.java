@@ -5,9 +5,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.apache.lucene.analysis.Analyzer;
+import org.codelibs.fess.suggest.analysis.SuggestAnalyzer;
 import org.codelibs.fess.suggest.converter.ReadingConverter;
 import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.codelibs.fess.suggest.normalizer.Normalizer;
+import org.codelibs.fess.suggest.settings.AnalyzerSettings;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.codelibs.fess.suggest.settings.SuggestSettingsBuilder;
 import org.codelibs.fess.suggest.util.SuggestUtil;
@@ -19,7 +21,7 @@ public class SuggesterBuilder {
     protected SuggestSettingsBuilder settingsBuilder;
     protected ReadingConverter readingConverter;
     protected Normalizer normalizer;
-    protected Analyzer analyzer;
+    protected SuggestAnalyzer analyzer;
     protected ExecutorService threadPool;
 
     protected int threadPoolSize = Runtime.getRuntime().availableProcessors();
@@ -46,7 +48,7 @@ public class SuggesterBuilder {
         return this;
     }
 
-    public SuggesterBuilder analyzer(final Analyzer analyzer) {
+    public SuggesterBuilder analyzer(final SuggestAnalyzer analyzer) {
         this.analyzer = analyzer;
         return this;
     }
@@ -84,7 +86,7 @@ public class SuggesterBuilder {
         }
 
         if (analyzer == null) {
-            analyzer = SuggestUtil.createDefaultAnalyzer();
+            analyzer = SuggestUtil.createDefaultAnalyzer(client, settings);
         }
 
         if (threadPool == null) {

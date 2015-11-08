@@ -1,42 +1,27 @@
 package org.codelibs.fess.suggest.util;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.Charset;
-import java.nio.charset.CharsetDecoder;
-import java.nio.charset.CodingErrorAction;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Stream;
 
-import com.google.common.base.Strings;
-import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser;
 import org.apache.lucene.queryparser.flexible.standard.config.StandardQueryConfigHandler;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.util.IOUtils;
 import org.codelibs.core.CoreLibConstants;
-import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.converter.*;
 import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.codelibs.fess.suggest.normalizer.*;
+import org.codelibs.fess.suggest.settings.AnalyzerSettings;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
-import org.codelibs.neologd.ipadic.lucene.analysis.ja.JapaneseAnalyzer;
-import org.codelibs.neologd.ipadic.lucene.analysis.ja.JapaneseTokenizer;
-import org.codelibs.neologd.ipadic.lucene.analysis.ja.dict.UserDictionary;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.delete.DeleteRequest;
@@ -183,33 +168,9 @@ public final class SuggestUtil {
         return normalizerChain;
     }
 
-    public static Analyzer createDefaultAnalyzer() {
-        try {
-            final UserDictionary userDictionary;
-            final String userDictionaryPath = System.getProperty(SuggestConstants.USER_DICT_PATH);
-            if (Strings.isNullOrEmpty(userDictionaryPath) || !new File(userDictionaryPath).exists()) {
-                userDictionary = null;
-            } else {
-                final InputStream stream = new FileInputStream(new File(userDictionaryPath));
-                String encoding = System.getProperty(SuggestConstants.USER_DICT_ENCODING);
-                if (encoding == null) {
-                    encoding = IOUtils.UTF_8;
-                }
-
-                final CharsetDecoder decoder =
-                        Charset.forName(encoding).newDecoder().onMalformedInput(CodingErrorAction.REPORT)
-                                .onUnmappableCharacter(CodingErrorAction.REPORT);
-                final InputStreamReader reader = new InputStreamReader(stream, decoder);
-                //userDictionary = new UserDictionary();
-                userDictionary = null;
-            }
-
-            final Set<String> stopTags = new HashSet<>();
-
-            return new JapaneseAnalyzer(userDictionary, JapaneseTokenizer.Mode.NORMAL, null, stopTags);
-        } catch (final IOException e) {
-            throw new SuggesterException("Failed to create default analyzer.", e);
-        }
+    public static AnalyzerSettings.DefaultAnalyzer createDefaultAnalyzer(final Client client, final SuggestSettings settings) {
+        final AnalyzerSettings analyzerSettings = settings.analyzer();
+        return analyzerSettings.new DefaultAnalyzer();
     }
 
     public static List<String> getAsList(final Object value) {

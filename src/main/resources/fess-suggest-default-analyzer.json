@@ -22,6 +22,10 @@
         "tokenizer" : "keyword",
         "char_filter" : ["mapping_char"],
         "filter" : ["lowercase"]
+      },
+      "default_analyzer" : {
+        "type" : "custom",
+        "tokenizer" : "kuromoji_neologd_normal"
       }
     },
     "char_filter" : {

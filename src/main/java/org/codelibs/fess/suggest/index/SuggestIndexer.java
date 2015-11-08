@@ -9,6 +9,7 @@ import java.util.stream.Stream;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.codelibs.core.lang.StringUtil;
+import org.codelibs.fess.suggest.analysis.SuggestAnalyzer;
 import org.codelibs.fess.suggest.concurrent.Deferred;
 import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
@@ -42,7 +43,7 @@ public class SuggestIndexer {
 
     protected ReadingConverter readingConverter;
     protected Normalizer normalizer;
-    protected Analyzer analyzer;
+    protected SuggestAnalyzer analyzer;
 
     protected ContentsParser contentsParser;
     protected SuggestWriter suggestWriter;
@@ -50,7 +51,7 @@ public class SuggestIndexer {
     protected ExecutorService threadPool;
 
     public SuggestIndexer(final Client client, final String index, final String type, final ReadingConverter readingConverter,
-            final Normalizer normalizer, final Analyzer analyzer, final SuggestSettings settings, final ExecutorService threadPool) {
+            final Normalizer normalizer, final SuggestAnalyzer analyzer, final SuggestSettings settings, final ExecutorService threadPool) {
         this.client = client;
         this.index = index;
         this.type = type;
@@ -316,7 +317,7 @@ public class SuggestIndexer {
         return this;
     }
 
-    public SuggestIndexer setAnalyzer(final Analyzer analyzer) {
+    public SuggestIndexer setAnalyzer(final SuggestAnalyzer analyzer) {
         this.analyzer = analyzer;
         return this;
     }

@@ -11,11 +11,8 @@ import java.util.Map;
 import com.google.common.base.Strings;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
-import org.apache.lucene.analysis.util.FilesystemResourceLoader;
 import org.apache.lucene.analysis.util.TokenizerFactory;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
-import org.codelibs.neologd.ipadic.lucene.analysis.ja.JapaneseTokenizerFactory;
-import org.codelibs.neologd.ipadic.lucene.analysis.ja.tokenattributes.ReadingAttribute;
 
 import com.ibm.icu.text.Transliterator;
 
@@ -39,6 +36,7 @@ public class KatakanaConverter implements ReadingConverter {
 
     @Override
     public void init() throws IOException {
+        /* TODO
         if (initialized) {
             return;
         }
@@ -60,6 +58,7 @@ public class KatakanaConverter implements ReadingConverter {
             tokenizerFactory = japaneseTokenizerFactory;
         }
         initialized = true;
+        */
     }
 
     @Override
@@ -105,24 +104,31 @@ public class KatakanaConverter implements ReadingConverter {
     }
 
     protected boolean isEnableTokenizer(final TokenizerFactory factory) {
-        return factory instanceof JapaneseTokenizerFactory;
+        //TODO return factory instanceof JapaneseTokenizerFactory;
+        return false;
     }
 
     private TokenStream createTokenStream(final Reader rd) {
+        return null;
+        /* TODO
         if (tokenizerFactory instanceof JapaneseTokenizerFactory) {
             return tokenizerFactory.create();
         } else {
             return null;
         }
+        */
     }
 
     protected String getReadingFromAttribute(final TokenStream stream) {
+        return null;
+        /*
         if (tokenizerFactory instanceof JapaneseTokenizerFactory) {
             final ReadingAttribute rdAttr = stream.getAttribute(ReadingAttribute.class);
             return rdAttr.getReading();
         } else {
             return null;
         }
+        */
     }
 
 }

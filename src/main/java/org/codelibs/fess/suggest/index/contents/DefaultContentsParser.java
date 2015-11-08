@@ -5,9 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+import org.codelibs.fess.suggest.analysis.SuggestAnalyzer;
 import org.codelibs.fess.suggest.converter.ReadingConverter;
 import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.fess.suggest.exception.SuggesterException;
@@ -92,7 +90,7 @@ public class DefaultContentsParser implements ContentsParser {
 
     @Override
     public List<SuggestItem> parseDocument(final Map<String, Object> document, final String[] fields,
-            final ReadingConverter readingConverter, final Normalizer normalizer, final Analyzer analyzer) {
+            final ReadingConverter readingConverter, final Normalizer normalizer, final SuggestAnalyzer analyzer) {
         List<SuggestItem> items = null;
 
         for (final String field : fields) {
@@ -101,13 +99,10 @@ public class DefaultContentsParser implements ContentsParser {
                 continue;
             }
             final String text = textObj.toString();
-
-            try (TokenStream stream = analyzer.tokenStream(field, text)) {
-                stream.reset();
-                while (stream.incrementToken()) {
-                    final CharTermAttribute charTermAttribute = stream.getAttribute(CharTermAttribute.class);
-                    final String[] words = new String[] { charTermAttribute.toString() };
-
+            final List<String> tokens = analyzer.analyze(text);
+            try {
+                for (final String token : tokens) {
+                    final String[] words = new String[] { token };
                     final String[][] readings = new String[words.length][];
                     for (int j = 0; j < words.length; j++) {
                         words[j] = normalizer.normalize(words[j]);

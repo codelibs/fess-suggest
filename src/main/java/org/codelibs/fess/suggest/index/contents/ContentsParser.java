@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.lucene.analysis.Analyzer;
+import org.codelibs.fess.suggest.analysis.SuggestAnalyzer;
 import org.codelibs.fess.suggest.converter.ReadingConverter;
 import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.fess.suggest.index.contents.querylog.QueryLog;
@@ -17,5 +18,5 @@ public interface ContentsParser {
             ReadingConverter readingConverter, Normalizer normalizer);
 
     List<SuggestItem> parseDocument(Map<String, Object> document, String[] fields, ReadingConverter readingConverter,
-            Normalizer normalizer, Analyzer analyzer);
+            Normalizer normalizer, SuggestAnalyzer analyzer);
 }

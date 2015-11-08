@@ -160,12 +160,14 @@
 			<version>${lucene.version}</version>
 			<scope>provided</scope>
 		</dependency>
+		<!--
 		<dependency>
 			<groupId>org.codelibs</groupId>
 			<artifactId>lucene-analyzers-kuromoji-ipadic-neologd</artifactId>
 			<version>5.2.1-20151102</version>
 			<scope>provided</scope>
 		</dependency>
+		-->
 		<dependency>
 			<groupId>org.codehaus.groovy</groupId>
 			<artifactId>groovy-all</artifactId>
