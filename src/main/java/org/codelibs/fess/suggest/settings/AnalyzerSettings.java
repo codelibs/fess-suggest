@@ -97,13 +97,13 @@ public class AnalyzerSettings {
     }
 
     public class DefaultAnalyzer implements SuggestAnalyzer {
-        public List<String> analyze(final String text) {
-            final AnalyzeResponse termResponse =
+        public List<AnalyzeResponse.AnalyzeToken> analyze(final String text) {
+            final AnalyzeResponse analyzeResponse =
                     client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text).setAnalyzer(defaultAnalyzerName).execute()
                             .actionGet();
-            final List<String> list = new ArrayList<>(termResponse.getTokens().size());
-            termResponse.getTokens().stream().map(AnalyzeResponse.AnalyzeToken::getTerm).forEach(list::add);
-            return list;
+            //final List<Analu> list = new ArrayList<>(termResponse.getTokens().size());
+            //termResponse.getTokens().stream().map(AnalyzeResponse.AnalyzeToken::getTerm).forEach(list::add);
+            return analyzeResponse.getTokens();
         }
     }
 }

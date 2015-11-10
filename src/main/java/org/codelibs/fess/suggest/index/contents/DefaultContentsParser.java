@@ -12,6 +12,7 @@ import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.codelibs.fess.suggest.index.contents.querylog.QueryLog;
 import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.util.SuggestUtil;
+import org.elasticsearch.action.admin.indices.analyze.AnalyzeResponse;
 
 public class DefaultContentsParser implements ContentsParser {
     @Override
@@ -99,10 +100,10 @@ public class DefaultContentsParser implements ContentsParser {
                 continue;
             }
             final String text = textObj.toString();
-            final List<String> tokens = analyzer.analyze(text);
+            final List<AnalyzeResponse.AnalyzeToken> tokens = analyzer.analyze(text);
             try {
-                for (final String token : tokens) {
-                    final String[] words = new String[] { token };
+                for (final AnalyzeResponse.AnalyzeToken token : tokens) {
+                    final String[] words = new String[] { token.getTerm() };
                     final String[][] readings = new String[words.length][];
                     for (int j = 0; j < words.length; j++) {
                         words[j] = normalizer.normalize(words[j]);

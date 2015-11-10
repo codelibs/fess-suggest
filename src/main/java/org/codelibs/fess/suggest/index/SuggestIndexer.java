@@ -204,12 +204,13 @@ public class SuggestIndexer {
                         Thread.sleep(requestInterval);
                     }
                 }
+                documentReader.close();
+
                 deferred.resolve(new SuggestIndexResponse(numberOfSuggestDocs, numberOfInputDocs, errors, System.currentTimeMillis()
                         - start));
             } catch (final Throwable t) {
-                deferred.reject(t);
-            } finally {
                 documentReader.close();
+                deferred.reject(t);
             }
         });
         return deferred.promise();

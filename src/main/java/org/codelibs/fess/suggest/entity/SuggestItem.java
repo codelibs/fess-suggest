@@ -278,13 +278,17 @@ public class SuggestItem implements Serializable {
 
         mergedItem.readings = new String[mergedItem.text.split(SuggestConstants.TEXT_SEPARATOR).length][];
         for (int i = 0; i < mergedItem.readings.length; i++) {
-            final List<String> list = new ArrayList<>(item1.getReadings()[i].length + item2.getReadings()[i].length);
-            for (final String reading : item1.getReadings()[i]) {
-                list.add(reading);
-            }
-            for (final String reading : item2.getReadings()[i]) {
-                if (!list.contains(reading)) {
+            final List<String> list = new ArrayList<>();
+            if (item1.getReadings().length > i) {
+                for (final String reading : item1.getReadings()[i]) {
                     list.add(reading);
+                }
+            }
+            if (item2.getReadings().length > i) {
+                for (final String reading : item2.getReadings()[i]) {
+                    if (!list.contains(reading)) {
+                        list.add(reading);
+                    }
                 }
             }
             mergedItem.readings[i] = list.toArray(new String[list.size()]);
