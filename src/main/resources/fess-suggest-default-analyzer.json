@@ -23,9 +23,10 @@
         "char_filter" : ["mapping_char"],
         "filter" : ["lowercase"]
       },
-      "default_analyzer" : {
+      "contents_analyzer" : {
         "type" : "custom",
-        "tokenizer" : "kuromoji_neologd_normal"
+        "tokenizer" : "kuromoji_neologd_normal",
+        "filter" : ["pos_filter"]
       }
     },
     "char_filter" : {
@@ -46,6 +47,29 @@
     "filter" : {
       "reading_form" : {
         "type" : "kuromoji_neologd_readingform"
+      },
+      "pos_filter" : {
+        "type" : "kuromoji_neologd_part_of_speech",
+        "stoptags" : [
+          "名詞-サ変接続",
+          "助詞-連体化",
+          "助詞-格助詞-一般",
+          "助詞-係助詞",
+          "助詞-副助詞",
+          "助詞-接続助詞",
+          "助詞-副助詞／並立助詞／終助詞",
+          "助動詞",
+          "動詞-自立",
+          "動詞-非自立",
+          "記号-読点",
+          "記号-句点",
+          "記号-括弧開",
+          "記号-括弧閉",
+          "副詞-一般",
+          "副詞-助詞類接続",
+          "接続詞",
+          "連体詞"
+        ]
       }
     }
   }

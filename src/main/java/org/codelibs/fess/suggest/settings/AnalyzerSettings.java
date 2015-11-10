@@ -6,17 +6,14 @@ import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRespon
 import org.elasticsearch.client.Client;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
 
 public class AnalyzerSettings {
     public static final String readingAnalyzerName = "reading_analyzer";
     public static final String readingTermAnalyzerName = "reading_term_analyzer";
     public static final String normalizeAnalyzerName = "normalize_analyzer";
-    public static final String defaultAnalyzerName = "default_analyzer";
+    public static final String contentsAnalyzerName = "contents_analyzer";
 
     protected final Client client;
     protected final String analyzerSettingsIndexName;
@@ -53,8 +50,8 @@ public class AnalyzerSettings {
         return normalizeAnalyzerName;
     }
 
-    public static String getDefaultAnalyzerName() {
-        return defaultAnalyzerName;
+    public static String getContentsAnalyzerName() {
+        return contentsAnalyzerName;
     }
 
     public void updateAnalyzer(final Map<String, Object> settings) {
@@ -99,10 +96,8 @@ public class AnalyzerSettings {
     public class DefaultAnalyzer implements SuggestAnalyzer {
         public List<AnalyzeResponse.AnalyzeToken> analyze(final String text) {
             final AnalyzeResponse analyzeResponse =
-                    client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text).setAnalyzer(defaultAnalyzerName).execute()
+                    client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text).setAnalyzer(contentsAnalyzerName).execute()
                             .actionGet();
-            //final List<Analu> list = new ArrayList<>(termResponse.getTokens().size());
-            //termResponse.getTokens().stream().map(AnalyzeResponse.AnalyzeToken::getTerm).forEach(list::add);
             return analyzeResponse.getTokens();
         }
     }
