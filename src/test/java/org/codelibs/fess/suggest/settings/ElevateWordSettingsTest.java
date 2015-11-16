@@ -57,9 +57,13 @@ public class ElevateWordSettingsTest {
 
     @Test
     public void test_setAndGet() {
-        ElevateWord elevateWord1 = new ElevateWord("a", 1.0f, Collections.singletonList("a"), Collections.singletonList("content"));
-        ElevateWord elevateWord2 = new ElevateWord("b", 0.0f, Collections.singletonList("b"), Collections.singletonList("content"));
-        ElevateWord elevateWord3 = new ElevateWord("c", 100.0f, Collections.singletonList("c"), Collections.singletonList("content"));
+        ElevateWord elevateWord1 =
+                new ElevateWord("a", 1.0f, Collections.singletonList("a"), Collections.singletonList("content"), null, null);
+        ElevateWord elevateWord2 =
+                new ElevateWord("b", 0.0f, Collections.singletonList("b"), Collections.singletonList("content"), null, null);
+        ElevateWord elevateWord3 =
+                new ElevateWord("c", 100.0f, Collections.singletonList("c"), Collections.singletonList("content"),
+                        Collections.singletonList("tag1"), Collections.singletonList("role1"));
 
         settings.elevateWord().add(elevateWord1);
         settings.elevateWord().add(elevateWord2);
@@ -77,13 +81,18 @@ public class ElevateWordSettingsTest {
         assertEquals(elevateWord3.getElevateWord(), settings.elevateWord().get()[2].getElevateWord());
         assertEquals(elevateWord3.getBoost(), settings.elevateWord().get()[2].getBoost(), 0);
         assertEquals(elevateWord3.getReadings().get(0), settings.elevateWord().get()[2].getReadings().get(0));
+        assertEquals(elevateWord3.getTags().get(0), settings.elevateWord().get()[2].getTags().get(0));
+        assertEquals(elevateWord3.getRoles().get(0), settings.elevateWord().get()[2].getRoles().get(0));
     }
 
     @Test
     public void test_delete() {
-        ElevateWord elevateWord1 = new ElevateWord("a", 1.0f, Collections.singletonList("a"), Collections.singletonList("content"));
-        ElevateWord elevateWord2 = new ElevateWord("b", 0.0f, Collections.singletonList("b"), Collections.singletonList("content"));
-        ElevateWord elevateWord3 = new ElevateWord("c", 100.0f, Collections.singletonList("c"), Collections.singletonList("content"));
+        ElevateWord elevateWord1 =
+                new ElevateWord("a", 1.0f, Collections.singletonList("a"), Collections.singletonList("content"), null, null);
+        ElevateWord elevateWord2 =
+                new ElevateWord("b", 0.0f, Collections.singletonList("b"), Collections.singletonList("content"), null, null);
+        ElevateWord elevateWord3 =
+                new ElevateWord("c", 100.0f, Collections.singletonList("c"), Collections.singletonList("content"), null, null);
 
         settings.elevateWord().add(elevateWord1);
         settings.elevateWord().add(elevateWord2);

@@ -14,6 +14,8 @@ public class ElevateWordSettings {
     public static final String ELEVATE_WORD_BOOST = "boost";
     public static final String ELEVATE_WORD_READING = "reading";
     public static final String ELEVATE_WORD_FIELDS = "fields";
+    public static final String ELEVATE_WORD_TAGS = "tags";
+    public static final String ELEVATE_WORD_ROLES = "roles";
 
     protected ArraySettings arraySettings;
 
@@ -38,8 +40,13 @@ public class ElevateWordSettings {
             final List<String> readings = (List<String>) sourceArray[i].get(ELEVATE_WORD_READING);
             @SuppressWarnings("unchecked")
             final List<String> fields = (List<String>) sourceArray[i].get(ELEVATE_WORD_FIELDS);
+            @SuppressWarnings("unchecked")
+            final List<String> tags = (List<String>) sourceArray[i].get(ELEVATE_WORD_TAGS);
+            @SuppressWarnings("unchecked")
+            final List<String> roles = (List<String>) sourceArray[i].get(ELEVATE_WORD_ROLES);
             if (elevateWord != null && boost != null && readings != null && fields != null) {
-                elevateWords[i] = new ElevateWord(elevateWord.toString(), Float.parseFloat(boost.toString()), readings, fields);
+                elevateWords[i] =
+                        new ElevateWord(elevateWord.toString(), Float.parseFloat(boost.toString()), readings, fields, tags, roles);
             }
         }
         return elevateWords;
@@ -52,6 +59,8 @@ public class ElevateWordSettings {
         source.put(ELEVATE_WORD_BOOST, elevateWord.getBoost());
         source.put(ELEVATE_WORD_READING, elevateWord.getReadings());
         source.put(ELEVATE_WORD_FIELDS, elevateWord.getFields());
+        source.put(ELEVATE_WORD_TAGS, elevateWord.getTags());
+        source.put(ELEVATE_WORD_ROLES, elevateWord.getRoles());
         source.put(FieldNames.TIMESTAMP, LocalDateTime.now());
 
         arraySettings.addToArrayIndex(arraySettings.arraySettingsIndexName, arraySettings.settingsId,

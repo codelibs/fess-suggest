@@ -242,7 +242,8 @@ public class SuggesterTest {
 
     @Test
     public void test_indexElevateWord() throws Exception {
-        ElevateWord elevateWord = new ElevateWord("test", 2.0f, Collections.singletonList("test"), Collections.singletonList("content"));
+        ElevateWord elevateWord =
+                new ElevateWord("test", 2.0f, Collections.singletonList("test"), Collections.singletonList("content"), null, null);
         suggester.indexer().addElevateWord(elevateWord);
         suggester.refresh();
         SuggestResponse response1 = suggester.suggest().setQuery("tes").setSuggestDetail(true).execute().getResponse();
@@ -257,9 +258,12 @@ public class SuggesterTest {
 
     @Test
     public void test_restoreElevateWord() throws Exception {
-        ElevateWord elevateWord1 = new ElevateWord("test", 2.0f, Collections.singletonList("test"), Collections.singletonList("content"));
-        ElevateWord elevateWord2 = new ElevateWord("hoge", 2.0f, Collections.singletonList("hoge"), Collections.singletonList("content"));
-        ElevateWord elevateWord3 = new ElevateWord("fuga", 2.0f, Collections.singletonList("fuga"), Collections.singletonList("content"));
+        ElevateWord elevateWord1 =
+                new ElevateWord("test", 2.0f, Collections.singletonList("test"), Collections.singletonList("content"), null, null);
+        ElevateWord elevateWord2 =
+                new ElevateWord("hoge", 2.0f, Collections.singletonList("hoge"), Collections.singletonList("content"), null, null);
+        ElevateWord elevateWord3 =
+                new ElevateWord("fuga", 2.0f, Collections.singletonList("fuga"), Collections.singletonList("content"), null, null);
 
         suggester.settings().elevateWord().add(elevateWord1);
         suggester.settings().elevateWord().add(elevateWord2);
@@ -280,7 +284,8 @@ public class SuggesterTest {
     @SuppressWarnings("unchecked")
     public void test_deleteOldWords() throws Exception {
         String field = suggester.settings().array().get(SuggestSettings.DefaultKeys.SUPPORTED_FIELDS)[0];
-        ElevateWord elevateWord = new ElevateWord("test", 2.0f, Collections.singletonList("test"), Collections.singletonList("content"));
+        ElevateWord elevateWord =
+                new ElevateWord("test", 2.0f, Collections.singletonList("test"), Collections.singletonList("content"), null, null);
 
         suggester.indexer().indexFromDocument(new Map[] { Collections.singletonMap(field, (Object) "この柿は美味しい。") });
         suggester.indexer().addElevateWord(elevateWord);

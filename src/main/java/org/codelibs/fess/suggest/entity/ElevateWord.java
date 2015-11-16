@@ -1,6 +1,7 @@
 package org.codelibs.fess.suggest.entity;
 
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.List;
 
 public class ElevateWord implements Serializable {
@@ -11,12 +12,25 @@ public class ElevateWord implements Serializable {
     protected final float boost;
     protected final List<String> readings;
     protected final List<String> fields;
+    protected final List<String> tags;
+    protected final List<String> roles;
 
-    public ElevateWord(final String elevateWord, final float boost, final List<String> readings, final List<String> fields) {
+    public ElevateWord(final String elevateWord, final float boost, final List<String> readings, final List<String> fields,
+            final List<String> tags, final List<String> roles) {
         this.elevateWord = elevateWord;
         this.boost = boost;
         this.readings = readings;
         this.fields = fields;
+        if (tags == null) {
+            this.tags = Collections.emptyList();
+        } else {
+            this.tags = tags;
+        }
+        if (roles == null) {
+            this.roles = Collections.emptyList();
+        } else {
+            this.roles = roles;
+        }
     }
 
     public String getElevateWord() {
@@ -35,9 +49,18 @@ public class ElevateWord implements Serializable {
         return fields;
     }
 
+    public List<String> getTags() {
+        return tags;
+    }
+
+    public List<String> getRoles() {
+        return roles;
+    }
+
     public SuggestItem toSuggestItem() {
         return new SuggestItem(new String[] { this.getElevateWord() }, new String[][] { this.getReadings().toArray(
-                new String[this.getReadings().size()]) }, fields.toArray(new String[fields.size()]), 1, this.getBoost(), null, null,
+                new String[this.getReadings().size()]) }, fields.toArray(new String[fields.size()]), 1, this.getBoost(), this.getTags()
+                .toArray(new String[this.getTags().size()]), this.getRoles().toArray(new String[this.getRoles().size()]),
                 SuggestItem.Kind.USER);
     }
 }
