@@ -42,6 +42,8 @@ public class PopularWordsRequest extends Request<PopularWordsResponse> {
 
     private boolean detail = true;
 
+    private final List<String> excludeWords = new ArrayList<>();
+
     public void setIndex(final String index) {
         this.index = index;
     }
@@ -76,6 +78,10 @@ public class PopularWordsRequest extends Request<PopularWordsResponse> {
 
     public void setDetail(final boolean detail) {
         this.detail = detail;
+    }
+
+    public void addExcludeWord(final String excludeWord) {
+        this.excludeWords.add(excludeWord);
     }
 
     @Override
@@ -124,9 +130,12 @@ public class PopularWordsRequest extends Request<PopularWordsResponse> {
         if (fields.size() > 0) {
             queryBuilder.must(QueryBuilders.termsQuery(FieldNames.FIELDS, fields));
         }
+        if (excludeWords.size() > 0) {
+            queryBuilder.mustNot(QueryBuilders.termsQuery(FieldNames.TEXT, excludeWords));
+        }
 
         final BoolFilterBuilder filterBuilder = FilterBuilders.boolFilter();
-        filterBuilder.mustNot(FilterBuilders.existsFilter(FieldNames.READING_PREFIX + 1));
+        filterBuilder.mustNot(FilterBuilders.existsFilter(FieldNames.READING_PREFIX + "1"));
 
         final FunctionScoreQueryBuilder functionScoreQueryBuilder = QueryBuilders.functionScoreQuery(queryBuilder, filterBuilder);
         functionScoreQueryBuilder.boostMode(CombineFunction.REPLACE).add(
