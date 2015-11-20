@@ -47,4 +47,9 @@ public class PopularWordsRequestBuilder extends RequestBuilder<PopularWordsReque
         request.setWindowSize(windowSize);
         return this;
     }
+
+    public PopularWordsRequestBuilder addExcludeWord(final String excludeWord) {
+        request.addExcludeWord(excludeWord);
+        return this;
+    }
 }

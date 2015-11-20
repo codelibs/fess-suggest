@@ -38,9 +38,11 @@ public class PopularWordsRequest extends Request<PopularWordsResponse> {
 
     private String seed = String.valueOf(System.currentTimeMillis());
 
-    private int windowSize = 20;
+    private int windowSize = 50;
 
     private boolean detail = true;
+
+    private final List<String> excludeWords = new ArrayList<>();
 
     public void setIndex(final String index) {
         this.index = index;
@@ -78,6 +80,10 @@ public class PopularWordsRequest extends Request<PopularWordsResponse> {
         this.detail = detail;
     }
 
+    public void addExcludeWord(final String excludeWord) {
+        this.excludeWords.add(excludeWord);
+    }
+
     @Override
     protected void processRequest(final Client client, final Deferred<PopularWordsResponse> deferred) {
         final SearchRequestBuilder builder = client.prepareSearch(index);
@@ -113,7 +119,7 @@ public class PopularWordsRequest extends Request<PopularWordsResponse> {
     protected QueryBuilder buildQuery() {
         final BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery();
         queryBuilder.must(QueryBuilders.matchAllQuery());
-        queryBuilder.must(QueryBuilders.missingQuery(FieldNames.READING_PREFIX + 1));
+        queryBuilder.must(QueryBuilders.missingQuery(FieldNames.READING_PREFIX + "1"));
         if (tags.size() > 0) {
             queryBuilder.must(QueryBuilders.termsQuery(FieldNames.TAGS, tags));
         }
@@ -124,6 +130,9 @@ public class PopularWordsRequest extends Request<PopularWordsResponse> {
         }
         if (fields.size() > 0) {
             queryBuilder.must(QueryBuilders.termsQuery(FieldNames.FIELDS, fields));
+        }
+        if (excludeWords.size() > 0) {
+            queryBuilder.mustNot(QueryBuilders.termsQuery(FieldNames.TEXT, excludeWords));
         }
 
         final BoolQueryBuilder filterBuilder = QueryBuilders.boolQuery();

@@ -360,6 +360,36 @@ public class SuggesterTest {
         }
     }
 
+    @Test
+    public void test_popularWordsWithExcludeWord() throws Exception {
+        SuggestItem[] items = getPopularWordsItemSet2();
+        suggester.indexer().index(items);
+        suggester.refresh();
+
+        final String excludeWord = "クエリー1";
+        PopularWordsResponse response = suggester.popularWords().setSize(2).addExcludeWord(excludeWord).execute().getResponse();
+
+        assertEquals(4, response.getTotal());
+
+        for (int i = 0; i < 5; i++) {
+            assertEquals(2, response.getNum());
+            boolean find = false;
+            final String checkStr = "クエリー" + i;
+            for (int j = 0; j < 1000; j++) {
+                if (response.getWords().contains(checkStr)) {
+                    find = true;
+                    break;
+                }
+                response = suggester.popularWords().setSize(2).addExcludeWord(excludeWord).execute().getResponse();
+            }
+            if (checkStr.equals(excludeWord)) {
+                assertFalse(find);
+            } else {
+                assertTrue(find);
+            }
+        }
+    }
+
     private SuggestItem[] getItemSet1() {
         SuggestItem[] queryItems = new SuggestItem[3];
 
