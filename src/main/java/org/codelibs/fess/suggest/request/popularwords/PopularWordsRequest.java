@@ -38,7 +38,7 @@ public class PopularWordsRequest extends Request<PopularWordsResponse> {
 
     private String seed = String.valueOf(System.currentTimeMillis());
 
-    private int windowSize = 50;
+    private int windowSize = 20;
 
     private boolean detail = true;
 
@@ -134,9 +134,6 @@ public class PopularWordsRequest extends Request<PopularWordsResponse> {
         if (excludeWords.size() > 0) {
             queryBuilder.mustNot(QueryBuilders.termsQuery(FieldNames.TEXT, excludeWords));
         }
-
-        final BoolQueryBuilder filterBuilder = QueryBuilders.boolQuery();
-        filterBuilder.filter(QueryBuilders.missingQuery(FieldNames.READING_PREFIX + 1));
 
         final FunctionScoreQueryBuilder functionScoreQueryBuilder = QueryBuilders.functionScoreQuery(queryBuilder);
         functionScoreQueryBuilder.boostMode(CombineFunction.REPLACE).add(
