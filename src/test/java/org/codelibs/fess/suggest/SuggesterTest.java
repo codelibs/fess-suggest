@@ -78,6 +78,9 @@ public class SuggesterTest {
         assertEquals(1, response.getNum());
         assertEquals("全文 検索", response.getWords().get(0));
 
+        response = suggester.suggest().addKind("query").execute().getResponse();
+        assertEquals(1, response.getNum());
+
         SuggestResponse response2 = suggester.suggest().setSuggestDetail(true).execute().getResponse();
         assertEquals(2, response2.getNum());
     }
@@ -213,7 +216,7 @@ public class SuggesterTest {
         AtomicInteger numObInputDoc = new AtomicInteger(0);
         ESSourceReader reader = new ESSourceReader(client, suggester.settings(), indexName, typeName);
 
-        suggester.indexer().indexFromDocument(reader, 1000, 100).done(response -> {
+        suggester.indexer().indexFromDocument(reader, 1000, 100).then(response -> {
             numObInputDoc.set(response.getNumberOfInputDocs());
             latch.countDown();
         }).error(t -> {

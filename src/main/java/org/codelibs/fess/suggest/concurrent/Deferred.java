@@ -67,8 +67,8 @@ public class Deferred<RESPONSE extends Response> {
         latch.countDown();
     }
 
-    public Promise done(final Consumer<RESPONSE> consumer) {
-        return promise.done(consumer);
+    public Promise then(final Consumer<RESPONSE> consumer) {
+        return promise.then(consumer);
     }
 
     public Promise error(final Consumer<Throwable> consumer) {
@@ -80,7 +80,7 @@ public class Deferred<RESPONSE extends Response> {
     }
 
     public class Promise {
-        public Promise done(final Consumer<RESPONSE> consumer) {
+        public Promise then(final Consumer<RESPONSE> consumer) {
             final ArrayList<Consumer<RESPONSE>> executeCallbacks;
             synchronized (Deferred.this) {
                 doneCallbacks.add(consumer);

@@ -44,6 +44,8 @@ public class SuggestRequest extends Request<SuggestResponse> {
 
     private final List<String> fields = new ArrayList<>();
 
+    private final List<String> kinds = new ArrayList<>();
+
     private boolean suggestDetail = true;
 
     private ReadingConverter readingConverter;
@@ -80,6 +82,10 @@ public class SuggestRequest extends Request<SuggestResponse> {
 
     public void addField(final String field) {
         this.fields.add(field);
+    }
+
+    public void addKind(final String kind) {
+        this.kinds.add(kind);
     }
 
     public void setSuggestDetail(final boolean suggestDetail) {
@@ -136,6 +142,11 @@ public class SuggestRequest extends Request<SuggestResponse> {
 
         if (!fields.isEmpty()) {
             final String fq = buildFilterQuery(FieldNames.FIELDS, fields);
+            filterList.add(QueryBuilders.queryStringQuery(fq));
+        }
+
+        if (!kinds.isEmpty()) {
+            final String fq = buildFilterQuery(FieldNames.KINDS, kinds);
             filterList.add(QueryBuilders.queryStringQuery(fq));
         }
 

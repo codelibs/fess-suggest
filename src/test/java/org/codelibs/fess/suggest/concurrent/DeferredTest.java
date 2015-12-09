@@ -26,7 +26,7 @@ public class DeferredTest {
         th.start();
 
         final CountDownLatch latch = new CountDownLatch(1);
-        deferred.promise().done(response -> latch.countDown());
+        deferred.promise().then(response -> latch.countDown());
         assertTrue(latch.await(10, TimeUnit.SECONDS));
     }
 
@@ -41,7 +41,7 @@ public class DeferredTest {
 
         Thread.sleep(1000);
         final CountDownLatch latch = new CountDownLatch(1);
-        deferred.promise().done(response -> latch.countDown());
+        deferred.promise().then(response -> latch.countDown());
         assertTrue(latch.await(10, TimeUnit.SECONDS));
     }
 
