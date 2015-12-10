@@ -86,6 +86,23 @@ public class SuggesterTest {
     }
 
     @Test
+    public void test_update() throws Exception {
+        SuggestItem[] items = getItemSet1();
+        suggester.indexer().index(items);
+        suggester.refresh();
+
+        SuggestItem[] items2 = getItemSet1();
+        SuggestIndexResponse response = suggester.indexer().index(items2);
+
+        assertFalse(response.hasError());
+
+        suggester.refresh();
+
+        SuggestResponse response2 = suggester.suggest().setSuggestDetail(true).execute().getResponse();
+        assertEquals(2, response2.getNum());
+    }
+
+    @Test
     public void test_delete() throws Exception {
         SuggestItem[] items = getItemSet1();
         suggester.indexer().index(items);

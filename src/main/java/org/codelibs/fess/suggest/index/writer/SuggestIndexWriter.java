@@ -10,6 +10,7 @@ import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexAction;
+import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
@@ -27,7 +28,7 @@ public class SuggestIndexWriter implements SuggestWriter {
                     client.prepareGet().setIndex(index).setType(type).setId(item.getId()).get(TimeValue.timeValueSeconds(30));
             if (getResponse.isExists()) {
                 final IndexRequestBuilder indexRequestBuilder = new IndexRequestBuilder(client, IndexAction.INSTANCE, index);
-                indexRequestBuilder.setType(type).setId(item.getId()).setCreate(true)
+                indexRequestBuilder.setType(type).setId(item.getId()).setOpType(IndexRequest.OpType.INDEX)
                         .setSource(item.getUpdatedSource(getResponse.getSourceAsMap()));
                 bulkRequestBuilder.add(indexRequestBuilder);
             } else {
