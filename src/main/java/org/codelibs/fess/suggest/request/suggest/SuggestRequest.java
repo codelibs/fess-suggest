@@ -22,7 +22,6 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.index.query.QueryStringQueryBuilder;
 import org.elasticsearch.index.query.functionscore.FunctionScoreQueryBuilder;
 import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders;
 import org.elasticsearch.search.SearchHit;
@@ -51,10 +50,6 @@ public class SuggestRequest extends Request<SuggestResponse> {
     private ReadingConverter readingConverter;
 
     private Normalizer normalizer;
-
-    private static final String _AND_ = " AND ";
-
-    private static final String _OR_ = " OR ";
 
     public void setIndex(final String index) {
         this.index = index;
@@ -114,7 +109,7 @@ public class SuggestRequest extends Request<SuggestResponse> {
         builder.setSize(size);
 
         // set query.
-        final String q = buildQueryString(query);
+        final QueryBuilder q = buildQuery(query);
 
         final QueryBuilder queryBuilder;
 
@@ -122,7 +117,7 @@ public class SuggestRequest extends Request<SuggestResponse> {
             queryBuilder = buildFunctionScoreQuery(query, q);
             builder.addSort("_score", SortOrder.DESC);
         } else {
-            queryBuilder = QueryBuilders.queryStringQuery(q).analyzeWildcard(false).defaultOperator(QueryStringQueryBuilder.Operator.AND);
+            queryBuilder = q;
         }
 
         builder.addSort(SortBuilders.fieldSort(FieldNames.SCORE).unmappedType("double").missing(0).order(SortOrder.DESC));
@@ -130,24 +125,20 @@ public class SuggestRequest extends Request<SuggestResponse> {
         //set filter query.
         final List<QueryBuilder> filterList = new ArrayList<>(10);
         if (!tags.isEmpty()) {
-            final String fq = buildFilterQuery(FieldNames.TAGS, tags);
-            filterList.add(QueryBuilders.queryStringQuery(fq));
+            filterList.add(buildFilterQuery(FieldNames.TAGS, tags));
         }
 
         roles.add(SuggestConstants.DEFAULT_ROLE);
         if (!roles.isEmpty()) {
-            final String fq = buildFilterQuery(FieldNames.ROLES, roles);
-            filterList.add(QueryBuilders.queryStringQuery(fq));
+            filterList.add(buildFilterQuery(FieldNames.ROLES, roles));
         }
 
         if (!fields.isEmpty()) {
-            final String fq = buildFilterQuery(FieldNames.FIELDS, fields);
-            filterList.add(QueryBuilders.queryStringQuery(fq));
+            filterList.add(buildFilterQuery(FieldNames.FIELDS, fields));
         }
 
         if (!kinds.isEmpty()) {
-            final String fq = buildFilterQuery(FieldNames.KINDS, kinds);
-            filterList.add(QueryBuilders.queryStringQuery(fq));
+            filterList.add(buildFilterQuery(FieldNames.KINDS, kinds));
         }
 
         if (filterList.size() > 0) {
@@ -176,22 +167,19 @@ public class SuggestRequest extends Request<SuggestResponse> {
         });
     }
 
-    protected String buildQueryString(final String q) {
+    protected QueryBuilder buildQuery(final String q) {
         try {
 
-            final String queryString;
+            final QueryBuilder queryBuilder;
             if (Strings.isNullOrEmpty(q)) {
-                queryString = "*:*";
+                queryBuilder = QueryBuilders.matchAllQuery();
             } else {
                 final boolean prefixQuery = !q.endsWith(" ") && !q.endsWith("　");
                 List<String> readingList = new ArrayList<>();
 
-                final StringBuilder buf = new StringBuilder(50);
+                final BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
                 final String[] queries = q.replaceAll("　", " ").replaceAll(" +", " ").trim().split(" ");
                 for (int i = 0; i < queries.length; i++) {
-                    if (i > 0) {
-                        buf.append(_AND_);
-                    }
                     final String fieldName = FieldNames.READING_PREFIX + i;
 
                     final String query;
@@ -207,57 +195,38 @@ public class SuggestRequest extends Request<SuggestResponse> {
                         readingList = readingConverter.convert(query);
                     }
 
+                    final BoolQueryBuilder readingQueryBuilder = QueryBuilders.boolQuery().minimumNumberShouldMatch(1);
                     final int readingNum = readingList.size();
-                    if (queries.length > 1 && readingNum > 1) {
-                        buf.append('(');
-                    }
                     for (int readingCount = 0; readingCount < readingNum; readingCount++) {
-                        if (readingCount > 0) {
-                            buf.append(_OR_);
-                        }
-                        buf.append(fieldName).append(':').append(readingList.get(readingCount));
-
+                        final String reading = readingList.get(readingCount);
                         if (i + 1 == queries.length && prefixQuery) {
-                            buf.append('*');
+                            readingQueryBuilder.should(QueryBuilders.prefixQuery(fieldName, reading));
+                        } else {
+                            readingQueryBuilder.should(QueryBuilders.termQuery(fieldName, reading));
                         }
-                    }
-                    if (queries.length > 1 && readingNum > 1) {
-                        buf.append(')');
                     }
                     readingList.clear();
+                    boolQueryBuilder.must(readingQueryBuilder);
                 }
-                queryString = buf.toString();
+                queryBuilder = boolQueryBuilder;
             }
 
-            return queryString;
+            return queryBuilder;
         } catch (final IOException e) {
             throw new SuggesterException("Failed to create queryString.", e);
         }
     }
 
-    protected String buildFilterQuery(final String fieldName, final List<String> words) {
-        final StringBuilder buf = new StringBuilder(20);
-        if (!words.isEmpty()) {
-            for (int i = 0; i < words.size(); i++) {
-                if (i > 0) {
-                    buf.append(_OR_);
-                }
-                buf.append(fieldName).append(':').append(words.get(i));
-            }
-        }
-        return buf.toString();
+    protected QueryBuilder buildFilterQuery(final String fieldName, final List<String> words) {
+        final BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery().minimumNumberShouldMatch(1);
+        words.stream().forEach(word -> boolQueryBuilder.should(QueryBuilders.termQuery(fieldName, word)));
+        return boolQueryBuilder;
     }
 
-    protected QueryBuilder buildFunctionScoreQuery(final String query, final String queryString) {
-        final FunctionScoreQueryBuilder functionScoreQueryBuilder =
-                QueryBuilders.functionScoreQuery(QueryBuilders.queryStringQuery(queryString).analyzeWildcard(false)
-                        .defaultOperator(QueryStringQueryBuilder.Operator.AND));
-
-        functionScoreQueryBuilder.add(QueryBuilders.queryStringQuery(FieldNames.TEXT + ":" + query + '*').analyzeWildcard(false)
-                .defaultOperator(QueryStringQueryBuilder.Operator.AND), ScoreFunctionBuilders.weightFactorFunction(2));
-
+    protected QueryBuilder buildFunctionScoreQuery(final String query, final QueryBuilder queryBuilder) {
+        final FunctionScoreQueryBuilder functionScoreQueryBuilder = QueryBuilders.functionScoreQuery(queryBuilder);
+        functionScoreQueryBuilder.add(QueryBuilders.prefixQuery(FieldNames.TEXT, query), ScoreFunctionBuilders.weightFactorFunction(2));
         functionScoreQueryBuilder.add(ScoreFunctionBuilders.fieldValueFactorFunction("score").factor(1.0F));
-
         return functionScoreQueryBuilder;
     }
 

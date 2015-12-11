@@ -410,6 +410,22 @@ public class SuggesterTest {
         }
     }
 
+    @Test
+    public void test_escapeQuery() throws Exception {
+        SuggestItem[] items = getItemSet2();
+        suggester.indexer().index(items);
+        suggester.refresh();
+
+        SuggestResponse response = suggester.suggest().setSuggestDetail(true).execute().getResponse();
+        assertEquals(3, response.getNum());
+
+        SuggestResponse response2 = suggester.suggest().setQuery("-a").setSuggestDetail(true).execute().getResponse();
+        assertEquals(2, response2.getNum());
+
+        SuggestResponse response3 = suggester.suggest().setQuery("-aa-").setSuggestDetail(true).execute().getResponse();
+        assertEquals(1, response3.getNum());
+    }
+
     private SuggestItem[] getItemSet1() {
         SuggestItem[] queryItems = new SuggestItem[3];
 
@@ -473,6 +489,38 @@ public class SuggesterTest {
             String[] roles = new String[] { SuggestConstants.DEFAULT_ROLE, "role1", "role2", "role3" };
             items.add(new SuggestItem(new String[] { "マルチワード" + i, "fuga" }, readings, new String[] { "content" }, 15 + i, -1, tags, roles,
                     SuggestItem.Kind.QUERY));
+        }
+
+        return items.toArray(new SuggestItem[items.size()]);
+    }
+
+    private SuggestItem[] getItemSet2() {
+        List<SuggestItem> items = new ArrayList<>();
+
+        {
+            String[][] readings = new String[2][];
+            readings[0] = new String[] { "-aaa" };
+            String[] tags = new String[] { "tag1", "tag2" };
+            String[] roles = new String[] { SuggestConstants.DEFAULT_ROLE, "role1", "role2", "role3" };
+            items.add(new SuggestItem(new String[] { "ドキュメント" + 1 }, readings, new String[] { "content" }, 15, -1, tags, roles,
+                    SuggestItem.Kind.DOCUMENT));
+        }
+
+        {
+            String[][] readings = new String[2][];
+            readings[0] = new String[] { "-aa-a" };
+            String[] tags = new String[] { "tag1", "tag2" };
+            String[] roles = new String[] { SuggestConstants.DEFAULT_ROLE, "role1", "role2", "role3" };
+            items.add(new SuggestItem(new String[] { "ドキュメント" + 2 }, readings, new String[] { "content" }, 15, -1, tags, roles,
+                    SuggestItem.Kind.DOCUMENT));
+        }
+        {
+            String[][] readings = new String[2][];
+            readings[0] = new String[] { "aa-a" };
+            String[] tags = new String[] { "tag1", "tag2" };
+            String[] roles = new String[] { SuggestConstants.DEFAULT_ROLE, "role1", "role2", "role3" };
+            items.add(new SuggestItem(new String[] { "ドキュメント" + 3 }, readings, new String[] { "content" }, 15, -1, tags, roles,
+                    SuggestItem.Kind.DOCUMENT));
         }
 
         return items.toArray(new SuggestItem[items.size()]);
