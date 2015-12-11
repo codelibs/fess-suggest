@@ -38,6 +38,6 @@ public class DefaultNormalizerTest {
     @Test
     public void test_normalize() throws Exception {
         Normalizer normalizer = SuggestUtil.createDefaultNormalizer(runner.client(), suggester.settings());
-        assertEquals(",.*[]「」abcケンサクabcdけんさくガギグゲゴ", normalizer.normalize(",.*[]「」ＡBCｹﾝｻｸabcdけんさくｶﾞｷﾞｸﾞｹﾞｺﾞ"));
+        assertEquals("12345,.*[]「」abcケンサクabcdけんさくガギグゲゴ", normalizer.normalize("１２３４５,.*[]「」ＡBCｹﾝｻｸabcdけんさくｶﾞｷﾞｸﾞｹﾞｺﾞ"));
     }
 }
