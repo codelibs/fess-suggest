@@ -115,7 +115,6 @@ public class SuggestRequest extends Request<SuggestResponse> {
         if (!Strings.isNullOrEmpty(query) && !query.contains(" ") && !query.contains("　")) {
             builder.setQuery(buildFunctionScoreQuery(query, q));
             builder.addSort("_score", SortOrder.DESC);
-
         } else {
             builder.setQuery(QueryBuilders.queryStringQuery(q).analyzeWildcard(false).defaultOperator(QueryStringQueryBuilder.Operator.AND));
         }
@@ -204,7 +203,7 @@ public class SuggestRequest extends Request<SuggestResponse> {
                         if (readingCount > 0) {
                             buf.append(_OR_);
                         }
-                        buf.append(fieldName).append(':').append(readingList.get(readingCount));
+                        buf.append(fieldName).append(':').append(SuggestUtil.escapeQueryChars(readingList.get(readingCount)));
 
                         if (i + 1 == queries.length && prefixQuery) {
                             buf.append('*');
@@ -231,7 +230,7 @@ public class SuggestRequest extends Request<SuggestResponse> {
                 if (i > 0) {
                     buf.append(_OR_);
                 }
-                buf.append(fieldName).append(':').append(words.get(i));
+                buf.append(fieldName).append(':').append(SuggestUtil.escapeQueryChars(words.get(i)));
             }
         }
         return buf.toString();
@@ -243,7 +242,8 @@ public class SuggestRequest extends Request<SuggestResponse> {
                         .defaultOperator(QueryStringQueryBuilder.Operator.AND));
 
         final FilterBuilder textScoreFilterBuiler =
-                FilterBuilders.queryFilter(QueryBuilders.queryStringQuery(FieldNames.TEXT + ":" + query + '*').analyzeWildcard(false)
+                FilterBuilders.queryFilter(QueryBuilders
+                        .queryStringQuery(FieldNames.TEXT + ":" + SuggestUtil.escapeQueryChars(query) + '*').analyzeWildcard(false)
                         .defaultOperator(QueryStringQueryBuilder.Operator.AND));
         functionScoreQueryBuilder.add(textScoreFilterBuiler, ScoreFunctionBuilders.weightFactorFunction(2));
 
