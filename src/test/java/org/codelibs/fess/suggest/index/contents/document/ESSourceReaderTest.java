@@ -65,6 +65,7 @@ public class ESSourceReaderTest {
         addDocument(indexName, typeName, client, num);
 
         ESSourceReader reader = new ESSourceReader(client, settings, indexName, typeName);
+        reader.setScrollSize(1000);
         int count = 0;
         Set<String> valueSet = Collections.synchronizedSet(new HashSet<>());
         Map<String, Object> source;

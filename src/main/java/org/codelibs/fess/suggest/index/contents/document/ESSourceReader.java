@@ -28,7 +28,7 @@ public class ESSourceReader implements DocumentReader {
     protected final String indexName;
     protected final String typeName;
 
-    protected int scrollSize = 10;
+    protected int scrollSize = 1;
     protected int maxRetryCount = 5;
 
     public final String scrollIdKey;

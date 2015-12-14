@@ -232,6 +232,7 @@ public class SuggesterTest {
         CountDownLatch latch = new CountDownLatch(1);
         AtomicInteger numObInputDoc = new AtomicInteger(0);
         ESSourceReader reader = new ESSourceReader(client, suggester.settings(), indexName, typeName);
+        reader.setScrollSize(1000);
 
         suggester.indexer().indexFromDocument(reader, 1000, 100).then(response -> {
             numObInputDoc.set(response.getNumberOfInputDocs());
