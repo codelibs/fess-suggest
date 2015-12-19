@@ -81,8 +81,9 @@ public class Suggester {
                     }
                 }
                 try {
-                    client.admin().indices().prepareCreate(index).addMapping("_default_", sb.toString()).execute()
-                            .actionGet(SuggestConstants.ACTION_TIMEOUT);
+                    final String mappingSource = sb.toString();
+                    client.admin().indices().prepareCreate(index).addMapping("_default_", mappingSource).addMapping(type, mappingSource)
+                            .execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
 
                     client.admin().cluster().prepareHealth().setWaitForYellowStatus().execute()
                             .actionGet(SuggestConstants.ACTION_TIMEOUT * 10);
