@@ -90,9 +90,11 @@ public class DefaultContentsParser implements ContentsParser {
     }
 
     @Override
-    public List<SuggestItem> parseDocument(final Map<String, Object> document, final String[] fields,
-            final ReadingConverter readingConverter, final Normalizer normalizer, final SuggestAnalyzer analyzer) {
+    public List<SuggestItem> parseDocument(final Map<String, Object> document, final String[] fields, final String tagFieldName,
+            final String roleFieldName, final ReadingConverter readingConverter, final Normalizer normalizer, final SuggestAnalyzer analyzer) {
         List<SuggestItem> items = null;
+        final String[] tags = getRoleFromDoc(document, tagFieldName);
+        final String[] roles = getRoleFromDoc(document, roleFieldName);
 
         for (final String field : fields) {
             final Object textObj = document.get(field);
@@ -115,9 +117,7 @@ public class DefaultContentsParser implements ContentsParser {
                         items = new ArrayList<>(text.length() * fields.length / field.length());
                     }
 
-                    items.add(new SuggestItem(words, readings, new String[] { field }, 1L, -1, null, //TODO label
-                            null, //TODO role
-                            SuggestItem.Kind.DOCUMENT));
+                    items.add(new SuggestItem(words, readings, new String[] { field }, 1L, -1, tags, roles, SuggestItem.Kind.DOCUMENT));
                 }
             } catch (final IOException e) {
                 throw new SuggesterException("Failed to create SuggestItem from document.", e);
@@ -125,5 +125,20 @@ public class DefaultContentsParser implements ContentsParser {
         }
 
         return items == null ? new ArrayList<>() : items;
+    }
+
+    private String[] getRoleFromDoc(Map<String, Object> document, String roleFieldName) {
+        final Object value = document.get(roleFieldName);
+        if (value instanceof String) {
+            return new String[] { value.toString() };
+        } else if (value instanceof String[]) {
+            return (String[]) value;
+        } else if (value instanceof List) {
+            return ((List<?>) value).stream().map(v -> v.toString()).toArray(n -> new String[n]);
+        } else if (value != null) {
+            return new String[] { value.toString() };
+        }
+
+        return null;
     }
 }

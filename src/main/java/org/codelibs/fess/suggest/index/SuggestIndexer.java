@@ -165,8 +165,8 @@ public class SuggestIndexer {
                     Stream.of(documents)
                             .parallel()
                             .flatMap(
-                                    document -> contentsParser.parseDocument(document, supportedFields, readingConverter, normalizer,
-                                            analyzer).stream()).toArray(n -> new SuggestItem[n]);
+                                    document -> contentsParser.parseDocument(document, supportedFields, tagFieldName, roleFieldName,
+                                            readingConverter, normalizer, analyzer).stream()).toArray(n -> new SuggestItem[n]);
             final SuggestIndexResponse response = index(array);
             return new SuggestIndexResponse(array.length, documents.length, response.getErrors(), System.currentTimeMillis() - start);
         } catch (final Exception e) {
