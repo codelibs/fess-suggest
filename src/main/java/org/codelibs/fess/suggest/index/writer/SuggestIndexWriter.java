@@ -23,6 +23,10 @@ public class SuggestIndexWriter implements SuggestWriter {
         final BulkRequestBuilder bulkRequestBuilder = client.prepareBulk();
 
         final SuggestItem[] mergedItems = mergeItems(items);
+        if (mergedItems.length == 0) {
+            return new SuggestWriterResult();
+        }
+
         for (final SuggestItem item : mergedItems) {
             final GetResponse getResponse =
                     client.prepareGet().setIndex(index).setType(type).setId(item.getId()).get(TimeValue.timeValueSeconds(30));
