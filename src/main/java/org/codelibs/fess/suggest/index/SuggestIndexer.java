@@ -1,13 +1,13 @@
 package org.codelibs.fess.suggest.index;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Stream;
 
-import org.apache.lucene.analysis.Analyzer;
 import org.codelibs.core.lang.StringUtil;
 import org.codelibs.fess.suggest.analysis.SuggestAnalyzer;
 import org.codelibs.fess.suggest.concurrent.Deferred;
@@ -278,7 +278,8 @@ public class SuggestIndexer {
     public SuggestDeleteResponse deleteOldWords(final LocalDateTime threshold) {
         final long start = System.currentTimeMillis();
         final String query =
-                FieldNames.TIMESTAMP + ":[* TO " + threshold.toString() + "] NOT " + FieldNames.KINDS + ':' + SuggestItem.Kind.USER;
+                FieldNames.TIMESTAMP + ":[* TO " + threshold.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli() + "] NOT "
+                        + FieldNames.KINDS + ':' + SuggestItem.Kind.USER;
         suggestWriter.deleteByQuery(client, settings, index, type, query);
         return new SuggestDeleteResponse(null, System.currentTimeMillis() - start);
     }

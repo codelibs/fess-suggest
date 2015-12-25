@@ -14,7 +14,7 @@
   "properties": {
     "@timestamp": {
       "type": "date",
-      "format": "dateOptionalTime"
+      "format": "epoch_millis"
     },
     "docFreq": {
       "type": "long"

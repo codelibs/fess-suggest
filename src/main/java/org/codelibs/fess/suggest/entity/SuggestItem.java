@@ -2,6 +2,7 @@ package org.codelibs.fess.suggest.entity;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -178,7 +179,7 @@ public class SuggestItem implements Serializable {
         map.put(FieldNames.DOC_FREQ, docFreq);
         map.put(FieldNames.USER_BOOST, userBoost);
         map.put(FieldNames.SCORE, (queryFreq + docFreq) * userBoost);
-        map.put(FieldNames.TIMESTAMP, timestamp);
+        map.put(FieldNames.TIMESTAMP, timestamp.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli());
         return map;
     }
 
@@ -254,7 +255,7 @@ public class SuggestItem implements Serializable {
 
         map.put(FieldNames.USER_BOOST, userBoost);
         map.put(FieldNames.SCORE, (updatedQueryFreq + updatedDocFreq) * userBoost);
-        map.put(FieldNames.TIMESTAMP, timestamp);
+        map.put(FieldNames.TIMESTAMP, timestamp.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli());
         return map;
     }
 
