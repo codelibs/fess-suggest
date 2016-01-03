@@ -209,8 +209,9 @@ public class SuggestIndexer {
                 deferred.resolve(new SuggestIndexResponse(numberOfSuggestDocs, numberOfInputDocs, errors, System.currentTimeMillis()
                         - start));
             } catch (final Throwable t) {
-                documentReader.close();
                 deferred.reject(t);
+            } finally {
+                documentReader.close();
             }
         });
         return deferred.promise();
