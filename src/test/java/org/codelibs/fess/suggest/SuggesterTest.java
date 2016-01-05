@@ -382,6 +382,31 @@ public class SuggesterTest {
     }
 
     @Test
+    public void test_popularWordsExcludeNotQueryWord() throws Exception {
+        SuggestItem[] items = getPopularWordsItemSet2();
+        suggester.indexer().index(items);
+        suggester.refresh();
+
+        PopularWordsResponse response = suggester.popularWords().setSize(100).execute().getResponse();
+
+        assertEquals(5, response.getTotal());
+
+        for (int i = 0; i < 5; i++) {
+            assertEquals(5, response.getNum());
+            boolean find = false;
+            final String checkStr = "クエリー" + i;
+            for (int j = 0; j < 1000; j++) {
+                if (response.getWords().contains(checkStr)) {
+                    find = true;
+                    break;
+                }
+                response = suggester.popularWords().setSize(100).execute().getResponse();
+            }
+            assertTrue(find);
+        }
+    }
+
+    @Test
     public void test_popularWordsWithExcludeWord() throws Exception {
         SuggestItem[] items = getPopularWordsItemSet2();
         suggester.indexer().index(items);
@@ -466,7 +491,6 @@ public class SuggesterTest {
         for (int i = 0; i < 10; i++) {
             String[][] readings = new String[2][];
             readings[0] = new String[] { "fuga" };
-            readings[1] = new String[] { "fuga" };
             String[] tags = new String[] { "tag1", "tag2" };
             String[] roles = new String[] { SuggestConstants.DEFAULT_ROLE, "role1", "role2", "role3" };
             items.add(new SuggestItem(new String[] { "ドキュメント" + i }, readings, new String[] { "content" }, 15 + i, -1, tags, roles,

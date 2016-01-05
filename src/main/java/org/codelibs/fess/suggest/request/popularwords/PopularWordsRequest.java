@@ -118,7 +118,7 @@ public class PopularWordsRequest extends Request<PopularWordsResponse> {
 
     protected QueryBuilder buildQuery() {
         final BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery();
-        queryBuilder.must(QueryBuilders.matchAllQuery());
+        queryBuilder.must(QueryBuilders.termQuery(FieldNames.KINDS, SuggestItem.Kind.QUERY.toString()));
         queryBuilder.must(QueryBuilders.missingQuery(FieldNames.READING_PREFIX + "1"));
         if (tags.size() > 0) {
             queryBuilder.must(QueryBuilders.termsQuery(FieldNames.TAGS, tags));
