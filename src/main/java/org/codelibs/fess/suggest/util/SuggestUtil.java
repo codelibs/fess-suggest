@@ -140,7 +140,7 @@ public final class SuggestUtil {
         secondLine.put("score", (item.getQueryFreq() + item.getDocFreq()) * item.getUserBoost());
         secondLine.put("tags", item.getTags());
         secondLine.put("roles", item.getRoles());
-        secondLine.put("kinds", item.getKind());
+        secondLine.put("kinds", item.getKind().toString());
         secondLine.put("@timestamp", item.getTimestamp());
 
         try {
