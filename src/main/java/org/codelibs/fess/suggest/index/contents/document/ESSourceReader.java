@@ -29,7 +29,7 @@ public class ESSourceReader implements DocumentReader {
     protected int scrollSize = 1;
     protected int maxRetryCount = 5;
 
-    protected long limitOfDocumentSize = 100000;
+    protected long limitOfDocumentSize = 50000;
 
     protected String scrollId = null;
 
