@@ -55,6 +55,8 @@ public class SuggestRequest extends Request<SuggestResponse> {
 
     private boolean matchWordFirst = true;
 
+    private boolean skipDuplicateWords = true;
+
     public void setIndex(final String index) {
         this.index = index;
     }
@@ -105,6 +107,10 @@ public class SuggestRequest extends Request<SuggestResponse> {
 
     public void setMatchWordFirst(final boolean matchWordFirst) {
         this.matchWordFirst = matchWordFirst;
+    }
+
+    public void setSkipDuplicateWords(final boolean skipDuplicateWords) {
+        this.skipDuplicateWords = skipDuplicateWords;
     }
 
     @Override
@@ -249,6 +255,7 @@ public class SuggestRequest extends Request<SuggestResponse> {
 
     protected SuggestResponse createResponse(final SearchResponse searchResponse) {
         final SearchHit[] hits = searchResponse.getHits().getHits();
+        final List<String> words = new ArrayList<>();
         final List<String> firstWords = new ArrayList<>();
         final List<String> secondWords = new ArrayList<>();
         final List<SuggestItem> firstItems = new ArrayList<>();
@@ -262,11 +269,20 @@ public class SuggestRequest extends Request<SuggestResponse> {
         }
 
         boolean singleWordQuery = isSingleWordQuery();
-        for (final SearchHit hit : hits) {
+        for (int i = 0; i < hits.length && words.size() < size; i++) {
+            final SearchHit hit = hits[i];
 
             final Map<String, Object> source = hit.sourceAsMap();
             final String text = source.get(FieldNames.TEXT).toString();
+            if (skipDuplicateWords) {
+                final String duplicateCheckStr = text.replace(" ", "");
+                if (words.stream().map(word -> word.replace(" ", "")).anyMatch(word -> word.equals(duplicateCheckStr))) {
+                    // skip duplicate word.
+                    continue;
+                }
+            }
 
+            words.add(text);
             boolean isFirstWords = matchWordFirst && singleWordQuery && text.contains(query);
             if (isFirstWords) {
                 firstWords.add(text);

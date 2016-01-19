@@ -61,4 +61,14 @@ public class SuggestRequestBuilder extends RequestBuilder<SuggestRequest, Sugges
         request.setPrefixMatchWeight(prefixMatchWeight);
         return this;
     }
+
+    public SuggestRequestBuilder setMatchWordFirst(final boolean matchWordFirst) {
+        request.setMatchWordFirst(matchWordFirst);
+        return this;
+    }
+
+    public SuggestRequestBuilder setSkipDuplicateWords(final boolean skipDuplicateWords) {
+        request.setSkipDuplicateWords(skipDuplicateWords);
+        return this;
+    }
 }
