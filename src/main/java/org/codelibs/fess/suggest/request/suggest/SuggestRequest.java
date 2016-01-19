@@ -249,7 +249,8 @@ public class SuggestRequest extends Request<SuggestResponse> {
 
     protected SuggestResponse createResponse(final SearchResponse searchResponse) {
         final SearchHit[] hits = searchResponse.getHits().getHits();
-        final List<String> words = new ArrayList<>();
+        final List<String> firstWords = new ArrayList<>();
+        final List<String> secondWords = new ArrayList<>();
         final List<SuggestItem> firstItems = new ArrayList<>();
         final List<SuggestItem> secondItems = new ArrayList<>();
 
@@ -265,7 +266,13 @@ public class SuggestRequest extends Request<SuggestResponse> {
 
             final Map<String, Object> source = hit.sourceAsMap();
             final String text = source.get(FieldNames.TEXT).toString();
-            words.add(text);
+
+            boolean isFirstWords = matchWordFirst && singleWordQuery && text.contains(query);
+            if (isFirstWords) {
+                firstWords.add(text);
+            } else {
+                secondWords.add(text);
+            }
 
             if (suggestDetail) {
                 int readingCount = 0;
@@ -293,17 +300,19 @@ public class SuggestRequest extends Request<SuggestResponse> {
                     freq = Long.parseLong(source.get(FieldNames.DOC_FREQ).toString());
                 }
 
-                SuggestItem item = new SuggestItem(text.split(" "), readings.toArray(new String[readings.size()][]),
-                        fields.toArray(new String[fields.size()]), freq, Float.valueOf(source.get(FieldNames.USER_BOOST).toString()),
-                        tags.toArray(new String[tags.size()]), roles.toArray(new String[tags.size()]), kind);
-                if (matchWordFirst && singleWordQuery && text.contains(query)) {
+                SuggestItem item =
+                        new SuggestItem(text.split(" "), readings.toArray(new String[readings.size()][]), fields.toArray(new String[fields
+                                .size()]), freq, Float.valueOf(source.get(FieldNames.USER_BOOST).toString()), tags.toArray(new String[tags
+                                .size()]), roles.toArray(new String[tags.size()]), kind);
+                if (isFirstWords) {
                     firstItems.add(item);
                 } else {
                     secondItems.add(item);
                 }
             }
         }
+        firstWords.addAll(secondWords);
         firstItems.addAll(secondItems);
-        return new SuggestResponse(index, searchResponse.getTookInMillis(), words, searchResponse.getHits().totalHits(), firstItems);
+        return new SuggestResponse(index, searchResponse.getTookInMillis(), firstWords, searchResponse.getHits().totalHits(), firstItems);
     }
 }
