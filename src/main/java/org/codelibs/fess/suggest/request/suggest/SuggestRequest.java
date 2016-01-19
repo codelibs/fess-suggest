@@ -124,7 +124,12 @@ public class SuggestRequest extends Request<SuggestResponse> {
         if (Strings.isNullOrEmpty(type)) {
             builder.setTypes(type);
         }
-        builder.setSize(size);
+
+        if (skipDuplicateWords) {
+            builder.setSize(size * 2);
+        } else {
+            builder.setSize(size);
+        }
 
         // set query.
         final QueryBuilder q = buildQuery(query);
