@@ -57,4 +57,8 @@ public class SuggestRequestBuilder extends RequestBuilder<SuggestRequest, Sugges
         return this;
     }
 
+    public SuggestRequestBuilder setPrefixMatchWeight(final float prefixMatchWeight) {
+        request.setPrefixMatchWeight(prefixMatchWeight);
+        return this;
+    }
 }

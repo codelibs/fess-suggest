@@ -51,6 +51,8 @@ public class SuggestRequest extends Request<SuggestResponse> {
 
     private Normalizer normalizer;
 
+    private float prefixMatchWeight = 2.0f;
+
     public void setIndex(final String index) {
         this.index = index;
     }
@@ -93,6 +95,10 @@ public class SuggestRequest extends Request<SuggestResponse> {
 
     public void setNormalizer(final Normalizer normalizer) {
         this.normalizer = normalizer;
+    }
+
+    public void setPrefixMatchWeight(final float prefixMatchWeight) {
+        this.prefixMatchWeight = prefixMatchWeight;
     }
 
     @Override
@@ -225,7 +231,8 @@ public class SuggestRequest extends Request<SuggestResponse> {
 
     protected QueryBuilder buildFunctionScoreQuery(final String query, final QueryBuilder queryBuilder) {
         final FunctionScoreQueryBuilder functionScoreQueryBuilder = QueryBuilders.functionScoreQuery(queryBuilder);
-        functionScoreQueryBuilder.add(QueryBuilders.prefixQuery(FieldNames.TEXT, query), ScoreFunctionBuilders.weightFactorFunction(2));
+        functionScoreQueryBuilder.add(QueryBuilders.prefixQuery(FieldNames.TEXT, query),
+                ScoreFunctionBuilders.weightFactorFunction(prefixMatchWeight));
         functionScoreQueryBuilder.add(ScoreFunctionBuilders.fieldValueFactorFunction("score").factor(1.0F));
         return functionScoreQueryBuilder;
     }
