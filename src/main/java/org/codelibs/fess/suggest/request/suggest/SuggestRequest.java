@@ -53,6 +53,8 @@ public class SuggestRequest extends Request<SuggestResponse> {
 
     private float prefixMatchWeight = 2.0f;
 
+    private boolean matchWordFirst = true;
+
     public void setIndex(final String index) {
         this.index = index;
     }
@@ -101,6 +103,10 @@ public class SuggestRequest extends Request<SuggestResponse> {
         this.prefixMatchWeight = prefixMatchWeight;
     }
 
+    public void setMatchWordFirst(final boolean matchWordFirst) {
+        this.matchWordFirst = matchWordFirst;
+    }
+
     @Override
     protected String getValidationError() {
         return null;
@@ -119,7 +125,7 @@ public class SuggestRequest extends Request<SuggestResponse> {
 
         final QueryBuilder queryBuilder;
 
-        if (!Strings.isNullOrEmpty(query) && !query.contains(" ") && !query.contains("　")) {
+        if (isSingleWordQuery()) {
             queryBuilder = buildFunctionScoreQuery(query, q);
             builder.addSort("_score", SortOrder.DESC);
         } else {
@@ -171,6 +177,10 @@ public class SuggestRequest extends Request<SuggestResponse> {
                 deferred.reject(new SuggesterException(e.getMessage(), e));
             }
         });
+    }
+
+    private boolean isSingleWordQuery() {
+        return !Strings.isNullOrEmpty(query) && !query.contains(" ") && !query.contains("　");
     }
 
     protected QueryBuilder buildQuery(final String q) {
@@ -240,7 +250,8 @@ public class SuggestRequest extends Request<SuggestResponse> {
     protected SuggestResponse createResponse(final SearchResponse searchResponse) {
         final SearchHit[] hits = searchResponse.getHits().getHits();
         final List<String> words = new ArrayList<>();
-        final List<SuggestItem> items = new ArrayList<>();
+        final List<SuggestItem> firstItems = new ArrayList<>();
+        final List<SuggestItem> secondItems = new ArrayList<>();
 
         final String index;
         if (hits.length > 0) {
@@ -249,6 +260,7 @@ public class SuggestRequest extends Request<SuggestResponse> {
             index = SuggestConstants.EMPTY_STRING;
         }
 
+        boolean singleWordQuery = isSingleWordQuery();
         for (final SearchHit hit : hits) {
 
             final Map<String, Object> source = hit.sourceAsMap();
@@ -281,12 +293,17 @@ public class SuggestRequest extends Request<SuggestResponse> {
                     freq = Long.parseLong(source.get(FieldNames.DOC_FREQ).toString());
                 }
 
-                items.add(new SuggestItem(text.split(" "), readings.toArray(new String[readings.size()][]), fields
-                        .toArray(new String[fields.size()]), freq, Float.valueOf(source.get(FieldNames.USER_BOOST).toString()), tags
-                        .toArray(new String[tags.size()]), roles.toArray(new String[tags.size()]), kind));
+                SuggestItem item = new SuggestItem(text.split(" "), readings.toArray(new String[readings.size()][]),
+                        fields.toArray(new String[fields.size()]), freq, Float.valueOf(source.get(FieldNames.USER_BOOST).toString()),
+                        tags.toArray(new String[tags.size()]), roles.toArray(new String[tags.size()]), kind);
+                if (matchWordFirst && singleWordQuery && text.contains(query)) {
+                    firstItems.add(item);
+                } else {
+                    secondItems.add(item);
+                }
             }
         }
-
-        return new SuggestResponse(index, searchResponse.getTookInMillis(), words, searchResponse.getHits().totalHits(), items);
+        firstItems.addAll(secondItems);
+        return new SuggestResponse(index, searchResponse.getTookInMillis(), words, searchResponse.getHits().totalHits(), firstItems);
     }
 }
