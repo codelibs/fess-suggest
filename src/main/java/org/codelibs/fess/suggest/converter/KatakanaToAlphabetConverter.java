@@ -127,7 +127,7 @@ public class KatakanaToAlphabetConverter implements ReadingConverter {
 
         map.put("ワ", new String[] { "wa" });
         map.put("ヲ", new String[] { "wo" });
-        map.put("ン", new String[] { "nn", "n" });
+        map.put("ン", new String[] { "nn" });
 
         map.put("ガ", new String[] { "ga" });
         map.put("ギ", new String[] { "gi" });

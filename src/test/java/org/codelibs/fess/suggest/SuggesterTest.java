@@ -140,7 +140,7 @@ public class SuggesterTest {
         assertEquals(1, responseKana.getTotal());
         assertEquals("検索", responseKana.getWords().get(0));
 
-        SuggestResponse responseAlphabet = suggester.suggest().setQuery("kensa").setSuggestDetail(true).execute().getResponse();
+        SuggestResponse responseAlphabet = suggester.suggest().setQuery("kennsa").setSuggestDetail(true).execute().getResponse();
         assertEquals(1, responseAlphabet.getNum());
         assertEquals(1, responseAlphabet.getTotal());
         assertEquals("検索", responseAlphabet.getWords().get(0));
