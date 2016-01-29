@@ -42,6 +42,8 @@ public class PopularWordsRequest extends Request<PopularWordsResponse> {
 
     private boolean detail = true;
 
+    private int queryFreqThreshold = 10;
+
     private final List<String> excludeWords = new ArrayList<>();
 
     public void setIndex(final String index) {
@@ -84,6 +86,10 @@ public class PopularWordsRequest extends Request<PopularWordsResponse> {
         this.excludeWords.add(excludeWord);
     }
 
+    public void setQueryFreqThreshold(final int queryFreqThreshold) {
+        this.queryFreqThreshold = queryFreqThreshold;
+    }
+
     @Override
     protected void processRequest(final Client client, final Deferred<PopularWordsResponse> deferred) {
         final SearchRequestBuilder builder = client.prepareSearch(index);
@@ -120,6 +126,7 @@ public class PopularWordsRequest extends Request<PopularWordsResponse> {
         final BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery();
         queryBuilder.must(QueryBuilders.termQuery(FieldNames.KINDS, SuggestItem.Kind.QUERY.toString()));
         queryBuilder.must(QueryBuilders.missingQuery(FieldNames.READING_PREFIX + "1"));
+        queryBuilder.must(QueryBuilders.rangeQuery(FieldNames.QUERY_FREQ).gte(queryFreqThreshold));
         if (tags.size() > 0) {
             queryBuilder.must(QueryBuilders.termsQuery(FieldNames.TAGS, tags));
         }

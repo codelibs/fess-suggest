@@ -52,4 +52,9 @@ public class PopularWordsRequestBuilder extends RequestBuilder<PopularWordsReque
         request.addExcludeWord(excludeWord);
         return this;
     }
+
+    public PopularWordsRequestBuilder setQueryFreqThreshold(final int queryFreqThreshold) {
+        request.setQueryFreqThreshold(queryFreqThreshold);
+        return this;
+    }
 }
