@@ -1,6 +1,7 @@
 package org.codelibs.fess.suggest.request.suggest;
 
 import java.io.IOException;
+import java.lang.Character.UnicodeBlock;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -288,7 +289,7 @@ public class SuggestRequest extends Request<SuggestResponse> {
             }
 
             words.add(text);
-            boolean isFirstWords = matchWordFirst && singleWordQuery && text.contains(query);
+            final boolean isFirstWords = isFirstWordMatching(singleWordQuery, text);
             if (isFirstWords) {
                 firstWords.add(text);
             } else {
@@ -335,5 +336,15 @@ public class SuggestRequest extends Request<SuggestResponse> {
         firstWords.addAll(secondWords);
         firstItems.addAll(secondItems);
         return new SuggestResponse(index, searchResponse.getTookInMillis(), firstWords, searchResponse.getHits().totalHits(), firstItems);
+    }
+
+    protected boolean isFirstWordMatching(boolean singleWordQuery, final String text) {
+        if (matchWordFirst && singleWordQuery && text.contains(query)) {
+            if (query.length() == 1) {
+                return UnicodeBlock.of(query.charAt(0)) != UnicodeBlock.HIRAGANA;
+            }
+            return true;
+        }
+        return false;
     }
 }
