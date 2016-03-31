@@ -26,7 +26,7 @@
       "contents_analyzer" : {
         "type" : "custom",
         "tokenizer" : "kuromoji_neologd_normal",
-        "filter" : ["pos_filter"]
+        "filter" : ["stopword_en_filter", "pos_filter"]
       }
     },
     "char_filter" : {
@@ -127,6 +127,10 @@
           "名詞-副詞可能",
           "連体詞"
         ]
+      },
+      "stopword_en_filter": {
+        "type": "stop",
+        "stopwords": "_english_"
       }
     }
   }
