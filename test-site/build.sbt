@@ -19,14 +19,16 @@ libraryDependencies ++= Seq(
   javaWs
 )
 
-libraryDependencies += "org.codelibs" % "elasticsearch-cluster-runner" % "1.5.0.1"
+libraryDependencies += "org.codelibs" % "elasticsearch-cluster-runner" % "2.1.2.0"
 
-libraryDependencies += "org.codelibs" % "elasticsearch-fess-suggest" % "1.7.3-SNAPSHOT"
+libraryDependencies += "org.codelibs" % "elasticsearch-fess-suggest" % "2.1.2"
 
-libraryDependencies += "org.codelibs" % "elasticsearch-analysis-kuromoji-neologd" % "1.5.1"
+libraryDependencies += "org.codelibs" % "elasticsearch-analysis-kuromoji-neologd" % "2.1.1"
 
-libraryDependencies += "org.codelibs.fess" % "fess-suggest" % "2.0.0-SNAPSHOT"
+libraryDependencies += "org.codelibs.fess" % "fess-suggest" % "2.1.4-SNAPSHOT"
 
 libraryDependencies += "org.apache.httpcomponents" % "httpclient" % "4.3.1"
 
 libraryDependencies += "org.codehaus.groovy" % "groovy-all" % "2.4.0"
+
+libraryDependencies += "log4j" % "log4j" % "1.2.17"

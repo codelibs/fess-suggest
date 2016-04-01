@@ -33,10 +33,11 @@ public class Global extends GlobalSettings {
         ElasticsearchClusterRunner runner = new ElasticsearchClusterRunner();
         runner.onBuild((number, settingsBuilder) -> {
             settingsBuilder.put("http.cors.enabled", true);
+            settingsBuilder.put("index.number_of_shards", 1);
             settingsBuilder.put("index.number_of_replicas", 0);
-            settingsBuilder.put("script.disable_dynamic", false);
-            settingsBuilder.put("script.groovy.sandbox.enabled", true);
-        }).build(newConfigs().ramIndexStore().numOfNode(1));
+            settingsBuilder.putArray("discovery.zen.ping.unicast.hosts", "localhost:9301-9399");
+            settingsBuilder.put("plugin.types", "org.codelibs.elasticsearch.kuromoji.neologd.KuromojiNeologdPlugin,org.codelibs.elasticsearch.FessSuggestPlugin");
+        }).build(newConfigs().clusterName("SuggesterTest").numOfNode(1));
         runner.ensureYellow();
 
         ComponentsUtil.runner = runner;
