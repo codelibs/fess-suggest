@@ -35,7 +35,7 @@ public class SuggestRequest extends Request<SuggestResponse> {
 
     private String type = null;
 
-    private String query = null;
+    private String query = "";
 
     private int size = 10;
 
@@ -247,7 +247,7 @@ public class SuggestRequest extends Request<SuggestResponse> {
 
     protected QueryBuilder buildFunctionScoreQuery(final String query, final QueryBuilder queryBuilder) {
         final FunctionScoreQueryBuilder functionScoreQueryBuilder = QueryBuilders.functionScoreQuery(queryBuilder);
-        if (isSingleWordQuery(query)) {
+        if (isSingleWordQuery(query) && !isHiraganaQuery(query)) {
             functionScoreQueryBuilder.add(QueryBuilders.prefixQuery(FieldNames.TEXT, query),
                     ScoreFunctionBuilders.weightFactorFunction(prefixMatchWeight));
         }
@@ -280,6 +280,7 @@ public class SuggestRequest extends Request<SuggestResponse> {
         }
 
         boolean singleWordQuery = isSingleWordQuery(query);
+        boolean hiraganaQuery = isHiraganaQuery(query);
         for (int i = 0; i < hits.length && words.size() < size; i++) {
             final SearchHit hit = hits[i];
 
@@ -294,7 +295,7 @@ public class SuggestRequest extends Request<SuggestResponse> {
             }
 
             words.add(text);
-            final boolean isFirstWords = isFirstWordMatching(singleWordQuery, text);
+            final boolean isFirstWords = isFirstWordMatching(singleWordQuery, hiraganaQuery, text);
             if (isFirstWords) {
                 firstWords.add(text);
             } else {
@@ -343,13 +344,17 @@ public class SuggestRequest extends Request<SuggestResponse> {
         return new SuggestResponse(index, searchResponse.getTookInMillis(), firstWords, searchResponse.getHits().totalHits(), firstItems);
     }
 
-    protected boolean isFirstWordMatching(boolean singleWordQuery, final String text) {
-        if (matchWordFirst && singleWordQuery && text.contains(query)) {
+    protected boolean isFirstWordMatching(final boolean singleWordQuery, final boolean hiraganaQuery, final String text) {
+        if (matchWordFirst && !hiraganaQuery && singleWordQuery && text.contains(query)) {
             if (query.length() == 1) {
                 return UnicodeBlock.of(query.charAt(0)) != UnicodeBlock.HIRAGANA;
             }
             return true;
         }
         return false;
+    }
+
+    protected boolean isHiraganaQuery(final String query) {
+        return query.matches("^[\\u3040-\\u309F]+$");
     }
 }
