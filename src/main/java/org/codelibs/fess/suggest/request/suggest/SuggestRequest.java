@@ -20,13 +20,14 @@ import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.common.lucene.search.function.CombineFunction;
+import org.elasticsearch.common.lucene.search.function.FieldValueFactorFunction;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.functionscore.FunctionScoreQueryBuilder;
 import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders;
 import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
 
 public class SuggestRequest extends Request<SuggestResponse> {
@@ -135,16 +136,9 @@ public class SuggestRequest extends Request<SuggestResponse> {
         // set query.
         final QueryBuilder q = buildQuery(query);
 
-        final QueryBuilder queryBuilder;
-
-        if (isSingleWordQuery()) {
-            queryBuilder = buildFunctionScoreQuery(query, q);
-            builder.addSort("_score", SortOrder.DESC);
-        } else {
-            queryBuilder = q;
-        }
-
-        builder.addSort(SortBuilders.fieldSort(FieldNames.SCORE).unmappedType("double").missing(0).order(SortOrder.DESC));
+        // set function score
+        final QueryBuilder queryBuilder = buildFunctionScoreQuery(query, q);
+        builder.addSort("_score", SortOrder.DESC);
 
         //set filter query.
         final List<QueryBuilder> filterList = new ArrayList<>(10);
@@ -191,7 +185,7 @@ public class SuggestRequest extends Request<SuggestResponse> {
         });
     }
 
-    private boolean isSingleWordQuery() {
+    private boolean isSingleWordQuery(final String query) {
         return !Strings.isNullOrEmpty(query) && !query.contains(" ") && !query.contains("　");
     }
 
@@ -253,9 +247,20 @@ public class SuggestRequest extends Request<SuggestResponse> {
 
     protected QueryBuilder buildFunctionScoreQuery(final String query, final QueryBuilder queryBuilder) {
         final FunctionScoreQueryBuilder functionScoreQueryBuilder = QueryBuilders.functionScoreQuery(queryBuilder);
-        functionScoreQueryBuilder.add(QueryBuilders.prefixQuery(FieldNames.TEXT, query),
-                ScoreFunctionBuilders.weightFactorFunction(prefixMatchWeight));
-        functionScoreQueryBuilder.add(ScoreFunctionBuilders.fieldValueFactorFunction("score").factor(1.0F));
+        if (isSingleWordQuery(query)) {
+            functionScoreQueryBuilder.add(QueryBuilders.prefixQuery(FieldNames.TEXT, query),
+                    ScoreFunctionBuilders.weightFactorFunction(prefixMatchWeight));
+        }
+
+        functionScoreQueryBuilder.add(ScoreFunctionBuilders.fieldValueFactorFunction(FieldNames.DOC_FREQ).missing(0.1f)
+                .modifier(FieldValueFactorFunction.Modifier.LOG2P).setWeight(1.0F));
+        functionScoreQueryBuilder.add(ScoreFunctionBuilders.fieldValueFactorFunction(FieldNames.QUERY_FREQ).missing(0.1f)
+                .modifier(FieldValueFactorFunction.Modifier.LOG2P).setWeight(1.0F));
+        functionScoreQueryBuilder.add(ScoreFunctionBuilders.fieldValueFactorFunction(FieldNames.USER_BOOST).missing(1f).setWeight(1.0F));
+
+        functionScoreQueryBuilder.boostMode(CombineFunction.REPLACE);
+        functionScoreQueryBuilder.scoreMode("multiply");
+
         return functionScoreQueryBuilder;
     }
 
@@ -274,7 +279,7 @@ public class SuggestRequest extends Request<SuggestResponse> {
             index = SuggestConstants.EMPTY_STRING;
         }
 
-        boolean singleWordQuery = isSingleWordQuery();
+        boolean singleWordQuery = isSingleWordQuery(query);
         for (int i = 0; i < hits.length && words.size() < size; i++) {
             final SearchHit hit = hits[i];
 
