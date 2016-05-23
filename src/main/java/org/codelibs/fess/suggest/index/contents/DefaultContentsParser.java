@@ -17,12 +17,19 @@ import org.elasticsearch.action.admin.indices.analyze.AnalyzeResponse;
 public class DefaultContentsParser implements ContentsParser {
     @Override
     public SuggestItem parseSearchWords(final String[] words, final String[][] readings, final String[] fields, final String[] tags,
-            final String[] roles, final long score, final ReadingConverter readingConverter, final Normalizer normalizer) {
+            final String[] roles, final long score, final ReadingConverter readingConverter, final Normalizer normalizer,
+            final SuggestAnalyzer analyzer) {
         try {
-            final String[][] readingArray = new String[words.length][];
+            final List<String> wordsList = new ArrayList<>(words.length);
+            final List<String[]> readingList = new ArrayList<>(words.length);
+
             for (int i = 0; i < words.length; i++) {
-                words[i] = normalizer.normalize(words[i]);
-                final List<String> l = readingConverter.convert(words[i]);
+                if (isExcludeSearchword(words[i], analyzer)) {
+                    continue;
+                }
+
+                final String word = normalizer.normalize(words[i]);
+                final List<String> l = readingConverter.convert(word);
                 if (readings != null && readings.length > i && readings[i].length > 0) {
                     for (final String reading : readings[i]) {
                         if (!l.contains(reading)) {
@@ -31,9 +38,14 @@ public class DefaultContentsParser implements ContentsParser {
                     }
                 }
 
-                readingArray[i] = l.toArray(new String[l.size()]);
+                wordsList.add(word);
+                readingList.add(l.toArray(new String[l.size()]));
             }
-            return new SuggestItem(words, readingArray, fields, score, -1, tags, roles, SuggestItem.Kind.QUERY);
+            if (wordsList.isEmpty()) {
+                return null;
+            }
+            return new SuggestItem(wordsList.toArray(new String[wordsList.size()]), readingList.toArray(new String[readingList.size()][]),
+                    fields, score, -1, tags, roles, SuggestItem.Kind.QUERY);
         } catch (final IOException e) {
             throw new SuggesterException("Failed to SuggestItem from search words.", e);
         }
@@ -127,7 +139,7 @@ public class DefaultContentsParser implements ContentsParser {
         return items == null ? new ArrayList<>() : items;
     }
 
-    private String[] getRoleFromDoc(Map<String, Object> document, String roleFieldName) {
+    protected String[] getRoleFromDoc(Map<String, Object> document, String roleFieldName) {
         final Object value = document.get(roleFieldName);
         if (value instanceof String) {
             return new String[] { value.toString() };
@@ -140,5 +152,10 @@ public class DefaultContentsParser implements ContentsParser {
         }
 
         return null;
+    }
+
+    protected boolean isExcludeSearchword(final String searchWord, final SuggestAnalyzer analyzer) {
+        final List<AnalyzeResponse.AnalyzeToken> tokens = analyzer.analyze(searchWord);
+        return tokens == null || tokens.size() == 0;
     }
 }

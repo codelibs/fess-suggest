@@ -293,6 +293,17 @@ public class SuggesterTest {
     }
 
     @Test
+    public void test_indexFromSearchWordExclude() throws Exception {
+        SuggestIndexResponse indexResponse = suggester.indexer().indexFromSearchWord("。」", null, null, null, 1);
+        indexResponse.getErrors();
+        assertEquals(0, indexResponse.getNumberOfSuggestDocs());
+        suggester.refresh();
+
+        final SuggestResponse response = suggester.suggest().setQuery("。").setSuggestDetail(true).execute().getResponse();
+        assertEquals(0, response.getNum());
+    }
+
+    @Test
     public void test_indexElevateWord() throws Exception {
         ElevateWord elevateWord =
                 new ElevateWord("test", 2.0f, Collections.singletonList("test"), Collections.singletonList("content"), null, null);

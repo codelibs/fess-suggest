@@ -232,7 +232,11 @@ public class SuggestIndexer {
         }
         final String[] words = buf.toString().trim().split(" ");
         try {
-            final SuggestItem item = contentsParser.parseSearchWords(words, null, fields, tags, roles, num, readingConverter, normalizer);
+            final SuggestItem item =
+                    contentsParser.parseSearchWords(words, null, fields, tags, roles, num, readingConverter, normalizer, analyzer);
+            if (item == null) {
+                return new SuggestIndexResponse(0, 1, null, System.currentTimeMillis() - start);
+            }
             final SuggestIndexResponse response = index(item);
             return new SuggestIndexResponse(1, 1, response.getErrors(), System.currentTimeMillis() - start);
         } catch (final Exception e) {
