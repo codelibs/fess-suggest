@@ -390,10 +390,16 @@ public class SuggesterTest {
         assertEquals(1, response.getNum());
         assertEquals("検索 エンジン", response.getWords().get(0));
 
-        suggester.indexer().addBadWord("検索");
+        response = suggester.suggest().setQuery("zenbun").setSuggestDetail(true).execute().getResponse();
+        assertEquals(1, response.getNum());
+        assertEquals("全文 検索", response.getWords().get(0));
+
+        suggester.indexer().addBadWord("エンジン");
         suggester.refresh();
         SuggestResponse response2 = suggester.suggest().setQuery("kensaku").setSuggestDetail(true).execute().getResponse();
         assertEquals(0, response2.getNum());
+        response2 = suggester.suggest().setQuery("zenbun").setSuggestDetail(true).execute().getResponse();
+        assertEquals(1, response2.getNum());
 
         assertEquals(1, suggester.settings().badword().get().length);
     }
