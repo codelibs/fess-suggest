@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import org.codelibs.core.lang.StringUtil;
@@ -40,6 +41,7 @@ public class SuggestIndexer {
     protected String tagFieldName;
     protected String roleFieldName;
     protected String[] badWords;
+    protected boolean parallel;
 
     protected ReadingConverter readingConverter;
     protected Normalizer normalizer;
@@ -60,6 +62,7 @@ public class SuggestIndexer {
         this.badWords = settings.badword().get();
         this.tagFieldName = settings.getAsString(SuggestSettings.DefaultKeys.TAG_FIELD_NAME, StringUtil.EMPTY);
         this.roleFieldName = settings.getAsString(SuggestSettings.DefaultKeys.ROLE_FIELD_NAME, StringUtil.EMPTY);
+        this.parallel = settings.getAsBoolean(SuggestSettings.DefaultKeys.PARALLEL_PROCESSING, false);
         this.readingConverter = readingConverter;
         this.normalizer = normalizer;
         this.analyzer = analyzer;
@@ -105,12 +108,14 @@ public class SuggestIndexer {
     public SuggestIndexResponse indexFromQueryLog(final QueryLog[] queryLogs) {
         try {
             final long start = System.currentTimeMillis();
-            final SuggestItem[] array =
-                    Stream.of(queryLogs)
-                            .parallel()
-                            .flatMap(
-                                    queryLog -> contentsParser.parseQueryLog(queryLog, supportedFields, tagFieldName, roleFieldName,
-                                            readingConverter, normalizer).stream()).toArray(n -> new SuggestItem[n]);
+            final Stream<QueryLog> stream = Stream.of(queryLogs);
+            if (parallel) {
+                stream.parallel();
+            }
+            final SuggestItem[] array = stream
+                    .flatMap(queryLog -> contentsParser
+                            .parseQueryLog(queryLog, supportedFields, tagFieldName, roleFieldName, readingConverter, normalizer).stream())
+                    .toArray(n -> new SuggestItem[n]);
             final SuggestIndexResponse response = index(array);
             return new SuggestIndexResponse(array.length, queryLogs.length, response.getErrors(), System.currentTimeMillis() - start);
         } catch (final Exception e) {
@@ -161,12 +166,13 @@ public class SuggestIndexer {
     public SuggestIndexResponse indexFromDocument(final Map<String, Object>[] documents) {
         final long start = System.currentTimeMillis();
         try {
-            final SuggestItem[] array =
-                    Stream.of(documents)
-                            .parallel()
-                            .flatMap(
-                                    document -> contentsParser.parseDocument(document, supportedFields, tagFieldName, roleFieldName,
-                                            readingConverter, normalizer, analyzer).stream()).toArray(n -> new SuggestItem[n]);
+            final Stream<Map<String, Object>> stream = Stream.of(documents);
+            if (parallel) {
+                stream.parallel();
+            }
+            final SuggestItem[] array = stream.flatMap(document -> contentsParser
+                    .parseDocument(document, supportedFields, tagFieldName, roleFieldName, readingConverter, normalizer, analyzer).stream())
+                    .toArray(n -> new SuggestItem[n]);
             final SuggestIndexResponse response = index(array);
             return new SuggestIndexResponse(array.length, documents.length, response.getErrors(), System.currentTimeMillis() - start);
         } catch (final Exception e) {
@@ -174,8 +180,13 @@ public class SuggestIndexer {
         }
     }
 
-    // TODO replace documentReader with lambda reader
+    @Deprecated
     public Deferred<SuggestIndexResponse>.Promise indexFromDocument(final DocumentReader documentReader, final int docPerReq,
+            final long requestInterval) {
+        return indexFromDocument(() -> documentReader, docPerReq, requestInterval);
+    }
+
+    public Deferred<SuggestIndexResponse>.Promise indexFromDocument(final Supplier<DocumentReader> reader, final int docPerReq,
             final long requestInterval) {
         final Deferred<SuggestIndexResponse> deferred = new Deferred<>();
         threadPool.execute(() -> {
@@ -185,7 +196,7 @@ public class SuggestIndexer {
 
             final List<Throwable> errors = new ArrayList<>();
             final List<Map<String, Object>> docs = new ArrayList<>(docPerReq);
-            try {
+            try (final DocumentReader documentReader = reader.get()) {
                 Map<String, Object> doc = documentReader.read();
                 while (doc != null) {
                     if (Thread.currentThread().isInterrupted()) {
@@ -204,14 +215,11 @@ public class SuggestIndexer {
                         Thread.sleep(requestInterval);
                     }
                 }
-                documentReader.close();
 
                 deferred.resolve(new SuggestIndexResponse(numberOfSuggestDocs, numberOfInputDocs, errors, System.currentTimeMillis()
                         - start));
             } catch (final Throwable t) {
                 deferred.reject(t);
-            } finally {
-                documentReader.close();
             }
         });
         return deferred.promise();

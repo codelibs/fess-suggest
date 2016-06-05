@@ -224,6 +224,7 @@ public class SuggestSettings {
         defaultSettings.put(DefaultKeys.SUPPORTED_FIELDS, new String[] { "content" });
         defaultSettings.put(DefaultKeys.TAG_FIELD_NAME, "label");
         defaultSettings.put(DefaultKeys.ROLE_FIELD_NAME, "role");
+        defaultSettings.put(DefaultKeys.PARALLEL_PROCESSING, Boolean.FALSE);
         return defaultSettings;
     }
 
@@ -243,6 +244,7 @@ public class SuggestSettings {
         public static final String SUPPORTED_FIELDS = "supportedFields";
         public static final String TAG_FIELD_NAME = "tagFieldName";
         public static final String ROLE_FIELD_NAME = "roleFieldName";
+        public static final String PARALLEL_PROCESSING = "parallel";
 
         private DefaultKeys() {
         }
