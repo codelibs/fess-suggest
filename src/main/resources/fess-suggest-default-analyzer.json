@@ -26,7 +26,7 @@
       "contents_analyzer" : {
         "type" : "custom",
         "tokenizer" : "kuromoji_neologd_normal",
-        "filter" : ["stopword_en_filter", "pos_filter"]
+        "filter" : ["stopword_en_filter", "pos_filter", "content_length_filter"]
       }
     },
     "char_filter" : {
@@ -130,6 +130,10 @@
       "stopword_en_filter": {
         "type": "stop",
         "stopwords": "_english_"
+      },
+      "content_length_filter": {
+        "type": "length",
+        "max": 10000
       }
     }
   }
