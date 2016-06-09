@@ -26,7 +26,7 @@
       "contents_analyzer" : {
         "type" : "custom",
         "tokenizer" : "kuromoji_neologd_normal",
-        "filter" : ["pos_filter"]
+        "filter" : ["stopword_en_filter", "pos_filter", "content_length_filter", "limit_token_count_filter"]
       }
     },
     "char_filter" : {
@@ -81,6 +81,18 @@
           "接頭詞-数接続",
           "接頭詞-動詞接続"
         ]
+      },
+      "stopword_en_filter": {
+        "type": "stop",
+        "stopwords": "_english_"
+      },
+      "content_length_filter": {
+        "type": "length",
+        "max": 30
+      },
+      "limit_token_count_filter": {
+        "type": "limit",
+        "max_token_count": 10000
       }
     }
   }
