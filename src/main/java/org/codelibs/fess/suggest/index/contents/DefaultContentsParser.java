@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.codelibs.core.lang.StringUtil;
 import org.codelibs.fess.suggest.analysis.SuggestAnalyzer;
 import org.codelibs.fess.suggest.converter.ReadingConverter;
 import org.codelibs.fess.suggest.entity.SuggestItem;
@@ -117,7 +118,11 @@ public class DefaultContentsParser implements ContentsParser {
             final List<AnalyzeResponse.AnalyzeToken> tokens = analyzer.analyze(text);
             try {
                 for (final AnalyzeResponse.AnalyzeToken token : tokens) {
-                    final String[] words = new String[] { token.getTerm() };
+                    final String word = token.getTerm();
+                    if (StringUtil.isBlank(word)) {
+                        continue;
+                    }
+                    final String[] words = new String[] { word };
                     final String[][] readings = new String[words.length][];
                     for (int j = 0; j < words.length; j++) {
                         words[j] = normalizer.normalize(words[j]);
