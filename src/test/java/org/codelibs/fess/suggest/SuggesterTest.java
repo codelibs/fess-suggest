@@ -244,6 +244,32 @@ public class SuggesterTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    public void test_indexFromDocumentLengthLimit() throws Exception {
+        SuggestSettings settings = suggester.settings();
+        String field = settings.array().get(SuggestSettings.DefaultKeys.SUPPORTED_FIELDS)[0];
+
+        Map<String, Object> document = new HashMap<>();
+        document.put(field, "Sing the Supercalifragilisticexpialidocious for Honorificabilitudinitatibus");
+        suggester.indexer().indexFromDocument(new Map[] { document });
+        suggester.refresh();
+
+        SuggestResponse response0 = suggester.suggest().setQuery("sin").setSuggestDetail(true).execute().getResponse();
+        assertEquals(1, response0.getNum());
+        assertEquals(1, response0.getTotal());
+        assertEquals("sing", response0.getWords().get(0));
+
+        SuggestResponse response1 = suggester.suggest().setQuery("super").setSuggestDetail(true).execute().getResponse();
+        assertEquals(0, response1.getNum());
+        assertEquals(0, response1.getTotal());
+
+        SuggestResponse response2 = suggester.suggest().setQuery("honor").setSuggestDetail(true).execute().getResponse();
+        assertEquals(1, response2.getNum());
+        assertEquals(1, response2.getTotal());
+        assertEquals("honorificabilitudinitatibus", response2.getWords().get(0));
+    }
+
+    @Test
     public void test_indexFromDocumentReader() throws Exception {
         Client client = runner.client();
         int num = 10000;

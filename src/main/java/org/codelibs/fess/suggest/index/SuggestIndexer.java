@@ -112,10 +112,10 @@ public class SuggestIndexer {
             if (parallel) {
                 stream.parallel();
             }
-            final SuggestItem[] array = stream
-                    .flatMap(queryLog -> contentsParser
-                            .parseQueryLog(queryLog, supportedFields, tagFieldName, roleFieldName, readingConverter, normalizer).stream())
-                    .toArray(n -> new SuggestItem[n]);
+            final SuggestItem[] array =
+                    stream.flatMap(
+                            queryLog -> contentsParser.parseQueryLog(queryLog, supportedFields, tagFieldName, roleFieldName,
+                                    readingConverter, normalizer).stream()).toArray(n -> new SuggestItem[n]);
             final SuggestIndexResponse response = index(array);
             return new SuggestIndexResponse(array.length, queryLogs.length, response.getErrors(), System.currentTimeMillis() - start);
         } catch (final Exception e) {
@@ -170,9 +170,10 @@ public class SuggestIndexer {
             if (parallel) {
                 stream.parallel();
             }
-            final SuggestItem[] array = stream.flatMap(document -> contentsParser
-                    .parseDocument(document, supportedFields, tagFieldName, roleFieldName, readingConverter, normalizer, analyzer).stream())
-                    .toArray(n -> new SuggestItem[n]);
+            final SuggestItem[] array =
+                    stream.flatMap(
+                            document -> contentsParser.parseDocument(document, supportedFields, tagFieldName, roleFieldName,
+                                    readingConverter, normalizer, analyzer).stream()).toArray(n -> new SuggestItem[n]);
             final SuggestIndexResponse response = index(array);
             return new SuggestIndexResponse(array.length, documents.length, response.getErrors(), System.currentTimeMillis() - start);
         } catch (final Exception e) {

@@ -133,7 +133,7 @@
       },
       "content_length_filter": {
         "type": "length",
-        "max": 10000
+        "max": 30
       }
     }
   }
