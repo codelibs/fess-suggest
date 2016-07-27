@@ -71,4 +71,14 @@ public class SuggestRequestBuilder extends RequestBuilder<SuggestRequest, Sugges
         request.setSkipDuplicateWords(skipDuplicateWords);
         return this;
     }
+
+    public SuggestRequestBuilder setLang(final String lang) {
+        request.setLang(lang);
+        return this;
+    }
+
+    public SuggestRequestBuilder setAutoDetectLanguage(final boolean autoDetectLanguage) {
+        request.setAutoDetectLanguage(autoDetectLanguage);
+        return this;
+    }
 }

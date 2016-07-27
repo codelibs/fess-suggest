@@ -28,14 +28,14 @@ public class AnalyzerConverter implements ReadingConverter {
     }
 
     @Override
-    public List<String> convert(String text) throws IOException {
+    public List<String> convert(String text, String lang) throws IOException {
         final AnalyzeResponse readingResponse =
                 client.admin().indices().prepareAnalyze(analyzerSettings.getAnalyzerSettingsIndexName(), text)
-                        .setAnalyzer(analyzerSettings.getReadingAnalyzerName()).execute().actionGet();
+                        .setAnalyzer(analyzerSettings.getReadingAnalyzerName(lang)).execute().actionGet();
 
         final AnalyzeResponse termResponse =
                 client.admin().indices().prepareAnalyze(analyzerSettings.getAnalyzerSettingsIndexName(), text)
-                        .setAnalyzer(analyzerSettings.getReadingTermAnalyzerName()).execute().actionGet();
+                        .setAnalyzer(analyzerSettings.getReadingTermAnalyzerName(lang)).execute().actionGet();
 
         final List<AnalyzeResponse.AnalyzeToken> readingTokenList = readingResponse.getTokens();
         final List<AnalyzeResponse.AnalyzeToken> termTokenList = termResponse.getTokens();

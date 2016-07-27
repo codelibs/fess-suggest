@@ -227,7 +227,7 @@ public class SuggestIndexer {
     }
 
     public SuggestIndexResponse indexFromSearchWord(final String searchWord, final String[] fields, final String[] tags,
-            final String[] roles, final int num) {
+            final String[] roles, final int num, final String lang) {
         final long start = System.currentTimeMillis();
         final StringBuilder buf = new StringBuilder(searchWord.length());
         char prev = 0;
@@ -242,7 +242,7 @@ public class SuggestIndexer {
         final String[] words = buf.toString().trim().split(" ");
         try {
             final SuggestItem item =
-                    contentsParser.parseSearchWords(words, null, fields, tags, roles, num, readingConverter, normalizer, analyzer);
+                    contentsParser.parseSearchWords(words, null, fields, tags, roles, num, readingConverter, normalizer, analyzer, lang);
             if (item == null) {
                 return new SuggestIndexResponse(0, 1, null, System.currentTimeMillis() - start);
             }

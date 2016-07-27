@@ -27,7 +27,7 @@ public class KatakanaToAlphabetConverter implements ReadingConverter {
     }
 
     @Override
-    public List<String> convert(final String text) {
+    public List<String> convert(final String text, final String lang) {
         final List<String> list = new ArrayList<>();
 
         final List<StringBuilder> bufList = new ArrayList<>();

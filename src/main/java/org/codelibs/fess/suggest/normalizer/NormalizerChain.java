@@ -7,10 +7,10 @@ public class NormalizerChain implements Normalizer {
     List<Normalizer> normalizers = new ArrayList<>();
 
     @Override
-    public String normalize(final String text) {
+    public String normalize(final String text, final String lang) {
         String tmp = text;
         for (final Normalizer normalizer : normalizers) {
-            tmp = normalizer.normalize(tmp);
+            tmp = normalizer.normalize(tmp, lang);
         }
         return tmp;
     }

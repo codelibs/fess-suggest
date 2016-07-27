@@ -10,5 +10,5 @@ public interface ReadingConverter {
 
     void init() throws IOException;
 
-    List<String> convert(String text) throws IOException;
+    List<String> convert(String text, String lang) throws IOException;
 }

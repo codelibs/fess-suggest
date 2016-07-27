@@ -1,5 +1,6 @@
 package org.codelibs.fess.suggest.settings;
 
+import org.codelibs.core.lang.StringUtil;
 import org.codelibs.fess.suggest.analysis.SuggestAnalyzer;
 import org.elasticsearch.action.admin.indices.analyze.AnalyzeResponse;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
@@ -8,6 +9,7 @@ import org.elasticsearch.client.Client;
 import java.io.*;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 public class AnalyzerSettings {
     public static final String readingAnalyzerName = "reading_analyzer";
@@ -17,6 +19,8 @@ public class AnalyzerSettings {
 
     protected final Client client;
     protected final String analyzerSettingsIndexName;
+
+    private static final String[] SUPPORTED_LANGUAGES = new String[] { "en", "ja" };
 
     public AnalyzerSettings(final Client client, final String settingsIndexName) {
         this.client = client;
@@ -38,20 +42,20 @@ public class AnalyzerSettings {
         return analyzerSettingsIndexName;
     }
 
-    public String getReadingAnalyzerName() {
-        return readingAnalyzerName;
+    public String getReadingAnalyzerName(final String lang) {
+        return isSupportedLanguage(lang) ? readingAnalyzerName + '_' + lang : readingAnalyzerName;
     }
 
-    public String getReadingTermAnalyzerName() {
-        return readingTermAnalyzerName;
+    public String getReadingTermAnalyzerName(final String lang) {
+        return isSupportedLanguage(lang) ? readingTermAnalyzerName + '_' + lang : readingTermAnalyzerName;
     }
 
-    public String getNormalizeAnalyzerName() {
-        return normalizeAnalyzerName;
+    public String getNormalizeAnalyzerName(final String lang) {
+        return isSupportedLanguage(lang) ? normalizeAnalyzerName + '_' + lang : normalizeAnalyzerName;
     }
 
-    public static String getContentsAnalyzerName() {
-        return contentsAnalyzerName;
+    public String getContentsAnalyzerName(final String lang) {
+        return isSupportedLanguage(lang) ? contentsAnalyzerName + '_' + lang : contentsAnalyzerName;
     }
 
     public void updateAnalyzer(final Map<String, Object> settings) {
@@ -93,12 +97,16 @@ public class AnalyzerSettings {
         return sb.toString();
     }
 
-    public class DefaultAnalyzer implements SuggestAnalyzer {
-        public List<AnalyzeResponse.AnalyzeToken> analyze(final String text) {
+    public class DefaultContentsAnalyzer implements SuggestAnalyzer {
+        public List<AnalyzeResponse.AnalyzeToken> analyze(final String text, final String lang) {
             final AnalyzeResponse analyzeResponse =
-                    client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text).setAnalyzer(contentsAnalyzerName).execute()
+                    client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text).setAnalyzer(getContentsAnalyzerName(lang)).execute()
                             .actionGet();
             return analyzeResponse.getTokens();
         }
+    }
+
+    public static boolean isSupportedLanguage(final String lang) {
+        return (StringUtil.isNotBlank(lang) && Stream.of(SUPPORTED_LANGUAGES).anyMatch(lang::equals));
     }
 }

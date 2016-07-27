@@ -168,9 +168,9 @@ public final class SuggestUtil {
         return normalizerChain;
     }
 
-    public static AnalyzerSettings.DefaultAnalyzer createDefaultAnalyzer(final Client client, final SuggestSettings settings) {
+    public static AnalyzerSettings.DefaultContentsAnalyzer createDefaultAnalyzer(final Client client, final SuggestSettings settings) {
         final AnalyzerSettings analyzerSettings = settings.analyzer();
-        return analyzerSettings.new DefaultAnalyzer();
+        return analyzerSettings.new DefaultContentsAnalyzer();
     }
 
     public static List<String> getAsList(final Object value) {
@@ -213,5 +213,9 @@ public final class SuggestUtil {
         }
 
         return true;
+    }
+
+    public static String detectLanguage(final String text) {
+        return "";
     }
 }

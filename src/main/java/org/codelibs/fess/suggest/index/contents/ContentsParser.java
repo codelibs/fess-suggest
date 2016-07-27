@@ -11,7 +11,7 @@ import org.codelibs.fess.suggest.normalizer.Normalizer;
 
 public interface ContentsParser {
     SuggestItem parseSearchWords(String[] words, String[][] readings, String[] fields, String[] tags, String roles[], long score,
-            ReadingConverter readingConverter, Normalizer normalizer, SuggestAnalyzer analyzer);
+            ReadingConverter readingConverter, Normalizer normalizer, SuggestAnalyzer analyzer, String lang);
 
     List<SuggestItem> parseQueryLog(QueryLog queryLog, String[] fields, String tagFieldName, String roleFieldName,
             ReadingConverter readingConverter, Normalizer normalizer);

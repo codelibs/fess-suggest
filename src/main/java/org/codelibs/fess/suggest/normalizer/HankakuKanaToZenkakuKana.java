@@ -14,7 +14,7 @@ public class HankakuKanaToZenkakuKana implements Normalizer {
     private static final char HANKAKU_KATAKANA_LAST_CHAR = HANKAKU_KATAKANA[HANKAKU_KATAKANA.length - 1];
 
     @Override
-    public String normalize(final String s) {
+    public String normalize(final String s, final String lang) {
         if (s.length() == 0) {
             return s;
         } else if (s.length() == 1) {

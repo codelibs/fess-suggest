@@ -308,7 +308,7 @@ public class SuggesterTest {
 
     @Test
     public void test_indexFromSearchWord() throws Exception {
-        SuggestIndexResponse indexResponse = suggester.indexer().indexFromSearchWord("検索　 エンジン", null, null, null, 1);
+        SuggestIndexResponse indexResponse = suggester.indexer().indexFromSearchWord("検索　 エンジン", null, null, null, 1, null);
         indexResponse.getErrors();
         suggester.refresh();
 
@@ -320,7 +320,7 @@ public class SuggesterTest {
 
     @Test
     public void test_indexFromSearchWordExclude() throws Exception {
-        SuggestIndexResponse indexResponse = suggester.indexer().indexFromSearchWord("。」", null, null, null, 1);
+        SuggestIndexResponse indexResponse = suggester.indexer().indexFromSearchWord("。」", null, null, null, 1, null);
         indexResponse.getErrors();
         assertEquals(0, indexResponse.getNumberOfSuggestDocs());
         suggester.refresh();

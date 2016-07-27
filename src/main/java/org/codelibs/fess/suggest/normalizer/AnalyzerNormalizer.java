@@ -17,10 +17,10 @@ public class AnalyzerNormalizer implements Normalizer {
     }
 
     @Override
-    public String normalize(String text) {
+    public String normalize(final String text, final String lang) {
         final AnalyzeResponse termResponse =
                 client.admin().indices().prepareAnalyze(analyzerSettings.getAnalyzerSettingsIndexName(), text)
-                        .setAnalyzer(analyzerSettings.getNormalizeAnalyzerName()).execute().actionGet();
+                        .setAnalyzer(analyzerSettings.getNormalizeAnalyzerName(lang)).execute().actionGet();
 
         final List<AnalyzeResponse.AnalyzeToken> termTokenList = termResponse.getTokens();
         if (termTokenList.isEmpty()) {

@@ -19,7 +19,7 @@ public class DefaultContentsParser implements ContentsParser {
     @Override
     public SuggestItem parseSearchWords(final String[] words, final String[][] readings, final String[] fields, final String[] tags,
             final String[] roles, final long score, final ReadingConverter readingConverter, final Normalizer normalizer,
-            final SuggestAnalyzer analyzer) {
+            final SuggestAnalyzer analyzer, final String lang) {
         try {
             final List<String> wordsList = new ArrayList<>(words.length);
             final List<String[]> readingList = new ArrayList<>(words.length);
@@ -29,8 +29,8 @@ public class DefaultContentsParser implements ContentsParser {
                     continue;
                 }
 
-                final String word = normalizer.normalize(words[i]);
-                final List<String> l = readingConverter.convert(word);
+                final String word = normalizer.normalize(words[i], lang);
+                final List<String> l = readingConverter.convert(word, lang);
                 if (readings != null && readings.length > i && readings[i].length > 0) {
                     for (final String reading : readings[i]) {
                         if (!l.contains(reading)) {
@@ -88,8 +88,9 @@ public class DefaultContentsParser implements ContentsParser {
 
                 final String[][] readings = new String[words.length][];
                 for (int j = 0; j < words.length; j++) {
-                    words[j] = normalizer.normalize(words[j]);
-                    final List<String> l = readingConverter.convert(words[j]);
+                    //TODO
+                    words[j] = normalizer.normalize(words[j], null);
+                    final List<String> l = readingConverter.convert(words[j], null);
                     readings[j] = l.toArray(new String[l.size()]);
                 }
 
@@ -115,7 +116,9 @@ public class DefaultContentsParser implements ContentsParser {
                 continue;
             }
             final String text = textObj.toString();
-            final List<AnalyzeResponse.AnalyzeToken> tokens = analyzer.analyze(text);
+            final String lang = SuggestUtil.detectLanguage(text);
+
+            final List<AnalyzeResponse.AnalyzeToken> tokens = analyzer.analyze(text, lang);
             try {
                 for (final AnalyzeResponse.AnalyzeToken token : tokens) {
                     final String word = token.getTerm();
@@ -125,8 +128,8 @@ public class DefaultContentsParser implements ContentsParser {
                     final String[] words = new String[] { word };
                     final String[][] readings = new String[words.length][];
                     for (int j = 0; j < words.length; j++) {
-                        words[j] = normalizer.normalize(words[j]);
-                        final List<String> l = readingConverter.convert(words[j]);
+                        words[j] = normalizer.normalize(words[j], lang);
+                        final List<String> l = readingConverter.convert(words[j], lang);
                         readings[j] = l.toArray(new String[l.size()]);
                     }
 
@@ -160,7 +163,7 @@ public class DefaultContentsParser implements ContentsParser {
     }
 
     protected boolean isExcludeSearchword(final String searchWord, final SuggestAnalyzer analyzer) {
-        final List<AnalyzeResponse.AnalyzeToken> tokens = analyzer.analyze(searchWord);
+        final List<AnalyzeResponse.AnalyzeToken> tokens = analyzer.analyze(searchWord, SuggestUtil.detectLanguage(searchWord));
         return tokens == null || tokens.size() == 0;
     }
 }

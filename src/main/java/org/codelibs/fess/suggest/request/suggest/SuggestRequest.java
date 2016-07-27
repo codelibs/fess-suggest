@@ -59,6 +59,10 @@ public class SuggestRequest extends Request<SuggestResponse> {
 
     private boolean skipDuplicateWords = true;
 
+    private String lang = null;
+
+    private boolean autoDetectLanguage = false;
+
     public void setIndex(final String index) {
         this.index = index;
     }
@@ -113,6 +117,14 @@ public class SuggestRequest extends Request<SuggestResponse> {
 
     public void setSkipDuplicateWords(final boolean skipDuplicateWords) {
         this.skipDuplicateWords = skipDuplicateWords;
+    }
+
+    public void setLang(final String lang) {
+        this.lang = lang;
+    }
+
+    public void setAutoDetectLanguage(final boolean autoDetectLanguage) {
+        this.autoDetectLanguage = autoDetectLanguage;
     }
 
     @Override
@@ -196,6 +208,10 @@ public class SuggestRequest extends Request<SuggestResponse> {
             if (Strings.isNullOrEmpty(q)) {
                 queryBuilder = QueryBuilders.matchAllQuery();
             } else {
+                if (lang == null && autoDetectLanguage) {
+                    lang = SuggestUtil.detectLanguage(q);
+                }
+
                 final boolean prefixQuery = !q.endsWith(" ") && !q.endsWith("　");
                 List<String> readingList = new ArrayList<>();
 
@@ -208,13 +224,14 @@ public class SuggestRequest extends Request<SuggestResponse> {
                     if (normalizer == null) {
                         query = queries[i];
                     } else {
-                        query = normalizer.normalize(queries[i]);
+                        query = normalizer.normalize(queries[i], lang);
                     }
 
                     if (readingConverter == null) {
                         readingList.add(query);
                     } else {
-                        readingList = readingConverter.convert(query);
+                        //TODO locale
+                        readingList = readingConverter.convert(query, lang);
                     }
 
                     final BoolQueryBuilder readingQueryBuilder = QueryBuilders.boolQuery().minimumNumberShouldMatch(1);
