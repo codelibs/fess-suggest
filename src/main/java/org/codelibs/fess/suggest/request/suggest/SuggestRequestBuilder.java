@@ -76,9 +76,4 @@ public class SuggestRequestBuilder extends RequestBuilder<SuggestRequest, Sugges
         request.setLang(lang);
         return this;
     }
-
-    public SuggestRequestBuilder setAutoDetectLanguage(final boolean autoDetectLanguage) {
-        request.setAutoDetectLanguage(autoDetectLanguage);
-        return this;
-    }
 }

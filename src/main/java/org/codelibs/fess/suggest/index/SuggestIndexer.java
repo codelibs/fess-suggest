@@ -40,6 +40,7 @@ public class SuggestIndexer {
     protected String[] supportedFields;
     protected String tagFieldName;
     protected String roleFieldName;
+    protected String langFieldName;
     protected String[] badWords;
     protected boolean parallel;
 
@@ -62,6 +63,7 @@ public class SuggestIndexer {
         this.badWords = settings.badword().get();
         this.tagFieldName = settings.getAsString(SuggestSettings.DefaultKeys.TAG_FIELD_NAME, StringUtil.EMPTY);
         this.roleFieldName = settings.getAsString(SuggestSettings.DefaultKeys.ROLE_FIELD_NAME, StringUtil.EMPTY);
+        this.langFieldName = settings.getAsString(SuggestSettings.DefaultKeys.LANG_FIELD_NAME, StringUtil.EMPTY);
         this.parallel = settings.getAsBoolean(SuggestSettings.DefaultKeys.PARALLEL_PROCESSING, false);
         this.readingConverter = readingConverter;
         this.normalizer = normalizer;
@@ -172,7 +174,7 @@ public class SuggestIndexer {
             }
             final SuggestItem[] array =
                     stream.flatMap(
-                            document -> contentsParser.parseDocument(document, supportedFields, tagFieldName, roleFieldName,
+                            document -> contentsParser.parseDocument(document, supportedFields, tagFieldName, roleFieldName, langFieldName,
                                     readingConverter, normalizer, analyzer).stream()).toArray(n -> new SuggestItem[n]);
             final SuggestIndexResponse response = index(array);
             return new SuggestIndexResponse(array.length, documents.length, response.getErrors(), System.currentTimeMillis() - start);

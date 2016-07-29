@@ -100,8 +100,8 @@ public class AnalyzerSettings {
     public class DefaultContentsAnalyzer implements SuggestAnalyzer {
         public List<AnalyzeResponse.AnalyzeToken> analyze(final String text, final String lang) {
             final AnalyzeResponse analyzeResponse =
-                    client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text).setAnalyzer(getContentsAnalyzerName(lang)).execute()
-                            .actionGet();
+                    client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text).setAnalyzer(getContentsAnalyzerName(lang))
+                            .execute().actionGet();
             return analyzeResponse.getTokens();
         }
     }

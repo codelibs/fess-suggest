@@ -25,7 +25,7 @@ public class DefaultContentsParser implements ContentsParser {
             final List<String[]> readingList = new ArrayList<>(words.length);
 
             for (int i = 0; i < words.length; i++) {
-                if (isExcludeSearchword(words[i], analyzer)) {
+                if (isExcludeSearchword(words[i], lang, analyzer)) {
                     continue;
                 }
 
@@ -105,7 +105,8 @@ public class DefaultContentsParser implements ContentsParser {
 
     @Override
     public List<SuggestItem> parseDocument(final Map<String, Object> document, final String[] fields, final String tagFieldName,
-            final String roleFieldName, final ReadingConverter readingConverter, final Normalizer normalizer, final SuggestAnalyzer analyzer) {
+            final String roleFieldName, final String langFieldName, final ReadingConverter readingConverter, final Normalizer normalizer,
+            final SuggestAnalyzer analyzer) {
         List<SuggestItem> items = null;
         final String[] tags = getRoleFromDoc(document, tagFieldName);
         final String[] roles = getRoleFromDoc(document, roleFieldName);
@@ -116,7 +117,7 @@ public class DefaultContentsParser implements ContentsParser {
                 continue;
             }
             final String text = textObj.toString();
-            final String lang = SuggestUtil.detectLanguage(text);
+            final String lang = document.get(langFieldName) == null ? null : document.get(langFieldName).toString();
 
             final List<AnalyzeResponse.AnalyzeToken> tokens = analyzer.analyze(text, lang);
             try {
@@ -162,8 +163,8 @@ public class DefaultContentsParser implements ContentsParser {
         return null;
     }
 
-    protected boolean isExcludeSearchword(final String searchWord, final SuggestAnalyzer analyzer) {
-        final List<AnalyzeResponse.AnalyzeToken> tokens = analyzer.analyze(searchWord, SuggestUtil.detectLanguage(searchWord));
+    protected boolean isExcludeSearchword(final String searchWord, final String lang, final SuggestAnalyzer analyzer) {
+        final List<AnalyzeResponse.AnalyzeToken> tokens = analyzer.analyze(searchWord, lang);
         return tokens == null || tokens.size() == 0;
     }
 }

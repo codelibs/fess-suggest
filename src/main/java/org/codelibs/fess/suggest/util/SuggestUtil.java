@@ -214,8 +214,4 @@ public final class SuggestUtil {
 
         return true;
     }
-
-    public static String detectLanguage(final String text) {
-        return "";
-    }
 }

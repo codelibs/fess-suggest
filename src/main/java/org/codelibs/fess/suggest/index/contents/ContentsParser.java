@@ -17,5 +17,5 @@ public interface ContentsParser {
             ReadingConverter readingConverter, Normalizer normalizer);
 
     List<SuggestItem> parseDocument(Map<String, Object> document, String[] fields, String tagFieldName, String roleFieldName,
-            ReadingConverter readingConverter, Normalizer normalizer, SuggestAnalyzer analyzer);
+            String langFieldName, ReadingConverter readingConverter, Normalizer normalizer, SuggestAnalyzer analyzer);
 }
