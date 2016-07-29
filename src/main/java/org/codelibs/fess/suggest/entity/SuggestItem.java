@@ -188,7 +188,14 @@ public class SuggestItem implements Serializable {
         map.put(FieldNames.TEXT, text);
 
         for (int i = 0; i < readings.length; i++) {
-            map.put(FieldNames.READING_PREFIX + i, readings[i]);
+            final Object readingObj = existingSource.get(FieldNames.READING_PREFIX + i);
+            if (readingObj == null) {
+                map.put(FieldNames.READING_PREFIX + i, readings[i]);
+            } else {
+                final List<String> existingValues = (List) readingObj;
+                concatValues(existingValues, readings[i]);
+                map.put(FieldNames.READING_PREFIX + i, existingValues);
+            }
         }
 
         final Object fieldsObj = existingSource.get(FieldNames.FIELDS);

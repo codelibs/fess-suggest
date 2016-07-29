@@ -59,7 +59,7 @@ public class SuggesterBuilderTest extends TestCase {
             }
 
             @Override
-            public List<String> convert(String text, String lang) throws IOException {
+            public List<String> convert(String text, String... langs) throws IOException {
                 return null;
             }
         };

@@ -17,16 +17,39 @@ public class AnalyzerNormalizer implements Normalizer {
     }
 
     @Override
-    public String normalize(final String text, final String lang) {
-        final AnalyzeResponse termResponse =
-                client.admin().indices().prepareAnalyze(analyzerSettings.getAnalyzerSettingsIndexName(), text)
-                        .setAnalyzer(analyzerSettings.getNormalizeAnalyzerName(lang)).execute().actionGet();
+    public String normalize(final String text, final String... langs) {
+        final Normalizer normalizer;
+        if (langs == null || langs.length == 0) {
+            normalizer = new LangAnalyzerNormalizer(null);
+        } else {
+            final NormalizerChain chain = new NormalizerChain();
+            for (final String lang : langs) {
+                chain.add(new LangAnalyzerNormalizer(lang));
+            }
+            normalizer = chain;
+        }
+        return normalizer.normalize(text, null);
+    }
 
-        final List<AnalyzeResponse.AnalyzeToken> termTokenList = termResponse.getTokens();
-        if (termTokenList.isEmpty()) {
-            return text;
+    protected class LangAnalyzerNormalizer implements Normalizer {
+        protected final String lang;
+
+        protected LangAnalyzerNormalizer(final String lang) {
+            this.lang = lang;
         }
 
-        return termTokenList.get(0).getTerm();
+        @Override
+        public String normalize(final String text, final String... dummy) {
+            final AnalyzeResponse termResponse =
+                    client.admin().indices().prepareAnalyze(analyzerSettings.getAnalyzerSettingsIndexName(), text)
+                            .setAnalyzer(analyzerSettings.getNormalizeAnalyzerName(lang)).execute().actionGet();
+
+            final List<AnalyzeResponse.AnalyzeToken> termTokenList = termResponse.getTokens();
+            if (termTokenList.isEmpty()) {
+                return text;
+            }
+
+            return termTokenList.get(0).getTerm();
+        }
     }
 }

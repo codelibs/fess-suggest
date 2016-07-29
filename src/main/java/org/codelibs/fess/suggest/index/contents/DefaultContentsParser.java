@@ -19,18 +19,18 @@ public class DefaultContentsParser implements ContentsParser {
     @Override
     public SuggestItem parseSearchWords(final String[] words, final String[][] readings, final String[] fields, final String[] tags,
             final String[] roles, final long score, final ReadingConverter readingConverter, final Normalizer normalizer,
-            final SuggestAnalyzer analyzer, final String lang) {
+            final SuggestAnalyzer analyzer, final String[] langs) {
         try {
             final List<String> wordsList = new ArrayList<>(words.length);
             final List<String[]> readingList = new ArrayList<>(words.length);
 
             for (int i = 0; i < words.length; i++) {
-                if (isExcludeSearchword(words[i], lang, analyzer)) {
+                if (isExcludeSearchword(words[i], langs, analyzer)) {
                     continue;
                 }
 
-                final String word = normalizer.normalize(words[i], lang);
-                final List<String> l = readingConverter.convert(word, lang);
+                final String word = normalizer.normalize(words[i], langs);
+                final List<String> l = readingConverter.convert(word, langs);
                 if (readings != null && readings.length > i && readings[i].length > 0) {
                     for (final String reading : readings[i]) {
                         if (!l.contains(reading)) {
@@ -163,8 +163,19 @@ public class DefaultContentsParser implements ContentsParser {
         return null;
     }
 
-    protected boolean isExcludeSearchword(final String searchWord, final String lang, final SuggestAnalyzer analyzer) {
-        final List<AnalyzeResponse.AnalyzeToken> tokens = analyzer.analyze(searchWord, lang);
-        return tokens == null || tokens.size() == 0;
+    protected boolean isExcludeSearchword(final String searchWord, final String[] langs, final SuggestAnalyzer analyzer) {
+        if (langs == null || langs.length == 0) {
+            final List<AnalyzeResponse.AnalyzeToken> tokens = analyzer.analyze(searchWord, null);
+            return tokens == null || tokens.size() == 0;
+        } else {
+            for (final String lang : langs) {
+                final List<AnalyzeResponse.AnalyzeToken> tokens = analyzer.analyze(searchWord, lang);
+                if (tokens != null && tokens.size() > 0) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
     }
 }

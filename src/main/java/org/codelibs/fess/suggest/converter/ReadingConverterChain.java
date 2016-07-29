@@ -17,7 +17,7 @@ public class ReadingConverterChain implements ReadingConverter {
     }
 
     @Override
-    public List<String> convert(final String text, final String lang) throws IOException {
+    public List<String> convert(final String text, final String... lang) throws IOException {
         final Queue<String> queue = new LinkedList<>();
         queue.add(text);
         final List<String> convertedTexts = new ArrayList<>(getMaxReadingNum());

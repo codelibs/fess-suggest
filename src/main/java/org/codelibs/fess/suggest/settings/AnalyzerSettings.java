@@ -20,7 +20,7 @@ public class AnalyzerSettings {
     protected final Client client;
     protected final String analyzerSettingsIndexName;
 
-    private static final String[] SUPPORTED_LANGUAGES = new String[] { "en", "ja" };
+    public static final String[] SUPPORTED_LANGUAGES = new String[] { "en", "ja" };
 
     public AnalyzerSettings(final Client client, final String settingsIndexName) {
         this.client = client;
