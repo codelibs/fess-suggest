@@ -184,6 +184,7 @@ public class PopularWordsRequest extends Request<PopularWordsResponse> {
                 final List<String> tags = SuggestUtil.getAsList(source.get(FieldNames.TAGS));
                 final List<String> roles = SuggestUtil.getAsList(source.get(FieldNames.ROLES));
                 final List<String> kinds = SuggestUtil.getAsList(source.get(FieldNames.KINDS));
+                final List<String> languages = SuggestUtil.getAsList(source.get(FieldNames.LANGUAGES));
                 SuggestItem.Kind kind;
                 long freq;
                 if (SuggestItem.Kind.USER.toString().equals(kinds.get(0))) {
@@ -199,7 +200,8 @@ public class PopularWordsRequest extends Request<PopularWordsResponse> {
 
                 items.add(new SuggestItem(text.split(" "), readings.toArray(new String[readings.size()][]), fields
                         .toArray(new String[fields.size()]), freq, Float.valueOf(source.get(FieldNames.USER_BOOST).toString()), tags
-                        .toArray(new String[tags.size()]), roles.toArray(new String[tags.size()]), kind));
+                        .toArray(new String[tags.size()]), roles.toArray(new String[tags.size()]), languages.toArray(new String[languages
+                        .size()]), kind));
             }
         }
 

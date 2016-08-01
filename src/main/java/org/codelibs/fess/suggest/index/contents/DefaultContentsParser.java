@@ -19,18 +19,18 @@ public class DefaultContentsParser implements ContentsParser {
     @Override
     public SuggestItem parseSearchWords(final String[] words, final String[][] readings, final String[] fields, final String[] tags,
             final String[] roles, final long score, final ReadingConverter readingConverter, final Normalizer normalizer,
-            final SuggestAnalyzer analyzer) {
+            final SuggestAnalyzer analyzer, final String[] langs) {
         try {
             final List<String> wordsList = new ArrayList<>(words.length);
             final List<String[]> readingList = new ArrayList<>(words.length);
 
             for (int i = 0; i < words.length; i++) {
-                if (isExcludeSearchword(words[i], analyzer)) {
+                if (isExcludeSearchword(words[i], langs, analyzer)) {
                     continue;
                 }
 
-                final String word = normalizer.normalize(words[i]);
-                final List<String> l = readingConverter.convert(word);
+                final String word = normalizer.normalize(words[i], langs);
+                final List<String> l = readingConverter.convert(word, langs);
                 if (readings != null && readings.length > i && readings[i].length > 0) {
                     for (final String reading : readings[i]) {
                         if (!l.contains(reading)) {
@@ -46,7 +46,7 @@ public class DefaultContentsParser implements ContentsParser {
                 return null;
             }
             return new SuggestItem(wordsList.toArray(new String[wordsList.size()]), readingList.toArray(new String[readingList.size()][]),
-                    fields, score, -1, tags, roles, SuggestItem.Kind.QUERY);
+                    fields, score, -1, tags, roles, langs, SuggestItem.Kind.QUERY);
         } catch (final IOException e) {
             throw new SuggesterException("Failed to SuggestItem from search words.", e);
         }
@@ -88,12 +88,13 @@ public class DefaultContentsParser implements ContentsParser {
 
                 final String[][] readings = new String[words.length][];
                 for (int j = 0; j < words.length; j++) {
-                    words[j] = normalizer.normalize(words[j]);
-                    final List<String> l = readingConverter.convert(words[j]);
+                    //TODO
+                    words[j] = normalizer.normalize(words[j], null);
+                    final List<String> l = readingConverter.convert(words[j], null);
                     readings[j] = l.toArray(new String[l.size()]);
                 }
 
-                items.add(new SuggestItem(words, readings, new String[] { field }, 1L, -1, tags, roles, SuggestItem.Kind.QUERY));
+                items.add(new SuggestItem(words, readings, new String[] { field }, 1L, -1, tags, roles, null, SuggestItem.Kind.QUERY));
             }
         } catch (final IOException e) {
             throw new SuggesterException("Failed to create SuggestItem from queryLog.", e);
@@ -104,7 +105,8 @@ public class DefaultContentsParser implements ContentsParser {
 
     @Override
     public List<SuggestItem> parseDocument(final Map<String, Object> document, final String[] fields, final String tagFieldName,
-            final String roleFieldName, final ReadingConverter readingConverter, final Normalizer normalizer, final SuggestAnalyzer analyzer) {
+            final String roleFieldName, final String langFieldName, final ReadingConverter readingConverter, final Normalizer normalizer,
+            final SuggestAnalyzer analyzer) {
         List<SuggestItem> items = null;
         final String[] tags = getRoleFromDoc(document, tagFieldName);
         final String[] roles = getRoleFromDoc(document, roleFieldName);
@@ -115,7 +117,9 @@ public class DefaultContentsParser implements ContentsParser {
                 continue;
             }
             final String text = textObj.toString();
-            final List<AnalyzeResponse.AnalyzeToken> tokens = analyzer.analyze(text);
+            final String lang = document.get(langFieldName) == null ? null : document.get(langFieldName).toString();
+
+            final List<AnalyzeResponse.AnalyzeToken> tokens = analyzer.analyze(text, lang);
             try {
                 for (final AnalyzeResponse.AnalyzeToken token : tokens) {
                     final String word = token.getTerm();
@@ -125,8 +129,8 @@ public class DefaultContentsParser implements ContentsParser {
                     final String[] words = new String[] { word };
                     final String[][] readings = new String[words.length][];
                     for (int j = 0; j < words.length; j++) {
-                        words[j] = normalizer.normalize(words[j]);
-                        final List<String> l = readingConverter.convert(words[j]);
+                        words[j] = normalizer.normalize(words[j], lang);
+                        final List<String> l = readingConverter.convert(words[j], lang);
                         readings[j] = l.toArray(new String[l.size()]);
                     }
 
@@ -134,7 +138,9 @@ public class DefaultContentsParser implements ContentsParser {
                         items = new ArrayList<>(text.length() * fields.length / field.length());
                     }
 
-                    items.add(new SuggestItem(words, readings, new String[] { field }, 1L, -1, tags, roles, SuggestItem.Kind.DOCUMENT));
+                    final String[] langs = lang == null ? new String[] {} : new String[] { lang };
+                    items.add(new SuggestItem(words, readings, new String[] { field }, 1L, -1, tags, roles, langs,
+                            SuggestItem.Kind.DOCUMENT));
                 }
             } catch (final IOException e) {
                 throw new SuggesterException("Failed to create SuggestItem from document.", e);
@@ -159,8 +165,19 @@ public class DefaultContentsParser implements ContentsParser {
         return null;
     }
 
-    protected boolean isExcludeSearchword(final String searchWord, final SuggestAnalyzer analyzer) {
-        final List<AnalyzeResponse.AnalyzeToken> tokens = analyzer.analyze(searchWord);
-        return tokens == null || tokens.size() == 0;
+    protected boolean isExcludeSearchword(final String searchWord, final String[] langs, final SuggestAnalyzer analyzer) {
+        if (langs == null || langs.length == 0) {
+            final List<AnalyzeResponse.AnalyzeToken> tokens = analyzer.analyze(searchWord, null);
+            return tokens == null || tokens.size() == 0;
+        } else {
+            for (final String lang : langs) {
+                final List<AnalyzeResponse.AnalyzeToken> tokens = analyzer.analyze(searchWord, lang);
+                if (tokens != null && tokens.size() > 0) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
     }
 }

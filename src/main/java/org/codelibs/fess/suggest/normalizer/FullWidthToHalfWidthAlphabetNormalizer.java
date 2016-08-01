@@ -2,7 +2,7 @@ package org.codelibs.fess.suggest.normalizer;
 
 public class FullWidthToHalfWidthAlphabetNormalizer implements Normalizer {
     @Override
-    public String normalize(final String text) {
+    public String normalize(final String text, final String... langs) {
         final char[] chars = new char[text.length()];
         for (int i = 0; i < chars.length; i++) {
             final char c = text.charAt(i);
