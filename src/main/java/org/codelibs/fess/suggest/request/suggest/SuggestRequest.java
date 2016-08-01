@@ -47,6 +47,8 @@ public class SuggestRequest extends Request<SuggestResponse> {
 
     private final List<String> kinds = new ArrayList<>();
 
+    private final List<String> languages = new ArrayList<>();
+
     private boolean suggestDetail = true;
 
     private ReadingConverter readingConverter;
@@ -58,8 +60,6 @@ public class SuggestRequest extends Request<SuggestResponse> {
     private boolean matchWordFirst = true;
 
     private boolean skipDuplicateWords = true;
-
-    private String lang = null;
 
     public void setIndex(final String index) {
         this.index = index;
@@ -117,8 +117,8 @@ public class SuggestRequest extends Request<SuggestResponse> {
         this.skipDuplicateWords = skipDuplicateWords;
     }
 
-    public void setLang(final String lang) {
-        this.lang = lang;
+    public void addLang(final String lang) {
+        this.languages.add(lang);
     }
 
     @Override
@@ -197,13 +197,14 @@ public class SuggestRequest extends Request<SuggestResponse> {
 
     protected QueryBuilder buildQuery(final String q) {
         try {
-
             final QueryBuilder queryBuilder;
             if (Strings.isNullOrEmpty(q)) {
                 queryBuilder = QueryBuilders.matchAllQuery();
             } else {
                 final boolean prefixQuery = !q.endsWith(" ") && !q.endsWith("　");
                 List<String> readingList = new ArrayList<>();
+
+                final String[] langsArray = languages.toArray(new String[languages.size()]);
 
                 final BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
                 final String[] queries = q.replaceAll("　", " ").replaceAll(" +", " ").trim().split(" ");
@@ -214,14 +215,14 @@ public class SuggestRequest extends Request<SuggestResponse> {
                     if (normalizer == null) {
                         query = queries[i];
                     } else {
-                        query = normalizer.normalize(queries[i], lang);
+                        query = normalizer.normalize(queries[i], langsArray);
                     }
 
                     if (readingConverter == null) {
                         readingList.add(query);
                     } else {
                         //TODO locale
-                        readingList = readingConverter.convert(query, lang);
+                        readingList = readingConverter.convert(query, langsArray);
                     }
 
                     final BoolQueryBuilder readingQueryBuilder = QueryBuilders.boolQuery().minimumNumberShouldMatch(1);
@@ -322,6 +323,7 @@ public class SuggestRequest extends Request<SuggestResponse> {
                 final List<String> tags = SuggestUtil.getAsList(source.get(FieldNames.TAGS));
                 final List<String> roles = SuggestUtil.getAsList(source.get(FieldNames.ROLES));
                 final List<String> kinds = SuggestUtil.getAsList(source.get(FieldNames.KINDS));
+                final List<String> language = SuggestUtil.getAsList(source.get(FieldNames.LANGUAGES));
                 SuggestItem.Kind kind;
                 long freq;
                 if (SuggestItem.Kind.USER.toString().equals(kinds.get(0))) {
@@ -338,7 +340,7 @@ public class SuggestRequest extends Request<SuggestResponse> {
                 SuggestItem item =
                         new SuggestItem(text.split(" "), readings.toArray(new String[readings.size()][]), fields.toArray(new String[fields
                                 .size()]), freq, Float.valueOf(source.get(FieldNames.USER_BOOST).toString()), tags.toArray(new String[tags
-                                .size()]), roles.toArray(new String[tags.size()]), kind);
+                                .size()]), roles.toArray(new String[tags.size()]), language.toArray(new String[language.size()]), kind);
                 if (isFirstWords) {
                     firstItems.add(item);
                 } else {

@@ -72,8 +72,8 @@ public class SuggestRequestBuilder extends RequestBuilder<SuggestRequest, Sugges
         return this;
     }
 
-    public SuggestRequestBuilder setLang(final String lang) {
-        request.setLang(lang);
+    public SuggestRequestBuilder addLang(final String lang) {
+        request.addLang(lang);
         return this;
     }
 }

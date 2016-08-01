@@ -46,7 +46,7 @@ public class DefaultContentsParser implements ContentsParser {
                 return null;
             }
             return new SuggestItem(wordsList.toArray(new String[wordsList.size()]), readingList.toArray(new String[readingList.size()][]),
-                    fields, score, -1, tags, roles, SuggestItem.Kind.QUERY);
+                    fields, score, -1, tags, roles, langs, SuggestItem.Kind.QUERY);
         } catch (final IOException e) {
             throw new SuggesterException("Failed to SuggestItem from search words.", e);
         }
@@ -94,7 +94,7 @@ public class DefaultContentsParser implements ContentsParser {
                     readings[j] = l.toArray(new String[l.size()]);
                 }
 
-                items.add(new SuggestItem(words, readings, new String[] { field }, 1L, -1, tags, roles, SuggestItem.Kind.QUERY));
+                items.add(new SuggestItem(words, readings, new String[] { field }, 1L, -1, tags, roles, null, SuggestItem.Kind.QUERY));
             }
         } catch (final IOException e) {
             throw new SuggesterException("Failed to create SuggestItem from queryLog.", e);
@@ -138,7 +138,9 @@ public class DefaultContentsParser implements ContentsParser {
                         items = new ArrayList<>(text.length() * fields.length / field.length());
                     }
 
-                    items.add(new SuggestItem(words, readings, new String[] { field }, 1L, -1, tags, roles, SuggestItem.Kind.DOCUMENT));
+                    final String[] langs = lang == null ? new String[] {} : new String[] { lang };
+                    items.add(new SuggestItem(words, readings, new String[] { field }, 1L, -1, tags, roles, langs,
+                            SuggestItem.Kind.DOCUMENT));
                 }
             } catch (final IOException e) {
                 throw new SuggesterException("Failed to create SuggestItem from document.", e);

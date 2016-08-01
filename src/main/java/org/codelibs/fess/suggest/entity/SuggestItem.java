@@ -51,6 +51,8 @@ public class SuggestItem implements Serializable {
 
     private String[] roles;
 
+    private String[] languages;
+
     private Kind kind;
 
     private Map<String, Object> emptySource;
@@ -61,7 +63,7 @@ public class SuggestItem implements Serializable {
     }
 
     public SuggestItem(final String[] text, final String[][] readings, final String[] fields, final long score, final float userBoost,
-            @Nullable final String[] tags, @Nullable final String[] roles, final Kind kind) {
+            @Nullable final String[] tags, @Nullable final String[] roles, @Nullable final String[] languages, final Kind kind) {
         this.text = String.join(SuggestConstants.TEXT_SEPARATOR, text);
         this.readings = readings;
         this.fields = fields != null ? fields : new String[] {};
@@ -73,6 +75,8 @@ public class SuggestItem implements Serializable {
             this.roles = new String[roles.length];
             System.arraycopy(roles, 0, this.roles, 0, roles.length);
         }
+
+        this.languages = languages != null ? languages : new String[] {};
 
         this.kind = kind;
         if (kind == Kind.QUERY) {
@@ -109,6 +113,10 @@ public class SuggestItem implements Serializable {
 
     public String[] getRoles() {
         return roles;
+    }
+
+    public String[] getLanguages() {
+        return languages;
     }
 
     public String[] getFields() {
@@ -150,6 +158,7 @@ public class SuggestItem implements Serializable {
         map.put(FieldNames.FIELDS, new String[] {});
         map.put(FieldNames.TAGS, new String[] {});
         map.put(FieldNames.ROLES, new String[] {});
+        map.put(FieldNames.LANGUAGES, new String[] {});
         map.put(FieldNames.KINDS, new String[] {});
         map.put(FieldNames.SCORE, 1.0F);
         map.put(FieldNames.QUERY_FREQ, 0L);
@@ -174,6 +183,7 @@ public class SuggestItem implements Serializable {
         map.put(FieldNames.FIELDS, fields);
         map.put(FieldNames.TAGS, tags);
         map.put(FieldNames.ROLES, roles);
+        map.put(FieldNames.LANGUAGES, languages);
         map.put(FieldNames.KINDS, new String[] { kind.toString() });
         map.put(FieldNames.QUERY_FREQ, queryFreq);
         map.put(FieldNames.DOC_FREQ, docFreq);
@@ -220,12 +230,22 @@ public class SuggestItem implements Serializable {
 
         final Object rolesObj = existingSource.get(FieldNames.ROLES);
         if (rolesObj == null) {
-            map.put(FieldNames.ROLES, rolesObj);
+            map.put(FieldNames.ROLES, roles);
         } else {
             @SuppressWarnings("unchecked")
-            final List<String> existingFields = (List) rolesObj;
-            concatValues(existingFields, roles);
-            map.put(FieldNames.ROLES, existingFields);
+            final List<String> existingValues = (List) rolesObj;
+            concatValues(existingValues, roles);
+            map.put(FieldNames.ROLES, existingValues);
+        }
+
+        final Object langsObj = existingSource.get(FieldNames.LANGUAGES);
+        if (langsObj == null) {
+            map.put(FieldNames.LANGUAGES, languages);
+        } else {
+            @SuppressWarnings("unchecked")
+            final List<String> existingValues = (List) langsObj;
+            concatValues(existingValues, languages);
+            map.put(FieldNames.LANGUAGES, existingValues);
         }
 
         final Object kindsObj = existingSource.get(FieldNames.KINDS);
@@ -323,6 +343,17 @@ public class SuggestItem implements Serializable {
             }
         }
         mergedItem.tags = tagList.toArray(new String[tagList.size()]);
+
+        final List<String> langList = new ArrayList<>(item1.getLanguages().length + item2.getLanguages().length);
+        for (final String lang : item1.getLanguages()) {
+            langList.add(lang);
+        }
+        for (final String lang : item2.getLanguages()) {
+            if (!langList.contains(lang)) {
+                langList.add(lang);
+            }
+        }
+        mergedItem.languages = langList.toArray(new String[langList.size()]);
 
         final List<String> roleList = new ArrayList<>(item1.getRoles().length + item2.getRoles().length);
         for (final String role : item1.getRoles()) {

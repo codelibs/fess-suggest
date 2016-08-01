@@ -60,7 +60,7 @@ public class ElevateWord implements Serializable {
     public SuggestItem toSuggestItem() {
         return new SuggestItem(new String[] { this.getElevateWord() }, new String[][] { this.getReadings().toArray(
                 new String[this.getReadings().size()]) }, fields.toArray(new String[fields.size()]), 1, this.getBoost(), this.getTags()
-                .toArray(new String[this.getTags().size()]), this.getRoles().toArray(new String[this.getRoles().size()]),
+                .toArray(new String[this.getTags().size()]), this.getRoles().toArray(new String[this.getRoles().size()]), null,
                 SuggestItem.Kind.USER);
     }
 }

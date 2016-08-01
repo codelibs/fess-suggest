@@ -535,7 +535,7 @@ public class SuggesterTest {
         String[] tags = new String[] { "tag1", "tag2" };
         String[] roles = new String[] { SuggestConstants.DEFAULT_ROLE, "role1", "role2", "role3" };
         queryItems[0] =
-                new SuggestItem(new String[] { "検索", "エンジン" }, readings, new String[] { "content" }, 1, -1, tags, roles,
+                new SuggestItem(new String[] { "検索", "エンジン" }, readings, new String[] { "content" }, 1, -1, tags, roles, null,
                         SuggestItem.Kind.DOCUMENT);
 
         String[][] readings2 = new String[2][];
@@ -544,7 +544,7 @@ public class SuggesterTest {
         String[] tags2 = new String[] { "tag3" };
         String[] roles2 = new String[] { SuggestConstants.DEFAULT_ROLE, "role4" };
         queryItems[1] =
-                new SuggestItem(new String[] { "全文", "検索" }, readings2, new String[] { "content" }, 1, -1, tags2, roles2,
+                new SuggestItem(new String[] { "全文", "検索" }, readings2, new String[] { "content" }, 1, -1, tags2, roles2, null,
                         SuggestItem.Kind.DOCUMENT);
 
         String[][] readings2Query = new String[2][];
@@ -554,7 +554,7 @@ public class SuggesterTest {
         String[] roles2Query = new String[] { SuggestConstants.DEFAULT_ROLE, "role5" };
         queryItems[2] =
                 new SuggestItem(new String[] { "全文", "検索" }, readings2Query, new String[] { "content" }, 1, -1, tags2Query, roles2Query,
-                        SuggestItem.Kind.QUERY);
+                        null, SuggestItem.Kind.QUERY);
 
         return queryItems;
     }
@@ -567,7 +567,7 @@ public class SuggesterTest {
             readings[0] = new String[] { "fuga" };
             String[] tags = new String[] { "tag1", "tag2" };
             String[] roles = new String[] { SuggestConstants.DEFAULT_ROLE, "role1", "role2", "role3" };
-            items.add(new SuggestItem(new String[] { "ドキュメント" + i }, readings, new String[] { "content" }, 15 + i, -1, tags, roles,
+            items.add(new SuggestItem(new String[] { "ドキュメント" + i }, readings, new String[] { "content" }, 15 + i, -1, tags, roles, null,
                     SuggestItem.Kind.DOCUMENT));
         }
 
@@ -576,7 +576,7 @@ public class SuggesterTest {
             readings[0] = new String[] { "fuga" };
             String[] tags = new String[] { "tag1", "tag2" };
             String[] roles = new String[] { SuggestConstants.DEFAULT_ROLE, "role1", "role2", "role3" };
-            items.add(new SuggestItem(new String[] { "クエリー" + i }, readings, new String[] { "content" }, 15 + i, -1, tags, roles,
+            items.add(new SuggestItem(new String[] { "クエリー" + i }, readings, new String[] { "content" }, 15 + i, -1, tags, roles, null,
                     SuggestItem.Kind.QUERY));
         }
 
@@ -587,7 +587,7 @@ public class SuggesterTest {
             String[] tags = new String[] { "tag1", "tag2" };
             String[] roles = new String[] { SuggestConstants.DEFAULT_ROLE, "role1", "role2", "role3" };
             items.add(new SuggestItem(new String[] { "マルチワード" + i, "fuga" }, readings, new String[] { "content" }, 15 + i, -1, tags, roles,
-                    SuggestItem.Kind.QUERY));
+                    null, SuggestItem.Kind.QUERY));
         }
 
         return items.toArray(new SuggestItem[items.size()]);
@@ -601,7 +601,7 @@ public class SuggesterTest {
             readings[0] = new String[] { "-aaa" };
             String[] tags = new String[] { "tag1", "tag2" };
             String[] roles = new String[] { SuggestConstants.DEFAULT_ROLE, "role1", "role2", "role3" };
-            items.add(new SuggestItem(new String[] { "ドキュメント" + 1 }, readings, new String[] { "content" }, 15, -1, tags, roles,
+            items.add(new SuggestItem(new String[] { "ドキュメント" + 1 }, readings, new String[] { "content" }, 15, -1, tags, roles, null,
                     SuggestItem.Kind.DOCUMENT));
         }
 
@@ -610,7 +610,7 @@ public class SuggesterTest {
             readings[0] = new String[] { "-aa-a" };
             String[] tags = new String[] { "tag1", "tag2" };
             String[] roles = new String[] { SuggestConstants.DEFAULT_ROLE, "role1", "role2", "role3" };
-            items.add(new SuggestItem(new String[] { "ドキュメント" + 2 }, readings, new String[] { "content" }, 15, -1, tags, roles,
+            items.add(new SuggestItem(new String[] { "ドキュメント" + 2 }, readings, new String[] { "content" }, 15, -1, tags, roles, null,
                     SuggestItem.Kind.DOCUMENT));
         }
         {
@@ -618,7 +618,7 @@ public class SuggesterTest {
             readings[0] = new String[] { "aa-a" };
             String[] tags = new String[] { "tag1", "tag2" };
             String[] roles = new String[] { SuggestConstants.DEFAULT_ROLE, "role1", "role2", "role3" };
-            items.add(new SuggestItem(new String[] { "ドキュメント" + 3 }, readings, new String[] { "content" }, 15, -1, tags, roles,
+            items.add(new SuggestItem(new String[] { "ドキュメント" + 3 }, readings, new String[] { "content" }, 15, -1, tags, roles, null,
                     SuggestItem.Kind.DOCUMENT));
         }
 
