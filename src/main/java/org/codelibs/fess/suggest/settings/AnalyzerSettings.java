@@ -9,6 +9,7 @@ import org.elasticsearch.client.Client;
 import java.io.*;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 public class AnalyzerSettings {
@@ -81,6 +82,7 @@ public class AnalyzerSettings {
     }
 
     protected String defaultAnalyzerSettings() throws IOException {
+        final String dictionaryPath = System.getProperty("fess.dictionary.path", StringUtil.EMPTY);
         BufferedReader br = null;
         final StringBuilder sb = new StringBuilder();
         try {
@@ -96,7 +98,7 @@ public class AnalyzerSettings {
                 br.close();
             }
         }
-        return sb.toString();
+        return sb.toString().replaceAll(Pattern.quote("${fess.dictionary.path}"), dictionaryPath);
     }
 
     public class DefaultContentsAnalyzer implements SuggestAnalyzer {
