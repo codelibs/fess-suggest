@@ -88,7 +88,7 @@ public class AnalyzerSettings {
         try {
             br =
                     new BufferedReader(new InputStreamReader(this.getClass().getClassLoader()
-                            .getResourceAsStream("fess-suggest-default-analyzer.json")));
+                            .getResourceAsStream("suggest/fess-suggest-default-analyzer.json")));
             String line;
             while ((line = br.readLine()) != null) {
                 sb.append(line);

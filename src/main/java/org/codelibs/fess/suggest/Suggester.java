@@ -72,7 +72,7 @@ public class Suggester {
                 try {
                     br =
                             new BufferedReader(new InputStreamReader(this.getClass().getClassLoader()
-                                    .getResourceAsStream("suggest-mappings.json")));
+                                    .getResourceAsStream("suggest/suggest-mappings.json")));
                     String line;
                     while ((line = br.readLine()) != null) {
                         sb.append(line);
