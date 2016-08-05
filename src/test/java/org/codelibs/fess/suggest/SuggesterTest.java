@@ -220,13 +220,13 @@ public class SuggesterTest {
 
         Map<String, Object> document = new HashMap<>();
         document.put(field, "The persimmon is delicious");
+        document.put("lang", "en");
         suggester.indexer().indexFromDocument(new Map[] { document });
         suggester.refresh();
 
-        SuggestResponse response1 = suggester.suggest().setQuery("The").setSuggestDetail(true).execute().getResponse();
-        assertEquals(1, response1.getNum());
-        assertEquals(1, response1.getTotal());
-        assertEquals("the", response1.getWords().get(0));
+        SuggestResponse response1 = suggester.suggest().setQuery("The").addLang("en").setSuggestDetail(true).execute().getResponse();
+        assertEquals(0, response1.getNum());
+        assertEquals(0, response1.getTotal());
 
         SuggestResponse response2 = suggester.suggest().setQuery("persimmon").setSuggestDetail(true).execute().getResponse();
         assertEquals(1, response2.getNum());

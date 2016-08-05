@@ -20,7 +20,9 @@ public class AnalyzerSettings {
     protected final Client client;
     protected final String analyzerSettingsIndexName;
 
-    public static final String[] SUPPORTED_LANGUAGES = new String[] { "en", "ja" };
+    public static final String[] SUPPORTED_LANGUAGES = new String[] { "ar", "bg", "bn", "ca", "cs", "da", "de", "el", "en", "es", "et",
+            "fa", "fi", "fr", "gu", "he", "hi", "hr", "hu", "id", "it", "ja", "ko", "lt", "lv", "mk", "ml", "nl", "no", "pa", "pl", "pt",
+            "ro", "ru", "si", "sq", "sv", "ta", "te", "th", "tl", "tr", "uk", "ur", "vi", "zh-cn", "zh-tw" };
 
     public AnalyzerSettings(final Client client, final String settingsIndexName) {
         this.client = client;
