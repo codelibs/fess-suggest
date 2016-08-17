@@ -93,7 +93,9 @@ public class AnalyzerConverter implements ReadingConverter {
             }
 
             final List<String> list = new ArrayList<>(1);
-            list.add(readingBuf.toString());
+            if (readingBuf.length() > 0) {
+                list.add(readingBuf.toString());
+            }
             return list;
         }
     }
