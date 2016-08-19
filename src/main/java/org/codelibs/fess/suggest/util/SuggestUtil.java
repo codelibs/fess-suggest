@@ -174,6 +174,10 @@ public final class SuggestUtil {
     }
 
     public static List<String> getAsList(final Object value) {
+        if (value == null) {
+            return new ArrayList<>();
+        }
+
         if (value instanceof String) {
             final List<String> list = new ArrayList<>();
             list.add(value.toString());
