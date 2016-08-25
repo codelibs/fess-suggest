@@ -14,5 +14,5 @@ public final class SuggestConstants {
 
     public static final String DEFAULT_ROLE = "_guest_";
 
-    public static final long ACTION_TIMEOUT = 10 * 1000;
+    public static final long ACTION_TIMEOUT = 10 * 1000L;
 }
