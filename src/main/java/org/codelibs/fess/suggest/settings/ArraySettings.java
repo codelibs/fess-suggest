@@ -12,6 +12,7 @@ import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.exception.SuggestSettingsException;
 import org.codelibs.fess.suggest.util.SuggestUtil;
+import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.client.Client;
@@ -154,10 +155,15 @@ public class ArraySettings {
         try {
             boolean empty;
             try {
-                empty = client.admin().indices().prepareGetMappings(index).setTypes(type).get().getMappings().isEmpty();
+                empty = client.admin().indices().prepareGetMappings(index).setTypes(type).execute().actionGet(SuggestConstants.ACTION_TIMEOUT).getMappings().isEmpty();
             } catch (final IndexNotFoundException e) {
                 empty = true;
-                client.admin().indices().prepareCreate(index).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
+                CreateIndexResponse response =
+                        client.admin().indices().prepareCreate(index).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
+                if (!response.isAcknowledged()) {
+                    throw new SuggestSettingsException("Failed to create " + index + "/" + type + " index.", e);
+                }
+                client.admin().cluster().prepareHealth(index).setWaitForYellowStatus().execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
             }
             if (empty) {
                 client.admin()
