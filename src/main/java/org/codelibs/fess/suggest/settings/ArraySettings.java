@@ -155,7 +155,9 @@ public class ArraySettings {
         try {
             boolean empty;
             try {
-                empty = client.admin().indices().prepareGetMappings(index).setTypes(type).execute().actionGet(SuggestConstants.ACTION_TIMEOUT).getMappings().isEmpty();
+                empty =
+                        client.admin().indices().prepareGetMappings(index).setTypes(type).execute()
+                                .actionGet(SuggestConstants.ACTION_TIMEOUT).getMappings().isEmpty();
             } catch (final IndexNotFoundException e) {
                 empty = true;
                 CreateIndexResponse response =
