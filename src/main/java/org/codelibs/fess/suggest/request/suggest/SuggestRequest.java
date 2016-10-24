@@ -340,7 +340,7 @@ public class SuggestRequest extends Request<SuggestResponse> {
                 SuggestItem item =
                         new SuggestItem(text.split(" "), readings.toArray(new String[readings.size()][]), fields.toArray(new String[fields
                                 .size()]), freq, Float.valueOf(source.get(FieldNames.USER_BOOST).toString()), tags.toArray(new String[tags
-                                .size()]), roles.toArray(new String[tags.size()]), language.toArray(new String[language.size()]), kind);
+                                .size()]), roles.toArray(new String[roles.size()]), language.toArray(new String[language.size()]), kind);
                 if (isFirstWords) {
                     firstItems.add(item);
                 } else {
