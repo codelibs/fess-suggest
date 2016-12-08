@@ -2,9 +2,10 @@ package org.codelibs.fess.suggest;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.concurrent.ExecutorService;
 
-import com.google.common.util.concurrent.AtomicDouble;
 import org.codelibs.core.lang.StringUtil;
 import org.codelibs.fess.suggest.analysis.SuggestAnalyzer;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
@@ -15,11 +16,11 @@ import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.request.popularwords.PopularWordsRequestBuilder;
 import org.codelibs.fess.suggest.request.suggest.SuggestRequestBuilder;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
+import org.elasticsearch.action.admin.indices.alias.Alias;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.indices.IndexAlreadyExistsException;
-import sun.misc.Contended;
 
 public class Suggester {
     protected final Client client;
@@ -83,9 +84,11 @@ public class Suggester {
                     }
                 }
                 try {
+                    final String indexName = index + '.' + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmm"));
                     final String mappingSource = sb.toString();
-                    client.admin().indices().prepareCreate(index).addMapping("_default_", mappingSource).addMapping(type, mappingSource)
-                            .execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
+                    client.admin().indices().prepareCreate(indexName).addMapping("_default_", mappingSource)
+                            .addMapping(type, mappingSource).addAlias(new Alias(index)).execute()
+                            .actionGet(SuggestConstants.ACTION_TIMEOUT);
 
                     client.admin().cluster().prepareHealth().setWaitForYellowStatus().execute()
                             .actionGet(SuggestConstants.ACTION_TIMEOUT * 10);
