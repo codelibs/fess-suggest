@@ -1,10 +1,9 @@
 {
   "dynamic_templates": [
     {
-      "not_analyzed": {
+      "strings": {
         "mapping": {
-          "index": "not_analyzed",
-          "type": "string"
+          "type": "keyword"
         },
         "match": "*",
         "match_mapping_type": "string"
@@ -20,34 +19,28 @@
       "type": "long"
     },
     "fields": {
-      "type": "string",
-      "index": "not_analyzed"
+      "type": "keyword"
     },
     "kinds": {
-      "type": "string",
-      "index": "not_analyzed"
+      "type": "keyword"
     },
     "queryFreq": {
       "type": "long"
     },
     "roles": {
-      "type": "string",
-      "index": "not_analyzed"
+      "type": "keyword"
     },
     "languages": {
-      "type": "string",
-      "index": "not_analyzed"
+      "type": "keyword"
     },
     "score": {
       "type": "double"
     },
     "tags": {
-      "type": "string",
-      "index": "not_analyzed"
+      "type": "keyword"
     },
     "text": {
-      "type": "string",
-      "index": "not_analyzed"
+      "type": "keyword"
     },
     "userBoost": {
       "type": "double"
