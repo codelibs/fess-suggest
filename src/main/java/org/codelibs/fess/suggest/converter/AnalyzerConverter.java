@@ -1,17 +1,15 @@
 package org.codelibs.fess.suggest.converter;
 
-import com.google.common.base.Strings;
 import com.ibm.icu.text.Transliterator;
-import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.codelibs.fess.suggest.settings.AnalyzerSettings;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.elasticsearch.action.admin.indices.analyze.AnalyzeResponse;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.common.Strings;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
 
 public class AnalyzerConverter implements ReadingConverter {
     protected final Client client;

@@ -1,6 +1,5 @@
 package org.codelibs.fess.suggest.request.popularwords;
 
-import com.google.common.base.Strings;
 import org.codelibs.fess.suggest.concurrent.Deferred;
 import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
@@ -12,6 +11,7 @@ import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.lucene.search.function.CombineFunction;
 import org.elasticsearch.index.query.*;
 import org.elasticsearch.index.query.functionscore.FunctionScoreQueryBuilder;
@@ -111,7 +111,7 @@ public class PopularWordsRequest extends Request<PopularWordsResponse> {
             }
 
             @Override
-            public void onFailure(final Throwable e) {
+            public void onFailure(final Exception e) {
                 deferred.reject(e);
             }
         });
@@ -125,7 +125,7 @@ public class PopularWordsRequest extends Request<PopularWordsResponse> {
     protected QueryBuilder buildQuery() {
         final BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery();
         queryBuilder.must(QueryBuilders.termQuery(FieldNames.KINDS, SuggestItem.Kind.QUERY.toString()));
-        queryBuilder.must(QueryBuilders.missingQuery(FieldNames.READING_PREFIX + "1"));
+        queryBuilder.mustNot(QueryBuilders.existsQuery(FieldNames.READING_PREFIX + "1"));
         queryBuilder.must(QueryBuilders.rangeQuery(FieldNames.QUERY_FREQ).gte(queryFreqThreshold));
         if (tags.size() > 0) {
             queryBuilder.must(QueryBuilders.termsQuery(FieldNames.TAGS, tags));
@@ -142,16 +142,16 @@ public class PopularWordsRequest extends Request<PopularWordsResponse> {
             queryBuilder.mustNot(QueryBuilders.termsQuery(FieldNames.TEXT, excludeWords));
         }
 
-        final FunctionScoreQueryBuilder functionScoreQueryBuilder = QueryBuilders.functionScoreQuery(queryBuilder);
-        functionScoreQueryBuilder.boostMode(CombineFunction.REPLACE).add(
-                ScoreFunctionBuilders.fieldValueFactorFunction(FieldNames.QUERY_FREQ));
-
+        ;
+        final FunctionScoreQueryBuilder functionScoreQueryBuilder =
+                QueryBuilders.functionScoreQuery(queryBuilder, ScoreFunctionBuilders.fieldValueFactorFunction(FieldNames.QUERY_FREQ));
+        functionScoreQueryBuilder.boostMode(CombineFunction.REPLACE);
         return functionScoreQueryBuilder;
     }
 
-    protected RescoreBuilder.QueryRescorer buildRescore() {
-        return RescoreBuilder.queryRescorer(QueryBuilders.functionScoreQuery().add(ScoreFunctionBuilders.randomFunction(seed)))
-                .setQueryWeight(0).setRescoreQueryWeight(1);
+    protected RescoreBuilder buildRescore() {
+        return RescoreBuilder.queryRescorer(QueryBuilders.functionScoreQuery(ScoreFunctionBuilders.randomFunction(seed))).setQueryWeight(0)
+                .setRescoreQueryWeight(1);
     }
 
     protected PopularWordsResponse createResponse(final SearchResponse searchResponse) {

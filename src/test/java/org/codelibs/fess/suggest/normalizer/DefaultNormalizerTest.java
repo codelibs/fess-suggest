@@ -20,10 +20,10 @@ public class DefaultNormalizerTest {
         runner = new ElasticsearchClusterRunner();
         runner.onBuild((number, settingsBuilder) -> {
             settingsBuilder.put("http.cors.enabled", true);
-            settingsBuilder.put("index.number_of_replicas", 0);
             settingsBuilder.putArray("discovery.zen.ping.unicast.hosts", "localhost:9301-9399");
-            settingsBuilder.put("plugin.types", "org.codelibs.elasticsearch.kuromoji.neologd.KuromojiNeologdPlugin");
-        }).build(newConfigs().clusterName("DefaultNormalizerTest").numOfNode(1));
+        }).build(
+                newConfigs().clusterName("DefaultNormalizerTest").numOfNode(1)
+                        .pluginTypes("org.codelibs.elasticsearch.kuromoji.neologd.KuromojiNeologdPlugin"));
         runner.ensureYellow();
 
         suggester = Suggester.builder().build(runner.client(), "SuggesterTest");

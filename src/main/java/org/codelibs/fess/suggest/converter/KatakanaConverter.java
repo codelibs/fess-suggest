@@ -4,17 +4,14 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-import com.google.common.base.Strings;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.util.TokenizerFactory;
-import org.codelibs.fess.suggest.constants.SuggestConstants;
 
 import com.ibm.icu.text.Transliterator;
+import org.elasticsearch.common.Strings;
 
 public class KatakanaConverter implements ReadingConverter {
 

@@ -9,6 +9,7 @@ import java.util.Map;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.exception.SuggestSettingsException;
 import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.action.support.WriteRequest;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
@@ -169,7 +170,8 @@ public class SuggestSettings {
     public void set(final String key, final Object value) {
         try {
             client.prepareUpdate().setIndex(settingsIndexName).setType(settingsTypeName).setId(settingsId).setDocAsUpsert(true)
-                    .setDoc(key, value).setRefresh(true).setRetryOnConflict(5).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
+                    .setDoc(key, value).setRefreshPolicy(WriteRequest.RefreshPolicy.WAIT_UNTIL).setRetryOnConflict(5).execute()
+                    .actionGet(SuggestConstants.ACTION_TIMEOUT);
         } catch (final Exception e) {
             throw new SuggestSettingsException("Failed to update suggestSettings.", e);
         }
@@ -178,8 +180,8 @@ public class SuggestSettings {
     public void set(final Map<String, Object> map) {
         try {
             client.prepareUpdate().setIndex(settingsIndexName).setType(settingsTypeName).setId(settingsId).setDocAsUpsert(true)
-                    .setRefresh(true).setDoc(JsonXContent.contentBuilder().map(map)).setRetryOnConflict(5).execute()
-                    .actionGet(SuggestConstants.ACTION_TIMEOUT);
+                    .setRefreshPolicy(WriteRequest.RefreshPolicy.WAIT_UNTIL).setDoc(JsonXContent.contentBuilder().map(map))
+                    .setRetryOnConflict(5).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
         } catch (final Exception e) {
             throw new SuggestSettingsException("Failed to update suggestSettings.", e);
         }
