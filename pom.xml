@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.codelibs.fess</groupId>
 	<artifactId>fess-suggest</artifactId>
-	<version>2.3.2-SNAPSHOT</version>
+	<version>5.0.0-SNAPSHOT</version>
 	<packaging>jar</packaging>
 	<name>fess-suggest</name>
 	<url>http://fess.codelibs.org/</url>
@@ -35,9 +35,8 @@
 	</parent>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<lucene.version>5.5.2</lucene.version>
-		<elasticsearch.version>2.4.2</elasticsearch.version>
-		<slf4j.version>1.7.7</slf4j.version>
+		<lucene.version>6.2.1</lucene.version>
+		<elasticsearch.version>5.0.2</elasticsearch.version>
 	</properties>
 	<build>
 		<plugins>
@@ -177,7 +176,7 @@
 		<dependency>
 			<groupId>org.codelibs</groupId>
 			<artifactId>elasticsearch-cluster-runner</artifactId>
-			<version>2.4.0.0</version>
+			<version>5.0.2.0-SNAPSHOT</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -195,7 +194,7 @@
 		<dependency>
 			<groupId>org.codelibs</groupId>
 			<artifactId>elasticsearch-analysis-kuromoji-neologd</artifactId>
-			<version>2.4.0</version>
+			<version>5.0.0-SNAPSHOT</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>

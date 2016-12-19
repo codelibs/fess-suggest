@@ -15,6 +15,7 @@ import org.codelibs.fess.suggest.util.SuggestUtil;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
+import org.elasticsearch.action.support.WriteRequest;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentFactory;
@@ -77,24 +78,22 @@ public class ArraySettings {
 
     protected Map<String, Object>[] getFromArrayIndex(final String index, final String type, final String key) {
         try {
-            final SearchResponse response =
+            SearchResponse response =
                     client.prepareSearch().setIndices(index).setTypes(type).setScroll(TimeValue.timeValueSeconds(10))
-                            .setSearchType(SearchType.SCAN).setQuery(QueryBuilders.termQuery(FieldNames.ARRAY_KEY, key)).setSize(1000)
-                            .execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
+                            .setQuery(QueryBuilders.termQuery(FieldNames.ARRAY_KEY, key)).setSize(1000).execute()
+                            .actionGet(SuggestConstants.ACTION_TIMEOUT);
 
             @SuppressWarnings("unchecked")
             final Map<String, Object>[] array = new Map[(int) response.getHits().getTotalHits()];
 
-            String scrollId = response.getScrollId();
             int count = 0;
-            SearchResponse searchResponse;
-            while ((searchResponse = client.prepareSearchScroll(scrollId).setScroll(TimeValue.timeValueMinutes(10)).execute().actionGet())
-                    .getHits().getHits().length > 0) {
-                scrollId = searchResponse.getScrollId();
-                final SearchHit[] hits = searchResponse.getHits().getHits();
+            while (response.getHits().getHits().length > 0) {
+                String scrollId = response.getScrollId();
+                final SearchHit[] hits = response.getHits().getHits();
                 for (final SearchHit hit : hits) {
                     array[count++] = hit.getSource();
                 }
+                response = client.prepareSearchScroll(scrollId).setScroll(TimeValue.timeValueMinutes(10)).execute().actionGet();
             }
 
             Arrays.sort(array, (o1, o2) -> {
@@ -127,7 +126,7 @@ public class ArraySettings {
     protected void addToArrayIndex(final String index, final String type, final String id, final Map<String, Object> source) {
         try {
             client.prepareUpdate().setIndex(index).setType(type).setId(id).setDocAsUpsert(true)
-                    .setDoc(JsonXContent.contentBuilder().map(source)).setRefresh(true).execute()
+                    .setDoc(JsonXContent.contentBuilder().map(source)).setRefreshPolicy(WriteRequest.RefreshPolicy.WAIT_UNTIL).execute()
                     .actionGet(SuggestConstants.ACTION_TIMEOUT);
         } catch (final Exception e) {
             throw new SuggestSettingsException("Failed to add to array.", e);
@@ -144,8 +143,8 @@ public class ArraySettings {
 
     protected void deleteFromArray(final String index, final String type, final String id) {
         try {
-            client.prepareDelete().setIndex(index).setType(type).setId(id).setRefresh(true).execute()
-                    .actionGet(SuggestConstants.ACTION_TIMEOUT);
+            client.prepareDelete().setIndex(index).setType(type).setId(id).setRefreshPolicy(WriteRequest.RefreshPolicy.WAIT_UNTIL)
+                    .execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
         } catch (final Exception e) {
             throw new SuggestSettingsException("Failed to delete from array.", e);
         }

@@ -1,11 +1,11 @@
 package org.codelibs.fess.suggest;
 
-import com.google.common.base.Strings;
 import junit.framework.TestCase;
 import org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner;
 import org.codelibs.fess.suggest.converter.ReadingConverter;
 import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
+import org.elasticsearch.common.Strings;
 
 import java.io.IOException;
 import java.util.List;
@@ -20,10 +20,10 @@ public class SuggesterBuilderTest extends TestCase {
         runner = new ElasticsearchClusterRunner();
         runner.onBuild((number, settingsBuilder) -> {
             settingsBuilder.put("http.cors.enabled", true);
-            settingsBuilder.put("index.number_of_replicas", 0);
             settingsBuilder.putArray("discovery.zen.ping.unicast.hosts", "localhost:9301-9399");
-            settingsBuilder.put("plugin.types", "org.codelibs.elasticsearch.kuromoji.neologd.KuromojiNeologdPlugin");
-        }).build(newConfigs().clusterName("SuggesterBuilderTest").numOfNode(1));
+        }).build(
+                newConfigs().clusterName("ArraySettingsTest").numOfNode(1)
+                        .pluginTypes("org.codelibs.elasticsearch.kuromoji.neologd.KuromojiNeologdPlugin"));
         runner.ensureYellow();
     }
 

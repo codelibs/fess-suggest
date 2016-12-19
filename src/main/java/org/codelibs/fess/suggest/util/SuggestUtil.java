@@ -86,7 +86,7 @@ public final class SuggestUtil {
     public static List<TermQuery> getTermQueryList(final Query query, final String[] fields) {
         if (query instanceof BooleanQuery) {
             final BooleanQuery booleanQuery = (BooleanQuery) query;
-            final BooleanClause[] clauses = booleanQuery.getClauses();
+            final List<BooleanClause> clauses = booleanQuery.clauses();
             final List<TermQuery> queryList = new ArrayList<>();
             for (final BooleanClause clause : clauses) {
                 final Query q = clause.getQuery();
@@ -192,15 +192,12 @@ public final class SuggestUtil {
 
     public static boolean deleteByQuery(final Client client, final String index, final String type, final QueryBuilder queryBuilder) {
         try {
-            final SearchResponse scanResponse =
-                    client.prepareSearch(index).setTypes(type).setQuery(queryBuilder).setSearchType(SearchType.SCAN).setSize(500)
+            SearchResponse searchResponse =
+                    client.prepareSearch(index).setTypes(type).setQuery(queryBuilder).setSize(500)
                             .setScroll(TimeValue.timeValueSeconds(10)).execute().actionGet();
 
-            String scrollId = scanResponse.getScrollId();
-            SearchResponse searchResponse;
-            while ((searchResponse = client.prepareSearchScroll(scrollId).setScroll(TimeValue.timeValueSeconds(10)).execute().actionGet())
-                    .getHits().getHits().length > 0) {
-                scrollId = searchResponse.getScrollId();
+            while (searchResponse.getHits().getHits().length > 0) {
+                String scrollId = searchResponse.getScrollId();
                 final SearchHit[] hits = searchResponse.getHits().getHits();
 
                 final BulkRequestBuilder bulkRequestBuiler = client.prepareBulk();
@@ -210,6 +207,7 @@ public final class SuggestUtil {
                 if (bulkResponse.hasFailures()) {
                     throw new SuggesterException(bulkResponse.buildFailureMessage());
                 }
+                searchResponse = client.prepareSearchScroll(scrollId).setScroll(TimeValue.timeValueSeconds(10)).execute().actionGet();
             }
             client.admin().indices().prepareRefresh(index).execute().actionGet();
         } catch (Exception e) {

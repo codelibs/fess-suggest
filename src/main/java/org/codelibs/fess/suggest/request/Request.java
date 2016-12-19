@@ -1,9 +1,9 @@
 package org.codelibs.fess.suggest.request;
 
-import com.google.common.base.Strings;
 import org.codelibs.fess.suggest.concurrent.Deferred;
 import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.common.Strings;
 
 public abstract class Request<T extends Response> {
     public Deferred<T>.Promise execute(final Client client) {
