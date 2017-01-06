@@ -2,6 +2,7 @@ package org.codelibs.fess.suggest.settings;
 
 import org.codelibs.core.lang.StringUtil;
 import org.codelibs.fess.suggest.analysis.SuggestAnalyzer;
+import org.codelibs.fess.suggest.exception.SuggestSettingsException;
 import org.elasticsearch.action.admin.indices.analyze.AnalyzeResponse;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.elasticsearch.client.Client;
@@ -34,10 +35,10 @@ public class AnalyzerSettings {
         try {
             IndicesExistsResponse response = client.admin().indices().prepareExists(analyzerSettingsIndexName).execute().actionGet();
             if (!response.isExists()) {
-                createAnalyzerSettings(defaultAnalyzerSettings());
+                createAnalyzerSettings(loadIndexSettings());
             }
         } catch (IOException e) {
-            //TODO
+            throw new SuggestSettingsException("Failed to create mappings.");
         }
     }
 
@@ -78,24 +79,19 @@ public class AnalyzerSettings {
     }
 
     protected String createAnalyzerSettingsIndexName(final String settingsIndexName) {
-        return settingsIndexName + ".analyzer";
+        return settingsIndexName + "_analyzer";
     }
 
-    protected String defaultAnalyzerSettings() throws IOException {
+    protected String loadIndexSettings() throws IOException {
         final String dictionaryPath = System.getProperty("fess.dictionary.path", StringUtil.EMPTY);
-        BufferedReader br = null;
         final StringBuilder sb = new StringBuilder();
-        try {
-            br =
-                    new BufferedReader(new InputStreamReader(this.getClass().getClassLoader()
-                            .getResourceAsStream("suggest/fess-suggest-default-analyzer.json")));
+        try (BufferedReader br =
+                new BufferedReader(new InputStreamReader(this.getClass().getClassLoader()
+                        .getResourceAsStream("suggest_indices/suggest_analyzer.json")));) {
+
             String line;
             while ((line = br.readLine()) != null) {
                 sb.append(line);
-            }
-        } finally {
-            if (br != null) {
-                br.close();
             }
         }
         return sb.toString().replaceAll(Pattern.quote("${fess.dictionary.path}"), dictionaryPath);

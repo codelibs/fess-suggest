@@ -12,7 +12,7 @@ public class BadWordSettings {
         this.arraySettings = new ArraySettings(client, settingsIndexName, settingsId) {
             @Override
             protected String createArraySettingsIndexName(final String settingsIndexName) {
-                return settingsIndexName + "-badword";
+                return settingsIndexName + "_badword";
             }
         };
     }

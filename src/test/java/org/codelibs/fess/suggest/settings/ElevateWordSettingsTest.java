@@ -52,7 +52,7 @@ public class ElevateWordSettingsTest {
 
     @Test
     public void test_elevateWordIndexName() {
-        assertEquals(".suggest-elevate", settings.elevateWord().arraySettings.arraySettingsIndexName);
+        assertEquals(".suggest_elevate", settings.elevateWord().arraySettings.arraySettingsIndexName);
     }
 
     @Test

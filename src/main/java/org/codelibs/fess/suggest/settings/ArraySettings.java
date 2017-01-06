@@ -1,20 +1,23 @@
 package org.codelibs.fess.suggest.settings;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import org.codelibs.core.CoreLibConstants;
+import org.codelibs.core.lang.StringUtil;
 import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.exception.SuggestSettingsException;
 import org.codelibs.fess.suggest.util.SuggestUtil;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.action.support.WriteRequest;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
@@ -69,7 +72,7 @@ public class ArraySettings {
     }
 
     protected String createArraySettingsIndexName(final String settingsIndexName) {
-        return settingsIndexName + "-array";
+        return settingsIndexName + "_array";
     }
 
     protected String createId(final String key, final Object value) {
@@ -160,7 +163,8 @@ public class ArraySettings {
             } catch (final IndexNotFoundException e) {
                 empty = true;
                 CreateIndexResponse response =
-                        client.admin().indices().prepareCreate(index).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
+                        client.admin().indices().prepareCreate(index).setSettings(loadIndexSettings()).execute()
+                                .actionGet(SuggestConstants.ACTION_TIMEOUT);
                 if (!response.isAcknowledged()) {
                     throw new SuggestSettingsException("Failed to create " + index + "/" + type + " index.", e);
                 }
@@ -180,6 +184,21 @@ public class ArraySettings {
         } catch (final IOException e) {
             throw new SuggestSettingsException("Failed to create mappings.");
         }
+    }
+
+    protected String loadIndexSettings() throws IOException {
+        final String dictionaryPath = System.getProperty("fess.dictionary.path", StringUtil.EMPTY);
+        final StringBuilder sb = new StringBuilder();
+        try (BufferedReader br =
+                new BufferedReader(new InputStreamReader(this.getClass().getClassLoader()
+                        .getResourceAsStream("suggest_indices/suggest_settings_array.json")));) {
+
+            String line;
+            while ((line = br.readLine()) != null) {
+                sb.append(line);
+            }
+        }
+        return sb.toString().replaceAll(Pattern.quote("${fess.dictionary.path}"), dictionaryPath);
     }
 
 }

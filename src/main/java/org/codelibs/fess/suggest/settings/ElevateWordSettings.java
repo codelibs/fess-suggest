@@ -23,7 +23,7 @@ public class ElevateWordSettings {
         this.arraySettings = new ArraySettings(client, settingsIndexName, settingsId) {
             @Override
             protected String createArraySettingsIndexName(final String settingsIndexName) {
-                return settingsIndexName + "-elevate";
+                return settingsIndexName + "_elevate";
             }
         };
     }

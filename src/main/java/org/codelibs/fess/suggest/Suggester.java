@@ -68,26 +68,31 @@ public class Suggester {
             final IndicesExistsResponse response =
                     client.admin().indices().prepareExists(index).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
             if (!response.isExists()) {
-                BufferedReader br = null;
-                final StringBuilder sb = new StringBuilder();
-                try {
-                    br =
-                            new BufferedReader(new InputStreamReader(this.getClass().getClassLoader()
-                                    .getResourceAsStream("suggest/suggest-mappings.json")));
+                final StringBuilder mappingSource = new StringBuilder();
+                try (BufferedReader br =
+                        new BufferedReader(new InputStreamReader(this.getClass().getClassLoader()
+                                .getResourceAsStream("suggest_indices/suggest/mappings-default.json")))) {
+
                     String line;
                     while ((line = br.readLine()) != null) {
-                        sb.append(line);
-                    }
-                } finally {
-                    if (br != null) {
-                        br.close();
+                        mappingSource.append(line);
                     }
                 }
+
+                final StringBuilder settingsSource = new StringBuilder();
+                try (BufferedReader br =
+                        new BufferedReader(new InputStreamReader(this.getClass().getClassLoader()
+                                .getResourceAsStream("suggest_indices/suggest.json")))) {
+                    String line;
+                    while ((line = br.readLine()) != null) {
+                        settingsSource.append(line);
+                    }
+                }
+
                 try {
                     final String indexName = index + '.' + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmm"));
-                    final String mappingSource = sb.toString();
-                    client.admin().indices().prepareCreate(indexName).addMapping("_default_", mappingSource)
-                            .addMapping(type, mappingSource).addAlias(new Alias(index)).execute()
+                    client.admin().indices().prepareCreate(indexName).setSettings(settingsSource.toString())
+                            .addMapping("_default_", mappingSource.toString()).addAlias(new Alias(index)).execute()
                             .actionGet(SuggestConstants.ACTION_TIMEOUT);
 
                     client.admin().cluster().prepareHealth().setWaitForYellowStatus().execute()

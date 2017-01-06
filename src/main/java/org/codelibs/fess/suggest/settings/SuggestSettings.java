@@ -1,13 +1,19 @@
 package org.codelibs.fess.suggest.settings;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
+import org.codelibs.core.lang.StringUtil;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.exception.SuggestSettingsException;
+import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.support.WriteRequest;
 import org.elasticsearch.client.Client;
@@ -53,6 +59,7 @@ public class SuggestSettings {
     }
 
     private void initialize(final Map<String, Object> initialSettings) {
+        boolean doIndexCreate = false;
         boolean doCreate = false;
         try {
             final GetResponse getResponse =
@@ -63,12 +70,21 @@ public class SuggestSettings {
                 doCreate = true;
             }
         } catch (final IndexNotFoundException e) {
+            doIndexCreate = true;
             doCreate = true;
         }
 
         if (doCreate) {
-            final List<Tuple<String, Object>> arraySettings = new ArrayList<>();
+            if (doIndexCreate) {
+                try {
+                    client.admin().indices().prepareCreate(settingsIndexName).setSettings(loadIndexSettings()).execute()
+                            .actionGet(SuggestConstants.ACTION_TIMEOUT);
+                } catch (IOException e) {
+                    throw new SuggesterException(e);
+                }
+            }
 
+            final List<Tuple<String, Object>> arraySettings = new ArrayList<>();
             final Map<String, Object> defaultSettings = defaultSettings();
             initialSettings.forEach((key, value) -> {
                 if (value instanceof Collection) {
@@ -234,6 +250,21 @@ public class SuggestSettings {
         final List<Tuple<String, Object>> tuples = new ArrayList<>();
         tuples.add(new Tuple<>(DefaultKeys.SUPPORTED_FIELDS, "content"));
         return tuples;
+    }
+
+    protected String loadIndexSettings() throws IOException {
+        final String dictionaryPath = System.getProperty("fess.dictionary.path", StringUtil.EMPTY);
+        final StringBuilder sb = new StringBuilder();
+        try (BufferedReader br =
+                new BufferedReader(new InputStreamReader(this.getClass().getClassLoader()
+                        .getResourceAsStream("suggest_indices/suggest_settings.json")));) {
+
+            String line;
+            while ((line = br.readLine()) != null) {
+                sb.append(line);
+            }
+        }
+        return sb.toString().replaceAll(Pattern.quote("${fess.dictionary.path}"), dictionaryPath);
     }
 
     public static SuggestSettingsBuilder builder() {
