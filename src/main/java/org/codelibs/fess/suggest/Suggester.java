@@ -20,7 +20,6 @@ import org.elasticsearch.action.admin.indices.alias.Alias;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.indices.IndexAlreadyExistsException;
 
 public class Suggester {
     protected final Client client;
@@ -89,15 +88,12 @@ public class Suggester {
                     }
                 }
 
-                try {
-                    final String indexName = index + '.' + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmm"));
-                    client.admin().indices().prepareCreate(indexName).setSettings(settingsSource.toString())
-                            .addMapping("_default_", mappingSource.toString()).addAlias(new Alias(index)).execute()
-                            .actionGet(SuggestConstants.ACTION_TIMEOUT);
+                final String indexName = index + '.' + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmm"));
+                client.admin().indices().prepareCreate(indexName).setSettings(settingsSource.toString())
+                        .addMapping("_default_", mappingSource.toString()).addAlias(new Alias(index)).execute()
+                        .actionGet(SuggestConstants.ACTION_TIMEOUT);
 
-                    client.admin().cluster().prepareHealth().setWaitForYellowStatus().execute()
-                            .actionGet(SuggestConstants.ACTION_TIMEOUT * 10);
-                } catch (IndexAlreadyExistsException ignore) {}
+                client.admin().cluster().prepareHealth().setWaitForYellowStatus().execute().actionGet(SuggestConstants.ACTION_TIMEOUT * 10);
                 created = true;
             }
 
