@@ -75,7 +75,7 @@ public class SuggestIndexWriter implements SuggestWriter {
         final SuggestWriterResult result = new SuggestWriterResult();
         try {
             SuggestUtil.deleteByQuery(client, index, type, QueryBuilders.queryStringQuery(queryString).defaultOperator(Operator.AND)
-                    /* TODO .lowercaseExpandedTerms(true)*/.autoGeneratePhraseQueries(true));
+                    .autoGeneratePhraseQueries(true));
         } catch (final Exception e) {
             result.addFailure(e);
         }

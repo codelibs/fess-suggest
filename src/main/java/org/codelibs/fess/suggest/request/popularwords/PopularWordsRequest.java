@@ -144,7 +144,8 @@ public class PopularWordsRequest extends Request<PopularWordsResponse> {
 
         ;
         final FunctionScoreQueryBuilder functionScoreQueryBuilder =
-                QueryBuilders.functionScoreQuery(queryBuilder, ScoreFunctionBuilders.fieldValueFactorFunction(FieldNames.QUERY_FREQ));
+                QueryBuilders.functionScoreQuery(queryBuilder, ScoreFunctionBuilders.fieldValueFactorFunction(FieldNames.QUERY_FREQ)
+                        .missing(0));
         functionScoreQueryBuilder.boostMode(CombineFunction.REPLACE);
         return functionScoreQueryBuilder;
     }
