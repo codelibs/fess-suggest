@@ -525,6 +525,17 @@ public class SuggesterTest {
         assertEquals(1, response3.getNum());
     }
 
+    @Test
+    public void test_getNum() throws Exception {
+        SuggestItem[] items = getItemSet1();
+        suggester.indexer().index(items);
+        suggester.refresh();
+
+        assertEquals(2, suggester.getTotalWordsNum());
+        assertEquals(2, suggester.getDocumentWordsNum());
+        assertEquals(1, suggester.getQueryWordsNum());
+    }
+
     private SuggestItem[] getItemSet1() {
         SuggestItem[] queryItems = new SuggestItem[3];
 

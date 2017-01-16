@@ -15,6 +15,7 @@ import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.Operator;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.QueryStringQueryBuilder;
 
@@ -71,11 +72,10 @@ public class SuggestIndexWriter implements SuggestWriter {
 
     @Override
     public SuggestWriterResult deleteByQuery(final Client client, final SuggestSettings settings, final String index, final String type,
-            final String queryString) {
+            final QueryBuilder queryBuilder) {
         final SuggestWriterResult result = new SuggestWriterResult();
         try {
-            SuggestUtil.deleteByQuery(client, index, type, QueryBuilders.queryStringQuery(queryString).defaultOperator(Operator.AND)
-                    .autoGeneratePhraseQueries(true));
+            SuggestUtil.deleteByQuery(client, index, type, queryBuilder);
         } catch (final Exception e) {
             result.addFailure(e);
         }

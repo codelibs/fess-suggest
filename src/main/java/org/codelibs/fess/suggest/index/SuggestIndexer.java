@@ -29,7 +29,13 @@ import org.codelibs.fess.suggest.index.writer.SuggestWriterResult;
 import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.codelibs.fess.suggest.util.SuggestUtil;
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.Operator;
+import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.SearchHit;
 
 public class SuggestIndexer {
     protected final Client client;
@@ -99,8 +105,39 @@ public class SuggestIndexer {
 
     public SuggestDeleteResponse deleteByQuery(final String queryString) {
         final long start = System.currentTimeMillis();
-        final SuggestWriterResult result = suggestWriter.deleteByQuery(client, settings, index, type, queryString);
+        final SuggestWriterResult result = suggestWriter.deleteByQuery(client, settings, index, type, QueryBuilders.queryStringQuery(queryString).autoGeneratePhraseQueries(true).defaultOperator(Operator.AND));
         return new SuggestDeleteResponse(result.getFailures(), System.currentTimeMillis() - start);
+    }
+
+    public SuggestDeleteResponse deleteByQuery(final QueryBuilder queryBuilder) {
+        final long start = System.currentTimeMillis();
+        final SuggestWriterResult result = suggestWriter.deleteByQuery(client, settings, index, type, queryBuilder);
+        return new SuggestDeleteResponse(result.getFailures(), System.currentTimeMillis() - start);
+    }
+
+    public SuggestDeleteResponse deleteAll() {
+        return deleteByQuery(QueryBuilders.matchAllQuery());
+    }
+
+    public SuggestDeleteResponse deleteDocumentWords() {
+        final SuggestDeleteResponse deleteResponse = deleteByQuery(QueryBuilders.boolQuery().must(QueryBuilders.rangeQuery(FieldNames.DOC_FREQ).gte(1)).must(QueryBuilders.termQuery(FieldNames.QUERY_FREQ, 0)));
+        if (deleteResponse.hasError()) {
+            return deleteResponse;
+        }
+
+        SearchResponse response = client.prepareSearch(index).setTypes(type).setQuery(QueryBuilders.rangeQuery(FieldNames.DOC_FREQ).gte(1)).execute().actionGet();
+        while (response.getHits().getHits().length > 0) {
+            final SearchHit[] hits = response.getHits().hits();
+            for (SearchHit hit: hits) {
+
+            }
+        }
+
+        return null; //TODO
+    }
+
+    public SuggestDeleteResponse deleteQueryWords() {
+        return null; //TODO
     }
 
     public SuggestIndexResponse indexFromQueryLog(final QueryLog queryLog) {
@@ -296,7 +333,7 @@ public class SuggestIndexer {
         final String query =
                 FieldNames.TIMESTAMP + ":[* TO " + threshold.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli() + "] NOT "
                         + FieldNames.KINDS + ':' + SuggestItem.Kind.USER;
-        suggestWriter.deleteByQuery(client, settings, index, type, query);
+        deleteByQuery(query);
         return new SuggestDeleteResponse(null, System.currentTimeMillis() - start);
     }
 

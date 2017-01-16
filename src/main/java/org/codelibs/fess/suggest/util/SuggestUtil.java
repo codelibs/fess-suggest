@@ -26,7 +26,6 @@ import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
@@ -140,7 +139,7 @@ public final class SuggestUtil {
         secondLine.put("score", (item.getQueryFreq() + item.getDocFreq()) * item.getUserBoost());
         secondLine.put("tags", item.getTags());
         secondLine.put("roles", item.getRoles());
-        secondLine.put("kinds", item.getKind().toString());
+        secondLine.put("kinds", item.getKinds().toString());
         secondLine.put("@timestamp", item.getTimestamp());
 
         try {

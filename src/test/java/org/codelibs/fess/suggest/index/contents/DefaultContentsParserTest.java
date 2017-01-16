@@ -1,7 +1,6 @@
 package org.codelibs.fess.suggest.index.contents;
 
 import junit.framework.TestCase;
-import org.codelibs.fess.suggest.converter.KatakanaConverter;
 import org.codelibs.fess.suggest.converter.KatakanaToAlphabetConverter;
 import org.codelibs.fess.suggest.converter.ReadingConverter;
 import org.codelibs.fess.suggest.converter.ReadingConverterChain;
@@ -27,7 +26,7 @@ public class DefaultContentsParserTest extends TestCase {
                         createDefaultReadingConverter(), createDefaultNormalizer());
         SuggestItem item = items.get(0);
         assertEquals("検索エンジン", item.getText());
-        assertEquals(SuggestItem.Kind.QUERY, item.getKind());
+        assertEquals(SuggestItem.Kind.QUERY, item.getKinds());
         assertEquals(1, item.getQueryFreq());
     }
 

@@ -8,6 +8,7 @@ import java.util.concurrent.ExecutorService;
 
 import org.codelibs.core.lang.StringUtil;
 import org.codelibs.fess.suggest.analysis.SuggestAnalyzer;
+import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.converter.ReadingConverter;
 import org.codelibs.fess.suggest.exception.SuggesterException;
@@ -19,7 +20,10 @@ import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.elasticsearch.action.admin.indices.alias.Alias;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
 
 public class Suggester {
     protected final Client client;
@@ -90,7 +94,7 @@ public class Suggester {
 
                 final String indexName = index + '.' + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmm"));
                 client.admin().indices().prepareCreate(indexName).setSettings(settingsSource.toString())
-                        .addMapping("_default_", mappingSource.toString()).addAlias(new Alias(index)).execute()
+                        .addMapping(type, mappingSource.toString()).addAlias(new Alias(index)).execute()
                         .actionGet(SuggestConstants.ACTION_TIMEOUT);
 
                 client.admin().cluster().prepareHealth().setWaitForYellowStatus().execute().actionGet(SuggestConstants.ACTION_TIMEOUT * 10);
@@ -134,5 +138,23 @@ public class Suggester {
 
     public String getType() {
         return type;
+    }
+
+    public long getTotalWordsNum() {
+        return getNum(QueryBuilders.matchAllQuery());
+    }
+
+    public long getDocumentWordsNum() {
+        return getNum(QueryBuilders.rangeQuery(FieldNames.DOC_FREQ).gte(1));
+    }
+
+    public long getQueryWordsNum() {
+        return getNum(QueryBuilders.rangeQuery(FieldNames.QUERY_FREQ).gte(1));
+    }
+
+    private long getNum(final QueryBuilder queryBuilder) {
+        final SearchResponse searchResponse =
+                client.prepareSearch().setIndices(index).setTypes(type).setSize(0).setQuery(queryBuilder).execute().actionGet();
+        return searchResponse.getHits().getTotalHits();
     }
 }
