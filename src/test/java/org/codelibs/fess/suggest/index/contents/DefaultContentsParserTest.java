@@ -26,7 +26,7 @@ public class DefaultContentsParserTest extends TestCase {
                         createDefaultReadingConverter(), createDefaultNormalizer());
         SuggestItem item = items.get(0);
         assertEquals("検索エンジン", item.getText());
-        assertEquals(SuggestItem.Kind.QUERY, item.getKinds());
+        assertEquals(SuggestItem.Kind.QUERY, item.getKinds()[0]);
         assertEquals(1, item.getQueryFreq());
     }
 

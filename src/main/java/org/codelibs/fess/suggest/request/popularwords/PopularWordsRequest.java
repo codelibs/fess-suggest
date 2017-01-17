@@ -173,36 +173,7 @@ public class PopularWordsRequest extends Request<PopularWordsResponse> {
             words.add(text);
 
             if (detail) {
-                int readingCount = 0;
-                Object readingObj;
-                final List<String[]> readings = new ArrayList<>();
-                while ((readingObj = source.get(FieldNames.READING_PREFIX + readingCount++)) != null) {
-                    final List<String> reading = SuggestUtil.getAsList(readingObj);
-                    readings.add(reading.toArray(new String[reading.size()]));
-                }
-
-                final List<String> fields = SuggestUtil.getAsList(source.get(FieldNames.FIELDS));
-                final List<String> tags = SuggestUtil.getAsList(source.get(FieldNames.TAGS));
-                final List<String> roles = SuggestUtil.getAsList(source.get(FieldNames.ROLES));
-                final List<String> kinds = SuggestUtil.getAsList(source.get(FieldNames.KINDS));
-                final List<String> languages = SuggestUtil.getAsList(source.get(FieldNames.LANGUAGES));
-                SuggestItem.Kind kind;
-                long freq;
-                if (SuggestItem.Kind.USER.toString().equals(kinds.get(0))) {
-                    kind = SuggestItem.Kind.USER;
-                    freq = 0;
-                } else if (SuggestItem.Kind.QUERY.toString().equals(kinds.get(0))) {
-                    kind = SuggestItem.Kind.QUERY;
-                    freq = Long.parseLong(source.get(FieldNames.QUERY_FREQ).toString());
-                } else {
-                    kind = SuggestItem.Kind.DOCUMENT;
-                    freq = Long.parseLong(source.get(FieldNames.DOC_FREQ).toString());
-                }
-
-                items.add(new SuggestItem(text.split(" "), readings.toArray(new String[readings.size()][]), fields
-                        .toArray(new String[fields.size()]), freq, Float.valueOf(source.get(FieldNames.USER_BOOST).toString()), tags
-                        .toArray(new String[tags.size()]), roles.toArray(new String[tags.size()]), languages.toArray(new String[languages
-                        .size()]), kind));
+                items.add(SuggestItem.parseSource(source));
             }
         }
 

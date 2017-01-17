@@ -61,8 +61,9 @@ public class SuggestItem implements Serializable {
     private SuggestItem() {
     }
 
-    public SuggestItem(final String[] text, final String[][] readings, final String[] fields, final long score, final float userBoost,
-            @Nullable final String[] tags, @Nullable final String[] roles, @Nullable final String[] languages, final Kind kind) {
+    public SuggestItem(final String[] text, final String[][] readings, final String[] fields, final long docFreq, final long queryFreq,
+            final float userBoost, @Nullable final String[] tags, @Nullable final String[] roles, @Nullable final String[] languages,
+            final Kind kind) {
         this.text = String.join(SuggestConstants.TEXT_SEPARATOR, text);
         this.readings = readings;
         this.fields = fields != null ? fields : new String[] {};
@@ -77,24 +78,12 @@ public class SuggestItem implements Serializable {
 
         this.languages = languages != null ? languages : new String[] {};
 
-        this.kinds = new Kind[]{kind};
-        if (kind == Kind.QUERY) {
-            this.queryFreq = score;
-            this.docFreq = 0;
-            this.userBoost = 1;
-        } else if (kind == Kind.USER) {
-            this.queryFreq = 0;
-            this.docFreq = 1;
-            this.userBoost = userBoost;
-        } else {
-            this.queryFreq = 0;
-            this.docFreq = score;
-            this.userBoost = 1;
-        }
-
+        this.kinds = new Kind[] { kind };
+        this.userBoost = userBoost;
+        this.docFreq = docFreq;
+        this.queryFreq = queryFreq;
         this.timestamp = LocalDateTime.now();
         this.emptySource = createEmptyMap();
-
         this.id = SuggestUtil.createSuggestTextId(this.text);
     }
 
@@ -195,30 +184,48 @@ public class SuggestItem implements Serializable {
     public static SuggestItem parseSource(final Map<String, Object> source) {
         final String text = source.get(FieldNames.TEXT).toString();
         final List<String[]> readings = new ArrayList<>();
-        for (int i=0;;i++) {
+        for (int i = 0;; i++) {
             final Object readingObj = source.get(FieldNames.READING_PREFIX + i);
             if (readingObj == null) {
                 break;
             }
-            final List<String> list = (List)readingObj;
+            final List<String> list = (List) readingObj;
             readings.add(list.toArray(new String[list.size()]));
         }
-        final List<String> fields = (List)source.get(FieldNames.FIELDS);
-        final long score = (long)source.get(FieldNames.SCORE);
-        final float userScore = (float)source.get(FieldNames.USER_BOOST);
-        final List<String> tags = (List)source.get(FieldNames.TAGS);
-        final List<String> roles = (List)source.get(FieldNames.ROLES);
-        final List<String> languages = (List)source.get(FieldNames.LANGUAGES);
-        final List<String> kinds = (List)source.get(FieldNames.KINDS);
+        final List<String> fields = SuggestUtil.getAsList(source.get(FieldNames.FIELDS));
+        final long docFreq = Long.parseLong(source.get(FieldNames.DOC_FREQ).toString());
+        final long queryFreq = Long.parseLong(source.get(FieldNames.QUERY_FREQ).toString());
+        final float userBoost = Float.parseFloat(source.get(FieldNames.USER_BOOST).toString());
+        final List<String> tags = SuggestUtil.getAsList(source.get(FieldNames.TAGS));
+        final List<String> roles = SuggestUtil.getAsList(source.get(FieldNames.ROLES));
+        final List<String> languages = SuggestUtil.getAsList(source.get(FieldNames.LANGUAGES));
+        final List<String> kinds = SuggestUtil.getAsList(source.get(FieldNames.KINDS));
 
         final SuggestItem item = new SuggestItem();
         item.text = text;
         item.readings = readings.toArray(new String[readings.size()][]);
         item.fields = fields.toArray(new String[fields.size()]);
-        item
+        item.docFreq = docFreq;
+        item.queryFreq = queryFreq;
+        item.userBoost = userBoost;
+        item.tags = tags.toArray(new String[tags.size()]);
+        item.roles = roles.toArray(new String[roles.size()]);
+        item.languages = languages.toArray(new String[languages.size()]);
 
+        item.kinds = new Kind[kinds.size()];
+        for (int i = 0; i < kinds.size(); i++) {
+            final String kind = kinds.get(i);
+            if (kind.equals(Kind.DOCUMENT.toString())) {
+                item.kinds[i] = Kind.DOCUMENT;
+            } else if (kind.equals(Kind.QUERY.toString())) {
+                item.kinds[i] = Kind.QUERY;
+            } else if (kind.equals(Kind.USER.toString())) {
+                item.kinds[i] = Kind.USER;
+            }
+        }
 
-
+        item.id = SuggestUtil.createSuggestTextId(item.text);
+        return item;
     }
 
     public Map<String, Object> getUpdatedSource(final Map<String, Object> existingSource) {
@@ -323,6 +330,12 @@ public class SuggestItem implements Serializable {
     }
 
     protected static Kind[] concatKinds(final Kind[] kinds, final Kind... newKinds) {
+        if (kinds == null) {
+            return newKinds;
+        } else if (newKinds == null) {
+            return kinds;
+        }
+
         final List<Kind> list = new ArrayList<>(kinds.length + newKinds.length);
         list.addAll(Arrays.asList(kinds));
         for (final Kind kind : newKinds) {
