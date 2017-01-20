@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 public interface SuggestWriter {
-    SuggestWriterResult write(Client client, SuggestSettings settings, String index, String type, SuggestItem[] items);
+    SuggestWriterResult write(Client client, SuggestSettings settings, String index, String type, SuggestItem[] items, boolean update);
 
     SuggestWriterResult delete(Client client, SuggestSettings settings, String index, String type, String id);
 

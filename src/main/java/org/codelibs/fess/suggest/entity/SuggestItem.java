@@ -1,6 +1,7 @@
 package org.codelibs.fess.suggest.entity;
 
 import java.io.Serializable;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
@@ -79,7 +80,11 @@ public class SuggestItem implements Serializable {
         this.languages = languages != null ? languages : new String[] {};
 
         this.kinds = new Kind[] { kind };
-        this.userBoost = userBoost;
+        if (userBoost > 1) {
+            this.userBoost = userBoost;
+        } else {
+            this.userBoost = 1;
+        }
         this.docFreq = docFreq;
         this.queryFreq = queryFreq;
         this.timestamp = LocalDateTime.now();
@@ -129,6 +134,58 @@ public class SuggestItem implements Serializable {
 
     public LocalDateTime getTimestamp() {
         return timestamp;
+    }
+
+    public void setText(String text) {
+        this.text = text;
+    }
+
+    public void setTimestamp(LocalDateTime timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    public void setQueryFreq(long queryFreq) {
+        this.queryFreq = queryFreq;
+    }
+
+    public void setDocFreq(long docFreq) {
+        this.docFreq = docFreq;
+    }
+
+    public void setUserBoost(float userBoost) {
+        this.userBoost = userBoost;
+    }
+
+    public void setReadings(String[][] readings) {
+        this.readings = readings;
+    }
+
+    public void setFields(String[] fields) {
+        this.fields = fields;
+    }
+
+    public void setTags(String[] tags) {
+        this.tags = tags;
+    }
+
+    public void setRoles(String[] roles) {
+        this.roles = roles;
+    }
+
+    public void setLanguages(String[] languages) {
+        this.languages = languages;
+    }
+
+    public void setKinds(Kind[] kinds) {
+        this.kinds = kinds;
+    }
+
+    public void setEmptySource(Map<String, Object> emptySource) {
+        this.emptySource = emptySource;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public Map<String, Object> toEmptyMap() {
@@ -200,6 +257,7 @@ public class SuggestItem implements Serializable {
         final List<String> roles = SuggestUtil.getAsList(source.get(FieldNames.ROLES));
         final List<String> languages = SuggestUtil.getAsList(source.get(FieldNames.LANGUAGES));
         final List<String> kinds = SuggestUtil.getAsList(source.get(FieldNames.KINDS));
+        final long timestamp = Long.parseLong(source.get(FieldNames.TIMESTAMP).toString());
 
         final SuggestItem item = new SuggestItem();
         item.text = text;
@@ -225,6 +283,7 @@ public class SuggestItem implements Serializable {
         }
 
         item.id = SuggestUtil.createSuggestTextId(item.text);
+        item.timestamp = LocalDateTime.ofInstant(Instant.ofEpochMilli(timestamp), ZoneId.systemDefault());
         return item;
     }
 
@@ -418,7 +477,7 @@ public class SuggestItem implements Serializable {
         }
         mergedItem.roles = roleList.toArray(new String[roleList.size()]);
 
-        mergedItem.kinds = concatKinds(mergedItem.kinds, item2.kinds);
+        mergedItem.kinds = concatKinds(item1.kinds, item2.kinds);
         mergedItem.timestamp = item2.timestamp;
         mergedItem.queryFreq = item1.queryFreq + item2.queryFreq;
         mergedItem.docFreq = item1.docFreq + item2.docFreq;

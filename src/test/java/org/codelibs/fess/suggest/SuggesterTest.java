@@ -536,6 +536,57 @@ public class SuggesterTest {
         assertEquals(1, suggester.getQueryWordsNum());
     }
 
+    @Test
+    public void test_deleteAllWords() throws Exception {
+        SuggestItem[] items = getItemSet1();
+        suggester.indexer().index(items);
+        suggester.refresh();
+
+        assertEquals(2, suggester.getTotalWordsNum());
+        assertEquals(2, suggester.getDocumentWordsNum());
+        assertEquals(1, suggester.getQueryWordsNum());
+
+        suggester.indexer().deleteAll();
+        suggester.refresh();
+        assertEquals(0, suggester.getTotalWordsNum());
+        assertEquals(0, suggester.getDocumentWordsNum());
+        assertEquals(0, suggester.getQueryWordsNum());
+    }
+
+    @Test
+    public void test_deleteDocumentWords() throws Exception {
+        SuggestItem[] items = getItemSet1();
+        suggester.indexer().index(items);
+        suggester.refresh();
+
+        assertEquals(2, suggester.getTotalWordsNum());
+        assertEquals(2, suggester.getDocumentWordsNum());
+        assertEquals(1, suggester.getQueryWordsNum());
+
+        suggester.indexer().deleteDocumentWords();
+        suggester.refresh();
+        assertEquals(1, suggester.getTotalWordsNum());
+        assertEquals(0, suggester.getDocumentWordsNum());
+        assertEquals(1, suggester.getQueryWordsNum());
+    }
+
+    @Test
+    public void test_deleteQueryWords() throws Exception {
+        SuggestItem[] items = getItemSet1();
+        suggester.indexer().index(items);
+        suggester.refresh();
+
+        assertEquals(2, suggester.getTotalWordsNum());
+        assertEquals(2, suggester.getDocumentWordsNum());
+        assertEquals(1, suggester.getQueryWordsNum());
+
+        suggester.indexer().deleteQueryWords();
+        suggester.refresh();
+        assertEquals(2, suggester.getTotalWordsNum());
+        assertEquals(2, suggester.getDocumentWordsNum());
+        assertEquals(0, suggester.getQueryWordsNum());
+    }
+
     private SuggestItem[] getItemSet1() {
         SuggestItem[] queryItems = new SuggestItem[3];
 

@@ -8,7 +8,7 @@ import org.elasticsearch.index.query.QueryBuilder;
 public class SuggestBulkFileWriter implements SuggestWriter {
     @Override
     public SuggestWriterResult write(final Client client, final SuggestSettings settings, final String index, final String type,
-            final SuggestItem[] items) {
+            final SuggestItem[] items, final boolean update) {
         throw new UnsupportedOperationException("not yet.");
     }
 
