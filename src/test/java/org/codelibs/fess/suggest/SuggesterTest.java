@@ -525,6 +525,68 @@ public class SuggesterTest {
         assertEquals(1, response3.getNum());
     }
 
+    @Test
+    public void test_getNum() throws Exception {
+        SuggestItem[] items = getItemSet1();
+        suggester.indexer().index(items);
+        suggester.refresh();
+
+        assertEquals(2, suggester.getAllWordsNum());
+        assertEquals(2, suggester.getDocumentWordsNum());
+        assertEquals(1, suggester.getQueryWordsNum());
+    }
+
+    @Test
+    public void test_deleteAllWords() throws Exception {
+        SuggestItem[] items = getItemSet1();
+        suggester.indexer().index(items);
+        suggester.refresh();
+
+        assertEquals(2, suggester.getAllWordsNum());
+        assertEquals(2, suggester.getDocumentWordsNum());
+        assertEquals(1, suggester.getQueryWordsNum());
+
+        suggester.indexer().deleteAll();
+        suggester.refresh();
+        assertEquals(0, suggester.getAllWordsNum());
+        assertEquals(0, suggester.getDocumentWordsNum());
+        assertEquals(0, suggester.getQueryWordsNum());
+    }
+
+    @Test
+    public void test_deleteDocumentWords() throws Exception {
+        SuggestItem[] items = getItemSet1();
+        suggester.indexer().index(items);
+        suggester.refresh();
+
+        assertEquals(2, suggester.getAllWordsNum());
+        assertEquals(2, suggester.getDocumentWordsNum());
+        assertEquals(1, suggester.getQueryWordsNum());
+
+        suggester.indexer().deleteDocumentWords();
+        suggester.refresh();
+        assertEquals(1, suggester.getAllWordsNum());
+        assertEquals(0, suggester.getDocumentWordsNum());
+        assertEquals(1, suggester.getQueryWordsNum());
+    }
+
+    @Test
+    public void test_deleteQueryWords() throws Exception {
+        SuggestItem[] items = getItemSet1();
+        suggester.indexer().index(items);
+        suggester.refresh();
+
+        assertEquals(2, suggester.getAllWordsNum());
+        assertEquals(2, suggester.getDocumentWordsNum());
+        assertEquals(1, suggester.getQueryWordsNum());
+
+        suggester.indexer().deleteQueryWords();
+        suggester.refresh();
+        assertEquals(2, suggester.getAllWordsNum());
+        assertEquals(2, suggester.getDocumentWordsNum());
+        assertEquals(0, suggester.getQueryWordsNum());
+    }
+
     private SuggestItem[] getItemSet1() {
         SuggestItem[] queryItems = new SuggestItem[3];
 
@@ -534,7 +596,7 @@ public class SuggesterTest {
         String[] tags = new String[] { "tag1", "tag2" };
         String[] roles = new String[] { SuggestConstants.DEFAULT_ROLE, "role1", "role2", "role3" };
         queryItems[0] =
-                new SuggestItem(new String[] { "検索", "エンジン" }, readings, new String[] { "content" }, 1, -1, tags, roles, null,
+                new SuggestItem(new String[] { "検索", "エンジン" }, readings, new String[] { "content" }, 1, 0, -1, tags, roles, null,
                         SuggestItem.Kind.DOCUMENT);
 
         String[][] readings2 = new String[2][];
@@ -543,7 +605,7 @@ public class SuggesterTest {
         String[] tags2 = new String[] { "tag3" };
         String[] roles2 = new String[] { SuggestConstants.DEFAULT_ROLE, "role4" };
         queryItems[1] =
-                new SuggestItem(new String[] { "全文", "検索" }, readings2, new String[] { "content" }, 1, -1, tags2, roles2, null,
+                new SuggestItem(new String[] { "全文", "検索" }, readings2, new String[] { "content" }, 1, 0, -1, tags2, roles2, null,
                         SuggestItem.Kind.DOCUMENT);
 
         String[][] readings2Query = new String[2][];
@@ -552,7 +614,7 @@ public class SuggesterTest {
         String[] tags2Query = new String[] { "tag4" };
         String[] roles2Query = new String[] { SuggestConstants.DEFAULT_ROLE, "role5" };
         queryItems[2] =
-                new SuggestItem(new String[] { "全文", "検索" }, readings2Query, new String[] { "content" }, 1, -1, tags2Query, roles2Query,
+                new SuggestItem(new String[] { "全文", "検索" }, readings2Query, new String[] { "content" }, 0, 1, -1, tags2Query, roles2Query,
                         null, SuggestItem.Kind.QUERY);
 
         return queryItems;
@@ -566,8 +628,8 @@ public class SuggesterTest {
             readings[0] = new String[] { "fuga" };
             String[] tags = new String[] { "tag1", "tag2" };
             String[] roles = new String[] { SuggestConstants.DEFAULT_ROLE, "role1", "role2", "role3" };
-            items.add(new SuggestItem(new String[] { "ドキュメント" + i }, readings, new String[] { "content" }, 15 + i, -1, tags, roles, null,
-                    SuggestItem.Kind.DOCUMENT));
+            items.add(new SuggestItem(new String[] { "ドキュメント" + i }, readings, new String[] { "content" }, 15 + i, 0, -1, tags, roles,
+                    null, SuggestItem.Kind.DOCUMENT));
         }
 
         for (int i = 0; i < 5; i++) {
@@ -575,7 +637,7 @@ public class SuggesterTest {
             readings[0] = new String[] { "fuga" };
             String[] tags = new String[] { "tag1", "tag2" };
             String[] roles = new String[] { SuggestConstants.DEFAULT_ROLE, "role1", "role2", "role3" };
-            items.add(new SuggestItem(new String[] { "クエリー" + i }, readings, new String[] { "content" }, 15 + i, -1, tags, roles, null,
+            items.add(new SuggestItem(new String[] { "クエリー" + i }, readings, new String[] { "content" }, 0, 15 + i, -1, tags, roles, null,
                     SuggestItem.Kind.QUERY));
         }
 
@@ -585,8 +647,8 @@ public class SuggesterTest {
             readings[1] = new String[] { "enjin" };
             String[] tags = new String[] { "tag1", "tag2" };
             String[] roles = new String[] { SuggestConstants.DEFAULT_ROLE, "role1", "role2", "role3" };
-            items.add(new SuggestItem(new String[] { "マルチワード" + i, "fuga" }, readings, new String[] { "content" }, 15 + i, -1, tags, roles,
-                    null, SuggestItem.Kind.QUERY));
+            items.add(new SuggestItem(new String[] { "マルチワード" + i, "fuga" }, readings, new String[] { "content" }, 0, 15 + i, -1, tags,
+                    roles, null, SuggestItem.Kind.QUERY));
         }
 
         return items.toArray(new SuggestItem[items.size()]);
@@ -600,7 +662,7 @@ public class SuggesterTest {
             readings[0] = new String[] { "-aaa" };
             String[] tags = new String[] { "tag1", "tag2" };
             String[] roles = new String[] { SuggestConstants.DEFAULT_ROLE, "role1", "role2", "role3" };
-            items.add(new SuggestItem(new String[] { "ドキュメント" + 1 }, readings, new String[] { "content" }, 15, -1, tags, roles, null,
+            items.add(new SuggestItem(new String[] { "ドキュメント" + 1 }, readings, new String[] { "content" }, 15, 0, -1, tags, roles, null,
                     SuggestItem.Kind.DOCUMENT));
         }
 
@@ -609,7 +671,7 @@ public class SuggesterTest {
             readings[0] = new String[] { "-aa-a" };
             String[] tags = new String[] { "tag1", "tag2" };
             String[] roles = new String[] { SuggestConstants.DEFAULT_ROLE, "role1", "role2", "role3" };
-            items.add(new SuggestItem(new String[] { "ドキュメント" + 2 }, readings, new String[] { "content" }, 15, -1, tags, roles, null,
+            items.add(new SuggestItem(new String[] { "ドキュメント" + 2 }, readings, new String[] { "content" }, 15, 0, -1, tags, roles, null,
                     SuggestItem.Kind.DOCUMENT));
         }
         {
@@ -617,7 +679,7 @@ public class SuggesterTest {
             readings[0] = new String[] { "aa-a" };
             String[] tags = new String[] { "tag1", "tag2" };
             String[] roles = new String[] { SuggestConstants.DEFAULT_ROLE, "role1", "role2", "role3" };
-            items.add(new SuggestItem(new String[] { "ドキュメント" + 3 }, readings, new String[] { "content" }, 15, -1, tags, roles, null,
+            items.add(new SuggestItem(new String[] { "ドキュメント" + 3 }, readings, new String[] { "content" }, 15, 0, -1, tags, roles, null,
                     SuggestItem.Kind.DOCUMENT));
         }
 

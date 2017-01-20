@@ -1,12 +1,12 @@
 package org.codelibs.fess.suggest.entity;
 
 import java.io.Serializable;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.function.IntFunction;
+import java.util.stream.Stream;
 
 import org.codelibs.core.lang.StringUtil;
 import org.codelibs.fess.suggest.constants.FieldNames;
@@ -53,7 +53,7 @@ public class SuggestItem implements Serializable {
 
     private String[] languages;
 
-    private Kind kind;
+    private Kind[] kinds;
 
     private Map<String, Object> emptySource;
 
@@ -62,8 +62,9 @@ public class SuggestItem implements Serializable {
     private SuggestItem() {
     }
 
-    public SuggestItem(final String[] text, final String[][] readings, final String[] fields, final long score, final float userBoost,
-            @Nullable final String[] tags, @Nullable final String[] roles, @Nullable final String[] languages, final Kind kind) {
+    public SuggestItem(final String[] text, final String[][] readings, final String[] fields, final long docFreq, final long queryFreq,
+            final float userBoost, @Nullable final String[] tags, @Nullable final String[] roles, @Nullable final String[] languages,
+            final Kind kind) {
         this.text = String.join(SuggestConstants.TEXT_SEPARATOR, text);
         this.readings = readings;
         this.fields = fields != null ? fields : new String[] {};
@@ -78,24 +79,16 @@ public class SuggestItem implements Serializable {
 
         this.languages = languages != null ? languages : new String[] {};
 
-        this.kind = kind;
-        if (kind == Kind.QUERY) {
-            this.queryFreq = score;
-            this.docFreq = 0;
-            this.userBoost = 1;
-        } else if (kind == Kind.USER) {
-            this.queryFreq = 0;
-            this.docFreq = 1;
+        this.kinds = new Kind[] { kind };
+        if (userBoost > 1) {
             this.userBoost = userBoost;
         } else {
-            this.queryFreq = 0;
-            this.docFreq = score;
             this.userBoost = 1;
         }
-
+        this.docFreq = docFreq;
+        this.queryFreq = queryFreq;
         this.timestamp = LocalDateTime.now();
         this.emptySource = createEmptyMap();
-
         this.id = SuggestUtil.createSuggestTextId(this.text);
     }
 
@@ -123,8 +116,8 @@ public class SuggestItem implements Serializable {
         return fields;
     }
 
-    public Kind getKind() {
-        return kind;
+    public Kind[] getKinds() {
+        return kinds;
     }
 
     public long getQueryFreq() {
@@ -141,6 +134,58 @@ public class SuggestItem implements Serializable {
 
     public LocalDateTime getTimestamp() {
         return timestamp;
+    }
+
+    public void setText(String text) {
+        this.text = text;
+    }
+
+    public void setTimestamp(LocalDateTime timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    public void setQueryFreq(long queryFreq) {
+        this.queryFreq = queryFreq;
+    }
+
+    public void setDocFreq(long docFreq) {
+        this.docFreq = docFreq;
+    }
+
+    public void setUserBoost(float userBoost) {
+        this.userBoost = userBoost;
+    }
+
+    public void setReadings(String[][] readings) {
+        this.readings = readings;
+    }
+
+    public void setFields(String[] fields) {
+        this.fields = fields;
+    }
+
+    public void setTags(String[] tags) {
+        this.tags = tags;
+    }
+
+    public void setRoles(String[] roles) {
+        this.roles = roles;
+    }
+
+    public void setLanguages(String[] languages) {
+        this.languages = languages;
+    }
+
+    public void setKinds(Kind[] kinds) {
+        this.kinds = kinds;
+    }
+
+    public void setEmptySource(Map<String, Object> emptySource) {
+        this.emptySource = emptySource;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public Map<String, Object> toEmptyMap() {
@@ -184,13 +229,62 @@ public class SuggestItem implements Serializable {
         map.put(FieldNames.TAGS, tags);
         map.put(FieldNames.ROLES, roles);
         map.put(FieldNames.LANGUAGES, languages);
-        map.put(FieldNames.KINDS, new String[] { kind.toString() });
+        map.put(FieldNames.KINDS, Stream.of(kinds).map(kind -> kind.toString()).toArray());
         map.put(FieldNames.QUERY_FREQ, queryFreq);
         map.put(FieldNames.DOC_FREQ, docFreq);
         map.put(FieldNames.USER_BOOST, userBoost);
         map.put(FieldNames.SCORE, (queryFreq + docFreq) * userBoost);
         map.put(FieldNames.TIMESTAMP, timestamp.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli());
         return map;
+    }
+
+    public static SuggestItem parseSource(final Map<String, Object> source) {
+        final String text = source.get(FieldNames.TEXT).toString();
+        final List<String[]> readings = new ArrayList<>();
+        for (int i = 0;; i++) {
+            final Object readingObj = source.get(FieldNames.READING_PREFIX + i);
+            if (readingObj == null) {
+                break;
+            }
+            final List<String> list = (List) readingObj;
+            readings.add(list.toArray(new String[list.size()]));
+        }
+        final List<String> fields = SuggestUtil.getAsList(source.get(FieldNames.FIELDS));
+        final long docFreq = Long.parseLong(source.get(FieldNames.DOC_FREQ).toString());
+        final long queryFreq = Long.parseLong(source.get(FieldNames.QUERY_FREQ).toString());
+        final float userBoost = Float.parseFloat(source.get(FieldNames.USER_BOOST).toString());
+        final List<String> tags = SuggestUtil.getAsList(source.get(FieldNames.TAGS));
+        final List<String> roles = SuggestUtil.getAsList(source.get(FieldNames.ROLES));
+        final List<String> languages = SuggestUtil.getAsList(source.get(FieldNames.LANGUAGES));
+        final List<String> kinds = SuggestUtil.getAsList(source.get(FieldNames.KINDS));
+        final long timestamp = Long.parseLong(source.get(FieldNames.TIMESTAMP).toString());
+
+        final SuggestItem item = new SuggestItem();
+        item.text = text;
+        item.readings = readings.toArray(new String[readings.size()][]);
+        item.fields = fields.toArray(new String[fields.size()]);
+        item.docFreq = docFreq;
+        item.queryFreq = queryFreq;
+        item.userBoost = userBoost;
+        item.tags = tags.toArray(new String[tags.size()]);
+        item.roles = roles.toArray(new String[roles.size()]);
+        item.languages = languages.toArray(new String[languages.size()]);
+
+        item.kinds = new Kind[kinds.size()];
+        for (int i = 0; i < kinds.size(); i++) {
+            final String kind = kinds.get(i);
+            if (kind.equals(Kind.DOCUMENT.toString())) {
+                item.kinds[i] = Kind.DOCUMENT;
+            } else if (kind.equals(Kind.QUERY.toString())) {
+                item.kinds[i] = Kind.QUERY;
+            } else if (kind.equals(Kind.USER.toString())) {
+                item.kinds[i] = Kind.USER;
+            }
+        }
+
+        item.id = SuggestUtil.createSuggestTextId(item.text);
+        item.timestamp = LocalDateTime.ofInstant(Instant.ofEpochMilli(timestamp), ZoneId.systemDefault());
+        return item;
     }
 
     public Map<String, Object> getUpdatedSource(final Map<String, Object> existingSource) {
@@ -250,11 +344,11 @@ public class SuggestItem implements Serializable {
 
         final Object kindsObj = existingSource.get(FieldNames.KINDS);
         if (kindsObj == null) {
-            map.put(FieldNames.KINDS, new String[] { kind.toString() });
+            map.put(FieldNames.KINDS, Stream.of(kinds).map(kind -> kind.toString()).toArray());
         } else {
             @SuppressWarnings("unchecked")
             final List<String> existingFields = (List) kindsObj;
-            concatValues(existingFields, kind.toString());
+            concatValues(existingFields, Stream.of(kinds).map(kind -> kind.toString()).toArray(count -> new String[count]));
             map.put(FieldNames.KINDS, existingFields);
         }
 
@@ -286,12 +380,29 @@ public class SuggestItem implements Serializable {
         return map;
     }
 
-    protected void concatValues(final List<String> dest, final String... newValues) {
-        for (final String value : newValues) {
+    protected static <T> void concatValues(final List<T> dest, final T... newValues) {
+        for (final T value : newValues) {
             if (!dest.contains(value)) {
                 dest.add(value);
             }
         }
+    }
+
+    protected static Kind[] concatKinds(final Kind[] kinds, final Kind... newKinds) {
+        if (kinds == null) {
+            return newKinds;
+        } else if (newKinds == null) {
+            return kinds;
+        }
+
+        final List<Kind> list = new ArrayList<>(kinds.length + newKinds.length);
+        list.addAll(Arrays.asList(kinds));
+        for (final Kind kind : newKinds) {
+            if (!list.contains(kind)) {
+                list.add(kind);
+            }
+        }
+        return list.toArray(new Kind[list.size()]);
     }
 
     public static SuggestItem merge(final SuggestItem item1, final SuggestItem item2) {
@@ -366,7 +477,7 @@ public class SuggestItem implements Serializable {
         }
         mergedItem.roles = roleList.toArray(new String[roleList.size()]);
 
-        mergedItem.kind = item2.kind;
+        mergedItem.kinds = concatKinds(item1.kinds, item2.kinds);
         mergedItem.timestamp = item2.timestamp;
         mergedItem.queryFreq = item1.queryFreq + item2.queryFreq;
         mergedItem.docFreq = item1.docFreq + item2.docFreq;
@@ -374,62 +485,6 @@ public class SuggestItem implements Serializable {
         mergedItem.emptySource = item2.emptySource;
 
         return mergedItem;
-    }
-
-    public String getScript() {
-        final StringBuilder script = new StringBuilder(1000);
-
-        // define vars
-        script.append("def source=ctx._source;");
-
-        //text
-        script.append("source.text=text;");
-
-        //readings
-        for (int i = 0; i < readings.length; i++) {
-            script.append("source[\"reading_").append(i).append("\"]").append("=reading").append(i).append(';');
-        }
-
-        //fields
-        script.append("sourceFields=source.fields; fields.each{ if(!sourceFields.contains(it)) sourceFields.add(it);};");
-
-        //score
-        script.append("source.queryFreq+=queryFreq;");
-        script.append("source.docFreq+=docFreq;");
-        script.append("if(userBoost >= 0) source.userBoost=userBoost;");
-        script.append("source.score=(source.queryFreq + source.docFreq) * source.userBoost;");
-
-        //tags
-        script.append("sourceTags=source.tags; tags.each{ if(!sourceTags.contains(it)) sourceTags.add(it);};");
-
-        //roles
-        script.append("sourceRoles=source.roles; roles.each{ if(!sourceRoles.contains(it)) sourceRoles.add(it);};");
-
-        //kind
-        script.append("if(!source.kinds.contains(kind)) {source.kinds.add(kind);};");
-
-        //timestamp
-        script.append("source['@timestamp']=timestamp;");
-
-        return script.toString();
-    }
-
-    public Map<String, Object> getScriptParams() {
-        final Map<String, Object> params = new HashMap<>();
-        params.put("text", text);
-        for (int i = 0; i < readings.length; i++) {
-            params.put("reading" + i, readings[i]);
-        }
-        params.put("fields", fields);
-        params.put("queryFreq", queryFreq);
-        params.put("docFreq", docFreq);
-        params.put("userBoost", userBoost);
-        params.put("tags", tags);
-        params.put("roles", roles);
-        params.put("kind", kind.toString());
-        params.put("timestamp", timestamp);
-
-        return params;
     }
 
     public boolean isNgWord(final String[] badWords) {

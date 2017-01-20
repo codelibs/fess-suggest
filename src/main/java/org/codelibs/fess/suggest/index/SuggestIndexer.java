@@ -29,7 +29,14 @@ import org.codelibs.fess.suggest.index.writer.SuggestWriterResult;
 import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.codelibs.fess.suggest.util.SuggestUtil;
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.Operator;
+import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.SearchHit;
 
 public class SuggestIndexer {
     protected final Client client;
@@ -87,7 +94,7 @@ public class SuggestIndexer {
         final SuggestItem[] array = Stream.of(items).filter(item -> !item.isNgWord(badWords)).toArray(n -> new SuggestItem[n]);
 
         final long start = System.currentTimeMillis();
-        final SuggestWriterResult result = suggestWriter.write(client, settings, index, type, array);
+        final SuggestWriterResult result = suggestWriter.write(client, settings, index, type, array, true);
         return new SuggestIndexResponse(items.length, items.length, result.getFailures(), System.currentTimeMillis() - start);
     }
 
@@ -99,8 +106,96 @@ public class SuggestIndexer {
 
     public SuggestDeleteResponse deleteByQuery(final String queryString) {
         final long start = System.currentTimeMillis();
-        final SuggestWriterResult result = suggestWriter.deleteByQuery(client, settings, index, type, queryString);
+        final SuggestWriterResult result =
+                suggestWriter.deleteByQuery(client, settings, index, type, QueryBuilders.queryStringQuery(queryString)
+                        .autoGeneratePhraseQueries(true).defaultOperator(Operator.AND));
         return new SuggestDeleteResponse(result.getFailures(), System.currentTimeMillis() - start);
+    }
+
+    public SuggestDeleteResponse deleteByQuery(final QueryBuilder queryBuilder) {
+        final long start = System.currentTimeMillis();
+        final SuggestWriterResult result = suggestWriter.deleteByQuery(client, settings, index, type, queryBuilder);
+        return new SuggestDeleteResponse(result.getFailures(), System.currentTimeMillis() - start);
+    }
+
+    public SuggestDeleteResponse deleteAll() {
+        SuggestDeleteResponse response = deleteByQuery(QueryBuilders.matchAllQuery());
+        restoreElevateWord();
+        return response;
+    }
+
+    public SuggestDeleteResponse deleteDocumentWords() {
+        final long start = System.currentTimeMillis();
+
+        final SuggestDeleteResponse deleteResponse =
+                deleteByQuery(QueryBuilders.boolQuery().must(QueryBuilders.rangeQuery(FieldNames.DOC_FREQ).gte(1))
+                        .mustNot(QueryBuilders.matchPhraseQuery(FieldNames.KINDS, SuggestItem.Kind.QUERY.toString()))
+                        .mustNot(QueryBuilders.matchPhraseQuery(FieldNames.KINDS, SuggestItem.Kind.USER.toString())));
+        if (deleteResponse.hasError()) {
+            throw new SuggestIndexException(deleteResponse.getErrors().get(0));
+        }
+
+        final List<SuggestItem> updateItems = new ArrayList<>();
+        SearchResponse response =
+                client.prepareSearch(index).setTypes(type).setSize(1000).setScroll(TimeValue.timeValueMinutes(1))
+                        .setQuery(QueryBuilders.rangeQuery(FieldNames.DOC_FREQ).gte(1)).execute().actionGet();
+        while (response.getHits().getHits().length > 0) {
+            final SearchHit[] hits = response.getHits().hits();
+            for (SearchHit hit : hits) {
+                final SuggestItem item = SuggestItem.parseSource(hit.getSource());
+                item.setDocFreq(0);
+                item.setKinds(Stream.of(item.getKinds()).filter(kind -> kind != SuggestItem.Kind.DOCUMENT)
+                        .toArray(count -> new SuggestItem.Kind[count]));
+                updateItems.add(item);
+            }
+            final SuggestWriterResult result =
+                    suggestWriter.write(client, settings, index, type, updateItems.toArray(new SuggestItem[updateItems.size()]), false);
+            if (result.hasFailure()) {
+                throw new SuggestIndexException(result.getFailures().get(0));
+            }
+
+            final String scrollId = response.getScrollId();
+            response = client.prepareSearchScroll(scrollId).execute().actionGet();
+        }
+
+        return new SuggestDeleteResponse(null, System.currentTimeMillis() - start);
+    }
+
+    public SuggestDeleteResponse deleteQueryWords() {
+        final long start = System.currentTimeMillis();
+
+        final SuggestDeleteResponse deleteResponse =
+                deleteByQuery(QueryBuilders.boolQuery().must(QueryBuilders.rangeQuery(FieldNames.QUERY_FREQ).gte(1))
+                        .mustNot(QueryBuilders.matchPhraseQuery(FieldNames.KINDS, SuggestItem.Kind.DOCUMENT.toString()))
+                        .mustNot(QueryBuilders.matchPhraseQuery(FieldNames.KINDS, SuggestItem.Kind.USER.toString())));
+        if (deleteResponse.hasError()) {
+            throw new SuggestIndexException(deleteResponse.getErrors().get(0));
+        }
+
+        final List<SuggestItem> updateItems = new ArrayList<>();
+        SearchResponse response =
+                client.prepareSearch(index).setTypes(type).setSize(1000).setScroll(TimeValue.timeValueMinutes(1))
+                        .setQuery(QueryBuilders.rangeQuery(FieldNames.QUERY_FREQ).gte(1)).execute().actionGet();
+        while (response.getHits().getHits().length > 0) {
+            final SearchHit[] hits = response.getHits().hits();
+            for (SearchHit hit : hits) {
+                final SuggestItem item = SuggestItem.parseSource(hit.getSource());
+                item.setQueryFreq(0);
+                item.setKinds(Stream.of(item.getKinds()).filter(kind -> kind != SuggestItem.Kind.QUERY)
+                        .toArray(count -> new SuggestItem.Kind[count]));
+                updateItems.add(item);
+            }
+            final SuggestWriterResult result =
+                    suggestWriter.write(client, settings, index, type, updateItems.toArray(new SuggestItem[updateItems.size()]), false);
+            if (result.hasFailure()) {
+                throw new SuggestIndexException(result.getFailures().get(0));
+            }
+
+            final String scrollId = response.getScrollId();
+            response = client.prepareSearchScroll(scrollId).execute().actionGet();
+        }
+
+        return new SuggestDeleteResponse(null, System.currentTimeMillis() - start);
     }
 
     public SuggestIndexResponse indexFromQueryLog(final QueryLog queryLog) {
@@ -296,7 +391,7 @@ public class SuggestIndexer {
         final String query =
                 FieldNames.TIMESTAMP + ":[* TO " + threshold.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli() + "] NOT "
                         + FieldNames.KINDS + ':' + SuggestItem.Kind.USER;
-        suggestWriter.deleteByQuery(client, settings, index, type, query);
+        deleteByQuery(query);
         return new SuggestDeleteResponse(null, System.currentTimeMillis() - start);
     }
 

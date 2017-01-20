@@ -15,13 +15,14 @@ import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.Operator;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.QueryStringQueryBuilder;
 
 public class SuggestIndexWriter implements SuggestWriter {
     @Override
     public SuggestWriterResult write(final Client client, final SuggestSettings settings, final String index, final String type,
-            final SuggestItem[] items) {
+            final SuggestItem[] items, final boolean update) {
         final BulkRequestBuilder bulkRequestBuilder = client.prepareBulk();
 
         final SuggestItem[] mergedItems = mergeItems(items);
@@ -32,14 +33,14 @@ public class SuggestIndexWriter implements SuggestWriter {
         for (final SuggestItem item : mergedItems) {
             final GetResponse getResponse =
                     client.prepareGet().setIndex(index).setType(type).setId(item.getId()).get(TimeValue.timeValueSeconds(30));
-            if (getResponse.isExists()) {
+            if (update && getResponse.isExists()) {
                 final IndexRequestBuilder indexRequestBuilder = new IndexRequestBuilder(client, IndexAction.INSTANCE, index);
                 indexRequestBuilder.setType(type).setId(item.getId()).setOpType(IndexRequest.OpType.INDEX)
                         .setSource(item.getUpdatedSource(getResponse.getSourceAsMap()));
                 bulkRequestBuilder.add(indexRequestBuilder);
             } else {
                 final IndexRequestBuilder indexRequestBuilder = new IndexRequestBuilder(client, IndexAction.INSTANCE, index);
-                indexRequestBuilder.setType(type).setId(item.getId()).setCreate(true).setSource(item.getSource());
+                indexRequestBuilder.setType(type).setId(item.getId()).setOpType(IndexRequest.OpType.INDEX).setSource(item.getSource());
                 bulkRequestBuilder.add(indexRequestBuilder);
             }
         }
@@ -71,11 +72,10 @@ public class SuggestIndexWriter implements SuggestWriter {
 
     @Override
     public SuggestWriterResult deleteByQuery(final Client client, final SuggestSettings settings, final String index, final String type,
-            final String queryString) {
+            final QueryBuilder queryBuilder) {
         final SuggestWriterResult result = new SuggestWriterResult();
         try {
-            SuggestUtil.deleteByQuery(client, index, type, QueryBuilders.queryStringQuery(queryString).defaultOperator(Operator.AND)
-                    .autoGeneratePhraseQueries(true));
+            SuggestUtil.deleteByQuery(client, index, type, queryBuilder);
         } catch (final Exception e) {
             result.addFailure(e);
         }
