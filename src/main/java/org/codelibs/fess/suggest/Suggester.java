@@ -140,7 +140,7 @@ public class Suggester {
         return type;
     }
 
-    public long getTotalWordsNum() {
+    public long getAllWordsNum() {
         return getNum(QueryBuilders.matchAllQuery());
     }
 

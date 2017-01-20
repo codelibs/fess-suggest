@@ -531,7 +531,7 @@ public class SuggesterTest {
         suggester.indexer().index(items);
         suggester.refresh();
 
-        assertEquals(2, suggester.getTotalWordsNum());
+        assertEquals(2, suggester.getAllWordsNum());
         assertEquals(2, suggester.getDocumentWordsNum());
         assertEquals(1, suggester.getQueryWordsNum());
     }
@@ -542,13 +542,13 @@ public class SuggesterTest {
         suggester.indexer().index(items);
         suggester.refresh();
 
-        assertEquals(2, suggester.getTotalWordsNum());
+        assertEquals(2, suggester.getAllWordsNum());
         assertEquals(2, suggester.getDocumentWordsNum());
         assertEquals(1, suggester.getQueryWordsNum());
 
         suggester.indexer().deleteAll();
         suggester.refresh();
-        assertEquals(0, suggester.getTotalWordsNum());
+        assertEquals(0, suggester.getAllWordsNum());
         assertEquals(0, suggester.getDocumentWordsNum());
         assertEquals(0, suggester.getQueryWordsNum());
     }
@@ -559,13 +559,13 @@ public class SuggesterTest {
         suggester.indexer().index(items);
         suggester.refresh();
 
-        assertEquals(2, suggester.getTotalWordsNum());
+        assertEquals(2, suggester.getAllWordsNum());
         assertEquals(2, suggester.getDocumentWordsNum());
         assertEquals(1, suggester.getQueryWordsNum());
 
         suggester.indexer().deleteDocumentWords();
         suggester.refresh();
-        assertEquals(1, suggester.getTotalWordsNum());
+        assertEquals(1, suggester.getAllWordsNum());
         assertEquals(0, suggester.getDocumentWordsNum());
         assertEquals(1, suggester.getQueryWordsNum());
     }
@@ -576,13 +576,13 @@ public class SuggesterTest {
         suggester.indexer().index(items);
         suggester.refresh();
 
-        assertEquals(2, suggester.getTotalWordsNum());
+        assertEquals(2, suggester.getAllWordsNum());
         assertEquals(2, suggester.getDocumentWordsNum());
         assertEquals(1, suggester.getQueryWordsNum());
 
         suggester.indexer().deleteQueryWords();
         suggester.refresh();
-        assertEquals(2, suggester.getTotalWordsNum());
+        assertEquals(2, suggester.getAllWordsNum());
         assertEquals(2, suggester.getDocumentWordsNum());
         assertEquals(0, suggester.getQueryWordsNum());
     }
