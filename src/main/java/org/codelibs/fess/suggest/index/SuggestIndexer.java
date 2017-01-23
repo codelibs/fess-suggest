@@ -32,7 +32,6 @@ import org.codelibs.fess.suggest.util.SuggestUtil;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.Operator;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -271,7 +270,10 @@ public class SuggestIndexer {
                     stream.flatMap(
                             document -> contentsParser.parseDocument(document, supportedFields, tagFieldName, roleFieldName, langFieldName,
                                     readingConverter, normalizer, analyzer).stream()).toArray(n -> new SuggestItem[n]);
+            long now = System.currentTimeMillis();
+            System.out.println("parseTime " + (now - start) + "  (doc num=" + documents.length);
             final SuggestIndexResponse response = index(array);
+            System.out.println("indexTime " + (System.currentTimeMillis() - now));
             return new SuggestIndexResponse(array.length, documents.length, response.getErrors(), System.currentTimeMillis() - start);
         } catch (final Exception e) {
             throw new SuggestIndexException("Failed to index from document", e);
@@ -289,21 +291,37 @@ public class SuggestIndexer {
         final Deferred<SuggestIndexResponse> deferred = new Deferred<>();
         threadPool.execute(() -> {
             final long start = System.currentTimeMillis();
+            long prev = start;
             int numberOfSuggestDocs = 0;
             int numberOfInputDocs = 0;
 
             final List<Throwable> errors = new ArrayList<>();
             final List<Map<String, Object>> docs = new ArrayList<>(docPerReq);
+            long now = System.currentTimeMillis();
+            System.out.println("1 " + (now - prev));
+            prev = now;
             try (final DocumentReader documentReader = reader.get()) {
+                now = System.currentTimeMillis();
+                System.out.println("2 " + (now - prev));
+                prev = now;
                 Map<String, Object> doc = documentReader.read();
+                now = System.currentTimeMillis();
+                System.out.println("3 " + (now - prev));
+                prev = now;
                 while (doc != null) {
                     if (Thread.currentThread().isInterrupted()) {
                         break;
                     }
                     docs.add(doc);
                     doc = documentReader.read();
+                    now = System.currentTimeMillis();
+                    System.out.println("4 " + (now - prev));
+                    prev = now;
                     if (doc == null || docs.size() >= docPerReq) {
                         final SuggestIndexResponse res = indexFromDocument(docs.toArray(new Map[docs.size()]));
+                        now = System.currentTimeMillis();
+                        System.out.println("5 " + (now - prev));
+                        prev = now;
                         errors.addAll(res.getErrors());
                         numberOfSuggestDocs += res.getNumberOfSuggestDocs();
                         numberOfInputDocs += res.getNumberOfInputDocs();

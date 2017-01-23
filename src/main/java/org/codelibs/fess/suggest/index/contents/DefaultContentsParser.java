@@ -107,9 +107,14 @@ public class DefaultContentsParser implements ContentsParser {
     public List<SuggestItem> parseDocument(final Map<String, Object> document, final String[] fields, final String tagFieldName,
             final String roleFieldName, final String langFieldName, final ReadingConverter readingConverter, final Normalizer normalizer,
             final SuggestAnalyzer analyzer) {
+        long prev = System.currentTimeMillis();
         List<SuggestItem> items = null;
         final String[] tags = getRoleFromDoc(document, tagFieldName);
         final String[] roles = getRoleFromDoc(document, roleFieldName);
+
+        long now = System.currentTimeMillis();
+        System.out.println("parseDocument1: " + (now - prev));
+        prev = now;
 
         for (final String field : fields) {
             final Object textObj = document.get(field);
@@ -119,17 +124,29 @@ public class DefaultContentsParser implements ContentsParser {
             final String text = textObj.toString();
             final String lang = document.get(langFieldName) == null ? null : document.get(langFieldName).toString();
 
+            now = System.currentTimeMillis();
+            System.out.println("parseDocument2: " + (now - prev));
+            prev = now;
+            System.out.println(lang);
             final List<AnalyzeResponse.AnalyzeToken> tokens = analyzer.analyze(text, lang);
+            now = System.currentTimeMillis();
+            System.out.println("parseDocument3: " + (now - prev));
+            prev = now;
             try {
                 for (final AnalyzeResponse.AnalyzeToken token : tokens) {
                     final String word = token.getTerm();
                     if (StringUtil.isBlank(word)) {
                         continue;
                     }
+
                     final String[] words = new String[] { word };
                     final String[][] readings = new String[words.length][];
                     for (int j = 0; j < words.length; j++) {
+                        String prevWord = words[j];
                         words[j] = normalizer.normalize(words[j], lang);
+                        if (!prevWord.equals(words[j])) {
+                            throw new RuntimeException("different word. prev:" + prevWord + " normalized:" + words[j]);
+                        }
                         final List<String> l = readingConverter.convert(words[j], lang);
                         readings[j] = l.toArray(new String[l.size()]);
                     }
@@ -142,9 +159,12 @@ public class DefaultContentsParser implements ContentsParser {
                     items.add(new SuggestItem(words, readings, new String[] { field }, 1L, 0, -1, tags, roles, langs,
                             SuggestItem.Kind.DOCUMENT));
                 }
-            } catch (final IOException e) {
+            } catch (final Throwable e) {
                 throw new SuggesterException("Failed to create SuggestItem from document.", e);
             }
+            now = System.currentTimeMillis();
+            System.out.println("parseDocument4: " + (now - prev) + "  (Token num=" + tokens.size());
+            prev = now;
         }
 
         return items == null ? new ArrayList<>() : items;

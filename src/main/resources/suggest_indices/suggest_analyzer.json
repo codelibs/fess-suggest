@@ -31,6 +31,7 @@
       "contents_analyzer" : {
         "type" : "custom",
         "tokenizer" : "kuromoji_neologd_normal",
+        "char_filter" : ["mapping_char"],
         "filter" : ["lowercase", "stopword_en_filter", "pos_filter", "content_length_filter", "limit_token_count_filter"]
       },
       "reading_analyzer_ja" : {
@@ -51,6 +52,7 @@
       "contents_analyzer_ja" : {
         "type" : "custom",
         "tokenizer" : "kuromoji_neologd_normal",
+        "char_filter" : ["mapping_char"],
         "filter" : ["lowercase", "stopword_en_filter", "pos_filter", "content_length_filter", "limit_token_count_filter"]
       },
       "reading_analyzer_en" : {
@@ -70,6 +72,7 @@
       "contents_analyzer_en" : {
         "type" : "custom",
         "tokenizer" : "standard",
+        "char_filter" : ["mapping_char"],
         "filter" : ["lowercase", "stopword_en_filter", "content_length_filter", "limit_token_count_filter", "english_keywords"]
       },
       "reading_analyzer_ko" : {
