@@ -129,7 +129,6 @@ public class DefaultContentsParser implements ContentsParser {
                     final String[] words = new String[] { word };
                     final String[][] readings = new String[words.length][];
                     for (int j = 0; j < words.length; j++) {
-                        words[j] = normalizer.normalize(words[j], lang);
                         final List<String> l = readingConverter.convert(words[j], lang);
                         readings[j] = l.toArray(new String[l.size()]);
                     }
