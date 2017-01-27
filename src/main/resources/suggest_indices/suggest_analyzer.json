@@ -693,7 +693,7 @@
         "type" : "custom",
         "tokenizer" : "standard",
         "char_filter" : ["mapping_char"],
-        "filter" : ["lowercase", "stopword_en_filter", "content_length_filter", "limit_token_count_filter", "greek_stop", "greek_keywords"]
+        "filter" : ["greek_lowercase", "lowercase", "stopword_en_filter", "content_length_filter", "limit_token_count_filter", "greek_stop", "greek_keywords"]
       },
       "reading_analyzer_hu" : {
         "type" : "custom",
