@@ -79,6 +79,30 @@ public class ESSourceReaderTest {
     }
 
     @Test
+    public void test_ReadWithLimit() throws Exception {
+        String indexName = "test-index";
+        String typeName = "test-type";
+        Client client = runner.client();
+        SuggestSettings settings = suggester.settings();
+        int num = 10000;
+
+        addDocument(indexName, typeName, client, num);
+
+        ESSourceReader reader = new ESSourceReader(client, settings, indexName, typeName);
+        reader.setScrollSize(1);
+        reader.setLimitDocNumPercentage("1%");
+        int count = 0;
+        Set<String> valueSet = Collections.synchronizedSet(new HashSet<>());
+        Map<String, Object> source;
+        while ((source = reader.read()) != null) {
+            assertTrue(source.get("field1").toString().startsWith("test"));
+            valueSet.add(source.get("field1").toString());
+            count++;
+        }
+        assertTrue(String.valueOf(count), count < 200);
+    }
+
+    @Test
     public void test_ReadMultiThread() throws Exception {
         int threadNum = new Random().nextInt(20) + 1;
         System.out.println("Thread num:" + threadNum);
@@ -139,6 +163,12 @@ public class ESSourceReaderTest {
         }
         assertEquals(num * 2, count.get());
         assertEquals(num, valueSet2.size());
+    }
+
+    @Test
+    public void test_getLimitDocNum() throws Exception {
+        assertEquals(10, ESSourceReader.getLimitDocNum(100, 10));
+        assertEquals(25, ESSourceReader.getLimitDocNum(50, 50));
     }
 
     private void addDocument(String indexName, String typeName, Client client, int num) {

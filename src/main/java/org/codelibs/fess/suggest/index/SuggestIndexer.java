@@ -278,12 +278,6 @@ public class SuggestIndexer {
         }
     }
 
-    @Deprecated
-    public Deferred<SuggestIndexResponse>.Promise indexFromDocument(final DocumentReader documentReader, final int docPerReq,
-            final long requestInterval) {
-        return indexFromDocument(() -> documentReader, docPerReq, requestInterval);
-    }
-
     public Deferred<SuggestIndexResponse>.Promise indexFromDocument(final Supplier<DocumentReader> reader, final int docPerReq,
             final long requestInterval) {
         final Deferred<SuggestIndexResponse> deferred = new Deferred<>();

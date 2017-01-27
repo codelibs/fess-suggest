@@ -5,12 +5,14 @@ import java.util.Queue;
 import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.Scroll;
 import org.elasticsearch.search.SearchHit;
@@ -28,10 +30,14 @@ public class ESSourceReader implements DocumentReader {
 
     protected int scrollSize = 1;
     protected int maxRetryCount = 5;
-
     protected long limitOfDocumentSize = 50000;
+    protected QueryBuilder queryBuilder = QueryBuilders.matchAllQuery();
+    protected int limitPercentage = 100;
 
     protected String scrollId = null;
+
+    protected final AtomicLong docCount = new AtomicLong(0);
+    protected final long totalDocNum;
 
     public ESSourceReader(final Client client, final SuggestSettings settings, final String indexName, final String typeName) {
         this.client = client;
@@ -39,6 +45,7 @@ public class ESSourceReader implements DocumentReader {
         this.indexName = indexName;
         this.typeName = typeName;
         this.supportedFields = settings.array().get(SuggestSettings.DefaultKeys.SUPPORTED_FIELDS);
+        this.totalDocNum = getTotal();
     }
 
     @Override
@@ -64,7 +71,30 @@ public class ESSourceReader implements DocumentReader {
         this.limitOfDocumentSize = limitOfDocumentSize;
     }
 
+    public void setQuery(final QueryBuilder queryBuilder) {
+        this.queryBuilder = queryBuilder;
+    }
+
+    public void setLimitDocNumPercentage(final String limitPercentage) {
+        if (limitPercentage.endsWith("%")) {
+            this.limitPercentage = Integer.parseInt(limitPercentage.substring(0, limitPercentage.length() - 1));
+        } else {
+            this.limitPercentage = Integer.parseInt(limitPercentage);
+        }
+
+        if (this.limitPercentage > 100) {
+            this.limitPercentage = 100;
+        } else if (this.limitPercentage < 1) {
+            this.limitPercentage = 1;
+        }
+    }
+
     protected void addDocumentToQueue() {
+        if (docCount.get() > getLimitDocNum(totalDocNum, limitPercentage)) {
+            isFinished.set(true);
+            return;
+        }
+
         RuntimeException exception = null;
 
         for (int i = 0; i < maxRetryCount; i++) {
@@ -73,8 +103,8 @@ public class ESSourceReader implements DocumentReader {
                 if (scrollId == null) {
                     response =
                             client.prepareSearch().setIndices(indexName).setTypes(typeName)
-                                    .setScroll(new Scroll(TimeValue.timeValueMinutes(1))).setQuery(QueryBuilders.matchAllQuery())
-                                    .setSize(scrollSize).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
+                                    .setScroll(new Scroll(TimeValue.timeValueMinutes(1))).setQuery(queryBuilder).setSize(scrollSize)
+                                    .execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
                     scrollId = response.getScrollId();
                 } else {
                     response =
@@ -113,9 +143,21 @@ public class ESSourceReader implements DocumentReader {
             }
         }
 
+        docCount.getAndAdd(queue.size());
+
         if (exception != null) {
             throw exception;
         }
+    }
+
+    protected static long getLimitDocNum(final long total, final long limitPercentage) {
+        return (long) (total * ((float) limitPercentage / 100f));
+    }
+
+    protected long getTotal() {
+        final SearchResponse response =
+                client.prepareSearch().setIndices(indexName).setTypes(typeName).setQuery(queryBuilder).setSize(0).execute().actionGet();
+        return response.getHits().getTotalHits();
     }
 
 }

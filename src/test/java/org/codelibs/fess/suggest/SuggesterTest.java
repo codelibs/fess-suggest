@@ -290,7 +290,7 @@ public class SuggesterTest {
         ESSourceReader reader = new ESSourceReader(client, suggester.settings(), indexName, typeName);
         reader.setScrollSize(1000);
 
-        suggester.indexer().indexFromDocument(reader, 1000, 100).then(response -> {
+        suggester.indexer().indexFromDocument(() -> reader, 1000, 100).then(response -> {
             numObInputDoc.set(response.getNumberOfInputDocs());
             latch.countDown();
         }).error(t -> {
