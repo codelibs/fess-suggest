@@ -33,6 +33,7 @@ public class ESSourceReader implements DocumentReader {
     protected long limitOfDocumentSize = 50000;
     protected QueryBuilder queryBuilder = QueryBuilders.matchAllQuery();
     protected int limitPercentage = 100;
+    protected long limitNumber = -1;
 
     protected String scrollId = null;
 
@@ -89,8 +90,12 @@ public class ESSourceReader implements DocumentReader {
         }
     }
 
+    public void setLimitNumber(final long limitNumber) {
+        this.limitNumber = limitNumber;
+    }
+
     protected void addDocumentToQueue() {
-        if (docCount.get() > getLimitDocNum(totalDocNum, limitPercentage)) {
+        if (docCount.get() > getLimitDocNum(totalDocNum, limitPercentage, limitNumber)) {
             isFinished.set(true);
             return;
         }
@@ -150,8 +155,12 @@ public class ESSourceReader implements DocumentReader {
         }
     }
 
-    protected static long getLimitDocNum(final long total, final long limitPercentage) {
-        return (long) (total * ((float) limitPercentage / 100f));
+    protected static long getLimitDocNum(final long total, final long limitPercentage, final long limitNumber) {
+        long percentNum = (long) (total * ((float) limitPercentage / 100f));
+        if (limitNumber < 0) {
+            return percentNum;
+        }
+        return percentNum < limitNumber ? percentNum : limitNumber;
     }
 
     protected long getTotal() {

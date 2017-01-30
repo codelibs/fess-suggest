@@ -167,8 +167,9 @@ public class ESSourceReaderTest {
 
     @Test
     public void test_getLimitDocNum() throws Exception {
-        assertEquals(10, ESSourceReader.getLimitDocNum(100, 10));
-        assertEquals(25, ESSourceReader.getLimitDocNum(50, 50));
+        assertEquals(10, ESSourceReader.getLimitDocNum(100, 10, -1));
+        assertEquals(25, ESSourceReader.getLimitDocNum(50, 50, -1));
+        assertEquals(10, ESSourceReader.getLimitDocNum(50, 50, 10));
     }
 
     private void addDocument(String indexName, String typeName, Client client, int num) {
