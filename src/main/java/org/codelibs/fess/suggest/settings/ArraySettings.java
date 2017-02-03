@@ -177,9 +177,8 @@ public class ArraySettings {
                         .setType(type)
                         .setSource(
                                 XContentFactory.jsonBuilder().startObject().startObject(settingsId).startObject("properties")
-                                        .startObject(FieldNames.ARRAY_KEY).field("type", "keyword")
-                                        .endObject().endObject().endObject().endObject()).execute()
-                        .actionGet(SuggestConstants.ACTION_TIMEOUT);
+                                        .startObject(FieldNames.ARRAY_KEY).field("type", "keyword").endObject().endObject().endObject()
+                                        .endObject()).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
             }
         } catch (final IOException e) {
             throw new SuggestSettingsException("Failed to create mappings.");
