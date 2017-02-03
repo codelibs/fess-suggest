@@ -38,11 +38,17 @@ public final class SuggestUtil {
 
     private static final Base64.Encoder encoder = Base64.getEncoder();
 
+    private static final int idMaxLength = 445;
+
     private SuggestUtil() {
     }
 
     public static String createSuggestTextId(final String text) {
-        return encoder.encodeToString(text.getBytes(CoreLibConstants.CHARSET_UTF_8));
+        final String id =  encoder.encodeToString(text.getBytes(CoreLibConstants.CHARSET_UTF_8));
+        if (id.length() > 445) {
+            return id.substring(0, idMaxLength);
+        }
+        return id;
     }
 
     public static String[] parseQuery(final String q, final String field) {
