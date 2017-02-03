@@ -8,6 +8,8 @@ import org.elasticsearch.action.index.IndexAction;
 import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.index.IndexNotFoundException;
+import org.elasticsearch.search.sort.SortBuilders;
+import org.elasticsearch.search.sort.SortOrder;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -172,10 +174,50 @@ public class ESSourceReaderTest {
         assertEquals(10, ESSourceReader.getLimitDocNum(50, 50, 10));
     }
 
+    @Test
+    public void test_sort() throws Exception {
+        String indexName = "test-index";
+        String typeName = "test-type";
+        Client client = runner.client();
+        SuggestSettings settings = suggester.settings();
+        int num = 10000;
+
+        addDocument(indexName, typeName, client, num);
+
+        ESSourceReader reader = new ESSourceReader(client, settings, indexName, typeName);
+        reader.setScrollSize(1000);
+        reader.addSort(SortBuilders.fieldSort("field2"));
+        int count = 0;
+        int prev = -1;
+        Map<String, Object> source;
+        while ((source = reader.read()) != null) {
+            int current = Integer.parseInt(source.get("field2").toString());
+            assertTrue(prev < current);
+            prev = current;
+            count++;
+        }
+        assertEquals(num, count);
+
+        reader = new ESSourceReader(client, settings, indexName, typeName);
+        reader.setScrollSize(1000);
+        reader.addSort(SortBuilders.fieldSort("field2").order(SortOrder.DESC));
+        count = 0;
+        prev = Integer.MAX_VALUE;
+        while ((source = reader.read()) != null) {
+            int current = Integer.parseInt(source.get("field2").toString());
+            assertTrue(prev > current);
+            prev = current;
+            count++;
+        }
+        assertEquals(num, count);
+    }
+
     private void addDocument(String indexName, String typeName, Client client, int num) {
         BulkRequestBuilder bulkRequestBuilder = client.prepareBulk();
         for (int i = 0; i < num; i++) {
-            Map<String, Object> source = Collections.singletonMap("field1", "test" + i);
+            final Map<String, Object> source = new HashMap<>();
+            source.put("field1", "test" + i);
+            source.put("field2", i);
             IndexRequestBuilder indexRequestBuilder = new IndexRequestBuilder(client, IndexAction.INSTANCE);
             indexRequestBuilder.setIndex(indexName).setType(typeName).setId(String.valueOf(i)).setCreate(true).setSource(source);
             bulkRequestBuilder.add(indexRequestBuilder);

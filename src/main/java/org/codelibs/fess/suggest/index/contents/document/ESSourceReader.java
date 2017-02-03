@@ -1,14 +1,13 @@
 package org.codelibs.fess.suggest.index.contents.document;
 
-import java.util.Map;
-import java.util.Queue;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
+import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
@@ -16,6 +15,7 @@ import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.Scroll;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.sort.SortBuilder;
 
 public class ESSourceReader implements DocumentReader {
     protected final Queue<Map<String, Object>> queue = new ConcurrentLinkedQueue<>();
@@ -34,6 +34,7 @@ public class ESSourceReader implements DocumentReader {
     protected QueryBuilder queryBuilder = QueryBuilders.matchAllQuery();
     protected int limitPercentage = 100;
     protected long limitNumber = -1;
+    protected List<SortBuilder> sortList = new ArrayList<>();;
 
     protected String scrollId = null;
 
@@ -76,6 +77,10 @@ public class ESSourceReader implements DocumentReader {
         this.queryBuilder = queryBuilder;
     }
 
+    public void addSort(final SortBuilder sortBuilder) {
+        this.sortList.add(sortBuilder);
+    }
+
     public void setLimitDocNumPercentage(final String limitPercentage) {
         if (limitPercentage.endsWith("%")) {
             this.limitPercentage = Integer.parseInt(limitPercentage.substring(0, limitPercentage.length() - 1));
@@ -106,10 +111,13 @@ public class ESSourceReader implements DocumentReader {
             try {
                 final SearchResponse response;
                 if (scrollId == null) {
-                    response =
+                    final SearchRequestBuilder builder =
                             client.prepareSearch().setIndices(indexName).setTypes(typeName)
-                                    .setScroll(new Scroll(TimeValue.timeValueMinutes(1))).setQuery(queryBuilder).setSize(scrollSize)
-                                    .execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
+                                    .setScroll(new Scroll(TimeValue.timeValueMinutes(1))).setQuery(queryBuilder).setSize(scrollSize);
+                    for (final SortBuilder sortBuilder : sortList) {
+                        builder.addSort(sortBuilder);
+                    }
+                    response = builder.execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
                     scrollId = response.getScrollId();
                 } else {
                     response =
