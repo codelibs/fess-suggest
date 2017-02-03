@@ -177,7 +177,7 @@ public class ArraySettings {
                         .setType(type)
                         .setSource(
                                 XContentFactory.jsonBuilder().startObject().startObject(settingsId).startObject("properties")
-                                        .startObject(FieldNames.ARRAY_KEY).field("type", "string").field("index", "not_analyzed")
+                                        .startObject(FieldNames.ARRAY_KEY).field("type", "keyword")
                                         .endObject().endObject().endObject().endObject()).execute()
                         .actionGet(SuggestConstants.ACTION_TIMEOUT);
             }
