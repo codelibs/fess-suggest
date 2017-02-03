@@ -44,7 +44,7 @@ public final class SuggestUtil {
     }
 
     public static String createSuggestTextId(final String text) {
-        final String id =  encoder.encodeToString(text.getBytes(CoreLibConstants.CHARSET_UTF_8));
+        final String id = encoder.encodeToString(text.getBytes(CoreLibConstants.CHARSET_UTF_8));
         if (id.length() > 445) {
             return id.substring(0, idMaxLength);
         }
