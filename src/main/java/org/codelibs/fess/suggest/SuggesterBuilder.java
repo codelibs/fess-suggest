@@ -9,7 +9,6 @@ import org.codelibs.fess.suggest.analysis.SuggestAnalyzer;
 import org.codelibs.fess.suggest.converter.ReadingConverter;
 import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.codelibs.fess.suggest.normalizer.Normalizer;
-import org.codelibs.fess.suggest.settings.AnalyzerSettings;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.codelibs.fess.suggest.settings.SuggestSettingsBuilder;
 import org.codelibs.fess.suggest.util.SuggestUtil;
@@ -20,6 +19,7 @@ public class SuggesterBuilder {
     protected SuggestSettings settings;
     protected SuggestSettingsBuilder settingsBuilder;
     protected ReadingConverter readingConverter;
+    protected ReadingConverter contentsReadingConverter;
     protected Normalizer normalizer;
     protected SuggestAnalyzer analyzer;
     protected ExecutorService threadPool;
@@ -40,6 +40,11 @@ public class SuggesterBuilder {
 
     public SuggesterBuilder readingConverter(final ReadingConverter readingConverter) {
         this.readingConverter = readingConverter;
+        return this;
+    }
+
+    public SuggesterBuilder contentsReadigConverter(final ReadingConverter contentsReadigConverter) {
+        this.contentsReadingConverter = contentsReadigConverter;
         return this;
     }
 
@@ -81,6 +86,15 @@ public class SuggesterBuilder {
             throw new SuggesterException(e);
         }
 
+        if (contentsReadingConverter == null) {
+            contentsReadingConverter = SuggestUtil.createDefaultContentsReadingConverter(client, settings);
+        }
+        try {
+            contentsReadingConverter.init();
+        } catch (final IOException e) {
+            throw new SuggesterException(e);
+        }
+
         if (normalizer == null) {
             normalizer = SuggestUtil.createDefaultNormalizer(client, settings);
         }
@@ -93,6 +107,6 @@ public class SuggesterBuilder {
             threadPool = Executors.newFixedThreadPool(threadPoolSize);
         }
 
-        return new Suggester(client, settings, readingConverter, normalizer, analyzer, threadPool);
+        return new Suggester(client, settings, readingConverter, contentsReadingConverter, normalizer, analyzer, threadPool);
     }
 }

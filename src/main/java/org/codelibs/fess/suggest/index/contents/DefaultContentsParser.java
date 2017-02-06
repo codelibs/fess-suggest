@@ -120,18 +120,25 @@ public class DefaultContentsParser implements ContentsParser {
             final String lang = document.get(langFieldName) == null ? null : document.get(langFieldName).toString();
 
             final List<AnalyzeResponse.AnalyzeToken> tokens = analyzer.analyze(text, lang);
+            final List<AnalyzeResponse.AnalyzeToken> readingTokens = analyzer.analyzeAndReading(text, lang);
+            if (tokens.size() != readingTokens.size()) {
+                throw new SuggesterException("Failed to get reading. token_size=" + tokens.size() + " reading_size=" + readingTokens.size());
+            }
+
             try {
-                for (final AnalyzeResponse.AnalyzeToken token : tokens) {
+                for (int i = 0; i < tokens.size(); i++) {
+                    final AnalyzeResponse.AnalyzeToken token = tokens.get(i);
+                    final AnalyzeResponse.AnalyzeToken readingToken = readingTokens.get(i);
                     final String word = token.getTerm();
+                    final String reading = readingToken.getTerm();
                     if (StringUtil.isBlank(word)) {
                         continue;
                     }
                     final String[] words = new String[] { word };
                     final String[][] readings = new String[words.length][];
-                    for (int j = 0; j < words.length; j++) {
-                        final List<String> l = readingConverter.convert(words[j], lang);
-                        readings[j] = l.toArray(new String[l.size()]);
-                    }
+                    final List<String> l = readingConverter.convert(reading, lang);
+                    l.add(word);
+                    readings[0] = l.toArray(new String[l.size()]);
 
                     if (items == null) {
                         items = new ArrayList<>(text.length() * fields.length / field.length());

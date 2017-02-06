@@ -162,6 +162,12 @@ public final class SuggestUtil {
         return chain;
     }
 
+    public static ReadingConverter createDefaultContentsReadingConverter(final Client client, final SuggestSettings settings) {
+        final ReadingConverterChain chain = new ReadingConverterChain();
+        chain.addConverter(new KatakanaToAlphabetConverter());
+        return chain;
+    }
+
     public static Normalizer createDefaultNormalizer(final Client client, final SuggestSettings settings) {
         final NormalizerChain normalizerChain = new NormalizerChain();
         normalizerChain.add(new AnalyzerNormalizer(client, settings));

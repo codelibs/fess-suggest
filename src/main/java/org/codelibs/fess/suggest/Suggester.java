@@ -29,6 +29,7 @@ public class Suggester {
     protected final Client client;
     protected final SuggestSettings suggestSettings;
     protected final ReadingConverter readingConverter;
+    protected final ReadingConverter contentsReadingConverter;
     protected final Normalizer normalizer;
     protected final SuggestAnalyzer analyzer;
 
@@ -38,10 +39,12 @@ public class Suggester {
     protected final ExecutorService threadPool;
 
     public Suggester(final Client client, final SuggestSettings settings, final ReadingConverter readingConverter,
-            final Normalizer normalizer, final SuggestAnalyzer analyzer, final ExecutorService threadPool) {
+            final ReadingConverter contentsReadingConverter, final Normalizer normalizer, final SuggestAnalyzer analyzer,
+            final ExecutorService threadPool) {
         this.client = client;
         this.suggestSettings = settings;
         this.readingConverter = readingConverter;
+        this.contentsReadingConverter = contentsReadingConverter;
         this.normalizer = normalizer;
         this.analyzer = analyzer;
         this.index = settings.getAsString(SuggestSettings.DefaultKeys.INDEX, StringUtil.EMPTY);
@@ -129,7 +132,8 @@ public class Suggester {
     }
 
     protected SuggestIndexer createDefaultIndexer() {
-        return new SuggestIndexer(client, index, type, readingConverter, normalizer, analyzer, suggestSettings, threadPool);
+        return new SuggestIndexer(client, index, type, readingConverter, contentsReadingConverter, normalizer, analyzer, suggestSettings,
+                threadPool);
     }
 
     public String getIndex() {

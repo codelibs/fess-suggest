@@ -18,6 +18,7 @@ public class AnalyzerSettings {
     public static final String readingTermAnalyzerName = "reading_term_analyzer";
     public static final String normalizeAnalyzerName = "normalize_analyzer";
     public static final String contentsAnalyzerName = "contents_analyzer";
+    public static final String contentsReadingAnalyzerName = "contents_reading_analyzer";
 
     protected final Client client;
     protected final String analyzerSettingsIndexName;
@@ -62,6 +63,10 @@ public class AnalyzerSettings {
         return isSupportedLanguage(lang) ? contentsAnalyzerName + '_' + lang : contentsAnalyzerName;
     }
 
+    public String getContentsReadingAnalyzerName(final String lang) {
+        return isSupportedLanguage(lang) ? contentsReadingAnalyzerName + '_' + lang : contentsReadingAnalyzerName;
+    }
+
     public void updateAnalyzer(final Map<String, Object> settings) {
         client.admin().indices().prepareCreate(analyzerSettingsIndexName).setSettings(settings).execute().actionGet();
     }
@@ -98,11 +103,24 @@ public class AnalyzerSettings {
     }
 
     public class DefaultContentsAnalyzer implements SuggestAnalyzer {
+        @Override
         public List<AnalyzeResponse.AnalyzeToken> analyze(final String text, final String lang) {
             final AnalyzeResponse analyzeResponse =
                     client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text).setAnalyzer(getContentsAnalyzerName(lang))
                             .execute().actionGet();
             return analyzeResponse.getTokens();
+        }
+
+        @Override
+        public List<AnalyzeResponse.AnalyzeToken> analyzeAndReading(String text, String lang) {
+            try {
+                final AnalyzeResponse analyzeResponse =
+                        client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text)
+                                .setAnalyzer(getContentsReadingAnalyzerName(lang)).execute().actionGet();
+                return analyzeResponse.getTokens();
+            } catch (IllegalArgumentException e) {
+                return analyze(text, lang);
+            }
         }
     }
 

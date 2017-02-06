@@ -32,7 +32,6 @@ import org.codelibs.fess.suggest.util.SuggestUtil;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.Operator;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -52,6 +51,7 @@ public class SuggestIndexer {
     protected boolean parallel;
 
     protected ReadingConverter readingConverter;
+    protected ReadingConverter contentsReadingConverter;
     protected Normalizer normalizer;
     protected SuggestAnalyzer analyzer;
 
@@ -61,7 +61,8 @@ public class SuggestIndexer {
     protected ExecutorService threadPool;
 
     public SuggestIndexer(final Client client, final String index, final String type, final ReadingConverter readingConverter,
-            final Normalizer normalizer, final SuggestAnalyzer analyzer, final SuggestSettings settings, final ExecutorService threadPool) {
+            final ReadingConverter contentsReadingConverter, final Normalizer normalizer, final SuggestAnalyzer analyzer,
+            final SuggestSettings settings, final ExecutorService threadPool) {
         this.client = client;
         this.index = index;
         this.type = type;
@@ -73,6 +74,7 @@ public class SuggestIndexer {
         this.langFieldName = settings.getAsString(SuggestSettings.DefaultKeys.LANG_FIELD_NAME, StringUtil.EMPTY);
         this.parallel = settings.getAsBoolean(SuggestSettings.DefaultKeys.PARALLEL_PROCESSING, false);
         this.readingConverter = readingConverter;
+        this.contentsReadingConverter = contentsReadingConverter;
         this.normalizer = normalizer;
         this.analyzer = analyzer;
         this.settings = settings;
@@ -270,7 +272,7 @@ public class SuggestIndexer {
             final SuggestItem[] array =
                     stream.flatMap(
                             document -> contentsParser.parseDocument(document, supportedFields, tagFieldName, roleFieldName, langFieldName,
-                                    readingConverter, normalizer, analyzer).stream()).toArray(n -> new SuggestItem[n]);
+                                    contentsReadingConverter, normalizer, analyzer).stream()).toArray(n -> new SuggestItem[n]);
             final SuggestIndexResponse response = index(array);
             return new SuggestIndexResponse(array.length, documents.length, response.getErrors(), System.currentTimeMillis() - start);
         } catch (final Exception e) {
