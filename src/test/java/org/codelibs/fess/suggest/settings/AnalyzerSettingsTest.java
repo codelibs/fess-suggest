@@ -14,6 +14,7 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner.newConfigs;
 
@@ -51,6 +52,12 @@ public class AnalyzerSettingsTest {
         }
         runner.refresh();
         settings = Suggester.builder().build(runner.client(), id).settings();
+    }
+
+    @Test
+    public void test_analyzerCheck() throws Exception {
+        Set<String> undefined = settings.analyzer().checkAnalyzer();
+        assertEquals(0, undefined.size());
     }
 
     @Test

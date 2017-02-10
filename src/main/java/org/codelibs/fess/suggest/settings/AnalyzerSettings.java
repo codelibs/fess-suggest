@@ -8,8 +8,10 @@ import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRespon
 import org.elasticsearch.client.Client;
 
 import java.io.*;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
@@ -126,5 +128,52 @@ public class AnalyzerSettings {
 
     public static boolean isSupportedLanguage(final String lang) {
         return (StringUtil.isNotBlank(lang) && Stream.of(SUPPORTED_LANGUAGES).anyMatch(lang::equals));
+    }
+
+    public Set<String> checkAnalyzer() {
+        final String text = "text";
+        final Set<String> undefinedAnalyzerSet = new HashSet<>();
+        for (String lang : SUPPORTED_LANGUAGES) {
+            final String readingAnalyzer = getReadingAnalyzerName(lang);
+            try {
+                client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text).setAnalyzer(readingAnalyzer).execute().actionGet();
+            } catch (IllegalArgumentException e) {
+                undefinedAnalyzerSet.add(readingAnalyzer);
+            }
+
+            final String readingTermAnalyzer = getReadingTermAnalyzerName(lang);
+            try {
+                client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text).setAnalyzer(readingTermAnalyzer).execute()
+                        .actionGet();
+            } catch (IllegalArgumentException e) {
+                undefinedAnalyzerSet.add(readingTermAnalyzer);
+            }
+
+            final String normalizeAnalyzer = getNormalizeAnalyzerName(lang);
+            try {
+                client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text).setAnalyzer(normalizeAnalyzer).execute()
+                        .actionGet();
+            } catch (IllegalArgumentException e) {
+                undefinedAnalyzerSet.add(normalizeAnalyzer);
+            }
+
+            final String contentsAnalyzer = getContentsAnalyzerName(lang);
+            try {
+                client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text).setAnalyzer(contentsAnalyzer).execute()
+                        .actionGet();
+            } catch (IllegalArgumentException e) {
+                undefinedAnalyzerSet.add(contentsAnalyzer);
+            }
+
+            final String contentsReadingAnalyzer = getContentsReadingAnalyzerName(lang);
+            try {
+                client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text).setAnalyzer(contentsReadingAnalyzer).execute()
+                        .actionGet();
+            } catch (IllegalArgumentException e) {
+                undefinedAnalyzerSet.add(contentsReadingAnalyzer);
+            }
+        }
+
+        return undefinedAnalyzerSet;
     }
 }
