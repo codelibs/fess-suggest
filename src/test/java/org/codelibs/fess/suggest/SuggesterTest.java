@@ -331,7 +331,7 @@ public class SuggesterTest {
     @Test
     public void test_indexElevateWord() throws Exception {
         ElevateWord elevateWord =
-                new ElevateWord("test", 2.0f, Collections.singletonList("test"), Collections.singletonList("content"), null, null);
+                new ElevateWord("Test", 2.0f, Collections.singletonList("Test"), Collections.singletonList("content"), null, null);
         suggester.indexer().addElevateWord(elevateWord);
         suggester.refresh();
         SuggestResponse response1 = suggester.suggest().setQuery("tes").setSuggestDetail(true).execute().getResponse();
@@ -341,7 +341,12 @@ public class SuggesterTest {
 
         ElevateWord[] elevateWords = suggester.settings().elevateWord().get();
         assertEquals(1, elevateWords.length);
-        assertEquals("test", elevateWord.getElevateWord());
+        assertEquals("test", elevateWords[0].getElevateWord());
+
+        suggester.indexer().deleteElevateWord(elevateWord.getElevateWord());
+        suggester.refresh();
+        elevateWords = suggester.settings().elevateWord().get();
+        assertEquals(0, elevateWords.length);
     }
 
     @Test
@@ -419,7 +424,7 @@ public class SuggesterTest {
         assertEquals(1, response.getNum());
         assertEquals("全文 検索", response.getWords().get(0));
 
-        suggester.indexer().addBadWord("エンジン");
+        suggester.indexer().addBadWord("ｴﾝｼﾞﾝ");
         suggester.refresh();
         SuggestResponse response2 = suggester.suggest().setQuery("kensaku").setSuggestDetail(true).execute().getResponse();
         assertEquals(0, response2.getNum());
@@ -427,6 +432,8 @@ public class SuggesterTest {
         assertEquals(1, response2.getNum());
 
         assertEquals(1, suggester.settings().badword().get().length);
+        suggester.indexer().deleteBadWord("ｴﾝｼﾞﾝ");
+        assertEquals(0, suggester.settings().badword().get().length);
     }
 
     @Test

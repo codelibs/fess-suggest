@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.codelibs.core.lang.StringUtil;
@@ -347,23 +348,31 @@ public class SuggestIndexer {
     }
 
     public SuggestDeleteResponse addBadWord(final String badWord) {
-        settings.badword().add(badWord);
+        final String normalized = normalizer.normalize(badWord);
+        settings.badword().add(normalized);
         badWords = settings.badword().get();
-        return deleteByQuery(FieldNames.TEXT + ":*\"" + badWord + "\"*");
+        return deleteByQuery(FieldNames.TEXT + ":*\"" + normalized + "\"*");
     }
 
     public void deleteBadWord(final String badWord) {
-        settings.badword().delete(badWord);
+        settings.badword().delete(normalizer.normalize(badWord));
     }
 
     public SuggestIndexResponse addElevateWord(final ElevateWord elevateWord) {
-        settings.elevateWord().add(elevateWord);
-        return index(elevateWord.toSuggestItem());
+        final String normalizedWord = normalizer.normalize(elevateWord.getElevateWord());
+        final List<String> normalizedReadings =
+                elevateWord.getReadings().stream().map(reading -> normalizer.normalize(reading)).collect(Collectors.toList());
+        final ElevateWord normalized =
+                new ElevateWord(normalizedWord, elevateWord.getBoost(), normalizedReadings, elevateWord.getFields(), elevateWord.getTags(),
+                        elevateWord.getRoles());
+        settings.elevateWord().add(normalized);
+        return index(normalized.toSuggestItem());
     }
 
     public SuggestDeleteResponse deleteElevateWord(final String elevateWord) {
-        settings.elevateWord().delete(elevateWord);
-        return delete(SuggestUtil.createSuggestTextId(elevateWord));
+        final String normalized = normalizer.normalize(elevateWord);
+        settings.elevateWord().delete(normalized);
+        return delete(SuggestUtil.createSuggestTextId(normalized));
     }
 
     public SuggestIndexResponse restoreElevateWord() {
