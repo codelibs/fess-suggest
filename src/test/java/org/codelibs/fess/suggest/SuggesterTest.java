@@ -38,10 +38,10 @@ public class SuggesterTest {
         runner = new ElasticsearchClusterRunner();
         runner.onBuild((number, settingsBuilder) -> {
             settingsBuilder.put("http.cors.enabled", true);
+            settingsBuilder.put("index.number_of_replicas", 0);
             settingsBuilder.putArray("discovery.zen.ping.unicast.hosts", "localhost:9301-9399");
-        }).build(
-                newConfigs().clusterName("ArraySettingsTest").numOfNode(1)
-                        .pluginTypes("org.codelibs.elasticsearch.kuromoji.neologd.KuromojiNeologdPlugin"));
+            settingsBuilder.put("plugin.types", "org.codelibs.elasticsearch.kuromoji.neologd.KuromojiNeologdPlugin");
+        }).build(newConfigs().clusterName("SuggestSettingsTest").numOfNode(1));
         runner.ensureYellow();
     }
 

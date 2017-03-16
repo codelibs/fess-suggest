@@ -18,7 +18,6 @@ import org.codelibs.fess.suggest.exception.SuggestSettingsException;
 import org.codelibs.fess.suggest.util.SuggestUtil;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.action.support.WriteRequest;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentFactory;
@@ -129,7 +128,7 @@ public class ArraySettings {
     protected void addToArrayIndex(final String index, final String type, final String id, final Map<String, Object> source) {
         try {
             client.prepareUpdate().setIndex(index).setType(type).setId(id).setDocAsUpsert(true)
-                    .setDoc(JsonXContent.contentBuilder().map(source)).setRefreshPolicy(WriteRequest.RefreshPolicy.WAIT_UNTIL).execute()
+                    .setDoc(JsonXContent.contentBuilder().map(source)).setRefresh(true).execute()
                     .actionGet(SuggestConstants.ACTION_TIMEOUT);
         } catch (final Exception e) {
             throw new SuggestSettingsException("Failed to add to array.", e);
@@ -146,8 +145,8 @@ public class ArraySettings {
 
     protected void deleteFromArray(final String index, final String type, final String id) {
         try {
-            client.prepareDelete().setIndex(index).setType(type).setId(id).setRefreshPolicy(WriteRequest.RefreshPolicy.WAIT_UNTIL)
-                    .execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
+            client.prepareDelete().setIndex(index).setType(type).setId(id).setRefresh(true).execute()
+                    .actionGet(SuggestConstants.ACTION_TIMEOUT);
         } catch (final Exception e) {
             throw new SuggestSettingsException("Failed to delete from array.", e);
         }
@@ -177,8 +176,9 @@ public class ArraySettings {
                         .setType(type)
                         .setSource(
                                 XContentFactory.jsonBuilder().startObject().startObject(settingsId).startObject("properties")
-                                        .startObject(FieldNames.ARRAY_KEY).field("type", "keyword").endObject().endObject().endObject()
-                                        .endObject()).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
+                                        .startObject(FieldNames.ARRAY_KEY).field("type", "string").field("index", "not_analyzed")
+                                        .endObject().endObject().endObject().endObject()).execute()
+                        .actionGet(SuggestConstants.ACTION_TIMEOUT);
             }
         } catch (final IOException e) {
             throw new SuggestSettingsException("Failed to create mappings.");

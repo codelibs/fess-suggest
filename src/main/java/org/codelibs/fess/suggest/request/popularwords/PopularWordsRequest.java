@@ -1,27 +1,29 @@
 package org.codelibs.fess.suggest.request.popularwords;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import org.codelibs.fess.suggest.concurrent.Deferred;
 import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.codelibs.fess.suggest.request.Request;
-import org.codelibs.fess.suggest.util.SuggestUtil;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.lucene.search.function.CombineFunction;
-import org.elasticsearch.index.query.*;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.functionscore.FunctionScoreQueryBuilder;
 import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.rescore.RescoreBuilder;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import org.elasticsearch.search.rescore.RescoreBuilder.QueryRescorer;
 
 public class PopularWordsRequest extends Request<PopularWordsResponse> {
     private String index = null;
@@ -111,7 +113,7 @@ public class PopularWordsRequest extends Request<PopularWordsResponse> {
             }
 
             @Override
-            public void onFailure(final Exception e) {
+            public void onFailure(final Throwable e) {
                 deferred.reject(e);
             }
         });
@@ -150,7 +152,7 @@ public class PopularWordsRequest extends Request<PopularWordsResponse> {
         return functionScoreQueryBuilder;
     }
 
-    protected RescoreBuilder buildRescore() {
+    protected QueryRescorer buildRescore() {
         return RescoreBuilder.queryRescorer(QueryBuilders.functionScoreQuery(ScoreFunctionBuilders.randomFunction(seed))).setQueryWeight(0)
                 .setRescoreQueryWeight(1);
     }

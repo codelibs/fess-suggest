@@ -33,9 +33,9 @@ import org.codelibs.fess.suggest.util.SuggestUtil;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.index.query.Operator;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.QueryStringQueryBuilder.Operator;
 import org.elasticsearch.search.SearchHit;
 
 public class SuggestIndexer {

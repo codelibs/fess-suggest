@@ -3,7 +3,8 @@
     {
       "strings": {
         "mapping": {
-          "type": "keyword"
+          "type": "string",
+          "index": "not_analyzed"
         },
         "match": "*",
         "match_mapping_type": "string"
@@ -19,28 +20,34 @@
       "type": "long"
     },
     "fields": {
-      "type": "keyword"
+      "type": "string",
+      "index": "not_analyzed"
     },
     "kinds": {
-      "type": "keyword"
+      "type": "string",
+      "index": "not_analyzed"
     },
     "queryFreq": {
       "type": "long"
     },
     "roles": {
-      "type": "keyword"
+      "type": "string",
+      "index": "not_analyzed"
     },
     "languages": {
-      "type": "keyword"
+      "type": "string",
+      "index": "not_analyzed"
     },
     "score": {
       "type": "double"
     },
     "tags": {
-      "type": "keyword"
+      "type": "string",
+      "index": "not_analyzed"
     },
     "text": {
-      "type": "keyword"
+      "type": "string",
+      "index": "not_analyzed"
     },
     "userBoost": {
       "type": "double"

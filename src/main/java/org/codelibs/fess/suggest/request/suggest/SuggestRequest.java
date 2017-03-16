@@ -14,7 +14,6 @@ import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.request.Request;
-import org.codelibs.fess.suggest.util.SuggestUtil;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
@@ -22,7 +21,6 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.lucene.search.function.CombineFunction;
 import org.elasticsearch.common.lucene.search.function.FieldValueFactorFunction;
-import org.elasticsearch.common.lucene.search.function.FiltersFunctionScoreQuery;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -186,7 +184,7 @@ public class SuggestRequest extends Request<SuggestResponse> {
             }
 
             @Override
-            public void onFailure(final Exception e) {
+            public void onFailure(final Throwable e) {
                 deferred.reject(new SuggesterException(e.getMessage(), e));
             }
         });
@@ -255,26 +253,20 @@ public class SuggestRequest extends Request<SuggestResponse> {
     }
 
     protected QueryBuilder buildFunctionScoreQuery(final String query, final QueryBuilder queryBuilder) {
-
-        final List<FunctionScoreQueryBuilder.FilterFunctionBuilder> flist = new ArrayList<>();
-
+        final FunctionScoreQueryBuilder functionScoreQueryBuilder = QueryBuilders.functionScoreQuery(queryBuilder);
         if (isSingleWordQuery(query) && !isHiraganaQuery(query)) {
-            flist.add(new FunctionScoreQueryBuilder.FilterFunctionBuilder(QueryBuilders.prefixQuery(FieldNames.TEXT, query),
-                    ScoreFunctionBuilders.weightFactorFunction(prefixMatchWeight)));
+            functionScoreQueryBuilder.add(QueryBuilders.prefixQuery(FieldNames.TEXT, query),
+                    ScoreFunctionBuilders.weightFactorFunction(prefixMatchWeight));
         }
 
-        flist.add(new FunctionScoreQueryBuilder.FilterFunctionBuilder(ScoreFunctionBuilders.fieldValueFactorFunction(FieldNames.DOC_FREQ)
-                .missing(0.1f).modifier(FieldValueFactorFunction.Modifier.LOG2P).setWeight(1.0F)));
-        flist.add(new FunctionScoreQueryBuilder.FilterFunctionBuilder(ScoreFunctionBuilders.fieldValueFactorFunction(FieldNames.QUERY_FREQ)
-                .missing(0.1f).modifier(FieldValueFactorFunction.Modifier.LOG2P).setWeight(1.0F)));
-        flist.add(new FunctionScoreQueryBuilder.FilterFunctionBuilder(ScoreFunctionBuilders.fieldValueFactorFunction(FieldNames.USER_BOOST)
-                .missing(1f).setWeight(1.0F)));
-        final FunctionScoreQueryBuilder functionScoreQueryBuilder =
-                QueryBuilders.functionScoreQuery(queryBuilder,
-                        flist.toArray(new FunctionScoreQueryBuilder.FilterFunctionBuilder[flist.size()]));
+        functionScoreQueryBuilder.add(ScoreFunctionBuilders.fieldValueFactorFunction(FieldNames.DOC_FREQ).missing(0.1f)
+                .modifier(FieldValueFactorFunction.Modifier.LOG2P).setWeight(1.0F));
+        functionScoreQueryBuilder.add(ScoreFunctionBuilders.fieldValueFactorFunction(FieldNames.QUERY_FREQ).missing(0.1f)
+                .modifier(FieldValueFactorFunction.Modifier.LOG2P).setWeight(1.0F));
+        functionScoreQueryBuilder.add(ScoreFunctionBuilders.fieldValueFactorFunction(FieldNames.USER_BOOST).missing(1f).setWeight(1.0F));
 
         functionScoreQueryBuilder.boostMode(CombineFunction.REPLACE);
-        functionScoreQueryBuilder.scoreMode(FiltersFunctionScoreQuery.ScoreMode.MULTIPLY);
+        functionScoreQueryBuilder.scoreMode("multiply");
 
         return functionScoreQueryBuilder;
     }

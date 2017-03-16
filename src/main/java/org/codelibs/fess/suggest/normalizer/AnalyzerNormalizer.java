@@ -1,11 +1,11 @@
 package org.codelibs.fess.suggest.normalizer;
 
+import java.util.List;
+
 import org.codelibs.fess.suggest.settings.AnalyzerSettings;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.elasticsearch.action.admin.indices.analyze.AnalyzeResponse;
 import org.elasticsearch.client.Client;
-
-import java.util.List;
 
 public class AnalyzerNormalizer implements Normalizer {
     protected final Client client;

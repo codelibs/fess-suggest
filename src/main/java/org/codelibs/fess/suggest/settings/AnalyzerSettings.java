@@ -1,19 +1,21 @@
 package org.codelibs.fess.suggest.settings;
 
-import org.codelibs.core.lang.StringUtil;
-import org.codelibs.fess.suggest.analysis.SuggestAnalyzer;
-import org.codelibs.fess.suggest.exception.SuggestSettingsException;
-import org.elasticsearch.action.admin.indices.analyze.AnalyzeResponse;
-import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
-import org.elasticsearch.client.Client;
-
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
+
+import org.codelibs.core.lang.StringUtil;
+import org.codelibs.fess.suggest.analysis.SuggestAnalyzer;
+import org.codelibs.fess.suggest.exception.SuggestSettingsException;
+import org.elasticsearch.action.admin.indices.analyze.AnalyzeResponse;
+import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
+import org.elasticsearch.client.Client;
 
 public class AnalyzerSettings {
     public static final String readingAnalyzerName = "reading_analyzer";
