@@ -138,13 +138,6 @@
 			</plugins>
 		</pluginManagement>
 	</build>
-	<repositories>
-		<repository>
-			<id>codelibs.org</id>
-			<name>CodeLibs Repository</name>
-			<url>http://maven.codelibs.org/</url>
-		</repository>
-	</repositories>
 	<dependencies>
 		<dependency>
 			<groupId>com.ibm.icu</groupId>
