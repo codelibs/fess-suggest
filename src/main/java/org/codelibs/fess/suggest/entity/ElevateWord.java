@@ -58,9 +58,10 @@ public class ElevateWord implements Serializable {
     }
 
     public SuggestItem toSuggestItem() {
-        return new SuggestItem(new String[] { this.getElevateWord() }, new String[][] { this.getReadings().toArray(
-                new String[this.getReadings().size()]) }, fields.toArray(new String[fields.size()]), 1, 0, this.getBoost(), this.getTags()
-                .toArray(new String[this.getTags().size()]), this.getRoles().toArray(new String[this.getRoles().size()]), null,
-                SuggestItem.Kind.USER);
+        final String[][] readingArray =
+                this.getReadings().stream().map(reading -> new String[] { reading }).toArray((count) -> new String[count][]);
+        return new SuggestItem(new String[] { this.getElevateWord() }, readingArray, fields.toArray(new String[fields.size()]), 1, 0,
+                this.getBoost(), this.getTags().toArray(new String[this.getTags().size()]), this.getRoles().toArray(
+                        new String[this.getRoles().size()]), null, SuggestItem.Kind.USER);
     }
 }
