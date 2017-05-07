@@ -143,7 +143,7 @@ public class SuggestIndexer {
                 client.prepareSearch(index).setTypes(type).setSize(1000).setScroll(TimeValue.timeValueMinutes(1))
                         .setQuery(QueryBuilders.rangeQuery(FieldNames.DOC_FREQ).gte(1)).execute().actionGet();
         while (response.getHits().getHits().length > 0) {
-            final SearchHit[] hits = response.getHits().hits();
+            final SearchHit[] hits = response.getHits().getHits();
             for (SearchHit hit : hits) {
                 final SuggestItem item = SuggestItem.parseSource(hit.getSource());
                 item.setDocFreq(0);
@@ -180,7 +180,7 @@ public class SuggestIndexer {
                 client.prepareSearch(index).setTypes(type).setSize(1000).setScroll(TimeValue.timeValueMinutes(1))
                         .setQuery(QueryBuilders.rangeQuery(FieldNames.QUERY_FREQ).gte(1)).execute().actionGet();
         while (response.getHits().getHits().length > 0) {
-            final SearchHit[] hits = response.getHits().hits();
+            final SearchHit[] hits = response.getHits().getHits();
             for (SearchHit hit : hits) {
                 final SuggestItem item = SuggestItem.parseSource(hit.getSource());
                 item.setQueryFreq(0);

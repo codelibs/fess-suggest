@@ -328,7 +328,7 @@ public class SuggestRequest extends Request<SuggestResponse> {
         }
         firstWords.addAll(secondWords);
         firstItems.addAll(secondItems);
-        return new SuggestResponse(index, searchResponse.getTookInMillis(), firstWords, searchResponse.getHits().totalHits(), firstItems);
+        return new SuggestResponse(index, searchResponse.getTookInMillis(), firstWords, searchResponse.getHits().getTotalHits(), firstItems);
     }
 
     protected boolean isFirstWordMatching(final boolean singleWordQuery, final boolean hiraganaQuery, final String text) {

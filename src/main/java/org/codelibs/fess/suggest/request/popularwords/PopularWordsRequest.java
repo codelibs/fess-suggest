@@ -177,6 +177,6 @@ public class PopularWordsRequest extends Request<PopularWordsResponse> {
             }
         }
 
-        return new PopularWordsResponse(index, searchResponse.getTookInMillis(), words, searchResponse.getHits().totalHits(), items);
+        return new PopularWordsResponse(index, searchResponse.getTookInMillis(), words, searchResponse.getHits().getTotalHits(), items);
     }
 }
