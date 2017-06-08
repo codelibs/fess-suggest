@@ -22,6 +22,7 @@ import org.elasticsearch.action.support.WriteRequest;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -79,6 +80,7 @@ public class ArraySettings {
         return encoder.encodeToString(("key:" + key + "value:" + value).getBytes(CoreLibConstants.CHARSET_UTF_8));
     }
 
+    @SuppressWarnings("unchecked")
     protected Map<String, Object>[] getFromArrayIndex(final String index, final String type, final String key) {
         try {
             SearchResponse response =
@@ -86,12 +88,11 @@ public class ArraySettings {
                             .setQuery(QueryBuilders.termQuery(FieldNames.ARRAY_KEY, key)).setSize(1000).execute()
                             .actionGet(SuggestConstants.ACTION_TIMEOUT);
 
-            @SuppressWarnings("unchecked")
             final Map<String, Object>[] array = new Map[(int) response.getHits().getTotalHits()];
 
             int count = 0;
             while (response.getHits().getHits().length > 0) {
-                String scrollId = response.getScrollId();
+                final String scrollId = response.getScrollId();
                 final SearchHit[] hits = response.getHits().getHits();
                 for (final SearchHit hit : hits) {
                     array[count++] = hit.getSource();
@@ -162,8 +163,8 @@ public class ArraySettings {
                                 .actionGet(SuggestConstants.ACTION_TIMEOUT).getMappings().isEmpty();
             } catch (final IndexNotFoundException e) {
                 empty = true;
-                CreateIndexResponse response =
-                        client.admin().indices().prepareCreate(index).setSettings(loadIndexSettings()).execute()
+                final CreateIndexResponse response =
+                        client.admin().indices().prepareCreate(index).setSettings(loadIndexSettings(), XContentType.JSON).execute()
                                 .actionGet(SuggestConstants.ACTION_TIMEOUT);
                 if (!response.isAcknowledged()) {
                     throw new SuggestSettingsException("Failed to create " + index + "/" + type + " index.", e);

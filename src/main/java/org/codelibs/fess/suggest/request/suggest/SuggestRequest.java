@@ -14,7 +14,6 @@ import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.request.Request;
-import org.codelibs.fess.suggest.util.SuggestUtil;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
@@ -226,7 +225,7 @@ public class SuggestRequest extends Request<SuggestResponse> {
                         readingList = readingConverter.convert(query, langsArray);
                     }
 
-                    final BoolQueryBuilder readingQueryBuilder = QueryBuilders.boolQuery().minimumNumberShouldMatch(1);
+                    final BoolQueryBuilder readingQueryBuilder = QueryBuilders.boolQuery().minimumShouldMatch(1);
                     final int readingNum = readingList.size();
                     for (int readingCount = 0; readingCount < readingNum; readingCount++) {
                         final String reading = readingList.get(readingCount);
@@ -249,7 +248,7 @@ public class SuggestRequest extends Request<SuggestResponse> {
     }
 
     protected QueryBuilder buildFilterQuery(final String fieldName, final List<String> words) {
-        final BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery().minimumNumberShouldMatch(1);
+        final BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery().minimumShouldMatch(1);
         words.stream().forEach(word -> boolQueryBuilder.should(QueryBuilders.termQuery(fieldName, word)));
         return boolQueryBuilder;
     }
@@ -289,17 +288,17 @@ public class SuggestRequest extends Request<SuggestResponse> {
 
         final String index;
         if (hits.length > 0) {
-            index = hits[0].index();
+            index = hits[0].getIndex();
         } else {
             index = SuggestConstants.EMPTY_STRING;
         }
 
-        boolean singleWordQuery = isSingleWordQuery(query);
-        boolean hiraganaQuery = isHiraganaQuery(query);
+        final boolean singleWordQuery = isSingleWordQuery(query);
+        final boolean hiraganaQuery = isHiraganaQuery(query);
         for (int i = 0; i < hits.length && words.size() < size; i++) {
             final SearchHit hit = hits[i];
 
-            final Map<String, Object> source = hit.sourceAsMap();
+            final Map<String, Object> source = hit.getSourceAsMap();
             final String text = source.get(FieldNames.TEXT).toString();
             if (skipDuplicateWords) {
                 final String duplicateCheckStr = text.replace(" ", "");

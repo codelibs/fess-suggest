@@ -122,7 +122,7 @@ public class SuggestIndexer {
     }
 
     public SuggestDeleteResponse deleteAll() {
-        SuggestDeleteResponse response = deleteByQuery(QueryBuilders.matchAllQuery());
+        final SuggestDeleteResponse response = deleteByQuery(QueryBuilders.matchAllQuery());
         restoreElevateWord();
         return response;
     }
@@ -144,7 +144,7 @@ public class SuggestIndexer {
                         .setQuery(QueryBuilders.rangeQuery(FieldNames.DOC_FREQ).gte(1)).execute().actionGet();
         while (response.getHits().getHits().length > 0) {
             final SearchHit[] hits = response.getHits().getHits();
-            for (SearchHit hit : hits) {
+            for (final SearchHit hit : hits) {
                 final SuggestItem item = SuggestItem.parseSource(hit.getSource());
                 item.setDocFreq(0);
                 item.setKinds(Stream.of(item.getKinds()).filter(kind -> kind != SuggestItem.Kind.DOCUMENT)
@@ -181,7 +181,7 @@ public class SuggestIndexer {
                         .setQuery(QueryBuilders.rangeQuery(FieldNames.QUERY_FREQ).gte(1)).execute().actionGet();
         while (response.getHits().getHits().length > 0) {
             final SearchHit[] hits = response.getHits().getHits();
-            for (SearchHit hit : hits) {
+            for (final SearchHit hit : hits) {
                 final SuggestItem item = SuggestItem.parseSource(hit.getSource());
                 item.setQueryFreq(0);
                 item.setKinds(Stream.of(item.getKinds()).filter(kind -> kind != SuggestItem.Kind.QUERY)

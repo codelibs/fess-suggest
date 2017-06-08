@@ -1,6 +1,10 @@
 package org.codelibs.fess.suggest.index.contents.document;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -34,7 +38,7 @@ public class ESSourceReader implements DocumentReader {
     protected QueryBuilder queryBuilder = QueryBuilders.matchAllQuery();
     protected int limitPercentage = 100;
     protected long limitNumber = -1;
-    protected List<SortBuilder> sortList = new ArrayList<>();;
+    protected List<SortBuilder<?>> sortList = new ArrayList<>();;
 
     protected String scrollId = null;
 
@@ -77,7 +81,7 @@ public class ESSourceReader implements DocumentReader {
         this.queryBuilder = queryBuilder;
     }
 
-    public void addSort(final SortBuilder sortBuilder) {
+    public void addSort(final SortBuilder<?> sortBuilder) {
         this.sortList.add(sortBuilder);
     }
 
@@ -114,7 +118,7 @@ public class ESSourceReader implements DocumentReader {
                     final SearchRequestBuilder builder =
                             client.prepareSearch().setIndices(indexName).setTypes(typeName)
                                     .setScroll(new Scroll(TimeValue.timeValueMinutes(1))).setQuery(queryBuilder).setSize(scrollSize);
-                    for (final SortBuilder sortBuilder : sortList) {
+                    for (final SortBuilder<?> sortBuilder : sortList) {
                         builder.addSort(sortBuilder);
                     }
                     response = builder.execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
@@ -131,7 +135,7 @@ public class ESSourceReader implements DocumentReader {
                 }
 
                 for (final SearchHit hit : hits) {
-                    final Map<String, Object> source = hit.sourceAsMap();
+                    final Map<String, Object> source = hit.getSourceAsMap();
                     if (limitOfDocumentSize > 0) {
                         long size = 0;
                         for (final String field : supportedFields) {
@@ -164,7 +168,7 @@ public class ESSourceReader implements DocumentReader {
     }
 
     protected static long getLimitDocNum(final long total, final long limitPercentage, final long limitNumber) {
-        long percentNum = (long) (total * ((float) limitPercentage / 100f));
+        final long percentNum = (long) (total * (limitPercentage / 100f));
         if (limitNumber < 0) {
             return percentNum;
         }

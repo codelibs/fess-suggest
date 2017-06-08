@@ -88,9 +88,8 @@ public class DefaultContentsParser implements ContentsParser {
 
                 final String[][] readings = new String[words.length][];
                 for (int j = 0; j < words.length; j++) {
-                    //TODO
-                    words[j] = normalizer.normalize(words[j], null);
-                    final List<String> l = readingConverter.convert(words[j], null);
+                    words[j] = normalizer.normalize(words[j]);
+                    final List<String> l = readingConverter.convert(words[j]);
                     readings[j] = l.toArray(new String[l.size()]);
                 }
 
@@ -156,7 +155,7 @@ public class DefaultContentsParser implements ContentsParser {
         return items == null ? new ArrayList<>() : items;
     }
 
-    protected String[] getRoleFromDoc(Map<String, Object> document, String roleFieldName) {
+    protected String[] getRoleFromDoc(final Map<String, Object> document, final String roleFieldName) {
         final Object value = document.get(roleFieldName);
         if (value instanceof String) {
             return new String[] { value.toString() };

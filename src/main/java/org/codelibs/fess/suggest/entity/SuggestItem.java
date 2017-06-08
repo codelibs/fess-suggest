@@ -4,8 +4,11 @@ import java.io.Serializable;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.*;
-import java.util.function.IntFunction;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import org.codelibs.core.lang.StringUtil;
@@ -136,55 +139,55 @@ public class SuggestItem implements Serializable {
         return timestamp;
     }
 
-    public void setText(String text) {
+    public void setText(final String text) {
         this.text = text;
     }
 
-    public void setTimestamp(LocalDateTime timestamp) {
+    public void setTimestamp(final LocalDateTime timestamp) {
         this.timestamp = timestamp;
     }
 
-    public void setQueryFreq(long queryFreq) {
+    public void setQueryFreq(final long queryFreq) {
         this.queryFreq = queryFreq;
     }
 
-    public void setDocFreq(long docFreq) {
+    public void setDocFreq(final long docFreq) {
         this.docFreq = docFreq;
     }
 
-    public void setUserBoost(float userBoost) {
+    public void setUserBoost(final float userBoost) {
         this.userBoost = userBoost;
     }
 
-    public void setReadings(String[][] readings) {
+    public void setReadings(final String[][] readings) {
         this.readings = readings;
     }
 
-    public void setFields(String[] fields) {
+    public void setFields(final String[] fields) {
         this.fields = fields;
     }
 
-    public void setTags(String[] tags) {
+    public void setTags(final String[] tags) {
         this.tags = tags;
     }
 
-    public void setRoles(String[] roles) {
+    public void setRoles(final String[] roles) {
         this.roles = roles;
     }
 
-    public void setLanguages(String[] languages) {
+    public void setLanguages(final String[] languages) {
         this.languages = languages;
     }
 
-    public void setKinds(Kind[] kinds) {
+    public void setKinds(final Kind[] kinds) {
         this.kinds = kinds;
     }
 
-    public void setEmptySource(Map<String, Object> emptySource) {
+    public void setEmptySource(final Map<String, Object> emptySource) {
         this.emptySource = emptySource;
     }
 
-    public void setId(String id) {
+    public void setId(final String id) {
         this.id = id;
     }
 
@@ -243,10 +246,11 @@ public class SuggestItem implements Serializable {
         final List<String[]> readings = new ArrayList<>();
         for (int i = 0;; i++) {
             final Object readingObj = source.get(FieldNames.READING_PREFIX + i);
-            if (readingObj == null) {
+            if (!(readingObj instanceof List)) {
                 break;
             }
-            final List<String> list = (List) readingObj;
+            @SuppressWarnings("unchecked")
+            final List<String> list = (List<String>) readingObj;
             readings.add(list.toArray(new String[list.size()]));
         }
         final List<String> fields = SuggestUtil.getAsList(source.get(FieldNames.FIELDS));
@@ -293,63 +297,64 @@ public class SuggestItem implements Serializable {
 
         for (int i = 0; i < readings.length; i++) {
             final Object readingObj = existingSource.get(FieldNames.READING_PREFIX + i);
-            if (readingObj == null) {
-                map.put(FieldNames.READING_PREFIX + i, readings[i]);
-            } else {
-                final List<String> existingValues = (List) readingObj;
+            if (readingObj instanceof List) {
+                @SuppressWarnings("unchecked")
+                final List<String> existingValues = (List<String>) readingObj;
                 concatValues(existingValues, readings[i]);
                 map.put(FieldNames.READING_PREFIX + i, existingValues);
+            } else {
+                map.put(FieldNames.READING_PREFIX + i, readings[i]);
             }
         }
 
         final Object fieldsObj = existingSource.get(FieldNames.FIELDS);
-        if (fieldsObj == null) {
-            map.put(FieldNames.FIELDS, fields);
-        } else {
+        if (fieldsObj instanceof List) {
             @SuppressWarnings("unchecked")
-            final List<String> existingValues = (List) fieldsObj;
+            final List<String> existingValues = (List<String>) fieldsObj;
             concatValues(existingValues, fields);
             map.put(FieldNames.FIELDS, existingValues);
+        } else {
+            map.put(FieldNames.FIELDS, fields);
         }
 
         final Object tagsObj = existingSource.get(FieldNames.TAGS);
-        if (tagsObj == null) {
-            map.put(FieldNames.TAGS, tags);
-        } else {
+        if (tagsObj instanceof List) {
             @SuppressWarnings("unchecked")
-            final List<String> existingValues = (List) tagsObj;
+            final List<String> existingValues = (List<String>) tagsObj;
             concatValues(existingValues, tags);
             map.put(FieldNames.TAGS, existingValues);
+        } else {
+            map.put(FieldNames.TAGS, tags);
         }
 
         final Object rolesObj = existingSource.get(FieldNames.ROLES);
-        if (rolesObj == null) {
-            map.put(FieldNames.ROLES, roles);
-        } else {
+        if (rolesObj instanceof List) {
             @SuppressWarnings("unchecked")
-            final List<String> existingValues = (List) rolesObj;
+            final List<String> existingValues = (List<String>) rolesObj;
             concatValues(existingValues, roles);
             map.put(FieldNames.ROLES, existingValues);
+        } else {
+            map.put(FieldNames.ROLES, roles);
         }
 
         final Object langsObj = existingSource.get(FieldNames.LANGUAGES);
-        if (langsObj == null) {
-            map.put(FieldNames.LANGUAGES, languages);
-        } else {
+        if (langsObj instanceof List) {
             @SuppressWarnings("unchecked")
-            final List<String> existingValues = (List) langsObj;
+            final List<String> existingValues = (List<String>) langsObj;
             concatValues(existingValues, languages);
             map.put(FieldNames.LANGUAGES, existingValues);
+        } else {
+            map.put(FieldNames.LANGUAGES, languages);
         }
 
         final Object kindsObj = existingSource.get(FieldNames.KINDS);
-        if (kindsObj == null) {
-            map.put(FieldNames.KINDS, Stream.of(kinds).map(kind -> kind.toString()).toArray());
-        } else {
+        if (kindsObj instanceof List) {
             @SuppressWarnings("unchecked")
-            final List<String> existingFields = (List) kindsObj;
+            final List<String> existingFields = (List<String>) kindsObj;
             concatValues(existingFields, Stream.of(kinds).map(kind -> kind.toString()).toArray(count -> new String[count]));
             map.put(FieldNames.KINDS, existingFields);
+        } else {
+            map.put(FieldNames.KINDS, Stream.of(kinds).map(kind -> kind.toString()).toArray());
         }
 
         final long updatedQueryFreq;
@@ -357,7 +362,6 @@ public class SuggestItem implements Serializable {
         if (queryFreqObj == null) {
             updatedQueryFreq = queryFreq;
         } else {
-            @SuppressWarnings("unchecked")
             final Long existingValue = Long.parseLong(queryFreqObj.toString());
             updatedQueryFreq = queryFreq + existingValue;
         }
@@ -368,7 +372,6 @@ public class SuggestItem implements Serializable {
         if (docFreqObj == null) {
             updatedDocFreq = docFreq;
         } else {
-            @SuppressWarnings("unchecked")
             final Long existingValue = Long.parseLong(docFreqObj.toString());
             updatedDocFreq = docFreq + existingValue;
         }

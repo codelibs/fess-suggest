@@ -22,6 +22,7 @@ import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRespon
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 
@@ -96,8 +97,8 @@ public class Suggester {
                 }
 
                 final String indexName = index + '.' + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmm"));
-                client.admin().indices().prepareCreate(indexName).setSettings(settingsSource.toString())
-                        .addMapping(type, mappingSource.toString()).addAlias(new Alias(index)).execute()
+                client.admin().indices().prepareCreate(indexName).setSettings(settingsSource.toString(), XContentType.JSON)
+                        .addMapping(type, mappingSource.toString(), XContentType.JSON).addAlias(new Alias(index)).execute()
                         .actionGet(SuggestConstants.ACTION_TIMEOUT);
 
                 client.admin().cluster().prepareHealth().setWaitForYellowStatus().execute().actionGet(SuggestConstants.ACTION_TIMEOUT * 10);

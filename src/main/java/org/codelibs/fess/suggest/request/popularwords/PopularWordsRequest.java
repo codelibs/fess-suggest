@@ -1,27 +1,28 @@
 package org.codelibs.fess.suggest.request.popularwords;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import org.codelibs.fess.suggest.concurrent.Deferred;
 import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.codelibs.fess.suggest.request.Request;
-import org.codelibs.fess.suggest.util.SuggestUtil;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.lucene.search.function.CombineFunction;
-import org.elasticsearch.index.query.*;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.functionscore.FunctionScoreQueryBuilder;
 import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.rescore.RescoreBuilder;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 public class PopularWordsRequest extends Request<PopularWordsResponse> {
     private String index = null;
@@ -127,18 +128,18 @@ public class PopularWordsRequest extends Request<PopularWordsResponse> {
         queryBuilder.must(QueryBuilders.termQuery(FieldNames.KINDS, SuggestItem.Kind.QUERY.toString()));
         queryBuilder.mustNot(QueryBuilders.existsQuery(FieldNames.READING_PREFIX + "1"));
         queryBuilder.must(QueryBuilders.rangeQuery(FieldNames.QUERY_FREQ).gte(queryFreqThreshold));
-        if (tags.size() > 0) {
+        if (!tags.isEmpty()) {
             queryBuilder.must(QueryBuilders.termsQuery(FieldNames.TAGS, tags));
         }
-        if (roles.size() > 0) {
+        if (!roles.isEmpty()) {
             queryBuilder.must(QueryBuilders.termsQuery(FieldNames.ROLES, roles));
         } else {
             queryBuilder.must(QueryBuilders.termQuery(FieldNames.ROLES, SuggestConstants.DEFAULT_ROLE));
         }
-        if (fields.size() > 0) {
+        if (!fields.isEmpty()) {
             queryBuilder.must(QueryBuilders.termsQuery(FieldNames.FIELDS, fields));
         }
-        if (excludeWords.size() > 0) {
+        if (!excludeWords.isEmpty()) {
             queryBuilder.mustNot(QueryBuilders.termsQuery(FieldNames.TEXT, excludeWords));
         }
 
@@ -150,7 +151,7 @@ public class PopularWordsRequest extends Request<PopularWordsResponse> {
         return functionScoreQueryBuilder;
     }
 
-    protected RescoreBuilder buildRescore() {
+    protected RescoreBuilder<?> buildRescore() {
         return RescoreBuilder.queryRescorer(QueryBuilders.functionScoreQuery(ScoreFunctionBuilders.randomFunction(seed))).setQueryWeight(0)
                 .setRescoreQueryWeight(1);
     }
@@ -162,13 +163,13 @@ public class PopularWordsRequest extends Request<PopularWordsResponse> {
 
         final String index;
         if (hits.length > 0) {
-            index = hits[0].index();
+            index = hits[0].getIndex();
         } else {
             index = SuggestConstants.EMPTY_STRING;
         }
 
         for (final SearchHit hit : hits) {
-            final Map<String, Object> source = hit.sourceAsMap();
+            final Map<String, Object> source = hit.getSourceAsMap();
             final String text = source.get(FieldNames.TEXT).toString();
             words.add(text);
 

@@ -1,14 +1,14 @@
 package org.codelibs.fess.suggest.concurrent;
 
-import org.codelibs.fess.suggest.exception.SuggesterException;
-import org.codelibs.fess.suggest.request.Response;
-
 import java.util.ArrayList;
 import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+
+import org.codelibs.fess.suggest.exception.SuggesterException;
+import org.codelibs.fess.suggest.request.Response;
 
 public class Deferred<RESPONSE extends Response> {
     private RESPONSE response = null;
@@ -40,7 +40,7 @@ public class Deferred<RESPONSE extends Response> {
         if (executeCallbacks.size() > 0) {
             try {
                 executeCallbacks.stream().forEach(callback -> callback.accept(response));
-            } catch (Exception ignore) {}
+            } catch (final Exception ignore) {}
         }
         latch.countDown();
     }
@@ -62,7 +62,7 @@ public class Deferred<RESPONSE extends Response> {
         if (executeCallbacks.size() > 0) {
             try {
                 executeCallbacks.stream().forEach(callback -> callback.accept(error));
-            } catch (Exception ignore) {}
+            } catch (final Exception ignore) {}
         }
         latch.countDown();
     }
@@ -130,7 +130,7 @@ public class Deferred<RESPONSE extends Response> {
                     throw new SuggesterException(error);
                 }
                 return response;
-            } catch (InterruptedException e) {
+            } catch (final InterruptedException e) {
                 throw new SuggesterException(e);
             }
         }

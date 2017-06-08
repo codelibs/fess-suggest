@@ -1,19 +1,22 @@
 package org.codelibs.fess.suggest.settings;
 
-import org.codelibs.core.lang.StringUtil;
-import org.codelibs.fess.suggest.analysis.SuggestAnalyzer;
-import org.codelibs.fess.suggest.exception.SuggestSettingsException;
-import org.elasticsearch.action.admin.indices.analyze.AnalyzeResponse;
-import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
-import org.elasticsearch.client.Client;
-
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
+
+import org.codelibs.core.lang.StringUtil;
+import org.codelibs.fess.suggest.analysis.SuggestAnalyzer;
+import org.codelibs.fess.suggest.exception.SuggestSettingsException;
+import org.elasticsearch.action.admin.indices.analyze.AnalyzeResponse;
+import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
+import org.elasticsearch.client.Client;
+import org.elasticsearch.common.xcontent.XContentType;
 
 public class AnalyzerSettings {
     public static final String readingAnalyzerName = "reading_analyzer";
@@ -36,11 +39,11 @@ public class AnalyzerSettings {
 
     public void init() {
         try {
-            IndicesExistsResponse response = client.admin().indices().prepareExists(analyzerSettingsIndexName).execute().actionGet();
+            final IndicesExistsResponse response = client.admin().indices().prepareExists(analyzerSettingsIndexName).execute().actionGet();
             if (!response.isExists()) {
                 createAnalyzerSettings(loadIndexSettings());
             }
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new SuggestSettingsException("Failed to create mappings.");
         }
     }
@@ -78,7 +81,7 @@ public class AnalyzerSettings {
     }
 
     protected void createAnalyzerSettings(final String settings) {
-        client.admin().indices().prepareCreate(analyzerSettingsIndexName).setSettings(settings).execute().actionGet();
+        client.admin().indices().prepareCreate(analyzerSettingsIndexName).setSettings(settings, XContentType.JSON).execute().actionGet();
     }
 
     protected void createAnalyzerSettings(final Map<String, Object> settings) {
@@ -114,13 +117,13 @@ public class AnalyzerSettings {
         }
 
         @Override
-        public List<AnalyzeResponse.AnalyzeToken> analyzeAndReading(String text, String lang) {
+        public List<AnalyzeResponse.AnalyzeToken> analyzeAndReading(final String text, final String lang) {
             try {
                 final AnalyzeResponse analyzeResponse =
                         client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text)
                                 .setAnalyzer(getContentsReadingAnalyzerName(lang)).execute().actionGet();
                 return analyzeResponse.getTokens();
-            } catch (IllegalArgumentException e) {
+            } catch (final IllegalArgumentException e) {
                 return analyze(text, lang);
             }
         }
@@ -133,11 +136,11 @@ public class AnalyzerSettings {
     public Set<String> checkAnalyzer() {
         final String text = "text";
         final Set<String> undefinedAnalyzerSet = new HashSet<>();
-        for (String lang : SUPPORTED_LANGUAGES) {
+        for (final String lang : SUPPORTED_LANGUAGES) {
             final String readingAnalyzer = getReadingAnalyzerName(lang);
             try {
                 client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text).setAnalyzer(readingAnalyzer).execute().actionGet();
-            } catch (IllegalArgumentException e) {
+            } catch (final IllegalArgumentException e) {
                 undefinedAnalyzerSet.add(readingAnalyzer);
             }
 
@@ -145,7 +148,7 @@ public class AnalyzerSettings {
             try {
                 client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text).setAnalyzer(readingTermAnalyzer).execute()
                         .actionGet();
-            } catch (IllegalArgumentException e) {
+            } catch (final IllegalArgumentException e) {
                 undefinedAnalyzerSet.add(readingTermAnalyzer);
             }
 
@@ -153,7 +156,7 @@ public class AnalyzerSettings {
             try {
                 client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text).setAnalyzer(normalizeAnalyzer).execute()
                         .actionGet();
-            } catch (IllegalArgumentException e) {
+            } catch (final IllegalArgumentException e) {
                 undefinedAnalyzerSet.add(normalizeAnalyzer);
             }
 
@@ -161,7 +164,7 @@ public class AnalyzerSettings {
             try {
                 client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text).setAnalyzer(contentsAnalyzer).execute()
                         .actionGet();
-            } catch (IllegalArgumentException e) {
+            } catch (final IllegalArgumentException e) {
                 undefinedAnalyzerSet.add(contentsAnalyzer);
             }
 
@@ -169,7 +172,7 @@ public class AnalyzerSettings {
             try {
                 client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text).setAnalyzer(contentsReadingAnalyzer).execute()
                         .actionGet();
-            } catch (IllegalArgumentException e) {
+            } catch (final IllegalArgumentException e) {
                 undefinedAnalyzerSet.add(contentsReadingAnalyzer);
             }
         }

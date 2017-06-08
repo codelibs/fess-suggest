@@ -16,10 +16,15 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.codelibs.core.CoreLibConstants;
-import org.codelibs.fess.suggest.converter.*;
+import org.codelibs.fess.suggest.converter.AnalyzerConverter;
+import org.codelibs.fess.suggest.converter.KatakanaToAlphabetConverter;
+import org.codelibs.fess.suggest.converter.ReadingConverter;
+import org.codelibs.fess.suggest.converter.ReadingConverterChain;
 import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.fess.suggest.exception.SuggesterException;
-import org.codelibs.fess.suggest.normalizer.*;
+import org.codelibs.fess.suggest.normalizer.AnalyzerNormalizer;
+import org.codelibs.fess.suggest.normalizer.Normalizer;
+import org.codelibs.fess.suggest.normalizer.NormalizerChain;
 import org.codelibs.fess.suggest.settings.AnalyzerSettings;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
@@ -208,7 +213,7 @@ public final class SuggestUtil {
                             .setScroll(TimeValue.timeValueSeconds(10)).execute().actionGet();
 
             while (searchResponse.getHits().getHits().length > 0) {
-                String scrollId = searchResponse.getScrollId();
+                final String scrollId = searchResponse.getScrollId();
                 final SearchHit[] hits = searchResponse.getHits().getHits();
 
                 final BulkRequestBuilder bulkRequestBuiler = client.prepareBulk();
@@ -221,7 +226,7 @@ public final class SuggestUtil {
                 searchResponse = client.prepareSearchScroll(scrollId).setScroll(TimeValue.timeValueSeconds(10)).execute().actionGet();
             }
             client.admin().indices().prepareRefresh(index).execute().actionGet();
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new SuggesterException("Failed to exec delete by query.", e);
         }
 

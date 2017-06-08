@@ -9,9 +9,9 @@ import java.util.List;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.util.TokenizerFactory;
+import org.elasticsearch.common.Strings;
 
 import com.ibm.icu.text.Transliterator;
-import org.elasticsearch.common.Strings;
 
 public class KatakanaConverter implements ReadingConverter {
 

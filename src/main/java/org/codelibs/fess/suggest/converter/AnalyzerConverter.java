@@ -1,15 +1,16 @@
 package org.codelibs.fess.suggest.converter;
 
-import com.ibm.icu.text.Transliterator;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.codelibs.fess.suggest.settings.AnalyzerSettings;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.elasticsearch.action.admin.indices.analyze.AnalyzeResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.Strings;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import com.ibm.icu.text.Transliterator;
 
 public class AnalyzerConverter implements ReadingConverter {
     protected final Client client;
@@ -28,7 +29,7 @@ public class AnalyzerConverter implements ReadingConverter {
     }
 
     @Override
-    public List<String> convert(String text, String... langs) throws IOException {
+    public List<String> convert(final String text, final String... langs) throws IOException {
         final ReadingConverter converter;
         if (langs == null || langs.length == 0) {
             converter = new LangAnayzerConverter(null);
@@ -39,7 +40,7 @@ public class AnalyzerConverter implements ReadingConverter {
             }
             converter = chain;
         }
-        return converter.convert(text, null);
+        return converter.convert(text);
     }
 
     protected class LangAnayzerConverter implements ReadingConverter {
@@ -55,7 +56,7 @@ public class AnalyzerConverter implements ReadingConverter {
         }
 
         @Override
-        public List<String> convert(String text, String... dummy) throws IOException {
+        public List<String> convert(final String text, final String... dummy) throws IOException {
             final AnalyzeResponse readingResponse =
                     client.admin().indices().prepareAnalyze(analyzerSettings.getAnalyzerSettingsIndexName(), text)
                             .setAnalyzer(analyzerSettings.getReadingAnalyzerName(lang)).execute().actionGet();

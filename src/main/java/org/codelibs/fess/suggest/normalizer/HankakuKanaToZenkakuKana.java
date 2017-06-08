@@ -20,25 +20,25 @@ public class HankakuKanaToZenkakuKana implements Normalizer {
         } else if (s.length() == 1) {
             return hankakuKatakanaToZenkakuKatakana(s.charAt(0)) + "";
         } else {
-            StringBuffer sb = new StringBuffer(s);
+            final StringBuffer sb = new StringBuffer(s);
             int i;
             for (i = 0; i < sb.length() - 1; i++) {
-                char originalChar1 = sb.charAt(i);
-                char originalChar2 = sb.charAt(i + 1);
-                char margedChar = mergeChar(originalChar1, originalChar2);
+                final char originalChar1 = sb.charAt(i);
+                final char originalChar2 = sb.charAt(i + 1);
+                final char margedChar = mergeChar(originalChar1, originalChar2);
                 if (margedChar != originalChar1) {
                     sb.setCharAt(i, margedChar);
                     sb.deleteCharAt(i + 1);
                 } else {
-                    char convertedChar = hankakuKatakanaToZenkakuKatakana(originalChar1);
+                    final char convertedChar = hankakuKatakanaToZenkakuKatakana(originalChar1);
                     if (convertedChar != originalChar1) {
                         sb.setCharAt(i, convertedChar);
                     }
                 }
             }
             if (i < sb.length()) {
-                char originalChar1 = sb.charAt(i);
-                char convertedChar = hankakuKatakanaToZenkakuKatakana(originalChar1);
+                final char originalChar1 = sb.charAt(i);
+                final char convertedChar = hankakuKatakanaToZenkakuKatakana(originalChar1);
                 if (convertedChar != originalChar1) {
                     sb.setCharAt(i, convertedChar);
                 }
@@ -47,7 +47,7 @@ public class HankakuKanaToZenkakuKana implements Normalizer {
         }
     }
 
-    private static char hankakuKatakanaToZenkakuKatakana(char c) {
+    private static char hankakuKatakanaToZenkakuKatakana(final char c) {
         if (c >= HANKAKU_KATAKANA_FIRST_CHAR && c <= HANKAKU_KATAKANA_LAST_CHAR) {
             return ZENKAKU_KATAKANA[c - HANKAKU_KATAKANA_FIRST_CHAR];
         } else {
@@ -55,7 +55,7 @@ public class HankakuKanaToZenkakuKana implements Normalizer {
         }
     }
 
-    public static char mergeChar(char c1, char c2) {
+    public static char mergeChar(final char c1, final char c2) {
         if (c2 == 'ﾞ') {
             if ("ｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾊﾋﾌﾍﾎ".indexOf(c1) >= 0) {
                 switch (c1) {

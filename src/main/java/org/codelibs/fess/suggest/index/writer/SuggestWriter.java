@@ -1,14 +1,14 @@
 package org.codelibs.fess.suggest.index.writer;
 
-import org.codelibs.fess.suggest.entity.SuggestItem;
-import org.codelibs.fess.suggest.settings.SuggestSettings;
-import org.elasticsearch.client.Client;
-import org.elasticsearch.index.query.QueryBuilder;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import org.codelibs.fess.suggest.entity.SuggestItem;
+import org.codelibs.fess.suggest.settings.SuggestSettings;
+import org.elasticsearch.client.Client;
+import org.elasticsearch.index.query.QueryBuilder;
 
 public interface SuggestWriter {
     SuggestWriterResult write(Client client, SuggestSettings settings, String index, String type, SuggestItem[] items, boolean update);
@@ -17,7 +17,7 @@ public interface SuggestWriter {
 
     SuggestWriterResult deleteByQuery(Client client, SuggestSettings settings, String index, String type, QueryBuilder queryBuilder);
 
-    default SuggestItem[] mergeItems(SuggestItem[] items) {
+    default SuggestItem[] mergeItems(final SuggestItem[] items) {
         final Set<String> mergedIdSet = new HashSet<>();
         final List<SuggestItem> mergedList = new ArrayList<>(items.length);
 

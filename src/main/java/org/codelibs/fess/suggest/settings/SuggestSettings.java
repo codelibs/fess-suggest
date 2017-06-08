@@ -18,6 +18,7 @@ import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.support.WriteRequest;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.collect.Tuple;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.index.IndexNotFoundException;
 
@@ -77,9 +78,9 @@ public class SuggestSettings {
         if (doCreate) {
             if (doIndexCreate) {
                 try {
-                    client.admin().indices().prepareCreate(settingsIndexName).setSettings(loadIndexSettings()).execute()
+                    client.admin().indices().prepareCreate(settingsIndexName).setSettings(loadIndexSettings(), XContentType.JSON).execute()
                             .actionGet(SuggestConstants.ACTION_TIMEOUT);
-                } catch (IOException e) {
+                } catch (final IOException e) {
                     throw new SuggesterException(e);
                 }
             }
@@ -89,7 +90,7 @@ public class SuggestSettings {
             initialSettings.forEach((key, value) -> {
                 if (value instanceof Collection) {
                     @SuppressWarnings("unchecked")
-                    Collection<Object> collection = (Collection<Object>) value;
+                    final Collection<Object> collection = (Collection<Object>) value;
                     collection.forEach(element -> arraySettings.add(new Tuple<>(key, element)));
                 } else if (value instanceof Object[]) {
                     for (final Object element : (Object[]) value) {
