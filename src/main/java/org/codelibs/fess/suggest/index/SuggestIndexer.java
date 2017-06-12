@@ -108,11 +108,7 @@ public class SuggestIndexer {
     }
 
     public SuggestDeleteResponse deleteByQuery(final String queryString) {
-        final long start = System.currentTimeMillis();
-        final SuggestWriterResult result =
-                suggestWriter.deleteByQuery(client, settings, index, type, QueryBuilders.queryStringQuery(queryString)
-                        .autoGeneratePhraseQueries(true).defaultOperator(Operator.AND));
-        return new SuggestDeleteResponse(result.getFailures(), System.currentTimeMillis() - start);
+        return deleteByQuery(QueryBuilders.queryStringQuery(queryString).autoGeneratePhraseQueries(true).defaultOperator(Operator.AND));
     }
 
     public SuggestDeleteResponse deleteByQuery(final QueryBuilder queryBuilder) {
@@ -351,7 +347,7 @@ public class SuggestIndexer {
         final String normalized = normalizer.normalize(badWord);
         settings.badword().add(normalized);
         badWords = settings.badword().get();
-        return deleteByQuery(FieldNames.TEXT + ":*\"" + normalized + "\"*");
+        return deleteByQuery(QueryBuilders.wildcardQuery(FieldNames.TEXT, "*" + normalized + "*"));
     }
 
     public void deleteBadWord(final String badWord) {

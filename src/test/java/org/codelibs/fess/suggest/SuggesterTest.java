@@ -424,14 +424,20 @@ public class SuggesterTest {
         assertEquals(1, response.getNum());
         assertEquals("全文 検索", response.getWords().get(0));
 
-        suggester.indexer().addBadWord("ｴﾝｼﾞﾝ");
+        suggester.indexer().addBadWord("[");
         suggester.refresh();
         SuggestResponse response2 = suggester.suggest().setQuery("kensaku").setSuggestDetail(true).execute().getResponse();
-        assertEquals(0, response2.getNum());
-        response2 = suggester.suggest().setQuery("zenbun").setSuggestDetail(true).execute().getResponse();
         assertEquals(1, response2.getNum());
 
-        assertEquals(1, suggester.settings().badword().get().length);
+        suggester.indexer().addBadWord("ｴﾝｼﾞﾝ");
+        suggester.refresh();
+        SuggestResponse response3 = suggester.suggest().setQuery("kensaku").setSuggestDetail(true).execute().getResponse();
+        assertEquals(0, response3.getNum());
+        response3 = suggester.suggest().setQuery("zenbun").setSuggestDetail(true).execute().getResponse();
+        assertEquals(1, response3.getNum());
+
+        assertEquals(2, suggester.settings().badword().get().length);
+        suggester.indexer().deleteBadWord("[");
         suggester.indexer().deleteBadWord("ｴﾝｼﾞﾝ");
         assertEquals(0, suggester.settings().badword().get().length);
     }
