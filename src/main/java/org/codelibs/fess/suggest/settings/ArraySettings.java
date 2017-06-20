@@ -130,8 +130,8 @@ public class ArraySettings {
     protected void addToArrayIndex(final String index, final String type, final String id, final Map<String, Object> source) {
         try {
             client.prepareUpdate().setIndex(index).setType(type).setId(id).setDocAsUpsert(true)
-                    .setDoc(JsonXContent.contentBuilder().map(source)).setRefreshPolicy(WriteRequest.RefreshPolicy.WAIT_UNTIL).execute()
-                    .actionGet(SuggestConstants.ACTION_TIMEOUT);
+                    .setDoc(JsonXContent.contentBuilder().map(source)).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
+            client.admin().indices().prepareRefresh().setIndices(index).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
         } catch (final Exception e) {
             throw new SuggestSettingsException("Failed to add to array.", e);
         }
@@ -147,8 +147,8 @@ public class ArraySettings {
 
     protected void deleteFromArray(final String index, final String type, final String id) {
         try {
-            client.prepareDelete().setIndex(index).setType(type).setId(id).setRefreshPolicy(WriteRequest.RefreshPolicy.WAIT_UNTIL)
-                    .execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
+            client.prepareDelete().setIndex(index).setType(type).setId(id).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
+            client.admin().indices().prepareRefresh().setIndices(index).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
         } catch (final Exception e) {
             throw new SuggestSettingsException("Failed to delete from array.", e);
         }

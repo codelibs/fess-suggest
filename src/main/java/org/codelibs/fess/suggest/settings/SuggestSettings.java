@@ -187,8 +187,8 @@ public class SuggestSettings {
     public void set(final String key, final Object value) {
         try {
             client.prepareUpdate().setIndex(settingsIndexName).setType(settingsTypeName).setId(settingsId).setDocAsUpsert(true)
-                    .setDoc(key, value).setRefreshPolicy(WriteRequest.RefreshPolicy.WAIT_UNTIL).setRetryOnConflict(5).execute()
-                    .actionGet(SuggestConstants.ACTION_TIMEOUT);
+                    .setDoc(key, value).setRetryOnConflict(5).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
+            client.admin().indices().prepareRefresh().setIndices(settingsIndexName).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
         } catch (final Exception e) {
             throw new SuggestSettingsException("Failed to update suggestSettings.", e);
         }
@@ -197,8 +197,9 @@ public class SuggestSettings {
     public void set(final Map<String, Object> map) {
         try {
             client.prepareUpdate().setIndex(settingsIndexName).setType(settingsTypeName).setId(settingsId).setDocAsUpsert(true)
-                    .setRefreshPolicy(WriteRequest.RefreshPolicy.WAIT_UNTIL).setDoc(JsonXContent.contentBuilder().map(map))
-                    .setRetryOnConflict(5).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
+                    .setDoc(JsonXContent.contentBuilder().map(map)).setRetryOnConflict(5).execute()
+                    .actionGet(SuggestConstants.ACTION_TIMEOUT);
+            client.admin().indices().prepareRefresh().setIndices(settingsIndexName).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
         } catch (final Exception e) {
             throw new SuggestSettingsException("Failed to update suggestSettings.", e);
         }
