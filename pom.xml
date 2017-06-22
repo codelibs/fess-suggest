@@ -36,7 +36,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<lucene.version>6.5.1</lucene.version>
-		<elasticsearch.version>5.4.1</elasticsearch.version>
+		<elasticsearch.version>5.4.2</elasticsearch.version>
 	</properties>
 	<build>
 		<plugins>
@@ -176,7 +176,7 @@
 		<dependency>
 			<groupId>org.codelibs</groupId>
 			<artifactId>elasticsearch-cluster-runner</artifactId>
-			<version>5.4.1.0</version>
+			<version>5.4.2.0</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
