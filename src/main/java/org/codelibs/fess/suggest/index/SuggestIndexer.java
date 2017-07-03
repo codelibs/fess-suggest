@@ -69,7 +69,7 @@ public class SuggestIndexer {
         this.type = type;
 
         this.supportedFields = settings.array().get(SuggestSettings.DefaultKeys.SUPPORTED_FIELDS);
-        this.badWords = settings.badword().get();
+        this.badWords = settings.badword().get(true);
         this.tagFieldName = settings.getAsString(SuggestSettings.DefaultKeys.TAG_FIELD_NAME, StringUtil.EMPTY);
         this.roleFieldName = settings.getAsString(SuggestSettings.DefaultKeys.ROLE_FIELD_NAME, StringUtil.EMPTY);
         this.langFieldName = settings.getAsString(SuggestSettings.DefaultKeys.LANG_FIELD_NAME, StringUtil.EMPTY);
@@ -346,7 +346,7 @@ public class SuggestIndexer {
     public SuggestDeleteResponse addBadWord(final String badWord) {
         final String normalized = normalizer.normalize(badWord);
         settings.badword().add(normalized);
-        badWords = settings.badword().get();
+        badWords = settings.badword().get(true);
         return deleteByQuery(QueryBuilders.wildcardQuery(FieldNames.TEXT, "*" + normalized + "*"));
     }
 

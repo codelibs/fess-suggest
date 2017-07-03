@@ -1,12 +1,20 @@
 package org.codelibs.fess.suggest.settings;
 
+import org.codelibs.fess.suggest.exception.SuggestSettingsException;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.Strings;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
 
 public class BadWordSettings {
     public static final String BAD_WORD_SETTINGD_KEY = "badword";
 
     protected ArraySettings arraySettings;
+
+    protected static String[] defaultWords = null;
 
     protected BadWordSettings(final Client client, final String settingsIndexName, final String settingsId) {
         this.arraySettings = new ArraySettings(client, settingsIndexName, settingsId) {
@@ -17,8 +25,19 @@ public class BadWordSettings {
         };
     }
 
-    public String[] get() {
-        return arraySettings.get(BAD_WORD_SETTINGD_KEY);
+    public String[] get(final boolean includeDefault) {
+        final String[] badWords = arraySettings.get(BAD_WORD_SETTINGD_KEY);
+        if (!includeDefault) {
+            return badWords;
+        }
+
+        if (defaultWords == null) {
+            updateDefaultBadwords();
+        }
+        final String[] concat = new String[defaultWords.length + badWords.length];
+        System.arraycopy(badWords, 0, concat, 0, badWords.length);
+        System.arraycopy(defaultWords, 0, concat, 0, defaultWords.length);
+        return concat;
     }
 
     public void add(final String badWord) {
@@ -45,5 +64,26 @@ public class BadWordSettings {
             return "badWord contains space.";
         }
         return null;
+    }
+
+    protected void updateDefaultBadwords() {
+        if (defaultWords != null) {
+            return;
+        }
+
+        final List<String> list = new ArrayList<>();
+        try (BufferedReader br =
+                new BufferedReader(new InputStreamReader(this.getClass().getClassLoader()
+                        .getResourceAsStream("suggest_settings/default-badwords.txt")))) {
+
+            String line;
+            while ((line = br.readLine()) != null) {
+                if (line.length() > 0 && !line.startsWith("#"))
+                    list.add(line.trim());
+            }
+        } catch (Exception e) {
+            throw new SuggestSettingsException("Failed to load default badwords.", e);
+        }
+        defaultWords = list.toArray(new String[list.size()]);
     }
 }

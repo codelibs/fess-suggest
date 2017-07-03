@@ -436,10 +436,10 @@ public class SuggesterTest {
         response3 = suggester.suggest().setQuery("zenbun").setSuggestDetail(true).execute().getResponse();
         assertEquals(1, response3.getNum());
 
-        assertEquals(2, suggester.settings().badword().get().length);
+        assertEquals(2, suggester.settings().badword().get(false).length);
         suggester.indexer().deleteBadWord("[");
         suggester.indexer().deleteBadWord("ｴﾝｼﾞﾝ");
-        assertEquals(0, suggester.settings().badword().get().length);
+        assertEquals(0, suggester.settings().badword().get(false).length);
     }
 
     @Test

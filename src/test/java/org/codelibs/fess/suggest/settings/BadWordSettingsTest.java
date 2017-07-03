@@ -84,10 +84,10 @@ public class BadWordSettingsTest {
         settings.badword().add(value1);
         settings.badword().add(value2);
         settings.badword().add(value3);
-        assertEquals(3, settings.badword().get().length);
-        assertEquals(value1, settings.badword().get()[0]);
-        assertEquals(value2, settings.badword().get()[1]);
-        assertEquals(value3, settings.badword().get()[2]);
+        assertEquals(3, settings.badword().get(false).length);
+        assertEquals(value1, settings.badword().get(false)[0]);
+        assertEquals(value2, settings.badword().get(false)[1]);
+        assertEquals(value3, settings.badword().get(false)[2]);
     }
 
     @Test
@@ -98,18 +98,18 @@ public class BadWordSettingsTest {
         settings.badword().add(value1);
         settings.badword().add(value2);
         settings.badword().add(value3);
-        assertEquals(3, settings.badword().get().length);
-        assertEquals(value1, settings.badword().get()[0]);
-        assertEquals(value2, settings.badword().get()[1]);
-        assertEquals(value3, settings.badword().get()[2]);
+        assertEquals(3, settings.badword().get(false).length);
+        assertEquals(value1, settings.badword().get(false)[0]);
+        assertEquals(value2, settings.badword().get(false)[1]);
+        assertEquals(value3, settings.badword().get(false)[2]);
 
         settings.badword().delete(value2);
-        assertEquals(2, settings.badword().get().length);
-        assertEquals(value1, settings.badword().get()[0]);
-        assertEquals(value3, settings.badword().get()[1]);
+        assertEquals(2, settings.badword().get(false).length);
+        assertEquals(value1, settings.badword().get(false)[0]);
+        assertEquals(value3, settings.badword().get(false)[1]);
 
         settings.badword().deleteAll();
-        assertEquals(0, settings.badword().get().length);
+        assertEquals(0, settings.badword().get(false).length);
     }
 
 }
