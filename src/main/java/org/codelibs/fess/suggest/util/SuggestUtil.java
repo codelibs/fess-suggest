@@ -232,4 +232,8 @@ public final class SuggestUtil {
 
         return true;
     }
+
+    public static String escapeWildcardQuery(final String query) {
+        return query.replace("*", "\\*").replace("?", "\\?");
+    }
 }
