@@ -11,6 +11,7 @@ import org.codelibs.fess.suggest.index.contents.querylog.QueryLogReader;
 import org.codelibs.fess.suggest.request.popularwords.PopularWordsResponse;
 import org.codelibs.fess.suggest.request.suggest.SuggestResponse;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
+import org.elasticsearch.action.admin.indices.get.GetIndexResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.index.IndexAction;
 import org.elasticsearch.action.index.IndexRequestBuilder;
@@ -332,7 +333,7 @@ public class SuggesterTest {
     public void test_indexElevateWord() throws Exception {
         ElevateWord elevateWord =
                 new ElevateWord("Test", 2.0f, Collections.singletonList("Test"), Collections.singletonList("content"), null, null);
-        suggester.indexer().addElevateWord(elevateWord);
+        suggester.indexer().addElevateWord(elevateWord, true);
         suggester.refresh();
         SuggestResponse response1 = suggester.suggest().setQuery("tes").setSuggestDetail(true).execute().getResponse();
         assertEquals(1, response1.getNum());
@@ -343,7 +344,7 @@ public class SuggesterTest {
         assertEquals(1, elevateWords.length);
         assertEquals("test", elevateWords[0].getElevateWord());
 
-        suggester.indexer().deleteElevateWord(elevateWord.getElevateWord());
+        suggester.indexer().deleteElevateWord(elevateWord.getElevateWord(), true);
         suggester.refresh();
         elevateWords = suggester.settings().elevateWord().get();
         assertEquals(0, elevateWords.length);
@@ -381,7 +382,7 @@ public class SuggesterTest {
                 new ElevateWord("test", 2.0f, Collections.singletonList("test"), Collections.singletonList("content"), null, null);
 
         suggester.indexer().indexFromDocument(new Map[] { Collections.singletonMap(field, (Object) "この柿は美味しい。") });
-        suggester.indexer().addElevateWord(elevateWord);
+        suggester.indexer().addElevateWord(elevateWord, true);
         suggester.refresh();
 
         Thread.sleep(1000);
@@ -424,12 +425,12 @@ public class SuggesterTest {
         assertEquals(1, response.getNum());
         assertEquals("全文 検索", response.getWords().get(0));
 
-        suggester.indexer().addBadWord("[");
+        suggester.indexer().addBadWord("[", true);
         suggester.refresh();
         SuggestResponse response2 = suggester.suggest().setQuery("kensaku").setSuggestDetail(true).execute().getResponse();
         assertEquals(1, response2.getNum());
 
-        suggester.indexer().addBadWord("ｴﾝｼﾞﾝ");
+        suggester.indexer().addBadWord("ｴﾝｼﾞﾝ", true);
         suggester.refresh();
         SuggestResponse response3 = suggester.suggest().setQuery("kensaku").setSuggestDetail(true).execute().getResponse();
         assertEquals(0, response3.getNum());
@@ -598,6 +599,68 @@ public class SuggesterTest {
         assertEquals(2, suggester.getAllWordsNum());
         assertEquals(2, suggester.getDocumentWordsNum());
         assertEquals(0, suggester.getQueryWordsNum());
+    }
+
+    @Test
+    public void test_switchIndex() throws Exception {
+        SuggestItem[] items = getItemSet1();
+        suggester.indexer().index(items);
+        suggester.refresh();
+
+        SuggestResponse response = suggester.suggest().setQuery("kensaku").setSuggestDetail(true).execute().getResponse();
+        assertEquals(1, response.getNum());
+        assertEquals("検索 エンジン", response.getWords().get(0));
+
+        SuggestResponse response2 = suggester.suggest().setSuggestDetail(true).execute().getResponse();
+        assertEquals(2, response2.getNum());
+
+        Thread.sleep(1000);
+        suggester.createNextIndex();
+        SuggestItem[] items2 = getItemSet2();
+        suggester.indexer().index(items2);
+        suggester.refresh();
+        response = suggester.suggest().setQuery("kensaku").setSuggestDetail(true).execute().getResponse();
+        assertEquals(1, response.getNum());
+        assertEquals("検索 エンジン", response.getWords().get(0));
+
+        response2 = suggester.suggest().setSuggestDetail(true).execute().getResponse();
+        assertEquals(2, response2.getNum());
+
+        suggester.switchIndex();
+
+        response = suggester.suggest().setQuery("kensaku").setSuggestDetail(true).execute().getResponse();
+        assertEquals(0, response.getNum());
+
+        response = suggester.suggest().setSuggestDetail(true).execute().getResponse();
+        assertEquals(3, response.getNum());
+
+        response2 = suggester.suggest().setQuery("-a").setSuggestDetail(true).execute().getResponse();
+        assertEquals(2, response2.getNum());
+
+        SuggestResponse response3 = suggester.suggest().setQuery("-aa-").setSuggestDetail(true).execute().getResponse();
+        assertEquals(1, response3.getNum());
+
+        GetIndexResponse getIndexResponse = runner.client().admin().indices().prepareGetIndex().execute().actionGet();
+        int count = 0;
+        for (String index : getIndexResponse.getIndices()) {
+            if (index.startsWith(suggester.getIndex())) {
+                count++;
+            }
+        }
+        assertEquals(2, count);
+
+        suggester.removeDisableIndices();
+        response = suggester.suggest().setSuggestDetail(true).execute().getResponse();
+        assertEquals(3, response.getNum());
+
+        getIndexResponse = runner.client().admin().indices().prepareGetIndex().execute().actionGet();
+        count = 0;
+        for (String index : getIndexResponse.getIndices()) {
+            if (index.startsWith(suggester.getIndex())) {
+                count++;
+            }
+        }
+        assertEquals(1, count);
     }
 
     private SuggestItem[] getItemSet1() {

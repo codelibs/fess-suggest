@@ -1,10 +1,14 @@
 package org.codelibs.fess.suggest;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
+import java.util.stream.Stream;
 
 import org.codelibs.core.lang.StringUtil;
 import org.codelibs.fess.suggest.analysis.SuggestAnalyzer;
@@ -18,7 +22,11 @@ import org.codelibs.fess.suggest.request.popularwords.PopularWordsRequestBuilder
 import org.codelibs.fess.suggest.request.suggest.SuggestRequestBuilder;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.elasticsearch.action.admin.indices.alias.Alias;
+import org.elasticsearch.action.admin.indices.alias.IndicesAliasesRequestBuilder;
+import org.elasticsearch.action.admin.indices.alias.get.GetAliasesResponse;
+import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
+import org.elasticsearch.action.admin.indices.get.GetIndexResponse;
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
@@ -54,15 +62,15 @@ public class Suggester {
     }
 
     public SuggestRequestBuilder suggest() {
-        return new SuggestRequestBuilder(client, readingConverter, normalizer).setIndex(index).setType(type);
+        return new SuggestRequestBuilder(client, readingConverter, normalizer).setIndex(getSearchAlias(index)).setType(type);
     }
 
     public PopularWordsRequestBuilder popularWords() {
-        return new PopularWordsRequestBuilder(client).setIndex(index).setType(type);
+        return new PopularWordsRequestBuilder(client).setIndex(getSearchAlias(index)).setType(type);
     }
 
     public RefreshResponse refresh() {
-        return client.admin().indices().prepareRefresh(index).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
+        return client.admin().indices().prepareRefresh().execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
     }
 
     public void shutdown() {
@@ -73,42 +81,103 @@ public class Suggester {
         try {
             boolean created = false;
             final IndicesExistsResponse response =
-                    client.admin().indices().prepareExists(index).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
+                    client.admin().indices().prepareExists(getSearchAlias(index)).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
             if (!response.isExists()) {
-                final StringBuilder mappingSource = new StringBuilder();
-                try (BufferedReader br =
-                        new BufferedReader(new InputStreamReader(this.getClass().getClassLoader()
-                                .getResourceAsStream("suggest_indices/suggest/mappings-default.json")))) {
 
-                    String line;
-                    while ((line = br.readLine()) != null) {
-                        mappingSource.append(line);
-                    }
-                }
-
-                final StringBuilder settingsSource = new StringBuilder();
-                try (BufferedReader br =
-                        new BufferedReader(new InputStreamReader(this.getClass().getClassLoader()
-                                .getResourceAsStream("suggest_indices/suggest.json")))) {
-                    String line;
-                    while ((line = br.readLine()) != null) {
-                        settingsSource.append(line);
-                    }
-                }
-
-                final String indexName = index + '.' + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmm"));
+                final String mappingSource = getDefaultMappings();
+                final String settingsSource = getDefaultIndexSettings();
+                final String indexName = createIndexName(index);
                 client.admin().indices().prepareCreate(indexName).setSettings(settingsSource.toString(), XContentType.JSON)
-                        .addMapping(type, mappingSource.toString(), XContentType.JSON).addAlias(new Alias(index)).execute()
-                        .actionGet(SuggestConstants.ACTION_TIMEOUT);
+                        .addMapping(type, mappingSource, XContentType.JSON).addAlias(new Alias(getSearchAlias(index)))
+                        .addAlias(new Alias(getUpdateAlias(index))).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
 
                 client.admin().cluster().prepareHealth().setWaitForYellowStatus().execute().actionGet(SuggestConstants.ACTION_TIMEOUT * 10);
                 created = true;
             }
-
             return created;
         } catch (final Exception e) {
             throw new SuggesterException("Failed to create index.", e);
         }
+    }
+
+    public void createNextIndex() {
+        try {
+            final List<String> prevIndices = new ArrayList();
+            final IndicesExistsResponse response =
+                    client.admin().indices().prepareExists(getUpdateAlias(index)).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
+            if (response.isExists()) {
+                GetAliasesResponse getAliasesResponse =
+                        client.admin().indices().prepareGetAliases(getUpdateAlias(index)).execute().actionGet();
+                getAliasesResponse.getAliases().keysIt().forEachRemaining(prevIndices::add);
+            }
+
+            final String mappingSource = getDefaultMappings();
+            final String settingsSource = getDefaultIndexSettings();
+            final String indexName = createIndexName(index);
+            CreateIndexResponse createIndexResponse =
+                    client.admin().indices().prepareCreate(indexName).setSettings(settingsSource.toString(), XContentType.JSON)
+                            .addMapping(type, mappingSource, XContentType.JSON).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
+            if (!createIndexResponse.isAcknowledged()) {
+                throw new SuggesterException("Failed to create index");
+            }
+            client.admin().cluster().prepareHealth().setWaitForYellowStatus().execute().actionGet(SuggestConstants.ACTION_TIMEOUT * 10);
+
+            final IndicesAliasesRequestBuilder aliasesRequestBuilder =
+                    client.admin().indices().prepareAliases().addAlias(indexName, getUpdateAlias(index));
+            for (final String prevIndex : prevIndices) {
+                aliasesRequestBuilder.removeAlias(prevIndex, getUpdateAlias(index));
+            }
+            aliasesRequestBuilder.execute().actionGet();
+        } catch (final Exception e) {
+            throw new SuggesterException("Failed to create index.", e);
+        }
+    }
+
+    public void switchIndex() {
+        try {
+            final List<String> updateIndices = new ArrayList();
+            final IndicesExistsResponse updateIndicesResponse =
+                    client.admin().indices().prepareExists(getUpdateAlias(index)).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
+            if (updateIndicesResponse.isExists()) {
+                GetAliasesResponse getAliasesResponse =
+                        client.admin().indices().prepareGetAliases(getUpdateAlias(index)).execute().actionGet();
+                getAliasesResponse.getAliases().keysIt().forEachRemaining(updateIndices::add);
+            }
+            if (updateIndices.size() != 1) {
+                throw new SuggesterException("Enexpected update indices num:" + updateIndices.size());
+            }
+            final String updateIndex = updateIndices.get(0);
+
+            final List<String> searchIndices = new ArrayList();
+            final IndicesExistsResponse searchIndicesResponse =
+                    client.admin().indices().prepareExists(getSearchAlias(index)).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
+            if (searchIndicesResponse.isExists()) {
+                GetAliasesResponse getAliasesResponse =
+                        client.admin().indices().prepareGetAliases(getSearchAlias(index)).execute().actionGet();
+                getAliasesResponse.getAliases().keysIt().forEachRemaining(searchIndices::add);
+            }
+            if (updateIndices.size() != 1) {
+                throw new SuggesterException("Enexpected search indices num:" + searchIndices.size());
+            }
+            final String searchIndex = searchIndices.get(0);
+
+            if (updateIndex.equals(searchIndex)) {
+                return;
+            }
+
+            client.admin().indices().prepareAliases().removeAlias(searchIndex, getSearchAlias(index))
+                    .addAlias(updateIndex, getSearchAlias(index)).execute().actionGet();
+        } catch (final Exception e) {
+            throw new SuggesterException("Failed to create index.", e);
+        }
+    }
+
+    public void removeDisableIndices() {
+        GetIndexResponse response = client.admin().indices().prepareGetIndex().execute().actionGet();
+        Stream.of(response.getIndices()).filter(this::isSuggestIndex).filter(index -> !response.getAliases().containsKey(index))
+                .forEach(index -> {
+                    client.admin().indices().prepareDelete(index).execute().actionGet();
+                });
     }
 
     public SuggestIndexer indexer() {
@@ -133,8 +202,8 @@ public class Suggester {
     }
 
     protected SuggestIndexer createDefaultIndexer() {
-        return new SuggestIndexer(client, index, type, readingConverter, contentsReadingConverter, normalizer, analyzer, suggestSettings,
-                threadPool);
+        return new SuggestIndexer(client, getUpdateAlias(index), type, readingConverter, contentsReadingConverter, normalizer, analyzer,
+                suggestSettings, threadPool);
     }
 
     public String getIndex() {
@@ -159,7 +228,51 @@ public class Suggester {
 
     private long getNum(final QueryBuilder queryBuilder) {
         final SearchResponse searchResponse =
-                client.prepareSearch().setIndices(index).setTypes(type).setSize(0).setQuery(queryBuilder).execute().actionGet();
+                client.prepareSearch().setIndices(getSearchAlias(index)).setTypes(type).setSize(0).setQuery(queryBuilder).execute()
+                        .actionGet();
         return searchResponse.getHits().getTotalHits();
+    }
+
+    private String getSearchAlias(final String index) {
+        return index;
+    }
+
+    private String getUpdateAlias(final String index) {
+        return index + ".update";
+    }
+
+    private String createIndexName(final String index) {
+        return index + '.' + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+    }
+
+    private String getDefaultMappings() throws IOException {
+        final StringBuilder mappingSource = new StringBuilder();
+        try (BufferedReader br =
+                new BufferedReader(new InputStreamReader(this.getClass().getClassLoader()
+                        .getResourceAsStream("suggest_indices/suggest/mappings-default.json")))) {
+
+            String line;
+            while ((line = br.readLine()) != null) {
+                mappingSource.append(line);
+            }
+        }
+        return mappingSource.toString();
+    }
+
+    private String getDefaultIndexSettings() throws IOException {
+        final StringBuilder settingsSource = new StringBuilder();
+        try (BufferedReader br =
+                new BufferedReader(new InputStreamReader(this.getClass().getClassLoader()
+                        .getResourceAsStream("suggest_indices/suggest.json")))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                settingsSource.append(line);
+            }
+        }
+        return settingsSource.toString();
+    }
+
+    private boolean isSuggestIndex(final String indexName) {
+        return indexName.startsWith(index);
     }
 }

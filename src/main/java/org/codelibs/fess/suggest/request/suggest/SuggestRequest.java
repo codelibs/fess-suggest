@@ -129,7 +129,7 @@ public class SuggestRequest extends Request<SuggestResponse> {
     @Override
     protected void processRequest(final Client client, final Deferred<SuggestResponse> deferred) {
         final SearchRequestBuilder builder = client.prepareSearch(index);
-        if (Strings.isNullOrEmpty(type)) {
+        if (!Strings.isNullOrEmpty(type)) {
             builder.setTypes(type);
         }
 

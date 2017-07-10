@@ -343,18 +343,22 @@ public class SuggestIndexer {
         }
     }
 
-    public SuggestDeleteResponse addBadWord(final String badWord) {
+    public SuggestDeleteResponse addBadWord(final String badWord, final boolean apply) {
         final String normalized = normalizer.normalize(badWord);
         settings.badword().add(normalized);
         badWords = settings.badword().get(true);
-        return deleteByQuery(QueryBuilders.wildcardQuery(FieldNames.TEXT, "*" + normalized + "*"));
+        if (apply) {
+            return deleteByQuery(QueryBuilders.wildcardQuery(FieldNames.TEXT, "*" + normalized + "*"));
+        } else {
+            return new SuggestDeleteResponse(null, 0);
+        }
     }
 
     public void deleteBadWord(final String badWord) {
         settings.badword().delete(normalizer.normalize(badWord));
     }
 
-    public SuggestIndexResponse addElevateWord(final ElevateWord elevateWord) {
+    public SuggestIndexResponse addElevateWord(final ElevateWord elevateWord, final boolean apply) {
         final String normalizedWord = normalizer.normalize(elevateWord.getElevateWord());
         final List<String> normalizedReadings =
                 elevateWord.getReadings().stream().map(reading -> normalizer.normalize(reading)).collect(Collectors.toList());
@@ -362,13 +366,21 @@ public class SuggestIndexer {
                 new ElevateWord(normalizedWord, elevateWord.getBoost(), normalizedReadings, elevateWord.getFields(), elevateWord.getTags(),
                         elevateWord.getRoles());
         settings.elevateWord().add(normalized);
-        return index(normalized.toSuggestItem());
+        if (apply) {
+            return index(normalized.toSuggestItem());
+        } else {
+            return new SuggestIndexResponse(0, 0, null, 0);
+        }
     }
 
-    public SuggestDeleteResponse deleteElevateWord(final String elevateWord) {
+    public SuggestDeleteResponse deleteElevateWord(final String elevateWord, final boolean apply) {
         final String normalized = normalizer.normalize(elevateWord);
         settings.elevateWord().delete(normalized);
-        return delete(SuggestUtil.createSuggestTextId(normalized));
+        if (apply) {
+            return delete(SuggestUtil.createSuggestTextId(normalized));
+        } else {
+            return new SuggestDeleteResponse(null, 0);
+        }
     }
 
     public SuggestIndexResponse restoreElevateWord() {
@@ -379,7 +391,7 @@ public class SuggestIndexer {
         final ElevateWord[] elevateWords = settings.elevateWord().get();
         final List<Throwable> errors = new ArrayList<>(elevateWords.length);
         for (final ElevateWord elevateWord : elevateWords) {
-            final SuggestIndexResponse res = addElevateWord(elevateWord);
+            final SuggestIndexResponse res = addElevateWord(elevateWord, true);
             numberOfSuggestDocs += res.getNumberOfSuggestDocs();
             numberOfInputDocs += res.getNumberOfInputDocs();
             errors.addAll(res.getErrors());
