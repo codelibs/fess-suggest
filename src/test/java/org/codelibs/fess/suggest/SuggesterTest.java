@@ -245,6 +245,29 @@ public class SuggesterTest {
 
     @Test
     @SuppressWarnings("unchecked")
+    public void test_indexFromDocumentDe() throws Exception {
+        SuggestSettings settings = suggester.settings();
+        String field = settings.array().get(SuggestSettings.DefaultKeys.SUPPORTED_FIELDS)[0];
+
+        Map<String, Object> document = new HashMap<>();
+        document.put(field, "Schöner Klang der Gitarre");
+        document.put("lang", "de");
+        suggester.indexer().indexFromDocument(new Map[] { document });
+        suggester.refresh();
+
+        SuggestResponse response1 = suggester.suggest().setQuery("schöner").setSuggestDetail(true).execute().getResponse();
+        assertEquals(1, response1.getNum());
+        assertEquals(1, response1.getTotal());
+        assertEquals("schöner", response1.getWords().get(0));
+
+        SuggestResponse response2 = suggester.suggest().setQuery("schoner").setSuggestDetail(true).execute().getResponse();
+        assertEquals(1, response2.getNum());
+        assertEquals(1, response2.getTotal());
+        assertEquals("schöner", response2.getWords().get(0));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
     public void test_indexFromDocumentLengthLimit() throws Exception {
         SuggestSettings settings = suggester.settings();
         String field = settings.array().get(SuggestSettings.DefaultKeys.SUPPORTED_FIELDS)[0];
