@@ -45,7 +45,7 @@ public class SuggestIndexer {
     protected SuggestSettings settings;
 
     protected String[] supportedFields;
-    protected String tagFieldName;
+    protected String[] tagFieldNames;
     protected String roleFieldName;
     protected String langFieldName;
     protected String[] badWords;
@@ -70,7 +70,7 @@ public class SuggestIndexer {
 
         this.supportedFields = settings.array().get(SuggestSettings.DefaultKeys.SUPPORTED_FIELDS);
         this.badWords = settings.badword().get(true);
-        this.tagFieldName = settings.getAsString(SuggestSettings.DefaultKeys.TAG_FIELD_NAME, StringUtil.EMPTY);
+        this.tagFieldNames = settings.getAsString(SuggestSettings.DefaultKeys.TAG_FIELD_NAME, StringUtil.EMPTY).split(",");
         this.roleFieldName = settings.getAsString(SuggestSettings.DefaultKeys.ROLE_FIELD_NAME, StringUtil.EMPTY);
         this.langFieldName = settings.getAsString(SuggestSettings.DefaultKeys.LANG_FIELD_NAME, StringUtil.EMPTY);
         this.parallel = settings.getAsBoolean(SuggestSettings.DefaultKeys.PARALLEL_PROCESSING, false);
@@ -210,7 +210,7 @@ public class SuggestIndexer {
             }
             final SuggestItem[] array =
                     stream.flatMap(
-                            queryLog -> contentsParser.parseQueryLog(queryLog, supportedFields, tagFieldName, roleFieldName,
+                            queryLog -> contentsParser.parseQueryLog(queryLog, supportedFields, tagFieldNames, roleFieldName,
                                     readingConverter, normalizer).stream()).toArray(n -> new SuggestItem[n]);
             final SuggestIndexResponse response = index(array);
             return new SuggestIndexResponse(array.length, queryLogs.length, response.getErrors(), System.currentTimeMillis() - start);
@@ -268,8 +268,9 @@ public class SuggestIndexer {
             }
             final SuggestItem[] array =
                     stream.flatMap(
-                            document -> contentsParser.parseDocument(document, supportedFields, tagFieldName, roleFieldName, langFieldName,
-                                    contentsReadingConverter, normalizer, analyzer).stream()).toArray(n -> new SuggestItem[n]);
+                            document -> contentsParser.parseDocument(document, supportedFields, tagFieldNames, roleFieldName,
+                                    langFieldName, contentsReadingConverter, normalizer, analyzer).stream()).toArray(
+                            n -> new SuggestItem[n]);
             final SuggestIndexResponse response = index(array);
             return new SuggestIndexResponse(array.length, documents.length, response.getErrors(), System.currentTimeMillis() - start);
         } catch (final Exception e) {
@@ -423,8 +424,8 @@ public class SuggestIndexer {
         return this;
     }
 
-    public SuggestIndexer setTagFieldName(final String tagFieldName) {
-        this.tagFieldName = tagFieldName;
+    public SuggestIndexer setTagFieldNames(final String[] tagFieldNames) {
+        this.tagFieldNames = tagFieldNames;
         return this;
     }
 

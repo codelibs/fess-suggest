@@ -2,6 +2,7 @@ package org.codelibs.fess.suggest.index.contents;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -53,24 +54,23 @@ public class DefaultContentsParser implements ContentsParser {
     }
 
     @Override
-    public List<SuggestItem> parseQueryLog(final QueryLog queryLog, final String[] fields, final String tagFieldName,
+    public List<SuggestItem> parseQueryLog(final QueryLog queryLog, final String[] fields, final String[] tagFieldNames,
             final String roleFieldName, final ReadingConverter readingConverter, final Normalizer normalizer) {
         final String queryString = queryLog.getQueryString();
         final String filterQueryString = queryLog.getFilterQueryString();
 
-        final String[] tags1 = SuggestUtil.parseQuery(queryString, tagFieldName);
+        final List<String> tagList = new ArrayList<>();
+        for (final String tagFieldName : tagFieldNames) {
+            tagList.addAll(Arrays.asList(SuggestUtil.parseQuery(queryString, tagFieldName)));
+            if (filterQueryString != null) {
+                tagList.addAll(Arrays.asList(SuggestUtil.parseQuery(filterQueryString, tagFieldName)));
+            }
+        }
+        final String[] tags = tagList.toArray(new String[tagList.size()]);
         final String[] roles1 = SuggestUtil.parseQuery(queryString, roleFieldName);
-        final String[] tags2 = filterQueryString == null ? new String[0] : SuggestUtil.parseQuery(filterQueryString, tagFieldName);
         final String[] roles2 = filterQueryString == null ? new String[0] : SuggestUtil.parseQuery(filterQueryString, roleFieldName);
-        final String[] tags = new String[tags1.length + tags2.length];
         final String[] roles = new String[roles1.length + roles2.length];
 
-        if (tags1.length > 0) {
-            System.arraycopy(tags1, 0, tags, 0, tags1.length);
-        }
-        if (tags2.length > 0) {
-            System.arraycopy(tags2, 0, tags, tags1.length, tags2.length);
-        }
         if (roles1.length > 0) {
             System.arraycopy(roles1, 0, roles, 0, roles1.length);
         }
@@ -103,12 +103,16 @@ public class DefaultContentsParser implements ContentsParser {
     }
 
     @Override
-    public List<SuggestItem> parseDocument(final Map<String, Object> document, final String[] fields, final String tagFieldName,
+    public List<SuggestItem> parseDocument(final Map<String, Object> document, final String[] fields, final String[] tagFieldNames,
             final String roleFieldName, final String langFieldName, final ReadingConverter readingConverter, final Normalizer normalizer,
             final SuggestAnalyzer analyzer) {
         List<SuggestItem> items = null;
-        final String[] tags = getRoleFromDoc(document, tagFieldName);
-        final String[] roles = getRoleFromDoc(document, roleFieldName);
+        final List<String> tagList = new ArrayList<>();
+        for (final String tagFieldName : tagFieldNames) {
+            tagList.addAll(Arrays.asList(getFieldValues(document, tagFieldName)));
+        }
+        final String[] tags = tagList.toArray(new String[tagList.size()]);
+        final String[] roles = getFieldValues(document, roleFieldName);
 
         for (final String field : fields) {
             final Object textObj = document.get(field);
@@ -155,8 +159,8 @@ public class DefaultContentsParser implements ContentsParser {
         return items == null ? new ArrayList<>() : items;
     }
 
-    protected String[] getRoleFromDoc(final Map<String, Object> document, final String roleFieldName) {
-        final Object value = document.get(roleFieldName);
+    protected String[] getFieldValues(final Map<String, Object> document, final String fieldName) {
+        final Object value = document.get(fieldName);
         if (value instanceof String) {
             return new String[] { value.toString() };
         } else if (value instanceof String[]) {
@@ -167,7 +171,7 @@ public class DefaultContentsParser implements ContentsParser {
             return new String[] { value.toString() };
         }
 
-        return null;
+        return new String[0];
     }
 
     protected boolean isExcludeSearchword(final String searchWord, final String[] langs, final SuggestAnalyzer analyzer) {

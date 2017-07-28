@@ -15,14 +15,14 @@ import java.util.List;
 public class DefaultContentsParserTest extends TestCase {
     DefaultContentsParser defaultContentsParser = new DefaultContentsParser();
     String[] supportedFields = new String[] { "content", "title" };
-    String tagFieldName = "label";
+    String[] tagFieldNames = new String[] { "label", "virtual_host" };
     String roleFieldName = "role";
 
     public void test_parseQueryLog() throws Exception {
 
         QueryLog queryLog = new QueryLog("content:検索エンジン", null);
         List<SuggestItem> items =
-                defaultContentsParser.parseQueryLog(queryLog, supportedFields, tagFieldName, roleFieldName,
+                defaultContentsParser.parseQueryLog(queryLog, supportedFields, tagFieldNames, roleFieldName,
                         createDefaultReadingConverter(), createDefaultNormalizer());
         SuggestItem item = items.get(0);
         assertEquals("検索エンジン", item.getText());
@@ -33,7 +33,7 @@ public class DefaultContentsParserTest extends TestCase {
     public void test_parseQueryLog2Word() throws Exception {
         QueryLog queryLog = new QueryLog("content:検索エンジン AND content:柿", null);
         List<SuggestItem> items =
-                defaultContentsParser.parseQueryLog(queryLog, supportedFields, tagFieldName, roleFieldName,
+                defaultContentsParser.parseQueryLog(queryLog, supportedFields, tagFieldNames, roleFieldName,
                         createDefaultReadingConverter(), createDefaultNormalizer());
         assertEquals("検索エンジン 柿", items.get(0).getText());
     }
@@ -41,7 +41,7 @@ public class DefaultContentsParserTest extends TestCase {
     public void test_parseQueryLogAndRole() throws Exception {
         QueryLog queryLog = new QueryLog("content:検索エンジン AND label:tag1", "role:role1");
         List<SuggestItem> items =
-                defaultContentsParser.parseQueryLog(queryLog, supportedFields, tagFieldName, roleFieldName,
+                defaultContentsParser.parseQueryLog(queryLog, supportedFields, tagFieldNames, roleFieldName,
                         createDefaultReadingConverter(), createDefaultNormalizer());
         SuggestItem item = items.get(0);
         assertEquals("検索エンジン", item.getText());

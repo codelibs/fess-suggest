@@ -13,9 +13,9 @@ public interface ContentsParser {
     SuggestItem parseSearchWords(String[] words, String[][] readings, String[] fields, String[] tags, String roles[], long score,
             ReadingConverter readingConverter, Normalizer normalizer, SuggestAnalyzer analyzer, String[] langs);
 
-    List<SuggestItem> parseQueryLog(QueryLog queryLog, String[] fields, String tagFieldName, String roleFieldName,
+    List<SuggestItem> parseQueryLog(QueryLog queryLog, String[] fields, String[] tagFieldNames, String roleFieldName,
             ReadingConverter readingConverter, Normalizer normalizer);
 
-    List<SuggestItem> parseDocument(Map<String, Object> document, String[] fields, String tagFieldName, String roleFieldName,
+    List<SuggestItem> parseDocument(Map<String, Object> document, String[] fields, String[] tagFieldNames, String roleFieldName,
             String langFieldName, ReadingConverter readingConverter, Normalizer normalizer, SuggestAnalyzer analyzer);
 }

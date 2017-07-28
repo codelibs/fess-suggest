@@ -241,7 +241,7 @@ public class SuggestSettings {
         final Map<String, Object> defaultSettings = new HashMap<>();
         defaultSettings.put(DefaultKeys.INDEX, (settingsId + ".suggest").toLowerCase());
         defaultSettings.put(DefaultKeys.TYPE, "doc");
-        defaultSettings.put(DefaultKeys.TAG_FIELD_NAME, "label");
+        defaultSettings.put(DefaultKeys.TAG_FIELD_NAME, "label,virtual_host");
         defaultSettings.put(DefaultKeys.ROLE_FIELD_NAME, "role");
         defaultSettings.put(DefaultKeys.LANG_FIELD_NAME, "lang");
         defaultSettings.put(DefaultKeys.PARALLEL_PROCESSING, Boolean.FALSE);
