@@ -36,7 +36,7 @@ public class BadWordSettings {
         }
         final String[] concat = new String[defaultWords.length + badWords.length];
         System.arraycopy(badWords, 0, concat, 0, badWords.length);
-        System.arraycopy(defaultWords, 0, concat, 0, defaultWords.length);
+        System.arraycopy(defaultWords, 0, concat, badWords.length, defaultWords.length);
         return concat;
     }
 
