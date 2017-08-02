@@ -490,7 +490,7 @@ public class SuggestItem implements Serializable {
         return mergedItem;
     }
 
-    public boolean isNgWord(final String[] badWords) {
+    public boolean isBadWord(final String[] badWords) {
         for (final String badWord : badWords) {
             if (text.contains(badWord)) {
                 return true;

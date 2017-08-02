@@ -94,7 +94,7 @@ public class SuggestIndexer {
     //TODO return result
     public SuggestIndexResponse index(final SuggestItem[] items) {
         // TODO parallel?
-        final SuggestItem[] array = Stream.of(items).filter(item -> !item.isNgWord(badWords)).toArray(n -> new SuggestItem[n]);
+        final SuggestItem[] array = Stream.of(items).filter(item -> !item.isBadWord(badWords)).toArray(n -> new SuggestItem[n]);
 
         final long start = System.currentTimeMillis();
         final SuggestWriterResult result = suggestWriter.write(client, settings, index, type, array, true);
