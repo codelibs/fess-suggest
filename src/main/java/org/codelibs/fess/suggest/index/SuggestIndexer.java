@@ -3,6 +3,7 @@ package org.codelibs.fess.suggest.index;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -96,9 +97,13 @@ public class SuggestIndexer {
         // TODO parallel?
         final SuggestItem[] array = Stream.of(items).filter(item -> !item.isBadWord(badWords)).toArray(n -> new SuggestItem[n]);
 
-        final long start = System.currentTimeMillis();
-        final SuggestWriterResult result = suggestWriter.write(client, settings, index, type, array, true);
-        return new SuggestIndexResponse(items.length, items.length, result.getFailures(), System.currentTimeMillis() - start);
+        try {
+            final long start = System.currentTimeMillis();
+            final SuggestWriterResult result = suggestWriter.write(client, settings, index, type, array, true);
+            return new SuggestIndexResponse(items.length, items.length, result.getFailures(), System.currentTimeMillis() - start);
+        } catch (Exception e) {
+            throw new SuggestIndexException("Failed to write items[" + items.length + "] to " + index + "/" + type, e);
+        }
     }
 
     public SuggestDeleteResponse delete(final String id) {
@@ -340,7 +345,12 @@ public class SuggestIndexer {
             final SuggestIndexResponse response = index(item);
             return new SuggestIndexResponse(1, 1, response.getErrors(), System.currentTimeMillis() - start);
         } catch (final Exception e) {
-            throw new SuggestIndexException("Failed to index from document", e);
+            throw new SuggestIndexException("Failed to index from document: searchWord=" + searchWord//
+                    + ", fields=" + Arrays.toString(fields)//
+                    + ", tags=" + Arrays.toString(tags)//
+                    + ", roles=" + Arrays.toString(roles)//
+                    + ", langs=" + Arrays.toString(langs)//
+                    + ", num=" + num, e);
         }
     }
 

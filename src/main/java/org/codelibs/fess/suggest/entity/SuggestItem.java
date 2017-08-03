@@ -499,4 +499,11 @@ public class SuggestItem implements Serializable {
         return false;
     }
 
+    @Override
+    public String toString() {
+        return "SuggestItem [text=" + text + ", timestamp=" + timestamp + ", queryFreq=" + queryFreq + ", docFreq=" + docFreq
+                + ", userBoost=" + userBoost + ", readings=" + Arrays.toString(readings) + ", fields=" + Arrays.toString(fields) + ", tags="
+                + Arrays.toString(tags) + ", roles=" + Arrays.toString(roles) + ", languages=" + Arrays.toString(languages) + ", kinds="
+                + Arrays.toString(kinds) + ", emptySource=" + emptySource + ", id=" + id + "]";
+    }
 }
