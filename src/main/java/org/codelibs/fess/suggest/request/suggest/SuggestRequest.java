@@ -21,7 +21,7 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.lucene.search.function.CombineFunction;
 import org.elasticsearch.common.lucene.search.function.FieldValueFactorFunction;
-import org.elasticsearch.common.lucene.search.function.FiltersFunctionScoreQuery;
+import org.elasticsearch.common.lucene.search.function.FunctionScoreQuery;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -273,7 +273,7 @@ public class SuggestRequest extends Request<SuggestResponse> {
                         flist.toArray(new FunctionScoreQueryBuilder.FilterFunctionBuilder[flist.size()]));
 
         functionScoreQueryBuilder.boostMode(CombineFunction.REPLACE);
-        functionScoreQueryBuilder.scoreMode(FiltersFunctionScoreQuery.ScoreMode.MULTIPLY);
+        functionScoreQueryBuilder.scoreMode(FunctionScoreQuery.ScoreMode.MULTIPLY);
 
         return functionScoreQueryBuilder;
     }
@@ -327,7 +327,8 @@ public class SuggestRequest extends Request<SuggestResponse> {
         }
         firstWords.addAll(secondWords);
         firstItems.addAll(secondItems);
-        return new SuggestResponse(index, searchResponse.getTookInMillis(), firstWords, searchResponse.getHits().getTotalHits(), firstItems);
+        return new SuggestResponse(index, searchResponse.getTook().getMillis(), firstWords, searchResponse.getHits().getTotalHits(),
+                firstItems);
     }
 
     protected boolean isFirstWordMatching(final boolean singleWordQuery, final boolean hiraganaQuery, final String text) {

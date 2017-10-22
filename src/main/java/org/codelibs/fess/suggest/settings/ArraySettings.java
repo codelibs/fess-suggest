@@ -18,7 +18,6 @@ import org.codelibs.fess.suggest.exception.SuggestSettingsException;
 import org.codelibs.fess.suggest.util.SuggestUtil;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.action.support.WriteRequest;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentFactory;
@@ -95,7 +94,7 @@ public class ArraySettings {
                 final String scrollId = response.getScrollId();
                 final SearchHit[] hits = response.getHits().getHits();
                 for (final SearchHit hit : hits) {
-                    array[count++] = hit.getSource();
+                    array[count++] = hit.getSourceAsMap();
                 }
                 response = client.prepareSearchScroll(scrollId).setScroll(TimeValue.timeValueMinutes(10)).execute().actionGet();
             }

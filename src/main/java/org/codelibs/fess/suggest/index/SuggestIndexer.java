@@ -146,7 +146,7 @@ public class SuggestIndexer {
         while (response.getHits().getHits().length > 0) {
             final SearchHit[] hits = response.getHits().getHits();
             for (final SearchHit hit : hits) {
-                final SuggestItem item = SuggestItem.parseSource(hit.getSource());
+                final SuggestItem item = SuggestItem.parseSource(hit.getSourceAsMap());
                 item.setDocFreq(0);
                 item.setKinds(Stream.of(item.getKinds()).filter(kind -> kind != SuggestItem.Kind.DOCUMENT)
                         .toArray(count -> new SuggestItem.Kind[count]));
@@ -183,7 +183,7 @@ public class SuggestIndexer {
         while (response.getHits().getHits().length > 0) {
             final SearchHit[] hits = response.getHits().getHits();
             for (final SearchHit hit : hits) {
-                final SuggestItem item = SuggestItem.parseSource(hit.getSource());
+                final SuggestItem item = SuggestItem.parseSource(hit.getSourceAsMap());
                 item.setQueryFreq(0);
                 item.setKinds(Stream.of(item.getKinds()).filter(kind -> kind != SuggestItem.Kind.QUERY)
                         .toArray(count -> new SuggestItem.Kind[count]));

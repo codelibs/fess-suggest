@@ -152,8 +152,8 @@ public class PopularWordsRequest extends Request<PopularWordsResponse> {
     }
 
     protected RescoreBuilder<?> buildRescore() {
-        return RescoreBuilder.queryRescorer(QueryBuilders.functionScoreQuery(ScoreFunctionBuilders.randomFunction(seed))).setQueryWeight(0)
-                .setRescoreQueryWeight(1);
+        return RescoreBuilder.queryRescorer(QueryBuilders.functionScoreQuery(ScoreFunctionBuilders.randomFunction().seed(seed)))
+                .setQueryWeight(0).setRescoreQueryWeight(1);
     }
 
     protected PopularWordsResponse createResponse(final SearchResponse searchResponse) {
@@ -178,6 +178,6 @@ public class PopularWordsRequest extends Request<PopularWordsResponse> {
             }
         }
 
-        return new PopularWordsResponse(index, searchResponse.getTookInMillis(), words, searchResponse.getHits().getTotalHits(), items);
+        return new PopularWordsResponse(index, searchResponse.getTook().getMillis(), words, searchResponse.getHits().getTotalHits(), items);
     }
 }

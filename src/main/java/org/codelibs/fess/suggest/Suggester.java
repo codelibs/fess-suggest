@@ -135,29 +135,33 @@ public class Suggester {
 
     public void switchIndex() {
         try {
-            final List<String> updateIndices = new ArrayList();
+            final List<String> updateIndices = new ArrayList<>();
+            final String updateAlias = getUpdateAlias(index);
             final IndicesExistsResponse updateIndicesResponse =
-                    client.admin().indices().prepareExists(getUpdateAlias(index)).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
+                    client.admin().indices().prepareExists(updateAlias).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
             if (updateIndicesResponse.isExists()) {
                 GetAliasesResponse getAliasesResponse =
-                        client.admin().indices().prepareGetAliases(getUpdateAlias(index)).execute().actionGet();
-                getAliasesResponse.getAliases().keysIt().forEachRemaining(updateIndices::add);
+                        client.admin().indices().prepareGetAliases(updateAlias).execute().actionGet();
+                getAliasesResponse.getAliases()
+                        .forEach(x -> x.value.stream().filter(y -> updateAlias.equals(y.alias())).forEach(y -> updateIndices.add(x.key)));
             }
             if (updateIndices.size() != 1) {
-                throw new SuggesterException("Enexpected update indices num:" + updateIndices.size());
+                throw new SuggesterException("Unexpected update indices num:" + updateIndices.size());
             }
             final String updateIndex = updateIndices.get(0);
 
-            final List<String> searchIndices = new ArrayList();
+            final List<String> searchIndices = new ArrayList<>();
+            final String searchAlias = getSearchAlias(index);
             final IndicesExistsResponse searchIndicesResponse =
-                    client.admin().indices().prepareExists(getSearchAlias(index)).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
+                    client.admin().indices().prepareExists(searchAlias).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
             if (searchIndicesResponse.isExists()) {
                 GetAliasesResponse getAliasesResponse =
-                        client.admin().indices().prepareGetAliases(getSearchAlias(index)).execute().actionGet();
-                getAliasesResponse.getAliases().keysIt().forEachRemaining(searchIndices::add);
+                        client.admin().indices().prepareGetAliases(searchAlias).execute().actionGet();
+                getAliasesResponse.getAliases()
+                        .forEach(x -> x.value.stream().filter(y -> searchAlias.equals(y.alias())).forEach(y -> searchIndices.add(x.key)));
             }
-            if (updateIndices.size() != 1) {
-                throw new SuggesterException("Enexpected search indices num:" + searchIndices.size());
+            if (searchIndices.size() != 1) {
+                throw new SuggesterException("Unexpected search indices num:" + searchIndices.size());
             }
             final String searchIndex = searchIndices.get(0);
 
@@ -165,8 +169,8 @@ public class Suggester {
                 return;
             }
 
-            client.admin().indices().prepareAliases().removeAlias(searchIndex, getSearchAlias(index))
-                    .addAlias(updateIndex, getSearchAlias(index)).execute().actionGet();
+            client.admin().indices().prepareAliases().removeAlias(searchIndex, searchAlias)
+                    .addAlias(updateIndex, searchAlias).execute().actionGet();
         } catch (final Exception e) {
             throw new SuggesterException("Failed to create index.", e);
         }
