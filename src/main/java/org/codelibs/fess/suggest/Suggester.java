@@ -156,7 +156,7 @@ public class Suggester {
                         client.admin().indices().prepareGetAliases(getSearchAlias(index)).execute().actionGet();
                 getAliasesResponse.getAliases().keysIt().forEachRemaining(searchIndices::add);
             }
-            if (updateIndices.size() != 1) {
+            if (searchIndices.size() != 1) {
                 throw new SuggesterException("Enexpected search indices num:" + searchIndices.size());
             }
             final String searchIndex = searchIndices.get(0);
