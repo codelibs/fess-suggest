@@ -81,9 +81,10 @@ public class ArraySettings {
 
     @SuppressWarnings("unchecked")
     protected Map<String, Object>[] getFromArrayIndex(final String index, final String type, final String key) {
+        final String actualIndex = index + "." + type;
         try {
             SearchResponse response =
-                    client.prepareSearch().setIndices(index).setTypes(type).setScroll(TimeValue.timeValueSeconds(10))
+                    client.prepareSearch().setIndices(actualIndex).setTypes(type).setScroll(TimeValue.timeValueSeconds(10))
                             .setQuery(QueryBuilders.termQuery(FieldNames.ARRAY_KEY, key)).setSize(1000).execute()
                             .actionGet(SuggestConstants.ACTION_TIMEOUT);
 
@@ -127,53 +128,57 @@ public class ArraySettings {
     }
 
     protected void addToArrayIndex(final String index, final String type, final String id, final Map<String, Object> source) {
+        final String actualIndex = index + "." + type;
         try {
-            client.prepareUpdate().setIndex(index).setType(type).setId(id).setDocAsUpsert(true)
+            client.prepareUpdate().setIndex(actualIndex).setType(type).setId(id).setDocAsUpsert(true)
                     .setDoc(JsonXContent.contentBuilder().map(source)).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
-            client.admin().indices().prepareRefresh().setIndices(index).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
+            client.admin().indices().prepareRefresh().setIndices(actualIndex).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
         } catch (final Exception e) {
             throw new SuggestSettingsException("Failed to add to array.", e);
         }
     }
 
     protected void deleteKeyFromArray(final String index, final String type, final String key) {
+        final String actualIndex = index + "." + type;
         try {
-            SuggestUtil.deleteByQuery(client, index, type, QueryBuilders.termQuery(FieldNames.ARRAY_KEY, key));
+            SuggestUtil.deleteByQuery(client, actualIndex, type, QueryBuilders.termQuery(FieldNames.ARRAY_KEY, key));
         } catch (final Exception e) {
             throw new SuggestSettingsException("Failed to delete all from array.", e);
         }
     }
 
     protected void deleteFromArray(final String index, final String type, final String id) {
+        final String actualIndex = index + "." + type;
         try {
-            client.prepareDelete().setIndex(index).setType(type).setId(id).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
-            client.admin().indices().prepareRefresh().setIndices(index).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
+            client.prepareDelete().setIndex(actualIndex).setType(type).setId(id).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
+            client.admin().indices().prepareRefresh().setIndices(actualIndex).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
         } catch (final Exception e) {
             throw new SuggestSettingsException("Failed to delete from array.", e);
         }
     }
 
     protected void createMappingIfEmpty(final String index, final String type, final Client client) {
+        final String actualIndex = index + "." + type;
         try {
             boolean empty;
             try {
                 empty =
-                        client.admin().indices().prepareGetMappings(index).setTypes(type).execute()
+                        client.admin().indices().prepareGetMappings(actualIndex).setTypes(type).execute()
                                 .actionGet(SuggestConstants.ACTION_TIMEOUT).getMappings().isEmpty();
             } catch (final IndexNotFoundException e) {
                 empty = true;
                 final CreateIndexResponse response =
-                        client.admin().indices().prepareCreate(index).setSettings(loadIndexSettings(), XContentType.JSON).execute()
+                        client.admin().indices().prepareCreate(actualIndex).setSettings(loadIndexSettings(), XContentType.JSON).execute()
                                 .actionGet(SuggestConstants.ACTION_TIMEOUT);
                 if (!response.isAcknowledged()) {
-                    throw new SuggestSettingsException("Failed to create " + index + "/" + type + " index.", e);
+                    throw new SuggestSettingsException("Failed to create " + actualIndex + "/" + type + " index.", e);
                 }
-                client.admin().cluster().prepareHealth(index).setWaitForYellowStatus().execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
+                client.admin().cluster().prepareHealth(actualIndex).setWaitForYellowStatus().execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
             }
             if (empty) {
                 client.admin()
                         .indices()
-                        .preparePutMapping(index)
+                        .preparePutMapping(actualIndex)
                         .setType(type)
                         .setSource(
                                 XContentFactory.jsonBuilder().startObject().startObject(settingsId).startObject("properties")
