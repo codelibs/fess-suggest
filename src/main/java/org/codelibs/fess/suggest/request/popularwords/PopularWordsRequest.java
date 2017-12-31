@@ -22,7 +22,8 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.functionscore.FunctionScoreQueryBuilder;
 import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders;
 import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.rescore.RescoreBuilder;
+import org.elasticsearch.search.rescore.QueryRescorerBuilder;
+import org.elasticsearch.search.rescore.RescorerBuilder;
 
 public class PopularWordsRequest extends Request<PopularWordsResponse> {
     private String index = null;
@@ -151,8 +152,8 @@ public class PopularWordsRequest extends Request<PopularWordsResponse> {
         return functionScoreQueryBuilder;
     }
 
-    protected RescoreBuilder<?> buildRescore() {
-        return RescoreBuilder.queryRescorer(QueryBuilders.functionScoreQuery(ScoreFunctionBuilders.randomFunction().seed(seed)))
+    protected RescorerBuilder<?> buildRescore() {
+        return new QueryRescorerBuilder(QueryBuilders.functionScoreQuery(ScoreFunctionBuilders.randomFunction().seed(seed)))
                 .setQueryWeight(0).setRescoreQueryWeight(1);
     }
 
