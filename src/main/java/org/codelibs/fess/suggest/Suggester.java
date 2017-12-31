@@ -176,7 +176,7 @@ public class Suggester {
 
     public void removeDisableIndices() {
         GetIndexResponse response = client.admin().indices().prepareGetIndex().execute().actionGet();
-        Stream.of(response.getIndices()).filter(this::isSuggestIndex).filter(index -> !response.getAliases().containsKey(index))
+        Stream.of(response.getIndices()).filter(this::isSuggestIndex).filter(index -> response.getAliases().get(index).isEmpty())
                 .forEach(index -> {
                     client.admin().indices().prepareDelete(index).execute().actionGet();
                 });
