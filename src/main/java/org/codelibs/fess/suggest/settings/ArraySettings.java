@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -81,7 +82,7 @@ public class ArraySettings {
 
     @SuppressWarnings("unchecked")
     protected Map<String, Object>[] getFromArrayIndex(final String index, final String type, final String key) {
-        final String actualIndex = index + "." + type;
+        final String actualIndex = index + "." + type.toLowerCase(Locale.ENGLISH);
         try {
             SearchResponse response =
                     client.prepareSearch().setIndices(actualIndex).setTypes(type).setScroll(TimeValue.timeValueSeconds(10))
@@ -128,7 +129,7 @@ public class ArraySettings {
     }
 
     protected void addToArrayIndex(final String index, final String type, final String id, final Map<String, Object> source) {
-        final String actualIndex = index + "." + type;
+        final String actualIndex = index + "." + type.toLowerCase(Locale.ENGLISH);
         try {
             client.prepareUpdate().setIndex(actualIndex).setType(type).setId(id).setDocAsUpsert(true)
                     .setDoc(JsonXContent.contentBuilder().map(source)).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
@@ -139,7 +140,7 @@ public class ArraySettings {
     }
 
     protected void deleteKeyFromArray(final String index, final String type, final String key) {
-        final String actualIndex = index + "." + type;
+        final String actualIndex = index + "." + type.toLowerCase(Locale.ENGLISH);
         try {
             SuggestUtil.deleteByQuery(client, actualIndex, type, QueryBuilders.termQuery(FieldNames.ARRAY_KEY, key));
         } catch (final Exception e) {
@@ -148,7 +149,7 @@ public class ArraySettings {
     }
 
     protected void deleteFromArray(final String index, final String type, final String id) {
-        final String actualIndex = index + "." + type;
+        final String actualIndex = index + "." + type.toLowerCase(Locale.ENGLISH);
         try {
             client.prepareDelete().setIndex(actualIndex).setType(type).setId(id).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
             client.admin().indices().prepareRefresh().setIndices(actualIndex).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
@@ -158,7 +159,7 @@ public class ArraySettings {
     }
 
     protected void createMappingIfEmpty(final String index, final String type, final Client client) {
-        final String actualIndex = index + "." + type;
+        final String actualIndex = index + "." + type.toLowerCase(Locale.ENGLISH);
         try {
             boolean empty;
             try {
