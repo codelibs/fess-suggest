@@ -174,7 +174,8 @@ public class ArraySettings {
                 if (!response.isAcknowledged()) {
                     throw new SuggestSettingsException("Failed to create " + actualIndex + "/" + type + " index.", e);
                 }
-                client.admin().cluster().prepareHealth(actualIndex).setWaitForYellowStatus().execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
+                client.admin().cluster().prepareHealth(actualIndex).setWaitForYellowStatus().execute()
+                        .actionGet(SuggestConstants.ACTION_TIMEOUT);
             }
             if (empty) {
                 client.admin()

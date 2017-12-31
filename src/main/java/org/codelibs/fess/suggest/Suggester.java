@@ -102,7 +102,7 @@ public class Suggester {
 
     public void createNextIndex() {
         try {
-            final List<String> prevIndices = new ArrayList();
+            final List<String> prevIndices = new ArrayList<>();
             final IndicesExistsResponse response =
                     client.admin().indices().prepareExists(getUpdateAlias(index)).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
             if (response.isExists()) {

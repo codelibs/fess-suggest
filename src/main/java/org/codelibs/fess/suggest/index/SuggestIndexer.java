@@ -113,7 +113,7 @@ public class SuggestIndexer {
     }
 
     public SuggestDeleteResponse deleteByQuery(final String queryString) {
-        return deleteByQuery(QueryBuilders.queryStringQuery(queryString).autoGeneratePhraseQueries(true).defaultOperator(Operator.AND));
+        return deleteByQuery(QueryBuilders.queryStringQuery(queryString).defaultOperator(Operator.AND));
     }
 
     public SuggestDeleteResponse deleteByQuery(final QueryBuilder queryBuilder) {

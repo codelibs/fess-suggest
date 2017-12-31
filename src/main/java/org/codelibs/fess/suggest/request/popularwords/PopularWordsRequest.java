@@ -153,7 +153,7 @@ public class PopularWordsRequest extends Request<PopularWordsResponse> {
     }
 
     protected RescorerBuilder<?> buildRescore() {
-        return new QueryRescorerBuilder(QueryBuilders.functionScoreQuery(ScoreFunctionBuilders.randomFunction().seed(seed)))
+        return new QueryRescorerBuilder(QueryBuilders.functionScoreQuery(ScoreFunctionBuilders.randomFunction().seed(seed).setField("_id")))
                 .setQueryWeight(0).setRescoreQueryWeight(1);
     }
 
