@@ -11,7 +11,6 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.codelibs.core.lang.StringUtil;
-import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.exception.SuggestSettingsException;
 import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.elasticsearch.action.get.GetResponse;
@@ -38,13 +37,24 @@ public class SuggestSettings {
     protected final String badWordIndexName;
     protected final String elevateWordIndexName;
 
+    protected TimeoutSettings timeoutSettings;
+
+    public static class TimeoutSettings {
+        protected String searchTimeout = "15s";
+        protected String indexTimeout = "1m";
+        protected String bulkTimeout = "1m";
+        protected String indicesTimeout = "1m";
+        protected String clusterTimeout = "1m";
+    }
+
     public SuggestSettings(final Client client, final String settingsId, final Map<String, Object> initialSettings,
-            final String settingsIndexName, final String settingsTypeName) {
+            final String settingsIndexName, final String settingsTypeName, final TimeoutSettings timeoutSettings) {
         this.client = client;
         this.settingsId = settingsId;
         this.settingsIndexName = settingsIndexName;
         this.settingsTypeName = settingsTypeName;
         this.initialSettings = initialSettings;
+        this.timeoutSettings = timeoutSettings;
 
         this.badWordIndexName = settingsIndexName + "-badword";
         this.elevateWordIndexName = settingsIndexName + "-elevateword";
@@ -65,7 +75,7 @@ public class SuggestSettings {
         try {
             final GetResponse getResponse =
                     client.prepareGet().setIndex(settingsIndexName).setType(settingsTypeName).setId(settingsId).execute()
-                            .actionGet(SuggestConstants.ACTION_TIMEOUT);
+                            .actionGet(getSearchTimeout());
 
             if (!getResponse.isExists()) {
                 doCreate = true;
@@ -79,7 +89,7 @@ public class SuggestSettings {
             if (doIndexCreate) {
                 try {
                     client.admin().indices().prepareCreate(settingsIndexName).setSettings(loadIndexSettings(), XContentType.JSON).execute()
-                            .actionGet(SuggestConstants.ACTION_TIMEOUT);
+                            .actionGet(getIndicesTimeout());
                 } catch (final IOException e) {
                     throw new SuggesterException(e);
                 }
@@ -111,7 +121,7 @@ public class SuggestSettings {
     public Object get(final String key) {
         final GetResponse getResponse =
                 client.prepareGet().setIndex(settingsIndexName).setType(settingsTypeName).setId(settingsId).execute()
-                        .actionGet(SuggestConstants.ACTION_TIMEOUT);
+                        .actionGet(getSearchTimeout());
         if (!getResponse.isExists()) {
             return null;
         }
@@ -187,8 +197,8 @@ public class SuggestSettings {
     public void set(final String key, final Object value) {
         try {
             client.prepareUpdate().setIndex(settingsIndexName).setType(settingsTypeName).setId(settingsId).setDocAsUpsert(true)
-                    .setDoc(key, value).setRetryOnConflict(5).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
-            client.admin().indices().prepareRefresh().setIndices(settingsIndexName).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
+                    .setDoc(key, value).setRetryOnConflict(5).execute().actionGet(getIndexTimeout());
+            client.admin().indices().prepareRefresh().setIndices(settingsIndexName).execute().actionGet(getIndicesTimeout());
         } catch (final Exception e) {
             throw new SuggestSettingsException("Failed to update suggestSettings.", e);
         }
@@ -198,15 +208,15 @@ public class SuggestSettings {
         try {
             client.prepareUpdate().setIndex(settingsIndexName).setType(settingsTypeName).setId(settingsId).setDocAsUpsert(true)
                     .setDoc(JsonXContent.contentBuilder().map(map)).setRetryOnConflict(5).execute()
-                    .actionGet(SuggestConstants.ACTION_TIMEOUT);
-            client.admin().indices().prepareRefresh().setIndices(settingsIndexName).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
+                    .actionGet(getIndexTimeout());
+            client.admin().indices().prepareRefresh().setIndices(settingsIndexName).execute().actionGet(getIndicesTimeout());
         } catch (final Exception e) {
             throw new SuggestSettingsException("Failed to update suggestSettings.", e);
         }
     }
 
     public ArraySettings array() {
-        return new ArraySettings(client, settingsIndexName, settingsId);
+        return new ArraySettings(this, client, settingsIndexName, settingsId);
     }
 
     public AnalyzerSettings analyzer() {
@@ -214,11 +224,11 @@ public class SuggestSettings {
     }
 
     public BadWordSettings badword() {
-        return new BadWordSettings(client, settingsIndexName, settingsId);
+        return new BadWordSettings(this, client, settingsIndexName, settingsId);
     }
 
     public ElevateWordSettings elevateWord() {
-        return new ElevateWordSettings(client, settingsIndexName, settingsId);
+        return new ElevateWordSettings(this, client, settingsIndexName, settingsId);
     }
 
     public String getSettingsIndexName() {
@@ -284,5 +294,25 @@ public class SuggestSettings {
 
         private DefaultKeys() {
         }
+    }
+
+    public String getSearchTimeout() {
+        return timeoutSettings.searchTimeout;
+    }
+
+    public String getIndexTimeout() {
+        return timeoutSettings.indexTimeout;
+    }
+
+    public String getIndicesTimeout() {
+        return timeoutSettings.indicesTimeout;
+    }
+
+    public String getBulkTimeout() {
+        return timeoutSettings.bulkTimeout;
+    }
+
+    public String getClusterTimeout() {
+        return timeoutSettings.clusterTimeout;
     }
 }

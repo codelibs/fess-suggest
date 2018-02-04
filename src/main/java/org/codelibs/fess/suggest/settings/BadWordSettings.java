@@ -16,8 +16,8 @@ public class BadWordSettings {
 
     protected static String[] defaultWords = null;
 
-    protected BadWordSettings(final Client client, final String settingsIndexName, final String settingsId) {
-        this.arraySettings = new ArraySettings(client, settingsIndexName, settingsId) {
+    protected BadWordSettings(final SuggestSettings settings, final Client client, final String settingsIndexName, final String settingsId) {
+        this.arraySettings = new ArraySettings(settings, client, settingsIndexName, settingsId) {
             @Override
             protected String createArraySettingsIndexName(final String settingsIndexName) {
                 return settingsIndexName + "_badword";

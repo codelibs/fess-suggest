@@ -1,6 +1,5 @@
 package org.codelibs.fess.suggest.index.writer;
 
-import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.fess.suggest.exception.SuggestIndexException;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
@@ -42,7 +41,7 @@ public class SuggestIndexWriter implements SuggestWriter {
             }
         }
 
-        final BulkResponse response = bulkRequestBuilder.execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
+        final BulkResponse response = bulkRequestBuilder.execute().actionGet(settings.getBulkTimeout());
         final SuggestWriterResult result = new SuggestWriterResult();
         if (response.hasFailures()) {
             for (final BulkItemResponse bulkItemResponses : response.getItems()) {
@@ -60,7 +59,7 @@ public class SuggestIndexWriter implements SuggestWriter {
             final String id) {
         final SuggestWriterResult result = new SuggestWriterResult();
         try {
-            client.prepareDelete().setIndex(index).setType(type).setId(id).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
+            client.prepareDelete().setIndex(index).setType(type).setId(id).execute().actionGet(settings.getIndexTimeout());
         } catch (final Exception e) {
             result.addFailure(e);
         }

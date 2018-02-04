@@ -15,7 +15,6 @@ import org.codelibs.core.lang.StringUtil;
 import org.codelibs.fess.suggest.analysis.SuggestAnalyzer;
 import org.codelibs.fess.suggest.concurrent.Deferred;
 import org.codelibs.fess.suggest.constants.FieldNames;
-import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.converter.ReadingConverter;
 import org.codelibs.fess.suggest.entity.ElevateWord;
 import org.codelibs.fess.suggest.entity.SuggestItem;
@@ -306,7 +305,7 @@ public class SuggestIndexer {
                         errors.addAll(res.getErrors());
                         numberOfSuggestDocs += res.getNumberOfSuggestDocs();
                         numberOfInputDocs += res.getNumberOfInputDocs();
-                        client.admin().indices().prepareRefresh(index).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
+                        client.admin().indices().prepareRefresh(index).execute().actionGet(settings.getIndicesTimeout());
                         docs.clear();
 
                         Thread.sleep(requestInterval);
