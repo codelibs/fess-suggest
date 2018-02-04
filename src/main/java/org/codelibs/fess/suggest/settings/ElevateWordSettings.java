@@ -19,8 +19,8 @@ public class ElevateWordSettings {
 
     protected ArraySettings arraySettings;
 
-    protected ElevateWordSettings(final Client client, final String settingsIndexName, final String settingsId) {
-        this.arraySettings = new ArraySettings(client, settingsIndexName, settingsId) {
+    protected ElevateWordSettings(final SuggestSettings settings, final Client client, final String settingsIndexName, final String settingsId) {
+        this.arraySettings = new ArraySettings(settings, client, settingsIndexName, settingsId) {
             @Override
             protected String createArraySettingsIndexName(final String settingsIndexName) {
                 return settingsIndexName + "_elevate";

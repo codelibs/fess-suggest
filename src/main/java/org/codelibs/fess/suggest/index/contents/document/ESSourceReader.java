@@ -9,7 +9,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
@@ -121,12 +120,11 @@ public class ESSourceReader implements DocumentReader {
                     for (final SortBuilder<?> sortBuilder : sortList) {
                         builder.addSort(sortBuilder);
                     }
-                    response = builder.execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
+                    response = builder.execute().actionGet(settings.getSearchTimeout());
                     scrollId = response.getScrollId();
                 } else {
-                    response =
-                            client.prepareSearchScroll(scrollId).setScroll(TimeValue.timeValueMinutes(1)).execute()
-                                    .actionGet(SuggestConstants.ACTION_TIMEOUT);
+                    response = client.prepareSearchScroll(scrollId).setScroll(TimeValue.timeValueMinutes(1)).execute()
+                            .actionGet(settings.getSearchTimeout());
                     scrollId = response.getScrollId();
                 }
                 final SearchHit[] hits = response.getHits().getHits();

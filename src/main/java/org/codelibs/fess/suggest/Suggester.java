@@ -13,7 +13,6 @@ import java.util.stream.Stream;
 import org.codelibs.core.lang.StringUtil;
 import org.codelibs.fess.suggest.analysis.SuggestAnalyzer;
 import org.codelibs.fess.suggest.constants.FieldNames;
-import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.converter.ReadingConverter;
 import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.codelibs.fess.suggest.index.SuggestIndexer;
@@ -70,7 +69,7 @@ public class Suggester {
     }
 
     public RefreshResponse refresh() {
-        return client.admin().indices().prepareRefresh().execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
+        return client.admin().indices().prepareRefresh().execute().actionGet(suggestSettings.getIndexTimeout());
     }
 
     public void shutdown() {
@@ -81,7 +80,7 @@ public class Suggester {
         try {
             boolean created = false;
             final IndicesExistsResponse response =
-                    client.admin().indices().prepareExists(getSearchAlias(index)).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
+                    client.admin().indices().prepareExists(getSearchAlias(index)).execute().actionGet(suggestSettings.getIndicesTimeout());
             if (!response.isExists()) {
 
                 final String mappingSource = getDefaultMappings();
@@ -89,9 +88,9 @@ public class Suggester {
                 final String indexName = createIndexName(index);
                 client.admin().indices().prepareCreate(indexName).setSettings(settingsSource.toString(), XContentType.JSON)
                         .addMapping(type, mappingSource, XContentType.JSON).addAlias(new Alias(getSearchAlias(index)))
-                        .addAlias(new Alias(getUpdateAlias(index))).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
+                        .addAlias(new Alias(getUpdateAlias(index))).execute().actionGet(suggestSettings.getIndicesTimeout());
 
-                client.admin().cluster().prepareHealth().setWaitForYellowStatus().execute().actionGet(SuggestConstants.ACTION_TIMEOUT * 10);
+                client.admin().cluster().prepareHealth().setWaitForYellowStatus().execute().actionGet(suggestSettings.getClusterTimeout());
                 created = true;
             }
             return created;
@@ -104,7 +103,7 @@ public class Suggester {
         try {
             final List<String> prevIndices = new ArrayList<>();
             final IndicesExistsResponse response =
-                    client.admin().indices().prepareExists(getUpdateAlias(index)).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
+                    client.admin().indices().prepareExists(getUpdateAlias(index)).execute().actionGet(suggestSettings.getIndicesTimeout());
             if (response.isExists()) {
                 GetAliasesResponse getAliasesResponse =
                         client.admin().indices().prepareGetAliases(getUpdateAlias(index)).execute().actionGet();
@@ -116,11 +115,11 @@ public class Suggester {
             final String indexName = createIndexName(index);
             CreateIndexResponse createIndexResponse =
                     client.admin().indices().prepareCreate(indexName).setSettings(settingsSource.toString(), XContentType.JSON)
-                            .addMapping(type, mappingSource, XContentType.JSON).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
+                            .addMapping(type, mappingSource, XContentType.JSON).execute().actionGet(suggestSettings.getIndicesTimeout());
             if (!createIndexResponse.isAcknowledged()) {
                 throw new SuggesterException("Failed to create index");
             }
-            client.admin().cluster().prepareHealth().setWaitForYellowStatus().execute().actionGet(SuggestConstants.ACTION_TIMEOUT * 10);
+            client.admin().cluster().prepareHealth().setWaitForYellowStatus().execute().actionGet(suggestSettings.getClusterTimeout());
 
             final IndicesAliasesRequestBuilder aliasesRequestBuilder =
                     client.admin().indices().prepareAliases().addAlias(indexName, getUpdateAlias(index));
@@ -138,7 +137,7 @@ public class Suggester {
             final List<String> updateIndices = new ArrayList<>();
             final String updateAlias = getUpdateAlias(index);
             final IndicesExistsResponse updateIndicesResponse =
-                    client.admin().indices().prepareExists(updateAlias).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
+                    client.admin().indices().prepareExists(updateAlias).execute().actionGet(suggestSettings.getIndicesTimeout());
             if (updateIndicesResponse.isExists()) {
                 GetAliasesResponse getAliasesResponse = client.admin().indices().prepareGetAliases(updateAlias).execute().actionGet();
                 getAliasesResponse.getAliases().forEach(
@@ -152,7 +151,7 @@ public class Suggester {
             final List<String> searchIndices = new ArrayList<>();
             final String searchAlias = getSearchAlias(index);
             final IndicesExistsResponse searchIndicesResponse =
-                    client.admin().indices().prepareExists(searchAlias).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
+                    client.admin().indices().prepareExists(searchAlias).execute().actionGet(suggestSettings.getIndicesTimeout());
             if (searchIndicesResponse.isExists()) {
                 GetAliasesResponse getAliasesResponse = client.admin().indices().prepareGetAliases(searchAlias).execute().actionGet();
                 getAliasesResponse.getAliases().forEach(

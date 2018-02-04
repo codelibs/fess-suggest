@@ -14,7 +14,6 @@ import java.util.regex.Pattern;
 import org.codelibs.core.CoreLibConstants;
 import org.codelibs.core.lang.StringUtil;
 import org.codelibs.fess.suggest.constants.FieldNames;
-import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.exception.SuggestSettingsException;
 import org.codelibs.fess.suggest.util.SuggestUtil;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
@@ -32,10 +31,12 @@ public class ArraySettings {
     protected final Client client;
     protected final String arraySettingsIndexName;
     protected final String settingsId;
+    protected final SuggestSettings settings;
 
     private static final Base64.Encoder encoder = Base64.getEncoder();
 
-    protected ArraySettings(final Client client, final String settingsIndexName, final String settingsId) {
+    protected ArraySettings(final SuggestSettings settings, final Client client, final String settingsIndexName, final String settingsId) {
+        this.settings = settings;
         this.client = client;
         this.arraySettingsIndexName = createArraySettingsIndexName(settingsIndexName);
         this.settingsId = settingsId;
@@ -87,7 +88,7 @@ public class ArraySettings {
             SearchResponse response =
                     client.prepareSearch().setIndices(actualIndex).setTypes(type).setScroll(TimeValue.timeValueSeconds(10))
                             .setQuery(QueryBuilders.termQuery(FieldNames.ARRAY_KEY, key)).setSize(1000).execute()
-                            .actionGet(SuggestConstants.ACTION_TIMEOUT);
+                            .actionGet(settings.getSearchTimeout());
 
             final Map<String, Object>[] array = new Map[(int) response.getHits().getTotalHits()];
 
@@ -132,8 +133,8 @@ public class ArraySettings {
         final String actualIndex = index + "." + type.toLowerCase(Locale.ENGLISH);
         try {
             client.prepareUpdate().setIndex(actualIndex).setType(type).setId(id).setDocAsUpsert(true)
-                    .setDoc(JsonXContent.contentBuilder().map(source)).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
-            client.admin().indices().prepareRefresh().setIndices(actualIndex).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
+                    .setDoc(JsonXContent.contentBuilder().map(source)).execute().actionGet(settings.getIndexTimeout());
+            client.admin().indices().prepareRefresh().setIndices(actualIndex).execute().actionGet(settings.getIndicesTimeout());
         } catch (final Exception e) {
             throw new SuggestSettingsException("Failed to add to array.", e);
         }
@@ -151,8 +152,8 @@ public class ArraySettings {
     protected void deleteFromArray(final String index, final String type, final String id) {
         final String actualIndex = index + "." + type.toLowerCase(Locale.ENGLISH);
         try {
-            client.prepareDelete().setIndex(actualIndex).setType(type).setId(id).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
-            client.admin().indices().prepareRefresh().setIndices(actualIndex).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
+            client.prepareDelete().setIndex(actualIndex).setType(type).setId(id).execute().actionGet(settings.getIndexTimeout());
+            client.admin().indices().prepareRefresh().setIndices(actualIndex).execute().actionGet(settings.getIndicesTimeout());
         } catch (final Exception e) {
             throw new SuggestSettingsException("Failed to delete from array.", e);
         }
@@ -165,17 +166,17 @@ public class ArraySettings {
             try {
                 empty =
                         client.admin().indices().prepareGetMappings(actualIndex).setTypes(type).execute()
-                                .actionGet(SuggestConstants.ACTION_TIMEOUT).getMappings().isEmpty();
+                                .actionGet(settings.getIndicesTimeout()).getMappings().isEmpty();
             } catch (final IndexNotFoundException e) {
                 empty = true;
                 final CreateIndexResponse response =
                         client.admin().indices().prepareCreate(actualIndex).setSettings(loadIndexSettings(), XContentType.JSON).execute()
-                                .actionGet(SuggestConstants.ACTION_TIMEOUT);
+                                .actionGet(settings.getIndicesTimeout());
                 if (!response.isAcknowledged()) {
                     throw new SuggestSettingsException("Failed to create " + actualIndex + "/" + type + " index.", e);
                 }
                 client.admin().cluster().prepareHealth(actualIndex).setWaitForYellowStatus().execute()
-                        .actionGet(SuggestConstants.ACTION_TIMEOUT);
+                        .actionGet(settings.getClusterTimeout());
             }
             if (empty) {
                 client.admin()
@@ -185,7 +186,7 @@ public class ArraySettings {
                         .setSource(
                                 XContentFactory.jsonBuilder().startObject().startObject(settingsId).startObject("properties")
                                         .startObject(FieldNames.ARRAY_KEY).field("type", "keyword").endObject().endObject().endObject()
-                                        .endObject()).execute().actionGet(SuggestConstants.ACTION_TIMEOUT);
+                                        .endObject()).execute().actionGet(settings.getIndicesTimeout());
             }
         } catch (final IOException e) {
             throw new SuggestSettingsException("Failed to create mappings.");
