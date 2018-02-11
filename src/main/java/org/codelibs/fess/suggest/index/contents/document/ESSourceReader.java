@@ -123,8 +123,9 @@ public class ESSourceReader implements DocumentReader {
                     response = builder.execute().actionGet(settings.getSearchTimeout());
                     scrollId = response.getScrollId();
                 } else {
-                    response = client.prepareSearchScroll(scrollId).setScroll(TimeValue.timeValueMinutes(1)).execute()
-                            .actionGet(settings.getSearchTimeout());
+                    response =
+                            client.prepareSearchScroll(scrollId).setScroll(TimeValue.timeValueMinutes(1)).execute()
+                                    .actionGet(settings.getSearchTimeout());
                     scrollId = response.getScrollId();
                 }
                 final SearchHit[] hits = response.getHits().getHits();

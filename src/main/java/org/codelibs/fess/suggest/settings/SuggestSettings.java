@@ -206,8 +206,7 @@ public class SuggestSettings {
     public void set(final Map<String, Object> map) {
         try {
             client.prepareUpdate().setIndex(settingsIndexName).setType(settingsTypeName).setId(settingsId).setDocAsUpsert(true)
-                    .setDoc(JsonXContent.contentBuilder().map(map)).setRetryOnConflict(5).execute()
-                    .actionGet(getIndexTimeout());
+                    .setDoc(JsonXContent.contentBuilder().map(map)).setRetryOnConflict(5).execute().actionGet(getIndexTimeout());
             client.admin().indices().prepareRefresh().setIndices(settingsIndexName).execute().actionGet(getIndicesTimeout());
         } catch (final Exception e) {
             throw new SuggestSettingsException("Failed to update suggestSettings.", e);
