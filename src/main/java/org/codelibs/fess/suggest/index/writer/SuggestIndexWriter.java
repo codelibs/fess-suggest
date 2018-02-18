@@ -71,7 +71,7 @@ public class SuggestIndexWriter implements SuggestWriter {
             final QueryBuilder queryBuilder) {
         final SuggestWriterResult result = new SuggestWriterResult();
         try {
-            SuggestUtil.deleteByQuery(client, index, type, queryBuilder);
+            SuggestUtil.deleteByQuery(client, settings, index, type, queryBuilder);
         } catch (final Exception e) {
             result.addFailure(e);
         }

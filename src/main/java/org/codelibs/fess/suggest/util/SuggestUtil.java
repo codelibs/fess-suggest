@@ -32,7 +32,6 @@ import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.SearchHit;
@@ -206,11 +205,12 @@ public final class SuggestUtil {
         throw new IllegalArgumentException("The value should be String or List, but " + value.getClass());
     }
 
-    public static boolean deleteByQuery(final Client client, final String index, final String type, final QueryBuilder queryBuilder) {
+    public static boolean deleteByQuery(final Client client, final SuggestSettings settings, final String index, final String type,
+            final QueryBuilder queryBuilder) {
         try {
             SearchResponse searchResponse =
-                    client.prepareSearch(index).setTypes(type).setQuery(queryBuilder).setSize(500)
-                            .setScroll(TimeValue.timeValueSeconds(10)).execute().actionGet();
+                    client.prepareSearch(index).setTypes(type).setQuery(queryBuilder).setSize(500).setScroll(settings.getScrollTimeout())
+                            .execute().actionGet(settings.getSearchTimeout());
 
             while (searchResponse.getHits().getHits().length > 0) {
                 final String scrollId = searchResponse.getScrollId();
@@ -219,13 +219,15 @@ public final class SuggestUtil {
                 final BulkRequestBuilder bulkRequestBuiler = client.prepareBulk();
                 Stream.of(hits).map(SearchHit::getId).forEach(id -> bulkRequestBuiler.add(new DeleteRequest(index, type, id)));
 
-                final BulkResponse bulkResponse = bulkRequestBuiler.execute().actionGet();
+                final BulkResponse bulkResponse = bulkRequestBuiler.execute().actionGet(settings.getBulkTimeout());
                 if (bulkResponse.hasFailures()) {
                     throw new SuggesterException(bulkResponse.buildFailureMessage());
                 }
-                searchResponse = client.prepareSearchScroll(scrollId).setScroll(TimeValue.timeValueSeconds(10)).execute().actionGet();
+                searchResponse =
+                        client.prepareSearchScroll(scrollId).setScroll(settings.getScrollTimeout()).execute()
+                                .actionGet(settings.getSearchTimeout());
             }
-            client.admin().indices().prepareRefresh(index).execute().actionGet();
+            client.admin().indices().prepareRefresh(index).execute().actionGet(settings.getIndicesTimeout());
         } catch (final Exception e) {
             throw new SuggesterException("Failed to exec delete by query.", e);
         }

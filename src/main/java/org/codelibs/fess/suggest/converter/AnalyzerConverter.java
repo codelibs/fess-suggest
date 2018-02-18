@@ -14,12 +14,14 @@ import com.ibm.icu.text.Transliterator;
 
 public class AnalyzerConverter implements ReadingConverter {
     protected final Client client;
+    private SuggestSettings settings;
     protected final AnalyzerSettings analyzerSettings;
 
     protected final Transliterator transliterator = Transliterator.getInstance("Hiragana-Katakana");
 
     public AnalyzerConverter(final Client client, final SuggestSettings settings) {
         this.client = client;
+        this.settings = settings;
         this.analyzerSettings = settings.analyzer();
     }
 
@@ -59,11 +61,12 @@ public class AnalyzerConverter implements ReadingConverter {
         public List<String> convert(final String text, final String... dummy) throws IOException {
             final AnalyzeResponse readingResponse =
                     client.admin().indices().prepareAnalyze(analyzerSettings.getAnalyzerSettingsIndexName(), text)
-                            .setAnalyzer(analyzerSettings.getReadingAnalyzerName(lang)).execute().actionGet();
+                            .setAnalyzer(analyzerSettings.getReadingAnalyzerName(lang)).execute().actionGet(settings.getIndicesTimeout());
 
             final AnalyzeResponse termResponse =
                     client.admin().indices().prepareAnalyze(analyzerSettings.getAnalyzerSettingsIndexName(), text)
-                            .setAnalyzer(analyzerSettings.getReadingTermAnalyzerName(lang)).execute().actionGet();
+                            .setAnalyzer(analyzerSettings.getReadingTermAnalyzerName(lang)).execute()
+                            .actionGet(settings.getIndicesTimeout());
 
             final List<AnalyzeResponse.AnalyzeToken> readingTokenList = readingResponse.getTokens();
             final List<AnalyzeResponse.AnalyzeToken> termTokenList = termResponse.getTokens();
