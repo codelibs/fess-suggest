@@ -10,9 +10,11 @@ import org.elasticsearch.client.Client;
 public class AnalyzerNormalizer implements Normalizer {
     protected final Client client;
     protected final AnalyzerSettings analyzerSettings;
+    private SuggestSettings settings;
 
     public AnalyzerNormalizer(final Client client, final SuggestSettings settings) {
         this.client = client;
+        this.settings = settings;
         this.analyzerSettings = settings.analyzer();
     }
 
@@ -42,7 +44,7 @@ public class AnalyzerNormalizer implements Normalizer {
         public String normalize(final String text, final String... dummy) {
             final AnalyzeResponse termResponse =
                     client.admin().indices().prepareAnalyze(analyzerSettings.getAnalyzerSettingsIndexName(), text)
-                            .setAnalyzer(analyzerSettings.getNormalizeAnalyzerName(lang)).execute().actionGet();
+                            .setAnalyzer(analyzerSettings.getNormalizeAnalyzerName(lang)).execute().actionGet(settings.getIndicesTimeout());
 
             final List<AnalyzeResponse.AnalyzeToken> termTokenList = termResponse.getTokens();
             if (termTokenList.isEmpty()) {

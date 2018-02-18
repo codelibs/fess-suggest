@@ -31,6 +31,11 @@ public class SuggestSettingsBuilder {
         return this;
     }
 
+    public SuggestSettingsBuilder scrollTimeout(final String timeout) {
+        timeoutSettings.scrollTimeout = timeout;
+        return this;
+    }
+
     public SuggestSettingsBuilder searchTimeout(final String timeout) {
         timeoutSettings.searchTimeout = timeout;
         return this;

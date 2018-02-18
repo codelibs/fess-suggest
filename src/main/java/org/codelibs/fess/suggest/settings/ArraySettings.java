@@ -19,7 +19,6 @@ import org.codelibs.fess.suggest.util.SuggestUtil;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
@@ -86,7 +85,7 @@ public class ArraySettings {
         final String actualIndex = index + "." + type.toLowerCase(Locale.ENGLISH);
         try {
             SearchResponse response =
-                    client.prepareSearch().setIndices(actualIndex).setTypes(type).setScroll(TimeValue.timeValueSeconds(10))
+                    client.prepareSearch().setIndices(actualIndex).setTypes(type).setScroll(settings.getScrollTimeout())
                             .setQuery(QueryBuilders.termQuery(FieldNames.ARRAY_KEY, key)).setSize(1000).execute()
                             .actionGet(settings.getSearchTimeout());
 
@@ -99,7 +98,9 @@ public class ArraySettings {
                 for (final SearchHit hit : hits) {
                     array[count++] = hit.getSourceAsMap();
                 }
-                response = client.prepareSearchScroll(scrollId).setScroll(TimeValue.timeValueMinutes(10)).execute().actionGet();
+                response =
+                        client.prepareSearchScroll(scrollId).setScroll(settings.getScrollTimeout()).execute()
+                                .actionGet(settings.getSearchTimeout());
             }
 
             Arrays.sort(array, (o1, o2) -> {
@@ -143,7 +144,7 @@ public class ArraySettings {
     protected void deleteKeyFromArray(final String index, final String type, final String key) {
         final String actualIndex = index + "." + type.toLowerCase(Locale.ENGLISH);
         try {
-            SuggestUtil.deleteByQuery(client, actualIndex, type, QueryBuilders.termQuery(FieldNames.ARRAY_KEY, key));
+            SuggestUtil.deleteByQuery(client, settings, actualIndex, type, QueryBuilders.termQuery(FieldNames.ARRAY_KEY, key));
         } catch (final Exception e) {
             throw new SuggestSettingsException("Failed to delete all from array.", e);
         }

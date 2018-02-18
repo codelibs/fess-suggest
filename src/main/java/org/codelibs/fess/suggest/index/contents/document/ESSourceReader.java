@@ -13,10 +13,8 @@ import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.Scroll;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.sort.SortBuilder;
 
@@ -115,8 +113,8 @@ public class ESSourceReader implements DocumentReader {
                 final SearchResponse response;
                 if (scrollId == null) {
                     final SearchRequestBuilder builder =
-                            client.prepareSearch().setIndices(indexName).setTypes(typeName)
-                                    .setScroll(new Scroll(TimeValue.timeValueMinutes(1))).setQuery(queryBuilder).setSize(scrollSize);
+                            client.prepareSearch().setIndices(indexName).setTypes(typeName).setScroll(settings.getScrollTimeout())
+                                    .setQuery(queryBuilder).setSize(scrollSize);
                     for (final SortBuilder<?> sortBuilder : sortList) {
                         builder.addSort(sortBuilder);
                     }
@@ -175,7 +173,8 @@ public class ESSourceReader implements DocumentReader {
 
     protected long getTotal() {
         final SearchResponse response =
-                client.prepareSearch().setIndices(indexName).setTypes(typeName).setQuery(queryBuilder).setSize(0).execute().actionGet();
+                client.prepareSearch().setIndices(indexName).setTypes(typeName).setQuery(queryBuilder).setSize(0).execute()
+                        .actionGet(settings.getSearchTimeout());
         return response.getHits().getTotalHits();
     }
 
