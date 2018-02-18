@@ -121,7 +121,7 @@ public class ESSourceReader implements DocumentReader {
                     response = builder.execute().actionGet(settings.getSearchTimeout());
                     scrollId = response.getScrollId();
                 } else {
-                    response = client.prepareSearchScroll(scrollId).setScroll(TimeValue.timeValueMinutes(1)).execute()
+                    response = client.prepareSearchScroll(scrollId).setScroll(settings.getScrollTimeout()).execute()
                             .actionGet(settings.getSearchTimeout());
                     scrollId = response.getScrollId();
                 }
