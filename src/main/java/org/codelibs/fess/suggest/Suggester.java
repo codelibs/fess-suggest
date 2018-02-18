@@ -106,7 +106,8 @@ public class Suggester {
                     client.admin().indices().prepareExists(getUpdateAlias(index)).execute().actionGet(suggestSettings.getIndicesTimeout());
             if (response.isExists()) {
                 GetAliasesResponse getAliasesResponse =
-                        client.admin().indices().prepareGetAliases(getUpdateAlias(index)).execute().actionGet();
+                        client.admin().indices().prepareGetAliases(getUpdateAlias(index)).execute()
+                                .actionGet(suggestSettings.getIndicesTimeout());
                 getAliasesResponse.getAliases().keysIt().forEachRemaining(prevIndices::add);
             }
 
@@ -126,7 +127,7 @@ public class Suggester {
             for (final String prevIndex : prevIndices) {
                 aliasesRequestBuilder.removeAlias(prevIndex, getUpdateAlias(index));
             }
-            aliasesRequestBuilder.execute().actionGet();
+            aliasesRequestBuilder.execute().actionGet(suggestSettings.getIndicesTimeout());
         } catch (final Exception e) {
             throw new SuggesterException("Failed to create index.", e);
         }
@@ -139,7 +140,7 @@ public class Suggester {
                     client.admin().indices().prepareExists(getUpdateAlias(index)).execute().actionGet(suggestSettings.getIndicesTimeout());
             if (updateIndicesResponse.isExists()) {
                 GetAliasesResponse getAliasesResponse =
-                        client.admin().indices().prepareGetAliases(getUpdateAlias(index)).execute().actionGet();
+                        client.admin().indices().prepareGetAliases(getUpdateAlias(index)).execute().actionGet(suggestSettings.getIndicesTimeout());
                 getAliasesResponse.getAliases().keysIt().forEachRemaining(updateIndices::add);
             }
             if (updateIndices.size() != 1) {
@@ -152,7 +153,7 @@ public class Suggester {
                     client.admin().indices().prepareExists(getSearchAlias(index)).execute().actionGet(suggestSettings.getIndicesTimeout());
             if (searchIndicesResponse.isExists()) {
                 GetAliasesResponse getAliasesResponse =
-                        client.admin().indices().prepareGetAliases(getSearchAlias(index)).execute().actionGet();
+                        client.admin().indices().prepareGetAliases(getSearchAlias(index)).execute().actionGet(suggestSettings.getIndicesTimeout());
                 getAliasesResponse.getAliases().keysIt().forEachRemaining(searchIndices::add);
             }
             if (searchIndices.size() != 1) {
@@ -165,17 +166,17 @@ public class Suggester {
             }
 
             client.admin().indices().prepareAliases().removeAlias(searchIndex, getSearchAlias(index))
-                    .addAlias(updateIndex, getSearchAlias(index)).execute().actionGet();
+                    .addAlias(updateIndex, getSearchAlias(index)).execute().actionGet(suggestSettings.getIndicesTimeout());
         } catch (final Exception e) {
             throw new SuggesterException("Failed to create index.", e);
         }
     }
 
     public void removeDisableIndices() {
-        GetIndexResponse response = client.admin().indices().prepareGetIndex().execute().actionGet();
+        GetIndexResponse response = client.admin().indices().prepareGetIndex().execute().actionGet(suggestSettings.getIndicesTimeout());
         Stream.of(response.getIndices()).filter(this::isSuggestIndex).filter(index -> !response.getAliases().containsKey(index))
                 .forEach(index -> {
-                    client.admin().indices().prepareDelete(index).execute().actionGet();
+                    client.admin().indices().prepareDelete(index).execute().actionGet(suggestSettings.getIndicesTimeout());
                 });
     }
 
@@ -228,7 +229,7 @@ public class Suggester {
     private long getNum(final QueryBuilder queryBuilder) {
         final SearchResponse searchResponse =
                 client.prepareSearch().setIndices(getSearchAlias(index)).setTypes(type).setSize(0).setQuery(queryBuilder).execute()
-                        .actionGet();
+                        .actionGet(suggestSettings.getSearchTimeout());
         return searchResponse.getHits().getTotalHits();
     }
 

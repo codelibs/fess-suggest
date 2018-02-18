@@ -27,19 +27,22 @@ public class AnalyzerSettings {
 
     protected final Client client;
     protected final String analyzerSettingsIndexName;
+    private SuggestSettings settings;
 
     public static final String[] SUPPORTED_LANGUAGES = new String[] { "ar", "bg", "bn", "ca", "cs", "da", "de", "el", "en", "es", "et",
             "fa", "fi", "fr", "gu", "he", "hi", "hr", "hu", "id", "it", "ja", "ko", "lt", "lv", "mk", "ml", "nl", "no", "pa", "pl", "pt",
             "ro", "ru", "si", "sq", "sv", "ta", "te", "th", "tl", "tr", "uk", "ur", "vi", "zh-cn", "zh-tw" };
 
-    public AnalyzerSettings(final Client client, final String settingsIndexName) {
+    public AnalyzerSettings(final Client client, SuggestSettings settings, final String settingsIndexName) {
         this.client = client;
+        this.settings = settings;
         analyzerSettingsIndexName = createAnalyzerSettingsIndexName(settingsIndexName);
     }
 
     public void init() {
         try {
-            final IndicesExistsResponse response = client.admin().indices().prepareExists(analyzerSettingsIndexName).execute().actionGet();
+            final IndicesExistsResponse response =
+                    client.admin().indices().prepareExists(analyzerSettingsIndexName).execute().actionGet(settings.getIndicesTimeout());
             if (!response.isExists()) {
                 createAnalyzerSettings(loadIndexSettings());
             }
@@ -73,19 +76,22 @@ public class AnalyzerSettings {
     }
 
     public void updateAnalyzer(final Map<String, Object> settings) {
-        client.admin().indices().prepareCreate(analyzerSettingsIndexName).setSettings(settings).execute().actionGet();
+        client.admin().indices().prepareCreate(analyzerSettingsIndexName).setSettings(settings).execute()
+                .actionGet(this.settings.getIndicesTimeout());
     }
 
     protected void deleteAnalyzerSettings() {
-        client.admin().indices().prepareDelete(analyzerSettingsIndexName).execute().actionGet();
+        client.admin().indices().prepareDelete(analyzerSettingsIndexName).execute().actionGet(settings.getIndicesTimeout());
     }
 
     protected void createAnalyzerSettings(final String settings) {
-        client.admin().indices().prepareCreate(analyzerSettingsIndexName).setSettings(settings, XContentType.JSON).execute().actionGet();
+        client.admin().indices().prepareCreate(analyzerSettingsIndexName).setSettings(settings, XContentType.JSON).execute()
+                .actionGet(this.settings.getIndicesTimeout());
     }
 
     protected void createAnalyzerSettings(final Map<String, Object> settings) {
-        client.admin().indices().prepareCreate(analyzerSettingsIndexName).setSettings(settings).execute().actionGet();
+        client.admin().indices().prepareCreate(analyzerSettingsIndexName).setSettings(settings).execute()
+                .actionGet(this.settings.getIndicesTimeout());
     }
 
     protected String createAnalyzerSettingsIndexName(final String settingsIndexName) {
@@ -112,7 +118,7 @@ public class AnalyzerSettings {
         public List<AnalyzeResponse.AnalyzeToken> analyze(final String text, final String lang) {
             final AnalyzeResponse analyzeResponse =
                     client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text).setAnalyzer(getContentsAnalyzerName(lang))
-                            .execute().actionGet();
+                            .execute().actionGet(settings.getIndicesTimeout());
             return analyzeResponse.getTokens();
         }
 
@@ -121,7 +127,7 @@ public class AnalyzerSettings {
             try {
                 final AnalyzeResponse analyzeResponse =
                         client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text)
-                                .setAnalyzer(getContentsReadingAnalyzerName(lang)).execute().actionGet();
+                                .setAnalyzer(getContentsReadingAnalyzerName(lang)).execute().actionGet(settings.getIndicesTimeout());
                 return analyzeResponse.getTokens();
             } catch (final IllegalArgumentException e) {
                 return analyze(text, lang);
@@ -139,7 +145,8 @@ public class AnalyzerSettings {
         for (final String lang : SUPPORTED_LANGUAGES) {
             final String readingAnalyzer = getReadingAnalyzerName(lang);
             try {
-                client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text).setAnalyzer(readingAnalyzer).execute().actionGet();
+                client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text).setAnalyzer(readingAnalyzer).execute()
+                        .actionGet(settings.getIndicesTimeout());
             } catch (final IllegalArgumentException e) {
                 undefinedAnalyzerSet.add(readingAnalyzer);
             }
@@ -147,7 +154,7 @@ public class AnalyzerSettings {
             final String readingTermAnalyzer = getReadingTermAnalyzerName(lang);
             try {
                 client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text).setAnalyzer(readingTermAnalyzer).execute()
-                        .actionGet();
+                        .actionGet(settings.getIndicesTimeout());
             } catch (final IllegalArgumentException e) {
                 undefinedAnalyzerSet.add(readingTermAnalyzer);
             }
@@ -155,7 +162,7 @@ public class AnalyzerSettings {
             final String normalizeAnalyzer = getNormalizeAnalyzerName(lang);
             try {
                 client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text).setAnalyzer(normalizeAnalyzer).execute()
-                        .actionGet();
+                        .actionGet(settings.getIndicesTimeout());
             } catch (final IllegalArgumentException e) {
                 undefinedAnalyzerSet.add(normalizeAnalyzer);
             }
@@ -163,7 +170,7 @@ public class AnalyzerSettings {
             final String contentsAnalyzer = getContentsAnalyzerName(lang);
             try {
                 client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text).setAnalyzer(contentsAnalyzer).execute()
-                        .actionGet();
+                        .actionGet(settings.getIndicesTimeout());
             } catch (final IllegalArgumentException e) {
                 undefinedAnalyzerSet.add(contentsAnalyzer);
             }
@@ -171,7 +178,7 @@ public class AnalyzerSettings {
             final String contentsReadingAnalyzer = getContentsReadingAnalyzerName(lang);
             try {
                 client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text).setAnalyzer(contentsReadingAnalyzer).execute()
-                        .actionGet();
+                        .actionGet(settings.getIndicesTimeout());
             } catch (final IllegalArgumentException e) {
                 undefinedAnalyzerSet.add(contentsReadingAnalyzer);
             }

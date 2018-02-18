@@ -32,7 +32,6 @@ import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.codelibs.fess.suggest.util.SuggestUtil;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.Operator;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -140,8 +139,8 @@ public class SuggestIndexer {
 
         final List<SuggestItem> updateItems = new ArrayList<>();
         SearchResponse response =
-                client.prepareSearch(index).setTypes(type).setSize(1000).setScroll(TimeValue.timeValueMinutes(1))
-                        .setQuery(QueryBuilders.rangeQuery(FieldNames.DOC_FREQ).gte(1)).execute().actionGet();
+                client.prepareSearch(index).setTypes(type).setSize(1000).setScroll(settings.getScrollTimeout())
+                        .setQuery(QueryBuilders.rangeQuery(FieldNames.DOC_FREQ).gte(1)).execute().actionGet(settings.getSearchTimeout());
         while (response.getHits().getHits().length > 0) {
             final SearchHit[] hits = response.getHits().getHits();
             for (final SearchHit hit : hits) {
@@ -158,7 +157,7 @@ public class SuggestIndexer {
             }
 
             final String scrollId = response.getScrollId();
-            response = client.prepareSearchScroll(scrollId).execute().actionGet();
+            response = client.prepareSearchScroll(scrollId).execute().actionGet(settings.getSearchTimeout());
         }
 
         return new SuggestDeleteResponse(null, System.currentTimeMillis() - start);
@@ -177,8 +176,8 @@ public class SuggestIndexer {
 
         final List<SuggestItem> updateItems = new ArrayList<>();
         SearchResponse response =
-                client.prepareSearch(index).setTypes(type).setSize(1000).setScroll(TimeValue.timeValueMinutes(1))
-                        .setQuery(QueryBuilders.rangeQuery(FieldNames.QUERY_FREQ).gte(1)).execute().actionGet();
+                client.prepareSearch(index).setTypes(type).setSize(1000).setScroll(settings.getScrollTimeout())
+                        .setQuery(QueryBuilders.rangeQuery(FieldNames.QUERY_FREQ).gte(1)).execute().actionGet(settings.getSearchTimeout());
         while (response.getHits().getHits().length > 0) {
             final SearchHit[] hits = response.getHits().getHits();
             for (final SearchHit hit : hits) {
@@ -195,7 +194,7 @@ public class SuggestIndexer {
             }
 
             final String scrollId = response.getScrollId();
-            response = client.prepareSearchScroll(scrollId).execute().actionGet();
+            response = client.prepareSearchScroll(scrollId).execute().actionGet(settings.getSearchTimeout());
         }
 
         return new SuggestDeleteResponse(null, System.currentTimeMillis() - start);

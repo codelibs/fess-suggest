@@ -45,6 +45,7 @@ public class SuggestSettings {
         protected String bulkTimeout = "1m";
         protected String indicesTimeout = "1m";
         protected String clusterTimeout = "1m";
+        protected String scrollTimeout = "1m";
     }
 
     public SuggestSettings(final Client client, final String settingsId, final Map<String, Object> initialSettings,
@@ -66,7 +67,7 @@ public class SuggestSettings {
         }
         initialized = true;
         initialize(initialSettings);
-        new AnalyzerSettings(client, settingsIndexName).init();
+        new AnalyzerSettings(client, this, settingsIndexName).init();
     }
 
     private void initialize(final Map<String, Object> initialSettings) {
@@ -220,7 +221,7 @@ public class SuggestSettings {
     }
 
     public AnalyzerSettings analyzer() {
-        return new AnalyzerSettings(client, settingsIndexName);
+        return new AnalyzerSettings(client, this, settingsIndexName);
     }
 
     public BadWordSettings badword() {
@@ -294,6 +295,10 @@ public class SuggestSettings {
 
         private DefaultKeys() {
         }
+    }
+
+    public String getScrollTimeout() {
+        return timeoutSettings.scrollTimeout;
     }
 
     public String getSearchTimeout() {
