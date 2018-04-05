@@ -1,13 +1,13 @@
 package org.codelibs.fess.suggest.settings;
 
-import org.codelibs.fess.suggest.exception.SuggestSettingsException;
-import org.elasticsearch.client.Client;
-import org.elasticsearch.common.Strings;
-
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.codelibs.fess.suggest.exception.SuggestSettingsException;
+import org.elasticsearch.client.Client;
+import org.elasticsearch.common.Strings;
 
 public class BadWordSettings {
     public static final String BAD_WORD_SETTINGD_KEY = "badword";

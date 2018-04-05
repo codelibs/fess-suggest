@@ -140,7 +140,8 @@ public class Suggester {
                     client.admin().indices().prepareExists(getUpdateAlias(index)).execute().actionGet(suggestSettings.getIndicesTimeout());
             if (updateIndicesResponse.isExists()) {
                 GetAliasesResponse getAliasesResponse =
-                        client.admin().indices().prepareGetAliases(getUpdateAlias(index)).execute().actionGet(suggestSettings.getIndicesTimeout());
+                        client.admin().indices().prepareGetAliases(getUpdateAlias(index)).execute()
+                                .actionGet(suggestSettings.getIndicesTimeout());
                 getAliasesResponse.getAliases().keysIt().forEachRemaining(updateIndices::add);
             }
             if (updateIndices.size() != 1) {
@@ -153,7 +154,8 @@ public class Suggester {
                     client.admin().indices().prepareExists(getSearchAlias(index)).execute().actionGet(suggestSettings.getIndicesTimeout());
             if (searchIndicesResponse.isExists()) {
                 GetAliasesResponse getAliasesResponse =
-                        client.admin().indices().prepareGetAliases(getSearchAlias(index)).execute().actionGet(suggestSettings.getIndicesTimeout());
+                        client.admin().indices().prepareGetAliases(getSearchAlias(index)).execute()
+                                .actionGet(suggestSettings.getIndicesTimeout());
                 getAliasesResponse.getAliases().keysIt().forEachRemaining(searchIndices::add);
             }
             if (searchIndices.size() != 1) {

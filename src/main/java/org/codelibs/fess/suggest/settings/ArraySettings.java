@@ -17,7 +17,6 @@ import org.codelibs.fess.suggest.exception.SuggestSettingsException;
 import org.codelibs.fess.suggest.util.SuggestUtil;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.action.support.WriteRequest;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentType;
@@ -161,8 +160,8 @@ public class ArraySettings {
             boolean empty;
             try {
                 empty =
-                        client.admin().indices().prepareGetMappings(index).setTypes(type).execute()
-                                .actionGet(settings.getIndicesTimeout()).getMappings().isEmpty();
+                        client.admin().indices().prepareGetMappings(index).setTypes(type).execute().actionGet(settings.getIndicesTimeout())
+                                .getMappings().isEmpty();
             } catch (final IndexNotFoundException e) {
                 empty = true;
                 final CreateIndexResponse response =
@@ -171,8 +170,7 @@ public class ArraySettings {
                 if (!response.isAcknowledged()) {
                     throw new SuggestSettingsException("Failed to create " + index + "/" + type + " index.", e);
                 }
-                client.admin().cluster().prepareHealth(index).setWaitForYellowStatus().execute()
-                        .actionGet(settings.getClusterTimeout());
+                client.admin().cluster().prepareHealth(index).setWaitForYellowStatus().execute().actionGet(settings.getClusterTimeout());
             }
             if (empty) {
                 client.admin()

@@ -14,7 +14,6 @@ import org.codelibs.core.lang.StringUtil;
 import org.codelibs.fess.suggest.exception.SuggestSettingsException;
 import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.elasticsearch.action.get.GetResponse;
-import org.elasticsearch.action.support.WriteRequest;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.xcontent.XContentType;
@@ -40,12 +39,12 @@ public class SuggestSettings {
     protected TimeoutSettings timeoutSettings;
 
     public static class TimeoutSettings {
-        protected String searchTimeout = "15s";
-        protected String indexTimeout = "1m";
-        protected String bulkTimeout = "1m";
+        protected String searchTimeout = "1m";
+        protected String indexTimeout = "3m";
+        protected String bulkTimeout = "3m";
         protected String indicesTimeout = "1m";
-        protected String clusterTimeout = "1m";
-        protected String scrollTimeout = "1m";
+        protected String clusterTimeout = "10m";
+        protected String scrollTimeout = "3m";
     }
 
     public SuggestSettings(final Client client, final String settingsId, final Map<String, Object> initialSettings,
@@ -208,8 +207,7 @@ public class SuggestSettings {
     public void set(final Map<String, Object> map) {
         try {
             client.prepareUpdate().setIndex(settingsIndexName).setType(settingsTypeName).setId(settingsId).setDocAsUpsert(true)
-                    .setDoc(JsonXContent.contentBuilder().map(map)).setRetryOnConflict(5).execute()
-                    .actionGet(getIndexTimeout());
+                    .setDoc(JsonXContent.contentBuilder().map(map)).setRetryOnConflict(5).execute().actionGet(getIndexTimeout());
             client.admin().indices().prepareRefresh().setIndices(settingsIndexName).execute().actionGet(getIndicesTimeout());
         } catch (final Exception e) {
             throw new SuggestSettingsException("Failed to update suggestSettings.", e);
