@@ -36,7 +36,8 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<lucene.version>7.2.1</lucene.version>
-		<elasticsearch.version>6.2.1</elasticsearch.version>
+		<elasticsearch.version>6.2.9</elasticsearch.version>
+		<jna.version>4.5.1</jna.version>
 	</properties>
 	<build>
 		<plugins>
@@ -188,13 +189,13 @@
 		<dependency>
 			<groupId>org.elasticsearch</groupId>
 			<artifactId>jna</artifactId>
-			<version>4.4.0-1</version>
+			<version>${jna.version}</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.codelibs</groupId>
 			<artifactId>elasticsearch-analysis-kuromoji-neologd</artifactId>
-			<version>6.1.0</version>
+			<version>6.2.1</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
