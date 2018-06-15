@@ -1,14 +1,14 @@
 package org.codelibs.fess.suggest.normalizer;
 
+import static org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner.newConfigs;
+import static org.junit.Assert.assertEquals;
+
 import org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner;
 import org.codelibs.fess.suggest.Suggester;
 import org.codelibs.fess.suggest.util.SuggestUtil;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import static org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner.newConfigs;
-import static org.junit.Assert.*;
 
 public class DefaultNormalizerTest {
     static Suggester suggester;

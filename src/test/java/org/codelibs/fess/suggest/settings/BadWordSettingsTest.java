@@ -1,5 +1,10 @@
 package org.codelibs.fess.suggest.settings;
 
+import static org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner.newConfigs;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner;
 import org.codelibs.fess.suggest.Suggester;
 import org.elasticsearch.index.IndexNotFoundException;
@@ -7,9 +12,6 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import static org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner.newConfigs;
-import static org.junit.Assert.*;
 
 public class BadWordSettingsTest {
     String id = "badwordSettingsTest";

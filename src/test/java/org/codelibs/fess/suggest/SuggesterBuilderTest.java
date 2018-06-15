@@ -1,16 +1,17 @@
 package org.codelibs.fess.suggest;
 
-import junit.framework.TestCase;
+import static org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner.newConfigs;
+
+import java.io.IOException;
+import java.util.List;
+
 import org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner;
 import org.codelibs.fess.suggest.converter.ReadingConverter;
 import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.elasticsearch.common.Strings;
 
-import java.io.IOException;
-import java.util.List;
-
-import static org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner.newConfigs;
+import junit.framework.TestCase;
 
 public class SuggesterBuilderTest extends TestCase {
     ElasticsearchClusterRunner runner;

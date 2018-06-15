@@ -1,6 +1,8 @@
 package org.codelibs.fess.suggest.index.contents;
 
-import junit.framework.TestCase;
+import java.io.IOException;
+import java.util.List;
+
 import org.codelibs.fess.suggest.converter.KatakanaToAlphabetConverter;
 import org.codelibs.fess.suggest.converter.ReadingConverter;
 import org.codelibs.fess.suggest.converter.ReadingConverterChain;
@@ -9,8 +11,7 @@ import org.codelibs.fess.suggest.index.contents.querylog.QueryLog;
 import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.normalizer.NormalizerChain;
 
-import java.io.IOException;
-import java.util.List;
+import junit.framework.TestCase;
 
 public class DefaultContentsParserTest extends TestCase {
     DefaultContentsParser defaultContentsParser = new DefaultContentsParser();

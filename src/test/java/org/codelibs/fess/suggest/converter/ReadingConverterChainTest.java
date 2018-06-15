@@ -2,8 +2,6 @@ package org.codelibs.fess.suggest.converter;
 
 import junit.framework.TestCase;
 
-import java.util.List;
-
 public class ReadingConverterChainTest extends TestCase {
     public void test_convert() throws Exception {
         /* TODO

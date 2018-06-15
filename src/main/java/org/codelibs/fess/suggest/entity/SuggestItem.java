@@ -3,7 +3,6 @@ package org.codelibs.fess.suggest.entity;
 import java.io.Serializable;
 import java.time.Clock;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -213,7 +212,7 @@ public class SuggestItem implements Serializable {
         map.put(FieldNames.QUERY_FREQ, 0L);
         map.put(FieldNames.DOC_FREQ, 0L);
         map.put(FieldNames.USER_BOOST, 1.0F);
-        map.put(FieldNames.TIMESTAMP, LocalDateTime.now());
+        map.put(FieldNames.TIMESTAMP, ZonedDateTime.now());
         return map;
     }
 

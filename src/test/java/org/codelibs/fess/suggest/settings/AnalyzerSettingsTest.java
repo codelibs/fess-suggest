@@ -1,5 +1,11 @@
 package org.codelibs.fess.suggest.settings;
 
+import static org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner.newConfigs;
+import static org.junit.Assert.assertEquals;
+
+import java.util.List;
+import java.util.Set;
+
 import org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner;
 import org.codelibs.fess.suggest.Suggester;
 import org.codelibs.fess.suggest.analysis.SuggestAnalyzer;
@@ -10,13 +16,6 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import static org.junit.Assert.*;
-
-import java.util.List;
-import java.util.Set;
-
-import static org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner.newConfigs;
 
 public class AnalyzerSettingsTest {
     String id = "analyzerSettingsTest";
