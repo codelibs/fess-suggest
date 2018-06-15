@@ -3,7 +3,7 @@ package org.codelibs.fess.suggest.settings;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashMap;
@@ -59,7 +59,7 @@ public class ArraySettings {
         final Map<String, Object> source = new HashMap<>();
         source.put(FieldNames.ARRAY_KEY, key);
         source.put(FieldNames.ARRAY_VALUE, value);
-        source.put(FieldNames.TIMESTAMP, LocalDateTime.now());
+        source.put(FieldNames.TIMESTAMP, ZonedDateTime.now());
 
         addToArrayIndex(arraySettingsIndexName, settingsId, createId(key, value), source);
     }

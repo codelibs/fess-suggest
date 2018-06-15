@@ -3,7 +3,7 @@ package org.codelibs.fess.suggest;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -246,7 +246,7 @@ public class Suggester {
     }
 
     private String createIndexName(final String index) {
-        return index + '.' + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+        return index + '.' + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
     }
 
     private String getDefaultMappings() throws IOException {

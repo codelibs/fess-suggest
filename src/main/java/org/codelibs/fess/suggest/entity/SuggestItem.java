@@ -1,9 +1,10 @@
 package org.codelibs.fess.suggest.entity;
 
 import java.io.Serializable;
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -38,7 +39,7 @@ public class SuggestItem implements Serializable {
 
     private String text;
 
-    private LocalDateTime timestamp;
+    private ZonedDateTime timestamp;
 
     private long queryFreq;
 
@@ -90,7 +91,7 @@ public class SuggestItem implements Serializable {
         }
         this.docFreq = docFreq;
         this.queryFreq = queryFreq;
-        this.timestamp = LocalDateTime.now();
+        this.timestamp = ZonedDateTime.now();
         this.emptySource = createEmptyMap();
         this.id = SuggestUtil.createSuggestTextId(this.text);
     }
@@ -135,7 +136,7 @@ public class SuggestItem implements Serializable {
         return userBoost;
     }
 
-    public LocalDateTime getTimestamp() {
+    public ZonedDateTime getTimestamp() {
         return timestamp;
     }
 
@@ -143,7 +144,7 @@ public class SuggestItem implements Serializable {
         this.text = text;
     }
 
-    public void setTimestamp(final LocalDateTime timestamp) {
+    public void setTimestamp(final ZonedDateTime timestamp) {
         this.timestamp = timestamp;
     }
 
@@ -237,7 +238,7 @@ public class SuggestItem implements Serializable {
         map.put(FieldNames.DOC_FREQ, docFreq);
         map.put(FieldNames.USER_BOOST, userBoost);
         map.put(FieldNames.SCORE, (queryFreq + docFreq) * userBoost);
-        map.put(FieldNames.TIMESTAMP, timestamp.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli());
+        map.put(FieldNames.TIMESTAMP, timestamp.toInstant().toEpochMilli());
         return map;
     }
 
@@ -287,7 +288,7 @@ public class SuggestItem implements Serializable {
         }
 
         item.id = SuggestUtil.createSuggestTextId(item.text);
-        item.timestamp = LocalDateTime.ofInstant(Instant.ofEpochMilli(timestamp), ZoneId.systemDefault());
+        item.timestamp = ZonedDateTime.ofInstant(Instant.ofEpochMilli(timestamp), Clock.systemDefaultZone().getZone());
         return item;
     }
 
@@ -379,7 +380,7 @@ public class SuggestItem implements Serializable {
 
         map.put(FieldNames.USER_BOOST, userBoost);
         map.put(FieldNames.SCORE, (updatedQueryFreq + updatedDocFreq) * userBoost);
-        map.put(FieldNames.TIMESTAMP, timestamp.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli());
+        map.put(FieldNames.TIMESTAMP, timestamp.toInstant().toEpochMilli());
         return map;
     }
 

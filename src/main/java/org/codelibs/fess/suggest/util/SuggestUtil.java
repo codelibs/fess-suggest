@@ -1,6 +1,8 @@
 package org.codelibs.fess.suggest.util;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
@@ -152,8 +154,10 @@ public final class SuggestUtil {
         secondLine.put("kinds", item.getKinds().toString());
         secondLine.put("@timestamp", item.getTimestamp());
 
-        try {
-            return JsonXContent.contentBuilder().map(firstLineMap).string() + '\n' + JsonXContent.contentBuilder().map(secondLine).string();
+        try (OutputStream out1 = JsonXContent.contentBuilder().map(firstLineMap).getOutputStream();
+                OutputStream out2 = JsonXContent.contentBuilder().map(secondLine).getOutputStream()) {
+            return ((ByteArrayOutputStream) out1).toString(CoreLibConstants.UTF_8) + '\n'
+                    + ((ByteArrayOutputStream) out2).toString(CoreLibConstants.UTF_8);
         } catch (final IOException e) {
             throw new SuggesterException(e);
         }

@@ -1,7 +1,6 @@
 package org.codelibs.fess.suggest.index;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -408,11 +407,11 @@ public class SuggestIndexer {
         return new SuggestIndexResponse(numberOfSuggestDocs, numberOfInputDocs, errors, System.currentTimeMillis() - start);
     }
 
-    public SuggestDeleteResponse deleteOldWords(final LocalDateTime threshold) {
+    public SuggestDeleteResponse deleteOldWords(final ZonedDateTime threshold) {
         final long start = System.currentTimeMillis();
         final String query =
-                FieldNames.TIMESTAMP + ":[* TO " + threshold.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli() + "] NOT "
-                        + FieldNames.KINDS + ':' + SuggestItem.Kind.USER;
+                FieldNames.TIMESTAMP + ":[* TO " + threshold.toInstant().toEpochMilli() + "] NOT " + FieldNames.KINDS + ':'
+                        + SuggestItem.Kind.USER;
         deleteByQuery(query);
         return new SuggestDeleteResponse(null, System.currentTimeMillis() - start);
     }
