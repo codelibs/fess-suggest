@@ -1,6 +1,7 @@
 package org.codelibs.fess.suggest.settings;
 
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -62,7 +63,7 @@ public class ElevateWordSettings {
         source.put(ELEVATE_WORD_FIELDS, elevateWord.getFields());
         source.put(ELEVATE_WORD_TAGS, elevateWord.getTags());
         source.put(ELEVATE_WORD_ROLES, elevateWord.getRoles());
-        source.put(FieldNames.TIMESTAMP, ZonedDateTime.now());
+        source.put(FieldNames.TIMESTAMP, DateTimeFormatter.ISO_INSTANT.format(ZonedDateTime.now()));
 
         arraySettings.addToArrayIndex(arraySettings.arraySettingsIndexName, arraySettings.settingsId,
                 arraySettings.createId(ELEVATE_WORD_SETTINGD_KEY, elevateWord.getElevateWord()), source);

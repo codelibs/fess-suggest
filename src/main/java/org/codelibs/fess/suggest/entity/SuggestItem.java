@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -212,7 +213,7 @@ public class SuggestItem implements Serializable {
         map.put(FieldNames.QUERY_FREQ, 0L);
         map.put(FieldNames.DOC_FREQ, 0L);
         map.put(FieldNames.USER_BOOST, 1.0F);
-        map.put(FieldNames.TIMESTAMP, ZonedDateTime.now());
+        map.put(FieldNames.TIMESTAMP, DateTimeFormatter.ISO_INSTANT.format(ZonedDateTime.now()));
         return map;
     }
 
