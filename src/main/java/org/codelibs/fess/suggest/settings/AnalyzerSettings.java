@@ -15,7 +15,10 @@ import org.codelibs.fess.suggest.analysis.SuggestAnalyzer;
 import org.codelibs.fess.suggest.exception.SuggestSettingsException;
 import org.elasticsearch.action.admin.indices.analyze.AnalyzeResponse;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
+import org.elasticsearch.action.admin.indices.settings.get.GetSettingsResponse;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.common.collect.ImmutableOpenMap;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentType;
 
 public class AnalyzerSettings {
@@ -44,7 +47,7 @@ public class AnalyzerSettings {
             final IndicesExistsResponse response =
                     client.admin().indices().prepareExists(analyzerSettingsIndexName).execute().actionGet(settings.getIndicesTimeout());
             if (!response.isExists()) {
-                createAnalyzerSettings(loadIndexSettings());
+                createAnalyzerSettings(loadIndexSettings(), loadIndexMapping());
             }
         } catch (final IOException e) {
             throw new SuggestSettingsException("Failed to create mappings.");
@@ -84,12 +87,13 @@ public class AnalyzerSettings {
         client.admin().indices().prepareDelete(analyzerSettingsIndexName).execute().actionGet(settings.getIndicesTimeout());
     }
 
-    protected void createAnalyzerSettings(final String settings) {
-        client.admin().indices().prepareCreate(analyzerSettingsIndexName).setSettings(settings, XContentType.JSON).execute()
+    protected void createAnalyzerSettings(final String settings, final String mappings) {
+        client.admin().indices().prepareCreate(analyzerSettingsIndexName).setSettings(settings, XContentType.JSON)
+            .addMapping("_doc", mappings, XContentType.JSON).execute()
                 .actionGet(this.settings.getIndicesTimeout());
     }
 
-    protected void createAnalyzerSettings(final Map<String, Object> settings) {
+    protected void createAnalyzerSettings(final Map<String, Object> settings, final Map<String, Object> mappings) {
         client.admin().indices().prepareCreate(analyzerSettingsIndexName).setSettings(settings).execute()
                 .actionGet(this.settings.getIndicesTimeout());
     }
@@ -111,6 +115,20 @@ public class AnalyzerSettings {
             }
         }
         return sb.toString().replaceAll(Pattern.quote("${fess.dictionary.path}"), dictionaryPath);
+    }
+
+    protected String loadIndexMapping() throws IOException {
+        final StringBuilder sb = new StringBuilder();
+        try (BufferedReader br =
+                 new BufferedReader(new InputStreamReader(this.getClass().getClassLoader()
+                     .getResourceAsStream("suggest_indices/analyzer/mapping-default.json")));) {
+
+            String line;
+            while ((line = br.readLine()) != null) {
+                sb.append(line);
+            }
+        }
+        return sb.toString();
     }
 
     public class DefaultContentsAnalyzer implements SuggestAnalyzer {
@@ -185,5 +203,13 @@ public class AnalyzerSettings {
         }
 
         return undefinedAnalyzerSet;
+    }
+
+    protected Set<String> getAnalyzerNames() {
+        final GetSettingsResponse response = client.admin().indices().prepareGetSettings().setIndices(analyzerSettingsIndexName).execute().actionGet();
+        final Settings settings = response.getIndexToSettings().get(analyzerSettingsIndexName);
+        final Settings analysisSettings = settings.getAsGroups().get("analysis");
+        final Settings analyzerSettings = analysisSettings.getAsGroups().get("analyzer");
+        return analyzerSettings.keySet();
     }
 }
