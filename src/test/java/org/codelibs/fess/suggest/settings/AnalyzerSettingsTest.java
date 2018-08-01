@@ -87,4 +87,23 @@ public class AnalyzerSettingsTest {
         }
     }
 
+    @Test
+    public void test_analyzerNames() throws Exception {
+        final Set<String> analyzerNames = settings.analyzer().getAnalyzerNames();
+        assertTrue(analyzerNames.size() > 4);
+        assertTrue(analyzerNames.contains(settings.analyzer().getContentsAnalyzerName("")));
+        assertTrue(analyzerNames.contains(settings.analyzer().getContentsReadingAnalyzerName("")));
+        assertTrue(analyzerNames.contains(settings.analyzer().getReadingAnalyzerName("")));
+        assertTrue(analyzerNames.contains(settings.analyzer().getReadingTermAnalyzerName("")));
+        assertTrue(analyzerNames.contains(settings.analyzer().getNormalizeAnalyzerName("")));
+
+        for (final String lang: settings.analyzer().SUPPORTED_LANGUAGES) {
+            assertTrue(analyzerNames.contains(settings.analyzer().getContentsAnalyzerName(lang)));
+            assertTrue(analyzerNames.contains(settings.analyzer().getContentsReadingAnalyzerName(lang)));
+            assertTrue(analyzerNames.contains(settings.analyzer().getReadingAnalyzerName(lang)));
+            assertTrue(analyzerNames.contains(settings.analyzer().getReadingTermAnalyzerName(lang)));
+            assertTrue(analyzerNames.contains(settings.analyzer().getNormalizeAnalyzerName(lang)));
+        }
+    }
+
 }
