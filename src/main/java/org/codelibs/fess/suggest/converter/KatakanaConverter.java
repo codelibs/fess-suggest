@@ -59,7 +59,7 @@ public class KatakanaConverter implements ReadingConverter {
     }
 
     @Override
-    public List<String> convert(final String text, final String... langs) throws IOException {
+    public List<String> convert(final String text, final String field, final String... langs) throws IOException {
         final List<String> readingList = new ArrayList<>();
         readingList.add(toKatakana(text));
         return readingList;

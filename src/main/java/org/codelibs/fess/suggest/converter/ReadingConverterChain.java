@@ -17,7 +17,7 @@ public class ReadingConverterChain implements ReadingConverter {
     }
 
     @Override
-    public List<String> convert(final String text, final String... lang) throws IOException {
+    public List<String> convert(final String text, final String field, final String... lang) throws IOException {
         final Queue<String> queue = new LinkedList<>();
         queue.add(text);
         final List<String> convertedTexts = new ArrayList<>(getMaxReadingNum());
@@ -26,7 +26,7 @@ public class ReadingConverterChain implements ReadingConverter {
         for (final ReadingConverter converter : converters) {
             String s;
             while ((s = queue.poll()) != null && convertedTexts.size() <= getMaxReadingNum()) {
-                final List<String> results = converter.convert(s, lang);
+                final List<String> results = converter.convert(s, field, lang);
                 convertedTexts.addAll(results);
             }
             queue.addAll(convertedTexts);

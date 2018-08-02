@@ -11,6 +11,10 @@
         "type" : "kuromoji_neologd_tokenizer",
         "mode" : "normal",
         "discard_punctuation" : "false"
+      },
+      "pattern_split" : {
+        "type" : "simple_pattern_split",
+        "pattern" : "__and__"
       }
     },
     "analyzer" : {
@@ -850,11 +854,15 @@
       },
       "reading_analyzer_de" : {
         "type" : "custom",
-        "tokenizer" : "standard"
+        "tokenizer" : "standard",
+        "char_filter" : ["mapping_char"],
+        "filter" : ["lowercase", "stopword_en_filter", "content_length_filter", "limit_token_count_filter", "german_stop", "german_keywords", "german_normalization"]
       },
       "reading_term_analyzer_de" : {
         "type" : "custom",
-        "tokenizer" : "standard"
+        "tokenizer" : "standard",
+        "char_filter" : ["mapping_char"],
+        "filter" : ["lowercase", "stopword_en_filter", "content_length_filter", "limit_token_count_filter", "german_stop", "german_keywords", "german_normalization"]
       },
       "normalize_analyzer_de" : {
         "type" : "custom",
@@ -1263,6 +1271,18 @@
         "tokenizer" : "thai",
         "char_filter" : ["mapping_char"],
         "filter" : ["lowercase", "stopword_en_filter", "content_length_filter", "limit_token_count_filter", "thai_stop"]
+      },
+      "title_contents_analyzer" : {
+        "type" : "custom",
+        "tokenizer" : "pattern_split",
+        "char_filter" : ["mapping_char"],
+        "filter" : ["lowercase", "stopword_en_filter", "pos_filter", "content_length_filter", "limit_token_count_filter"]
+      },
+      "title_contents_reading_analyzer" : {
+        "type" : "custom",
+        "tokenizer" : "pattern_split",
+        "char_filter" : ["mapping_char"],
+        "filter" : ["lowercase", "stopword_en_filter", "pos_filter", "content_length_filter", "limit_token_count_filter", "reading_form"]
       }
     },
     "char_filter" : {

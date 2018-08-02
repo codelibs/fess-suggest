@@ -168,6 +168,7 @@ public final class SuggestUtil {
 
     public static ReadingConverter createDefaultContentsReadingConverter(final Client client, final SuggestSettings settings) {
         final ReadingConverterChain chain = new ReadingConverterChain();
+        chain.addConverter(new AnalyzerConverter(client, settings));
         chain.addConverter(new KatakanaToAlphabetConverter());
         return chain;
     }
