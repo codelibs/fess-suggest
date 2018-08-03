@@ -304,7 +304,7 @@ public class SuggesterTest {
         analyzerMapping.put(FieldNames.ANALYZER_SETTINGS_TYPE, AnalyzerSettings.settingsFieldAnalyzerMappingType);
         analyzerMapping.put(FieldNames.ANALYZER_SETTINGS_FIELD_NAME, field);
         analyzerMapping.put(FieldNames.ANALYZER_SETTINGS_CONTENTS_ANALYZER, "title_contents_analyzer");
-        analyzerMapping.put(FieldNames.ANALYZER_SETTINGS_CONTENTS_READING_ANALYZER, "title_contents_reading_analyzer");
+        analyzerMapping.put(FieldNames.ANALYZER_SETTINGS_CONTENTS_READING_ANALYZER, "");
         runner.client().prepareIndex().setIndex(suggester.settings().analyzer().getAnalyzerSettingsIndexName())
                 .setType(suggester.settings().analyzer().DOC_TYPE_NAME).setSource(analyzerMapping)
                 .setRefreshPolicy(WriteRequest.RefreshPolicy.WAIT_UNTIL).execute().actionGet();

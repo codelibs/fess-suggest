@@ -854,15 +854,11 @@
       },
       "reading_analyzer_de" : {
         "type" : "custom",
-        "tokenizer" : "standard",
-        "char_filter" : ["mapping_char"],
-        "filter" : ["lowercase", "stopword_en_filter", "content_length_filter", "limit_token_count_filter", "german_stop", "german_keywords", "german_normalization"]
+        "tokenizer" : "standard"
       },
       "reading_term_analyzer_de" : {
         "type" : "custom",
-        "tokenizer" : "standard",
-        "char_filter" : ["mapping_char"],
-        "filter" : ["lowercase", "stopword_en_filter", "content_length_filter", "limit_token_count_filter", "german_stop", "german_keywords", "german_normalization"]
+        "tokenizer" : "standard"
       },
       "normalize_analyzer_de" : {
         "type" : "custom",
@@ -1277,12 +1273,6 @@
         "tokenizer" : "pattern_split",
         "char_filter" : ["mapping_char"],
         "filter" : ["lowercase", "stopword_en_filter", "pos_filter", "content_length_filter", "limit_token_count_filter"]
-      },
-      "title_contents_reading_analyzer" : {
-        "type" : "custom",
-        "tokenizer" : "pattern_split",
-        "char_filter" : ["mapping_char"],
-        "filter" : ["lowercase", "stopword_en_filter", "pos_filter", "content_length_filter", "limit_token_count_filter", "reading_form"]
       }
     },
     "char_filter" : {

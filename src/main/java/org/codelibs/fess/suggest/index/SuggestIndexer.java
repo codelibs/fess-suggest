@@ -272,7 +272,7 @@ public class SuggestIndexer {
             final SuggestItem[] array =
                     stream.flatMap(
                             document -> contentsParser.parseDocument(document, supportedFields, tagFieldNames, roleFieldName,
-                                    langFieldName, contentsReadingConverter, normalizer, analyzer).stream()).toArray(
+                                    langFieldName, readingConverter, contentsReadingConverter, normalizer, analyzer).stream()).toArray(
                             n -> new SuggestItem[n]);
             final SuggestIndexResponse response = index(array);
             return new SuggestIndexResponse(array.length, documents.length, response.getErrors(), System.currentTimeMillis() - start);

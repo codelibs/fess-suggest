@@ -59,19 +59,24 @@ public class AnalyzerSettingsTest {
         String text = "Fess (フェス) は「5 分で簡単に構築可能な全文検索サーバー」です。 Java 実行環境があればどの OS でも実行可能です。 Fess は Apache ライセンスで提供され、無料 (フリーソフト) でご利用いただけます。";
         SuggestAnalyzer analyzer = SuggestUtil.createDefaultAnalyzer(runner.client(), settings);
         final List<AnalyzeResponse.AnalyzeToken> tokens = analyzer.analyze(text, "", null);
+        final List<AnalyzeResponse.AnalyzeToken> readingTokens = analyzer.analyzeAndReading(text, "", null);
 
         int matchCount = 0;
         for (int i = 0; i < tokens.size(); i++) {
             final String term = tokens.get(i).getTerm();
+            final String reading = readingTokens.get(i).getTerm();
             switch (term) {
             case "fess":
                 matchCount++;
+                assertEquals("フェス", reading);
                 break;
             case "全文検索":
                 matchCount++;
+                assertEquals("ゼンブンケンサク", reading);
                 break;
             case "無料":
                 matchCount++;
+                assertEquals("ムリョウ", reading);
                 break;
             default:
                 break;

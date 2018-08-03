@@ -217,6 +217,22 @@ public class AnalyzerSettings {
                             .setAnalyzer(getContentsAnalyzerName(field, lang)).execute().actionGet(settings.getIndicesTimeout());
             return analyzeResponse.getTokens();
         }
+
+        @Override
+        public List<AnalyzeResponse.AnalyzeToken> analyzeAndReading(final String text, final String field, final String lang) {
+            try {
+                final String contentsReadingAnalyzerName = getContentsReadingAnalyzerName(field, lang);
+                if (StringUtil.isBlank(contentsReadingAnalyzerName)) {
+                    return null;
+                }
+                final AnalyzeResponse analyzeResponse =
+                        client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text).setAnalyzer(contentsReadingAnalyzerName)
+                                .execute().actionGet(settings.getIndicesTimeout());
+                return analyzeResponse.getTokens();
+            } catch (final IllegalArgumentException e) {
+                return analyze(text, field, lang);
+            }
+        }
     }
 
     public static boolean isSupportedLanguage(final String lang) {

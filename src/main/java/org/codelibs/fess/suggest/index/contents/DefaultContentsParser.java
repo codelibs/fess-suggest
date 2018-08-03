@@ -104,8 +104,8 @@ public class DefaultContentsParser implements ContentsParser {
 
     @Override
     public List<SuggestItem> parseDocument(final Map<String, Object> document, final String[] fields, final String[] tagFieldNames,
-            final String roleFieldName, final String langFieldName, final ReadingConverter readingConverter, final Normalizer normalizer,
-            final SuggestAnalyzer analyzer) {
+            final String roleFieldName, final String langFieldName, final ReadingConverter readingConverter,
+            final ReadingConverter contentsReadingConverter, final Normalizer normalizer, final SuggestAnalyzer analyzer) {
         List<SuggestItem> items = null;
         final List<String> tagList = new ArrayList<>();
         for (final String tagFieldName : tagFieldNames) {
@@ -123,6 +123,7 @@ public class DefaultContentsParser implements ContentsParser {
             final String lang = document.get(langFieldName) == null ? null : document.get(langFieldName).toString();
 
             final List<AnalyzeResponse.AnalyzeToken> tokens = analyzer.analyze(text, field, lang);
+            final List<AnalyzeResponse.AnalyzeToken> readingTokens = analyzer.analyzeAndReading(text, field, lang);
 
             try {
                 for (int i = 0; i < tokens.size(); i++) {
@@ -133,7 +134,13 @@ public class DefaultContentsParser implements ContentsParser {
                     }
                     final String[] words = new String[] { word };
                     final String[][] readings = new String[words.length][];
-                    final List<String> l = readingConverter.convert(word, field, lang);
+                    final List<String> l;
+                    if (readingTokens == null) {
+                        l = readingConverter.convert(word, field, lang);
+                    } else {
+                        final String reading = readingTokens.get(i).getTerm();
+                        l = contentsReadingConverter.convert(reading, field, lang);
+                    }
                     l.add(word);
                     readings[0] = l.toArray(new String[l.size()]);
 
