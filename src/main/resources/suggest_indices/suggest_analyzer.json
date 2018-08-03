@@ -11,6 +11,10 @@
         "type" : "kuromoji_neologd_tokenizer",
         "mode" : "normal",
         "discard_punctuation" : "false"
+      },
+      "pattern_split" : {
+        "type" : "simple_pattern_split",
+        "pattern" : "__and__"
       }
     },
     "analyzer" : {
@@ -1263,6 +1267,12 @@
         "tokenizer" : "thai",
         "char_filter" : ["mapping_char"],
         "filter" : ["lowercase", "stopword_en_filter", "content_length_filter", "limit_token_count_filter", "thai_stop"]
+      },
+      "title_contents_analyzer" : {
+        "type" : "custom",
+        "tokenizer" : "pattern_split",
+        "char_filter" : ["mapping_char"],
+        "filter" : ["lowercase", "stopword_en_filter", "pos_filter", "content_length_filter", "limit_token_count_filter"]
       }
     },
     "char_filter" : {

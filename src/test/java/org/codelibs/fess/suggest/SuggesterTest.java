@@ -16,6 +16,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner;
+import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.entity.ElevateWord;
 import org.codelibs.fess.suggest.entity.SuggestItem;
@@ -25,11 +26,13 @@ import org.codelibs.fess.suggest.index.contents.querylog.QueryLog;
 import org.codelibs.fess.suggest.index.contents.querylog.QueryLogReader;
 import org.codelibs.fess.suggest.request.popularwords.PopularWordsResponse;
 import org.codelibs.fess.suggest.request.suggest.SuggestResponse;
+import org.codelibs.fess.suggest.settings.AnalyzerSettings;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.elasticsearch.action.admin.indices.get.GetIndexResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.index.IndexAction;
 import org.elasticsearch.action.index.IndexRequestBuilder;
+import org.elasticsearch.action.support.WriteRequest;
 import org.elasticsearch.client.Client;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -297,6 +300,40 @@ public class SuggesterTest {
         assertEquals(1, response2.getNum());
         assertEquals(1, response2.getTotal());
         assertEquals("honorificabilitudinitatibus", response2.getWords().get(0));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void test_indexFromDocumentWithFieldAnalyzer() throws Exception {
+        String field = "testField";
+
+        Map<String, String> analyzerMapping = new HashMap<>();
+        analyzerMapping.put(FieldNames.ANALYZER_SETTINGS_TYPE, AnalyzerSettings.settingsFieldAnalyzerMappingType);
+        analyzerMapping.put(FieldNames.ANALYZER_SETTINGS_FIELD_NAME, field);
+        analyzerMapping.put(FieldNames.ANALYZER_SETTINGS_CONTENTS_ANALYZER, "title_contents_analyzer");
+        analyzerMapping.put(FieldNames.ANALYZER_SETTINGS_CONTENTS_READING_ANALYZER, "");
+        runner.client().prepareIndex().setIndex(suggester.settings().analyzer().getAnalyzerSettingsIndexName())
+                .setType(suggester.settings().analyzer().DOC_TYPE_NAME).setSource(analyzerMapping)
+                .setRefreshPolicy(WriteRequest.RefreshPolicy.WAIT_UNTIL).execute().actionGet();
+        suggester.settings().analyzer().init();
+
+        SuggestSettings settings = suggester.settings();
+        settings.array().add(SuggestSettings.DefaultKeys.SUPPORTED_FIELDS, field);
+
+        Map<String, Object> document = new HashMap<>();
+        document.put(field, "商品１__and__商品２");
+        suggester.indexer().indexFromDocument(new Map[] { document });
+        suggester.refresh();
+
+        SuggestResponse response1 = suggester.suggest().setQuery("商品１").setSuggestDetail(true).execute().getResponse();
+        assertEquals(1, response1.getNum());
+        assertEquals(1, response1.getTotal());
+        assertEquals("商品1", response1.getWords().get(0));
+
+        SuggestResponse response2 = suggester.suggest().setQuery("商品２").setSuggestDetail(true).execute().getResponse();
+        assertEquals(1, response2.getNum());
+        assertEquals(1, response2.getTotal());
+        assertEquals("商品2", response2.getWords().get(0));
     }
 
     @Test

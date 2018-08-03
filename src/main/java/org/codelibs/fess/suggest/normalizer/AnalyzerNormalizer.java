@@ -19,7 +19,7 @@ public class AnalyzerNormalizer implements Normalizer {
     }
 
     @Override
-    public String normalize(final String text, final String... langs) {
+    public String normalize(final String text, final String field, final String... langs) {
         final Normalizer normalizer;
         if (langs == null || langs.length == 0) {
             normalizer = new LangAnalyzerNormalizer(null);
@@ -30,7 +30,7 @@ public class AnalyzerNormalizer implements Normalizer {
             }
             normalizer = chain;
         }
-        return normalizer.normalize(text);
+        return normalizer.normalize(text, field);
     }
 
     protected class LangAnalyzerNormalizer implements Normalizer {
@@ -41,10 +41,11 @@ public class AnalyzerNormalizer implements Normalizer {
         }
 
         @Override
-        public String normalize(final String text, final String... dummy) {
+        public String normalize(final String text, final String field, final String... dummy) {
             final AnalyzeResponse termResponse =
                     client.admin().indices().prepareAnalyze(analyzerSettings.getAnalyzerSettingsIndexName(), text)
-                            .setAnalyzer(analyzerSettings.getNormalizeAnalyzerName(lang)).execute().actionGet(settings.getIndicesTimeout());
+                            .setAnalyzer(analyzerSettings.getNormalizeAnalyzerName(field, lang)).execute()
+                            .actionGet(settings.getIndicesTimeout());
 
             final List<AnalyzeResponse.AnalyzeToken> termTokenList = termResponse.getTokens();
             if (termTokenList.isEmpty()) {

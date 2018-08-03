@@ -31,7 +31,7 @@ public class AnalyzerConverter implements ReadingConverter {
     }
 
     @Override
-    public List<String> convert(final String text, final String... langs) throws IOException {
+    public List<String> convert(final String text, final String field, final String... langs) throws IOException {
         final ReadingConverter converter;
         if (langs == null || langs.length == 0) {
             converter = new LangAnayzerConverter(null);
@@ -42,7 +42,7 @@ public class AnalyzerConverter implements ReadingConverter {
             }
             converter = chain;
         }
-        return converter.convert(text);
+        return converter.convert(text, field);
     }
 
     protected class LangAnayzerConverter implements ReadingConverter {
@@ -58,14 +58,15 @@ public class AnalyzerConverter implements ReadingConverter {
         }
 
         @Override
-        public List<String> convert(final String text, final String... dummy) throws IOException {
+        public List<String> convert(final String text, final String field, final String... dummy) throws IOException {
             final AnalyzeResponse readingResponse =
                     client.admin().indices().prepareAnalyze(analyzerSettings.getAnalyzerSettingsIndexName(), text)
-                            .setAnalyzer(analyzerSettings.getReadingAnalyzerName(lang)).execute().actionGet(settings.getIndicesTimeout());
+                            .setAnalyzer(analyzerSettings.getReadingAnalyzerName("", lang)).execute()
+                            .actionGet(settings.getIndicesTimeout());
 
             final AnalyzeResponse termResponse =
                     client.admin().indices().prepareAnalyze(analyzerSettings.getAnalyzerSettingsIndexName(), text)
-                            .setAnalyzer(analyzerSettings.getReadingTermAnalyzerName(lang)).execute()
+                            .setAnalyzer(analyzerSettings.getReadingTermAnalyzerName(field, lang)).execute()
                             .actionGet(settings.getIndicesTimeout());
 
             final List<AnalyzeResponse.AnalyzeToken> readingTokenList = readingResponse.getTokens();

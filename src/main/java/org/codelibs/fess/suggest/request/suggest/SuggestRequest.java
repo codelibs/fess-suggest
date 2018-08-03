@@ -140,7 +140,7 @@ public class SuggestRequest extends Request<SuggestResponse> {
         }
 
         // set query.
-        final QueryBuilder q = buildQuery(query);
+        final QueryBuilder q = buildQuery(query, fields);
 
         // set function score
         final QueryBuilder queryBuilder = buildFunctionScoreQuery(query, q);
@@ -195,7 +195,7 @@ public class SuggestRequest extends Request<SuggestResponse> {
         return !Strings.isNullOrEmpty(query) && !query.contains(" ") && !query.contains("　");
     }
 
-    protected QueryBuilder buildQuery(final String q) {
+    protected QueryBuilder buildQuery(final String q, final List<String> fields) {
         try {
             final QueryBuilder queryBuilder;
             if (Strings.isNullOrEmpty(q)) {
@@ -215,14 +215,13 @@ public class SuggestRequest extends Request<SuggestResponse> {
                     if (normalizer == null) {
                         query = queries[i];
                     } else {
-                        query = normalizer.normalize(queries[i], langsArray);
+                        query = normalizer.normalize(queries[i], "", langsArray);
                     }
 
                     if (readingConverter == null) {
                         readingList.add(query);
                     } else {
-                        //TODO locale
-                        readingList = readingConverter.convert(query, langsArray);
+                        readingList = readingConverter.convert(query, "", langsArray);
                     }
 
                     final BoolQueryBuilder readingQueryBuilder = QueryBuilders.boolQuery().minimumShouldMatch(1);

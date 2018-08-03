@@ -10,7 +10,7 @@ public class ICUNormalizer implements Normalizer {
     }
 
     @Override
-    public String normalize(final String text, final String... langs) {
+    public String normalize(final String text, final String field, final String... langs) {
         return transliterator.transliterate(text);
     }
 }

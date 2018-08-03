@@ -1,0 +1,36 @@
+{
+  "dynamic_templates": [
+    {
+      "strings": {
+        "mapping": {
+          "type": "keyword"
+        },
+        "match": "*",
+        "match_mapping_type": "string"
+      }
+    }
+  ],
+  "properties": {
+    "settingsType": {
+      "type": "keyword"
+    },
+    "fieldName": {
+      "type": "keyword"
+    },
+    "readingAnalyzer": {
+      "type": "keyword"
+    },
+    "readingTermAnalyzer": {
+      "type": "keyword"
+    },
+    "normalizeAnalyzer": {
+      "type": "keyword"
+    },
+    "contentsAnalyzer": {
+      "type": "keyword"
+    },
+    "contentsReadingAnalyzer": {
+      "type": "keyword"
+    }
+  }
+}
