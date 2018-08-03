@@ -2,6 +2,7 @@ package org.codelibs.fess.suggest.settings;
 
 import static org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner.newConfigs;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.List;
 import java.util.Set;
@@ -87,7 +88,7 @@ public class AnalyzerSettingsTest {
     @Test
     public void test_analyzerNames() throws Exception {
         final Set<String> analyzerNames = settings.analyzer().getAnalyzerNames();
-        assertTrue(analyzerNames.size() > 4);
+        assert (analyzerNames.size() > 4);
         assertTrue(analyzerNames.contains(settings.analyzer().getContentsAnalyzerName("", "")));
         assertTrue(analyzerNames.contains(settings.analyzer().getContentsReadingAnalyzerName("", "")));
         assertTrue(analyzerNames.contains(settings.analyzer().getReadingAnalyzerName("", "")));
