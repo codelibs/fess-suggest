@@ -272,7 +272,7 @@ public class SuggestIndexer {
             final SuggestItem[] array =
                     stream.flatMap(
                             document -> contentsParser.parseDocument(document, supportedFields, tagFieldNames, roleFieldName,
-                                    langFieldName, contentsReadingConverter, normalizer, analyzer).stream()).toArray(
+                                    langFieldName, readingConverter, contentsReadingConverter, normalizer, analyzer).stream()).toArray(
                             n -> new SuggestItem[n]);
             final SuggestIndexResponse response = index(array);
             return new SuggestIndexResponse(array.length, documents.length, response.getErrors(), System.currentTimeMillis() - start);
@@ -353,7 +353,7 @@ public class SuggestIndexer {
     }
 
     public SuggestDeleteResponse addBadWord(final String badWord, final boolean apply) {
-        final String normalized = normalizer.normalize(badWord);
+        final String normalized = normalizer.normalize(badWord, "");
         settings.badword().add(normalized);
         badWords = settings.badword().get(true);
         if (apply) {
@@ -364,13 +364,13 @@ public class SuggestIndexer {
     }
 
     public void deleteBadWord(final String badWord) {
-        settings.badword().delete(normalizer.normalize(badWord));
+        settings.badword().delete(normalizer.normalize(badWord, ""));
     }
 
     public SuggestIndexResponse addElevateWord(final ElevateWord elevateWord, final boolean apply) {
-        final String normalizedWord = normalizer.normalize(elevateWord.getElevateWord());
+        final String normalizedWord = normalizer.normalize(elevateWord.getElevateWord(), "");
         final List<String> normalizedReadings =
-                elevateWord.getReadings().stream().map(reading -> normalizer.normalize(reading)).collect(Collectors.toList());
+                elevateWord.getReadings().stream().map(reading -> normalizer.normalize(reading, "")).collect(Collectors.toList());
         final ElevateWord normalized =
                 new ElevateWord(normalizedWord, elevateWord.getBoost(), normalizedReadings, elevateWord.getFields(), elevateWord.getTags(),
                         elevateWord.getRoles());
@@ -383,7 +383,7 @@ public class SuggestIndexer {
     }
 
     public SuggestDeleteResponse deleteElevateWord(final String elevateWord, final boolean apply) {
-        final String normalized = normalizer.normalize(elevateWord);
+        final String normalized = normalizer.normalize(elevateWord, "");
         settings.elevateWord().delete(normalized);
         if (apply) {
             return delete(SuggestUtil.createSuggestTextId(normalized));

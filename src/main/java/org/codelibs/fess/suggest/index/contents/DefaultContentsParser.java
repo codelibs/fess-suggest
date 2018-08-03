@@ -26,12 +26,12 @@ public class DefaultContentsParser implements ContentsParser {
             final List<String[]> readingList = new ArrayList<>(words.length);
 
             for (int i = 0; i < words.length; i++) {
-                if (isExcludeSearchword(words[i], langs, analyzer)) {
+                if (isExcludeSearchword(words[i], fields != null && fields.length > 0 ? fields[0] : "", langs, analyzer)) {
                     continue;
                 }
 
-                final String word = normalizer.normalize(words[i], langs);
-                final List<String> l = readingConverter.convert(word, langs);
+                final String word = normalizer.normalize(words[i], fields != null && fields.length > 0 ? fields[0] : "", langs);
+                final List<String> l = readingConverter.convert(word, fields != null && fields.length > 0 ? fields[0] : "", langs);
                 if (readings != null && readings.length > i && readings[i].length > 0) {
                     for (final String reading : readings[i]) {
                         if (!l.contains(reading)) {
@@ -88,8 +88,8 @@ public class DefaultContentsParser implements ContentsParser {
 
                 final String[][] readings = new String[words.length][];
                 for (int j = 0; j < words.length; j++) {
-                    words[j] = normalizer.normalize(words[j]);
-                    final List<String> l = readingConverter.convert(words[j]);
+                    words[j] = normalizer.normalize(words[j], field, "");
+                    final List<String> l = readingConverter.convert(words[j], field);
                     readings[j] = l.toArray(new String[l.size()]);
                 }
 
@@ -104,8 +104,8 @@ public class DefaultContentsParser implements ContentsParser {
 
     @Override
     public List<SuggestItem> parseDocument(final Map<String, Object> document, final String[] fields, final String[] tagFieldNames,
-            final String roleFieldName, final String langFieldName, final ReadingConverter readingConverter, final Normalizer normalizer,
-            final SuggestAnalyzer analyzer) {
+            final String roleFieldName, final String langFieldName, final ReadingConverter readingConverter,
+            final ReadingConverter contentsReadingConverter, final Normalizer normalizer, final SuggestAnalyzer analyzer) {
         List<SuggestItem> items = null;
         final List<String> tagList = new ArrayList<>();
         for (final String tagFieldName : tagFieldNames) {
@@ -122,24 +122,25 @@ public class DefaultContentsParser implements ContentsParser {
             final String text = textObj.toString();
             final String lang = document.get(langFieldName) == null ? null : document.get(langFieldName).toString();
 
-            final List<AnalyzeResponse.AnalyzeToken> tokens = analyzer.analyze(text, lang);
-            final List<AnalyzeResponse.AnalyzeToken> readingTokens = analyzer.analyzeAndReading(text, lang);
-            if (tokens.size() != readingTokens.size()) {
-                throw new SuggesterException("Failed to get reading. token_size=" + tokens.size() + " reading_size=" + readingTokens.size());
-            }
+            final List<AnalyzeResponse.AnalyzeToken> tokens = analyzer.analyze(text, field, lang);
+            final List<AnalyzeResponse.AnalyzeToken> readingTokens = analyzer.analyzeAndReading(text, field, lang);
 
             try {
                 for (int i = 0; i < tokens.size(); i++) {
                     final AnalyzeResponse.AnalyzeToken token = tokens.get(i);
-                    final AnalyzeResponse.AnalyzeToken readingToken = readingTokens.get(i);
                     final String word = token.getTerm();
-                    final String reading = readingToken.getTerm();
                     if (StringUtil.isBlank(word)) {
                         continue;
                     }
                     final String[] words = new String[] { word };
                     final String[][] readings = new String[words.length][];
-                    final List<String> l = readingConverter.convert(reading, lang);
+                    final List<String> l;
+                    if (readingTokens == null) {
+                        l = readingConverter.convert(word, field, lang);
+                    } else {
+                        final String reading = readingTokens.get(i).getTerm();
+                        l = contentsReadingConverter.convert(reading, field, lang);
+                    }
                     l.add(word);
                     readings[0] = l.toArray(new String[l.size()]);
 
@@ -174,13 +175,13 @@ public class DefaultContentsParser implements ContentsParser {
         return new String[0];
     }
 
-    protected boolean isExcludeSearchword(final String searchWord, final String[] langs, final SuggestAnalyzer analyzer) {
+    protected boolean isExcludeSearchword(final String searchWord, final String field, final String[] langs, final SuggestAnalyzer analyzer) {
         if (langs == null || langs.length == 0) {
-            final List<AnalyzeResponse.AnalyzeToken> tokens = analyzer.analyze(searchWord, null);
+            final List<AnalyzeResponse.AnalyzeToken> tokens = analyzer.analyze(searchWord, "", null);
             return tokens == null || tokens.size() == 0;
         } else {
             for (final String lang : langs) {
-                final List<AnalyzeResponse.AnalyzeToken> tokens = analyzer.analyze(searchWord, lang);
+                final List<AnalyzeResponse.AnalyzeToken> tokens = analyzer.analyze(searchWord, field, lang);
                 if (tokens != null && tokens.size() > 0) {
                     return false;
                 }

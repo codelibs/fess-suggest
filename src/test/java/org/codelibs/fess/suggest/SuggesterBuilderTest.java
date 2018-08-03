@@ -59,12 +59,12 @@ public class SuggesterBuilderTest extends TestCase {
             }
 
             @Override
-            public List<String> convert(String text, String... langs) throws IOException {
+            public List<String> convert(String text, final String field, String... langs) throws IOException {
                 return null;
             }
         };
 
-        final Normalizer normalizer = (text, lang) -> null;
+        final Normalizer normalizer = (text, field, lang) -> null;
 
         final Suggester suggester =
                 Suggester.builder()
