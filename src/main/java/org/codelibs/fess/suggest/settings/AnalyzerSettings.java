@@ -76,7 +76,7 @@ public class AnalyzerSettings {
         final Map<String, FieldAnalyzerMapping> fieldAnalyzerMapping = fieldAnalyzerMappingMap.get(analyzerSettingsIndexName);
         final Set<String> analyzerNames = analyzerMap.get(analyzerSettingsIndexName);
         final String analyzerName;
-        if (StringUtil.isNotBlank(field) && fieldAnalyzerMapping.containsKey(field)) {
+        if (StringUtil.isNotBlank(field) && fieldAnalyzerMapping.containsKey(field) && fieldAnalyzerMapping.get(field).readingAnalyzer != null) {
             analyzerName = fieldAnalyzerMapping.get(field).readingAnalyzer;
         } else {
             analyzerName = readingAnalyzerName;
@@ -93,7 +93,7 @@ public class AnalyzerSettings {
         final Map<String, FieldAnalyzerMapping> fieldAnalyzerMapping = fieldAnalyzerMappingMap.get(analyzerSettingsIndexName);
         final Set<String> analyzerNames = analyzerMap.get(analyzerSettingsIndexName);
         final String analyzerName;
-        if (StringUtil.isNotBlank(field) && fieldAnalyzerMapping.containsKey(field)) {
+        if (StringUtil.isNotBlank(field) && fieldAnalyzerMapping.containsKey(field) && fieldAnalyzerMapping.get(field).readingTermAnalyzer != null) {
             analyzerName = fieldAnalyzerMapping.get(field).readingTermAnalyzer;
         } else {
             analyzerName = readingTermAnalyzerName;
@@ -110,7 +110,7 @@ public class AnalyzerSettings {
         final Map<String, FieldAnalyzerMapping> fieldAnalyzerMapping = fieldAnalyzerMappingMap.get(analyzerSettingsIndexName);
         final Set<String> analyzerNames = analyzerMap.get(analyzerSettingsIndexName);
         final String analyzerName;
-        if (StringUtil.isNotBlank(field) && fieldAnalyzerMapping.containsKey(field)) {
+        if (StringUtil.isNotBlank(field) && fieldAnalyzerMapping.containsKey(field) && fieldAnalyzerMapping.get(field).normalizeAnalyzer != null) {
             analyzerName = fieldAnalyzerMapping.get(field).normalizeAnalyzer;
         } else {
             analyzerName = normalizeAnalyzerName;
@@ -127,7 +127,7 @@ public class AnalyzerSettings {
         final Map<String, FieldAnalyzerMapping> fieldAnalyzerMapping = fieldAnalyzerMappingMap.get(analyzerSettingsIndexName);
         final Set<String> analyzerNames = analyzerMap.get(analyzerSettingsIndexName);
         final String analyzerName;
-        if (StringUtil.isNotBlank(field) && fieldAnalyzerMapping.containsKey(field)) {
+        if (StringUtil.isNotBlank(field) && fieldAnalyzerMapping.containsKey(field) && fieldAnalyzerMapping.get(field).contentsAnalyzer != null) {
             analyzerName = fieldAnalyzerMapping.get(field).contentsAnalyzer;
         } else {
             analyzerName = contentsAnalyzerName;
@@ -144,7 +144,7 @@ public class AnalyzerSettings {
         final Map<String, FieldAnalyzerMapping> fieldAnalyzerMapping = fieldAnalyzerMappingMap.get(analyzerSettingsIndexName);
         final Set<String> analyzerNames = analyzerMap.get(analyzerSettingsIndexName);
         final String analyzerName;
-        if (StringUtil.isNotBlank(field) && fieldAnalyzerMapping.containsKey(field)) {
+        if (StringUtil.isNotBlank(field) && fieldAnalyzerMapping.containsKey(field) && fieldAnalyzerMapping.get(field).contentsReadingAnalyzer != null) {
             analyzerName = fieldAnalyzerMapping.get(field).contentsReadingAnalyzer;
         } else {
             analyzerName = contentsReadingAnalyzerName;
@@ -283,6 +283,54 @@ public class AnalyzerSettings {
                             .actionGet(settings.getSearchTimeout());
         }
         return fieldAnalyzerMappingMap;
+    }
+
+    public Set<String> checkAnalyzer() {
+        final String text = "text";
+        final Set<String> undefinedAnalyzerSet = new HashSet<>();
+        for (final String lang : SUPPORTED_LANGUAGES) {
+            final String readingAnalyzer = getReadingAnalyzerName("", lang);
+            try {
+                client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text).setAnalyzer(readingAnalyzer).execute()
+                        .actionGet(settings.getIndicesTimeout());
+            } catch (final IllegalArgumentException e) {
+                undefinedAnalyzerSet.add(readingAnalyzer);
+            }
+
+            final String readingTermAnalyzer = getReadingTermAnalyzerName("", lang);
+            try {
+                client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text).setAnalyzer(readingTermAnalyzer).execute()
+                        .actionGet(settings.getIndicesTimeout());
+            } catch (final IllegalArgumentException e) {
+                undefinedAnalyzerSet.add(readingTermAnalyzer);
+            }
+
+            final String normalizeAnalyzer = getNormalizeAnalyzerName("", lang);
+            try {
+                client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text).setAnalyzer(normalizeAnalyzer).execute()
+                        .actionGet(settings.getIndicesTimeout());
+            } catch (final IllegalArgumentException e) {
+                undefinedAnalyzerSet.add(normalizeAnalyzer);
+            }
+
+            final String contentsAnalyzer = getContentsAnalyzerName("", lang);
+            try {
+                client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text).setAnalyzer(contentsAnalyzer).execute()
+                        .actionGet(settings.getIndicesTimeout());
+            } catch (final IllegalArgumentException e) {
+                undefinedAnalyzerSet.add(contentsAnalyzer);
+            }
+
+            final String contentsReadingAnalyzer = getContentsReadingAnalyzerName("", lang);
+            try {
+                client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text).setAnalyzer(contentsReadingAnalyzer).execute()
+                        .actionGet(settings.getIndicesTimeout());
+            } catch (final IllegalArgumentException e) {
+                undefinedAnalyzerSet.add(contentsReadingAnalyzer);
+            }
+        }
+
+        return undefinedAnalyzerSet;
     }
 
     protected static class FieldAnalyzerMapping {
