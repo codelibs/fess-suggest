@@ -325,7 +325,7 @@ public class SuggesterTest {
         suggester.indexer().indexFromDocument(new Map[] { document });
         suggester.refresh();
 
-        SuggestResponse response1 = suggester.suggest().setQuery("商品１").setSuggestDetail(true).execute().getResponse();
+        SuggestResponse response1 = suggester.suggest().setQuery("しょうひん１").setSuggestDetail(true).execute().getResponse();
         assertEquals(1, response1.getNum());
         assertEquals(1, response1.getTotal());
         assertEquals("商品1", response1.getWords().get(0));

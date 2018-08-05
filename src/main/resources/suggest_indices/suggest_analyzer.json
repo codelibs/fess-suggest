@@ -1272,7 +1272,7 @@
         "type" : "custom",
         "tokenizer" : "pattern_split",
         "char_filter" : ["mapping_char"],
-        "filter" : ["lowercase", "stopword_en_filter", "pos_filter", "content_length_filter", "limit_token_count_filter"]
+        "filter" : ["lowercase", "content_length_filter"]
       }
     },
     "char_filter" : {

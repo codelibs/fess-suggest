@@ -61,7 +61,7 @@ public class AnalyzerConverter implements ReadingConverter {
         public List<String> convert(final String text, final String field, final String... dummy) throws IOException {
             final AnalyzeResponse readingResponse =
                     client.admin().indices().prepareAnalyze(analyzerSettings.getAnalyzerSettingsIndexName(), text)
-                            .setAnalyzer(analyzerSettings.getReadingAnalyzerName("", lang)).execute()
+                            .setAnalyzer(analyzerSettings.getReadingAnalyzerName(field, lang)).execute()
                             .actionGet(settings.getIndicesTimeout());
 
             final AnalyzeResponse termResponse =
