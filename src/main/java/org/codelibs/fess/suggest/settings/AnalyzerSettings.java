@@ -76,7 +76,8 @@ public class AnalyzerSettings {
         final Map<String, FieldAnalyzerMapping> fieldAnalyzerMapping = fieldAnalyzerMappingMap.get(analyzerSettingsIndexName);
         final Set<String> analyzerNames = analyzerMap.get(analyzerSettingsIndexName);
         final String analyzerName;
-        if (StringUtil.isNotBlank(field) && fieldAnalyzerMapping.containsKey(field) && fieldAnalyzerMapping.get(field).readingAnalyzer != null) {
+        if (StringUtil.isNotBlank(field) && fieldAnalyzerMapping.containsKey(field)
+                && fieldAnalyzerMapping.get(field).readingAnalyzer != null) {
             analyzerName = fieldAnalyzerMapping.get(field).readingAnalyzer;
         } else {
             analyzerName = readingAnalyzerName;
@@ -93,7 +94,8 @@ public class AnalyzerSettings {
         final Map<String, FieldAnalyzerMapping> fieldAnalyzerMapping = fieldAnalyzerMappingMap.get(analyzerSettingsIndexName);
         final Set<String> analyzerNames = analyzerMap.get(analyzerSettingsIndexName);
         final String analyzerName;
-        if (StringUtil.isNotBlank(field) && fieldAnalyzerMapping.containsKey(field) && fieldAnalyzerMapping.get(field).readingTermAnalyzer != null) {
+        if (StringUtil.isNotBlank(field) && fieldAnalyzerMapping.containsKey(field)
+                && fieldAnalyzerMapping.get(field).readingTermAnalyzer != null) {
             analyzerName = fieldAnalyzerMapping.get(field).readingTermAnalyzer;
         } else {
             analyzerName = readingTermAnalyzerName;
@@ -110,7 +112,8 @@ public class AnalyzerSettings {
         final Map<String, FieldAnalyzerMapping> fieldAnalyzerMapping = fieldAnalyzerMappingMap.get(analyzerSettingsIndexName);
         final Set<String> analyzerNames = analyzerMap.get(analyzerSettingsIndexName);
         final String analyzerName;
-        if (StringUtil.isNotBlank(field) && fieldAnalyzerMapping.containsKey(field) && fieldAnalyzerMapping.get(field).normalizeAnalyzer != null) {
+        if (StringUtil.isNotBlank(field) && fieldAnalyzerMapping.containsKey(field)
+                && fieldAnalyzerMapping.get(field).normalizeAnalyzer != null) {
             analyzerName = fieldAnalyzerMapping.get(field).normalizeAnalyzer;
         } else {
             analyzerName = normalizeAnalyzerName;
@@ -127,7 +130,8 @@ public class AnalyzerSettings {
         final Map<String, FieldAnalyzerMapping> fieldAnalyzerMapping = fieldAnalyzerMappingMap.get(analyzerSettingsIndexName);
         final Set<String> analyzerNames = analyzerMap.get(analyzerSettingsIndexName);
         final String analyzerName;
-        if (StringUtil.isNotBlank(field) && fieldAnalyzerMapping.containsKey(field) && fieldAnalyzerMapping.get(field).contentsAnalyzer != null) {
+        if (StringUtil.isNotBlank(field) && fieldAnalyzerMapping.containsKey(field)
+                && fieldAnalyzerMapping.get(field).contentsAnalyzer != null) {
             analyzerName = fieldAnalyzerMapping.get(field).contentsAnalyzer;
         } else {
             analyzerName = contentsAnalyzerName;
@@ -144,7 +148,8 @@ public class AnalyzerSettings {
         final Map<String, FieldAnalyzerMapping> fieldAnalyzerMapping = fieldAnalyzerMappingMap.get(analyzerSettingsIndexName);
         final Set<String> analyzerNames = analyzerMap.get(analyzerSettingsIndexName);
         final String analyzerName;
-        if (StringUtil.isNotBlank(field) && fieldAnalyzerMapping.containsKey(field) && fieldAnalyzerMapping.get(field).contentsReadingAnalyzer != null) {
+        if (StringUtil.isNotBlank(field) && fieldAnalyzerMapping.containsKey(field)
+                && fieldAnalyzerMapping.get(field).contentsReadingAnalyzer != null) {
             analyzerName = fieldAnalyzerMapping.get(field).contentsReadingAnalyzer;
         } else {
             analyzerName = contentsReadingAnalyzerName;
