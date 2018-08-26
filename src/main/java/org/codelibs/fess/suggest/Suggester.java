@@ -29,6 +29,7 @@ import org.elasticsearch.action.admin.indices.get.GetIndexResponse;
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.cluster.metadata.AliasMetaData;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -178,10 +179,18 @@ public class Suggester {
 
     public void removeDisableIndices() {
         GetIndexResponse response = client.admin().indices().prepareGetIndex().execute().actionGet(suggestSettings.getIndicesTimeout());
-        Stream.of(response.getIndices()).filter(this::isSuggestIndex).filter(index -> response.getAliases().get(index).isEmpty())
-                .forEach(index -> {
-                    client.admin().indices().prepareDelete(index).execute().actionGet(suggestSettings.getIndicesTimeout());
-                });
+        Stream.of(response.getIndices()).filter(index -> {
+            if (!isSuggestIndex(index)) {
+                return false;
+            }
+            final List<AliasMetaData> list = response.getAliases().get(index);
+            if (list == null) {
+                return true;
+            }
+            return list.isEmpty();
+        }).forEach(index -> {
+            client.admin().indices().prepareDelete(index).execute().actionGet(suggestSettings.getIndicesTimeout());
+        });
     }
 
     public SuggestIndexer indexer() {
