@@ -87,7 +87,7 @@ public class Suggester {
                 final String mappingSource = getDefaultMappings();
                 final String settingsSource = getDefaultIndexSettings();
                 final String indexName = createIndexName(index);
-                client.admin().indices().prepareCreate(indexName).setSettings(settingsSource.toString(), XContentType.JSON)
+                client.admin().indices().prepareCreate(indexName).setSettings(settingsSource, XContentType.JSON)
                         .addMapping(type, mappingSource, XContentType.JSON).addAlias(new Alias(getSearchAlias(index)))
                         .addAlias(new Alias(getUpdateAlias(index))).execute().actionGet(suggestSettings.getIndicesTimeout());
 
@@ -116,7 +116,7 @@ public class Suggester {
             final String settingsSource = getDefaultIndexSettings();
             final String indexName = createIndexName(index);
             CreateIndexResponse createIndexResponse =
-                    client.admin().indices().prepareCreate(indexName).setSettings(settingsSource.toString(), XContentType.JSON)
+                    client.admin().indices().prepareCreate(indexName).setSettings(settingsSource, XContentType.JSON)
                             .addMapping(type, mappingSource, XContentType.JSON).execute().actionGet(suggestSettings.getIndicesTimeout());
             if (!createIndexResponse.isAcknowledged()) {
                 throw new SuggesterException("Failed to create index");
@@ -179,18 +179,16 @@ public class Suggester {
 
     public void removeDisableIndices() {
         GetIndexResponse response = client.admin().indices().prepareGetIndex().execute().actionGet(suggestSettings.getIndicesTimeout());
-        Stream.of(response.getIndices()).filter(index -> {
-            if (!isSuggestIndex(index)) {
+        Stream.of(response.getIndices()).filter(s -> {
+            if (!isSuggestIndex(s)) {
                 return false;
             }
-            final List<AliasMetaData> list = response.getAliases().get(index);
+            final List<AliasMetaData> list = response.getAliases().get(s);
             if (list == null) {
                 return true;
             }
             return list.isEmpty();
-        }).forEach(index -> {
-            client.admin().indices().prepareDelete(index).execute().actionGet(suggestSettings.getIndicesTimeout());
-        });
+        }).forEach(s -> client.admin().indices().prepareDelete(s).execute().actionGet(suggestSettings.getIndicesTimeout()));
     }
 
     public SuggestIndexer indexer() {
