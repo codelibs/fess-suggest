@@ -123,6 +123,9 @@ public class DefaultContentsParser implements ContentsParser {
             final String lang = document.get(langFieldName) == null ? null : document.get(langFieldName).toString();
 
             final List<AnalyzeResponse.AnalyzeToken> tokens = analyzer.analyze(text, field, lang);
+            if (tokens == null) {
+                continue;
+            }
             final List<AnalyzeResponse.AnalyzeToken> readingTokens = analyzer.analyzeAndReading(text, field, lang);
 
             try {
