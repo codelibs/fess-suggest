@@ -20,6 +20,7 @@ import org.codelibs.fess.suggest.util.SuggestUtil;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
@@ -134,8 +135,10 @@ public class ArraySettings {
     protected void addToArrayIndex(final String index, final String type, final String id, final Map<String, Object> source) {
         final String actualIndex = index + "." + type.toLowerCase(Locale.ENGLISH);
         try {
-            client.prepareUpdate().setIndex(actualIndex).setType(type).setId(id).setDocAsUpsert(true)
-                    .setDoc(JsonXContent.contentBuilder().map(source)).execute().actionGet(settings.getIndexTimeout());
+            final XContentBuilder builder = JsonXContent.contentBuilder().map(source);
+            builder.flush();
+            client.prepareUpdate().setIndex(actualIndex).setType(type).setId(id).setDocAsUpsert(true).setDoc(builder).execute()
+                    .actionGet(settings.getIndexTimeout());
             client.admin().indices().prepareRefresh().setIndices(actualIndex).execute().actionGet(settings.getIndicesTimeout());
         } catch (final Exception e) {
             throw new SuggestSettingsException("Failed to add to array.", e);
