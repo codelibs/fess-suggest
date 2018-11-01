@@ -34,6 +34,7 @@ import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.SearchHit;
@@ -154,12 +155,18 @@ public final class SuggestUtil {
         secondLine.put("kinds", item.getKinds().toString());
         secondLine.put("@timestamp", item.getTimestamp());
 
-        try (OutputStream out1 = JsonXContent.contentBuilder().map(firstLineMap).getOutputStream();
-                OutputStream out2 = JsonXContent.contentBuilder().map(secondLine).getOutputStream()) {
+        try (OutputStream out1 = getXContentOutputStream(firstLineMap); OutputStream out2 = getXContentOutputStream(secondLine)) {
             return ((ByteArrayOutputStream) out1).toString(CoreLibConstants.UTF_8) + '\n'
                     + ((ByteArrayOutputStream) out2).toString(CoreLibConstants.UTF_8);
         } catch (final IOException e) {
             throw new SuggesterException(e);
+        }
+    }
+
+    private static OutputStream getXContentOutputStream(final Map<String, Object> firstLineMap) throws IOException {
+        try (XContentBuilder builder = JsonXContent.contentBuilder().map(firstLineMap)) {
+            builder.flush();
+            return builder.getOutputStream();
         }
     }
 

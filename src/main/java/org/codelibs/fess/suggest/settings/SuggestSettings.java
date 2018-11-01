@@ -16,6 +16,7 @@ import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.collect.Tuple;
+import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.index.IndexNotFoundException;
@@ -206,8 +207,10 @@ public class SuggestSettings {
 
     public void set(final Map<String, Object> map) {
         try {
+            final XContentBuilder builder = JsonXContent.contentBuilder().map(map);
+            builder.flush();
             client.prepareUpdate().setIndex(settingsIndexName).setType(settingsTypeName).setId(settingsId).setDocAsUpsert(true)
-                    .setDoc(JsonXContent.contentBuilder().map(map)).setRetryOnConflict(5).execute().actionGet(getIndexTimeout());
+                    .setDoc(builder).setRetryOnConflict(5).execute().actionGet(getIndexTimeout());
             client.admin().indices().prepareRefresh().setIndices(settingsIndexName).execute().actionGet(getIndicesTimeout());
         } catch (final Exception e) {
             throw new SuggestSettingsException("Failed to update suggestSettings.", e);
