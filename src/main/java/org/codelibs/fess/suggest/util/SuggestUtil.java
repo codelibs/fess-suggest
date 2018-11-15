@@ -3,6 +3,7 @@ package org.codelibs.fess.suggest.util;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
@@ -152,7 +153,7 @@ public final class SuggestUtil {
         secondLine.put("score", (item.getQueryFreq() + item.getDocFreq()) * item.getUserBoost());
         secondLine.put("tags", item.getTags());
         secondLine.put("roles", item.getRoles());
-        secondLine.put("kinds", item.getKinds().toString());
+        secondLine.put("kinds", Arrays.toString(item.getKinds()));
         secondLine.put("@timestamp", item.getTimestamp());
 
         try (OutputStream out1 = getXContentOutputStream(firstLineMap); OutputStream out2 = getXContentOutputStream(secondLine)) {
