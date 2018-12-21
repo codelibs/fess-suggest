@@ -137,9 +137,8 @@ public class SuggestIndexer {
         }
 
         final List<SuggestItem> updateItems = new ArrayList<>();
-        SearchResponse response =
-                client.prepareSearch(index).setTypes(type).setSize(1000).setScroll(settings.getScrollTimeout())
-                        .setQuery(QueryBuilders.rangeQuery(FieldNames.DOC_FREQ).gte(1)).execute().actionGet(settings.getSearchTimeout());
+        SearchResponse response = client.prepareSearch(index).setTypes(type).setSize(1000).setScroll(settings.getScrollTimeout())
+                .setQuery(QueryBuilders.rangeQuery(FieldNames.DOC_FREQ).gte(1)).execute().actionGet(settings.getSearchTimeout());
         while (response.getHits().getHits().length > 0) {
             final SearchHit[] hits = response.getHits().getHits();
             for (final SearchHit hit : hits) {
@@ -174,9 +173,8 @@ public class SuggestIndexer {
         }
 
         final List<SuggestItem> updateItems = new ArrayList<>();
-        SearchResponse response =
-                client.prepareSearch(index).setTypes(type).setSize(1000).setScroll(settings.getScrollTimeout())
-                        .setQuery(QueryBuilders.rangeQuery(FieldNames.QUERY_FREQ).gte(1)).execute().actionGet(settings.getSearchTimeout());
+        SearchResponse response = client.prepareSearch(index).setTypes(type).setSize(1000).setScroll(settings.getScrollTimeout())
+                .setQuery(QueryBuilders.rangeQuery(FieldNames.QUERY_FREQ).gte(1)).execute().actionGet(settings.getSearchTimeout());
         while (response.getHits().getHits().length > 0) {
             final SearchHit[] hits = response.getHits().getHits();
             for (final SearchHit hit : hits) {
@@ -210,10 +208,10 @@ public class SuggestIndexer {
             if (parallel) {
                 stream.parallel();
             }
-            final SuggestItem[] array =
-                    stream.flatMap(
-                            queryLog -> contentsParser.parseQueryLog(queryLog, supportedFields, tagFieldNames, roleFieldName,
-                                    readingConverter, normalizer).stream()).toArray(n -> new SuggestItem[n]);
+            final SuggestItem[] array = stream
+                    .flatMap(queryLog -> contentsParser
+                            .parseQueryLog(queryLog, supportedFields, tagFieldNames, roleFieldName, readingConverter, normalizer).stream())
+                    .toArray(n -> new SuggestItem[n]);
             final SuggestIndexResponse response = index(array);
             return new SuggestIndexResponse(array.length, queryLogs.length, response.getErrors(), System.currentTimeMillis() - start);
         } catch (final Exception e) {
@@ -250,8 +248,8 @@ public class SuggestIndexer {
                         Thread.sleep(requestInterval);
                     }
                 }
-                deferred.resolve(new SuggestIndexResponse(numberOfSuggestDocs, numberOfInputDocs, errors, System.currentTimeMillis()
-                        - start));
+                deferred.resolve(
+                        new SuggestIndexResponse(numberOfSuggestDocs, numberOfInputDocs, errors, System.currentTimeMillis() - start));
             } catch (final Throwable t) {
                 deferred.reject(t);
             } finally {
@@ -268,11 +266,10 @@ public class SuggestIndexer {
             if (parallel) {
                 stream.parallel();
             }
-            final SuggestItem[] array =
-                    stream.flatMap(
-                            document -> contentsParser.parseDocument(document, supportedFields, tagFieldNames, roleFieldName,
-                                    langFieldName, readingConverter, contentsReadingConverter, normalizer, analyzer).stream()).toArray(
-                            n -> new SuggestItem[n]);
+            final SuggestItem[] array = stream
+                    .flatMap(document -> contentsParser.parseDocument(document, supportedFields, tagFieldNames, roleFieldName,
+                            langFieldName, readingConverter, contentsReadingConverter, normalizer, analyzer).stream())
+                    .toArray(n -> new SuggestItem[n]);
             final SuggestIndexResponse response = index(array);
             return new SuggestIndexResponse(array.length, documents.length, response.getErrors(), System.currentTimeMillis() - start);
         } catch (final Exception e) {
@@ -310,8 +307,8 @@ public class SuggestIndexer {
                     }
                 }
 
-                deferred.resolve(new SuggestIndexResponse(numberOfSuggestDocs, numberOfInputDocs, errors, System.currentTimeMillis()
-                        - start));
+                deferred.resolve(
+                        new SuggestIndexResponse(numberOfSuggestDocs, numberOfInputDocs, errors, System.currentTimeMillis() - start));
             } catch (final Throwable t) {
                 deferred.reject(t);
             }
@@ -370,9 +367,8 @@ public class SuggestIndexer {
         final String normalizedWord = normalizer.normalize(elevateWord.getElevateWord(), "");
         final List<String> normalizedReadings =
                 elevateWord.getReadings().stream().map(reading -> normalizer.normalize(reading, "")).collect(Collectors.toList());
-        final ElevateWord normalized =
-                new ElevateWord(normalizedWord, elevateWord.getBoost(), normalizedReadings, elevateWord.getFields(), elevateWord.getTags(),
-                        elevateWord.getRoles());
+        final ElevateWord normalized = new ElevateWord(normalizedWord, elevateWord.getBoost(), normalizedReadings, elevateWord.getFields(),
+                elevateWord.getTags(), elevateWord.getRoles());
         settings.elevateWord().add(normalized);
         if (apply) {
             return index(normalized.toSuggestItem());
@@ -409,9 +405,8 @@ public class SuggestIndexer {
 
     public SuggestDeleteResponse deleteOldWords(final ZonedDateTime threshold) {
         final long start = System.currentTimeMillis();
-        final String query =
-                FieldNames.TIMESTAMP + ":[* TO " + threshold.toInstant().toEpochMilli() + "] NOT " + FieldNames.KINDS + ':'
-                        + SuggestItem.Kind.USER;
+        final String query = FieldNames.TIMESTAMP + ":[* TO " + threshold.toInstant().toEpochMilli() + "] NOT " + FieldNames.KINDS + ':'
+                + SuggestItem.Kind.USER;
         deleteByQuery(query);
         return new SuggestDeleteResponse(null, System.currentTimeMillis() - start);
     }

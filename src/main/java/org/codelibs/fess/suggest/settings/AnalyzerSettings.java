@@ -188,9 +188,8 @@ public class AnalyzerSettings {
     protected String loadIndexSettings() throws IOException {
         final String dictionaryPath = System.getProperty("fess.dictionary.path", StringUtil.EMPTY);
         final StringBuilder sb = new StringBuilder();
-        try (BufferedReader br =
-                new BufferedReader(new InputStreamReader(this.getClass().getClassLoader()
-                        .getResourceAsStream("suggest_indices/suggest_analyzer.json")));) {
+        try (BufferedReader br = new BufferedReader(
+                new InputStreamReader(this.getClass().getClassLoader().getResourceAsStream("suggest_indices/suggest_analyzer.json")));) {
 
             String line;
             while ((line = br.readLine()) != null) {
@@ -202,9 +201,8 @@ public class AnalyzerSettings {
 
     protected String loadIndexMapping() throws IOException {
         final StringBuilder sb = new StringBuilder();
-        try (BufferedReader br =
-                new BufferedReader(new InputStreamReader(this.getClass().getClassLoader()
-                        .getResourceAsStream("suggest_indices/analyzer/mapping-default.json")));) {
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(
+                this.getClass().getClassLoader().getResourceAsStream("suggest_indices/analyzer/mapping-default.json")));) {
 
             String line;
             while ((line = br.readLine()) != null) {
@@ -217,9 +215,8 @@ public class AnalyzerSettings {
     public class DefaultContentsAnalyzer implements SuggestAnalyzer {
         @Override
         public List<AnalyzeResponse.AnalyzeToken> analyze(final String text, final String field, final String lang) {
-            final AnalyzeResponse analyzeResponse =
-                    client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text)
-                            .setAnalyzer(getContentsAnalyzerName(field, lang)).execute().actionGet(settings.getIndicesTimeout());
+            final AnalyzeResponse analyzeResponse = client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text)
+                    .setAnalyzer(getContentsAnalyzerName(field, lang)).execute().actionGet(settings.getIndicesTimeout());
             return analyzeResponse.getTokens();
         }
 
@@ -230,9 +227,8 @@ public class AnalyzerSettings {
                 if (StringUtil.isBlank(contentsReadingAnalyzerName)) {
                     return null;
                 }
-                final AnalyzeResponse analyzeResponse =
-                        client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text).setAnalyzer(contentsReadingAnalyzerName)
-                                .execute().actionGet(settings.getIndicesTimeout());
+                final AnalyzeResponse analyzeResponse = client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text)
+                        .setAnalyzer(contentsReadingAnalyzerName).execute().actionGet(settings.getIndicesTimeout());
                 return analyzeResponse.getTokens();
             } catch (final IllegalArgumentException e) {
                 return analyze(text, field, lang);
@@ -254,38 +250,32 @@ public class AnalyzerSettings {
 
     protected Map<String, FieldAnalyzerMapping> getFieldAnalyzerMapping() {
         final Map<String, FieldAnalyzerMapping> fieldAnalyzerMappingMap = new HashMap<>();
-        SearchResponse searchResponse =
-                client.prepareSearch(analyzerSettingsIndexName)
-                        .setQuery(QueryBuilders.termQuery(FieldNames.ANALYZER_SETTINGS_TYPE, settingsFieldAnalyzerMappingType))
-                        .setScroll(settings.getScrollTimeout()).execute().actionGet(settings.getSearchTimeout());
+        SearchResponse searchResponse = client.prepareSearch(analyzerSettingsIndexName)
+                .setQuery(QueryBuilders.termQuery(FieldNames.ANALYZER_SETTINGS_TYPE, settingsFieldAnalyzerMappingType))
+                .setScroll(settings.getScrollTimeout()).execute().actionGet(settings.getSearchTimeout());
         while (searchResponse.getHits().getHits().length > 0) {
             final String scrollId = searchResponse.getScrollId();
             final SearchHit[] hits = searchResponse.getHits().getHits();
             for (SearchHit hit : hits) {
                 final Map<String, Object> source = hit.getSourceAsMap();
-                final String fieldReadingAnalyzer =
-                        source.get(FieldNames.ANALYZER_SETTINGS_READING_ANALYZER) == null ? null : source.get(
-                                FieldNames.ANALYZER_SETTINGS_READING_ANALYZER).toString();
-                final String fieldReadingTermAnalyzer =
-                        source.get(FieldNames.ANALYZER_SETTINGS_READING_TERM_ANALYZER) == null ? null : source.get(
-                                FieldNames.ANALYZER_SETTINGS_READING_TERM_ANALYZER).toString();
-                final String fieldNormalizeAnalyzer =
-                        source.get(FieldNames.ANALYZER_SETTINGS_NORMALIZE_ANALYZER) == null ? null : source.get(
-                                FieldNames.ANALYZER_SETTINGS_NORMALIZE_ANALYZER).toString();
-                final String fieldContentsAnalyzer =
-                        source.get(FieldNames.ANALYZER_SETTINGS_CONTENTS_ANALYZER) == null ? null : source.get(
-                                FieldNames.ANALYZER_SETTINGS_CONTENTS_ANALYZER).toString();
+                final String fieldReadingAnalyzer = source.get(FieldNames.ANALYZER_SETTINGS_READING_ANALYZER) == null ? null
+                        : source.get(FieldNames.ANALYZER_SETTINGS_READING_ANALYZER).toString();
+                final String fieldReadingTermAnalyzer = source.get(FieldNames.ANALYZER_SETTINGS_READING_TERM_ANALYZER) == null ? null
+                        : source.get(FieldNames.ANALYZER_SETTINGS_READING_TERM_ANALYZER).toString();
+                final String fieldNormalizeAnalyzer = source.get(FieldNames.ANALYZER_SETTINGS_NORMALIZE_ANALYZER) == null ? null
+                        : source.get(FieldNames.ANALYZER_SETTINGS_NORMALIZE_ANALYZER).toString();
+                final String fieldContentsAnalyzer = source.get(FieldNames.ANALYZER_SETTINGS_CONTENTS_ANALYZER) == null ? null
+                        : source.get(FieldNames.ANALYZER_SETTINGS_CONTENTS_ANALYZER).toString();
                 final String fieldContentsReadingAnalyzer =
-                        source.get(FieldNames.ANALYZER_SETTINGS_CONTENTS_READING_ANALYZER) == null ? null : source.get(
-                                FieldNames.ANALYZER_SETTINGS_CONTENTS_READING_ANALYZER).toString();
+                        source.get(FieldNames.ANALYZER_SETTINGS_CONTENTS_READING_ANALYZER) == null ? null
+                                : source.get(FieldNames.ANALYZER_SETTINGS_CONTENTS_READING_ANALYZER).toString();
 
-                fieldAnalyzerMappingMap.put(source.get(FieldNames.ANALYZER_SETTINGS_FIELD_NAME).toString(), new FieldAnalyzerMapping(
-                        fieldReadingAnalyzer, fieldReadingTermAnalyzer, fieldNormalizeAnalyzer, fieldContentsAnalyzer,
-                        fieldContentsReadingAnalyzer));
+                fieldAnalyzerMappingMap.put(source.get(FieldNames.ANALYZER_SETTINGS_FIELD_NAME).toString(),
+                        new FieldAnalyzerMapping(fieldReadingAnalyzer, fieldReadingTermAnalyzer, fieldNormalizeAnalyzer,
+                                fieldContentsAnalyzer, fieldContentsReadingAnalyzer));
             }
-            searchResponse =
-                    client.prepareSearchScroll(scrollId).setScroll(settings.getScrollTimeout()).execute()
-                            .actionGet(settings.getSearchTimeout());
+            searchResponse = client.prepareSearchScroll(scrollId).setScroll(settings.getScrollTimeout()).execute()
+                    .actionGet(settings.getSearchTimeout());
         }
         return fieldAnalyzerMappingMap;
     }

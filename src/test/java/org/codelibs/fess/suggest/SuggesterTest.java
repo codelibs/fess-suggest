@@ -50,9 +50,8 @@ public class SuggesterTest {
         runner.onBuild((number, settingsBuilder) -> {
             settingsBuilder.put("http.cors.enabled", true);
             settingsBuilder.putList("discovery.zen.ping.unicast.hosts", "localhost:9301-9399");
-        }).build(
-                newConfigs().clusterName("ArraySettingsTest").numOfNode(1)
-                        .pluginTypes("org.codelibs.elasticsearch.kuromoji.neologd.KuromojiNeologdPlugin"));
+        }).build(newConfigs().clusterName("ArraySettingsTest").numOfNode(1)
+                .pluginTypes("org.codelibs.elasticsearch.kuromoji.neologd.KuromojiNeologdPlugin"));
         runner.ensureYellow();
     }
 
@@ -738,27 +737,24 @@ public class SuggesterTest {
         readings[1] = new String[] { "enjin", "fuga" };
         String[] tags = new String[] { "tag1", "tag2" };
         String[] roles = new String[] { SuggestConstants.DEFAULT_ROLE, "role1", "role2", "role3" };
-        queryItems[0] =
-                new SuggestItem(new String[] { "検索", "エンジン" }, readings, new String[] { "content" }, 1, 0, -1, tags, roles, null,
-                        SuggestItem.Kind.DOCUMENT);
+        queryItems[0] = new SuggestItem(new String[] { "検索", "エンジン" }, readings, new String[] { "content" }, 1, 0, -1, tags, roles, null,
+                SuggestItem.Kind.DOCUMENT);
 
         String[][] readings2 = new String[2][];
         readings2[0] = new String[] { "zenbun", "fuga" };
         readings2[1] = new String[] { "kensaku", "fuga" };
         String[] tags2 = new String[] { "tag3" };
         String[] roles2 = new String[] { SuggestConstants.DEFAULT_ROLE, "role4" };
-        queryItems[1] =
-                new SuggestItem(new String[] { "全文", "検索" }, readings2, new String[] { "content" }, 1, 0, -1, tags2, roles2, null,
-                        SuggestItem.Kind.DOCUMENT);
+        queryItems[1] = new SuggestItem(new String[] { "全文", "検索" }, readings2, new String[] { "content" }, 1, 0, -1, tags2, roles2, null,
+                SuggestItem.Kind.DOCUMENT);
 
         String[][] readings2Query = new String[2][];
         readings2Query[0] = new String[] { "zenbun", "fuga" };
         readings2Query[1] = new String[] { "kensaku", "fuga" };
         String[] tags2Query = new String[] { "tag4" };
         String[] roles2Query = new String[] { SuggestConstants.DEFAULT_ROLE, "role5" };
-        queryItems[2] =
-                new SuggestItem(new String[] { "全文", "検索" }, readings2Query, new String[] { "content" }, 0, 1, -1, tags2Query, roles2Query,
-                        null, SuggestItem.Kind.QUERY);
+        queryItems[2] = new SuggestItem(new String[] { "全文", "検索" }, readings2Query, new String[] { "content" }, 0, 1, -1, tags2Query,
+                roles2Query, null, SuggestItem.Kind.QUERY);
 
         return queryItems;
     }
@@ -771,8 +767,8 @@ public class SuggesterTest {
             readings[0] = new String[] { "fuga" };
             String[] tags = new String[] { "tag1", "tag2" };
             String[] roles = new String[] { SuggestConstants.DEFAULT_ROLE, "role1", "role2", "role3" };
-            items.add(new SuggestItem(new String[] { "ドキュメント" + i }, readings, new String[] { "content" }, 15 + i, 0, -1, tags, roles,
-                    null, SuggestItem.Kind.DOCUMENT));
+            items.add(new SuggestItem(new String[] { "ドキュメント" + i }, readings, new String[] { "content" }, 15 + i, 0, -1, tags, roles, null,
+                    SuggestItem.Kind.DOCUMENT));
         }
 
         for (int i = 0; i < 5; i++) {

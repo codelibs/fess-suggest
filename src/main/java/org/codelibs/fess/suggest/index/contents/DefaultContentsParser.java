@@ -178,7 +178,8 @@ public class DefaultContentsParser implements ContentsParser {
         return new String[0];
     }
 
-    protected boolean isExcludeSearchword(final String searchWord, final String field, final String[] langs, final SuggestAnalyzer analyzer) {
+    protected boolean isExcludeSearchword(final String searchWord, final String field, final String[] langs,
+            final SuggestAnalyzer analyzer) {
         if (langs == null || langs.length == 0) {
             final List<AnalyzeResponse.AnalyzeToken> tokens = analyzer.analyze(searchWord, "", null);
             return tokens == null || tokens.size() == 0;

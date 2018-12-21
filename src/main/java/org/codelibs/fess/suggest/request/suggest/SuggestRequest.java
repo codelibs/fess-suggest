@@ -265,11 +265,10 @@ public class SuggestRequest extends Request<SuggestResponse> {
                 .missing(0.1f).modifier(FieldValueFactorFunction.Modifier.LOG2P).setWeight(1.0F)));
         flist.add(new FunctionScoreQueryBuilder.FilterFunctionBuilder(ScoreFunctionBuilders.fieldValueFactorFunction(FieldNames.QUERY_FREQ)
                 .missing(0.1f).modifier(FieldValueFactorFunction.Modifier.LOG2P).setWeight(1.0F)));
-        flist.add(new FunctionScoreQueryBuilder.FilterFunctionBuilder(ScoreFunctionBuilders.fieldValueFactorFunction(FieldNames.USER_BOOST)
-                .missing(1f).setWeight(1.0F)));
-        final FunctionScoreQueryBuilder functionScoreQueryBuilder =
-                QueryBuilders.functionScoreQuery(queryBuilder,
-                        flist.toArray(new FunctionScoreQueryBuilder.FilterFunctionBuilder[flist.size()]));
+        flist.add(new FunctionScoreQueryBuilder.FilterFunctionBuilder(
+                ScoreFunctionBuilders.fieldValueFactorFunction(FieldNames.USER_BOOST).missing(1f).setWeight(1.0F)));
+        final FunctionScoreQueryBuilder functionScoreQueryBuilder = QueryBuilders.functionScoreQuery(queryBuilder,
+                flist.toArray(new FunctionScoreQueryBuilder.FilterFunctionBuilder[flist.size()]));
 
         functionScoreQueryBuilder.boostMode(CombineFunction.REPLACE);
         functionScoreQueryBuilder.scoreMode(FunctionScoreQuery.ScoreMode.MULTIPLY);

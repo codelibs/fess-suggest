@@ -74,9 +74,8 @@ public class SuggestSettings {
         boolean doIndexCreate = false;
         boolean doCreate = false;
         try {
-            final GetResponse getResponse =
-                    client.prepareGet().setIndex(settingsIndexName).setType(settingsTypeName).setId(settingsId).execute()
-                            .actionGet(getSearchTimeout());
+            final GetResponse getResponse = client.prepareGet().setIndex(settingsIndexName).setType(settingsTypeName).setId(settingsId)
+                    .execute().actionGet(getSearchTimeout());
 
             if (!getResponse.isExists()) {
                 doCreate = true;
@@ -120,9 +119,8 @@ public class SuggestSettings {
     }
 
     public Object get(final String key) {
-        final GetResponse getResponse =
-                client.prepareGet().setIndex(settingsIndexName).setType(settingsTypeName).setId(settingsId).execute()
-                        .actionGet(getSearchTimeout());
+        final GetResponse getResponse = client.prepareGet().setIndex(settingsIndexName).setType(settingsTypeName).setId(settingsId)
+                .execute().actionGet(getSearchTimeout());
         if (!getResponse.isExists()) {
             return null;
         }
@@ -269,9 +267,8 @@ public class SuggestSettings {
     protected String loadIndexSettings() throws IOException {
         final String dictionaryPath = System.getProperty("fess.dictionary.path", StringUtil.EMPTY);
         final StringBuilder sb = new StringBuilder();
-        try (BufferedReader br =
-                new BufferedReader(new InputStreamReader(this.getClass().getClassLoader()
-                        .getResourceAsStream("suggest_indices/suggest_settings.json")));) {
+        try (BufferedReader br = new BufferedReader(
+                new InputStreamReader(this.getClass().getClassLoader().getResourceAsStream("suggest_indices/suggest_settings.json")));) {
 
             String line;
             while ((line = br.readLine()) != null) {

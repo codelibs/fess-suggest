@@ -16,7 +16,8 @@ public class BadWordSettings {
 
     protected static String[] defaultWords = null;
 
-    protected BadWordSettings(final SuggestSettings settings, final Client client, final String settingsIndexName, final String settingsId) {
+    protected BadWordSettings(final SuggestSettings settings, final Client client, final String settingsIndexName,
+            final String settingsId) {
         this.arraySettings = new ArraySettings(settings, client, settingsIndexName, settingsId) {
             @Override
             protected String createArraySettingsIndexName(final String settingsIndexName) {
@@ -72,9 +73,8 @@ public class BadWordSettings {
         }
 
         final List<String> list = new ArrayList<>();
-        try (BufferedReader br =
-                new BufferedReader(new InputStreamReader(this.getClass().getClassLoader()
-                        .getResourceAsStream("suggest_settings/default-badwords.txt")))) {
+        try (BufferedReader br = new BufferedReader(
+                new InputStreamReader(this.getClass().getClassLoader().getResourceAsStream("suggest_settings/default-badwords.txt")))) {
 
             String line;
             while ((line = br.readLine()) != null) {
