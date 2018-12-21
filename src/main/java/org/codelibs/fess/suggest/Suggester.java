@@ -177,7 +177,8 @@ public class Suggester {
     }
 
     public void removeDisableIndices() {
-        GetIndexResponse response = client.admin().indices().prepareGetIndex().execute().actionGet(suggestSettings.getIndicesTimeout());
+        GetIndexResponse response =
+                client.admin().indices().prepareGetIndex().addIndices("*").execute().actionGet(suggestSettings.getIndicesTimeout());
         Stream.of(response.getIndices()).filter(s -> {
             if (!isSuggestIndex(s)) {
                 return false;
