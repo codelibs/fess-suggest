@@ -126,7 +126,10 @@ public class DefaultContentsParser implements ContentsParser {
             if (tokens == null) {
                 continue;
             }
-            final List<AnalyzeResponse.AnalyzeToken> readingTokens = analyzer.analyzeAndReading(text, field, lang);
+            List<AnalyzeResponse.AnalyzeToken> readingTokens = analyzer.analyzeAndReading(text, field, lang);
+            if (readingTokens != null && readingTokens.size() != tokens.size()) {
+                readingTokens = null;
+            }
 
             try {
                 for (int i = 0; i < tokens.size(); i++) {
