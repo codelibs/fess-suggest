@@ -133,14 +133,6 @@ public class KatakanaConverter implements ReadingConverter {
 
     protected String getReadingFromAttribute(final TokenStream stream) {
         return null;
-        /*
-        if (tokenizerFactory instanceof JapaneseTokenizerFactory) {
-            final ReadingAttribute rdAttr = stream.getAttribute(ReadingAttribute.class);
-            return rdAttr.getReading();
-        } else {
-            return null;
-        }
-        */
     }
 
 }
