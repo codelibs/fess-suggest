@@ -193,6 +193,7 @@ public class PopularWordsRequest extends Request<PopularWordsResponse> {
             }
         }
 
-        return new PopularWordsResponse(index, searchResponse.getTook().getMillis(), words, searchResponse.getHits().getTotalHits(), items);
+        return new PopularWordsResponse(index, searchResponse.getTook().getMillis(), words, searchResponse.getHits().getTotalHits().value,
+                items);
     }
 }

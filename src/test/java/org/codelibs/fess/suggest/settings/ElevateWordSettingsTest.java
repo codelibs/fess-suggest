@@ -41,9 +41,10 @@ public class ElevateWordSettingsTest {
         runner = new ElasticsearchClusterRunner();
         runner.onBuild((number, settingsBuilder) -> {
             settingsBuilder.put("http.cors.enabled", true);
-            settingsBuilder.putList("discovery.zen.ping.unicast.hosts", "localhost:9301-9399");
+            settingsBuilder.putList("discovery.seed_hosts", "127.0.0.1:9301");
+            settingsBuilder.putList("cluster.initial_master_nodes", "127.0.0.1:9301");
         }).build(newConfigs().clusterName("ArraySettingsTest").numOfNode(1)
-                .pluginTypes("org.codelibs.elasticsearch.kuromoji.neologd.KuromojiNeologdPlugin"));
+                .pluginTypes("org.codelibs.elasticsearch.kuromoji.ipadic.neologd.KuromojiNeologdPlugin"));
         runner.ensureYellow();
     }
 

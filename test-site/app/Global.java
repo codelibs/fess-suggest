@@ -35,8 +35,9 @@ public class Global extends GlobalSettings {
             settingsBuilder.put("http.cors.enabled", true);
             settingsBuilder.put("index.number_of_shards", 1);
             settingsBuilder.put("index.number_of_replicas", 0);
-            settingsBuilder.putArray("discovery.zen.ping.unicast.hosts", "localhost:9301-9399");
-            settingsBuilder.put("plugin.types", "org.codelibs.elasticsearch.kuromoji.neologd.KuromojiNeologdPlugin,org.codelibs.elasticsearch.FessSuggestPlugin");
+            settingsBuilder.putList("discovery.seed_hosts", "127.0.0.1:9301");
+            settingsBuilder.putList("cluster.initial_master_nodes", "127.0.0.1:9301");
+            settingsBuilder.put("plugin.types", "org.codelibs.elasticsearch.kuromoji.ipadic.neologd.KuromojiNeologdPlugin,org.codelibs.elasticsearch.FessSuggestPlugin");
         }).build(newConfigs().clusterName("SuggesterTest").numOfNode(1));
         runner.ensureYellow();
 

@@ -340,7 +340,7 @@ public class SuggestRequest extends Request<SuggestResponse> {
         }
         firstWords.addAll(secondWords);
         firstItems.addAll(secondItems);
-        return new SuggestResponse(index, searchResponse.getTook().getMillis(), firstWords, searchResponse.getHits().getTotalHits(),
+        return new SuggestResponse(index, searchResponse.getTook().getMillis(), firstWords, searchResponse.getHits().getTotalHits().value,
                 firstItems);
     }
 

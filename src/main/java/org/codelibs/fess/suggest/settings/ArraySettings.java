@@ -105,7 +105,7 @@ public class ArraySettings {
                     .setQuery(QueryBuilders.termQuery(FieldNames.ARRAY_KEY, key)).setSize(1000).execute()
                     .actionGet(settings.getSearchTimeout());
 
-            final Map<String, Object>[] array = new Map[(int) response.getHits().getTotalHits()];
+            final Map<String, Object>[] array = new Map[(int) response.getHits().getTotalHits().value];
 
             int count = 0;
             while (response.getHits().getHits().length > 0) {
