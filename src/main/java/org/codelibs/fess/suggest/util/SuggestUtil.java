@@ -202,11 +202,6 @@ public final class SuggestUtil {
     public static Normalizer createDefaultNormalizer(final Client client, final SuggestSettings settings) {
         final NormalizerChain normalizerChain = new NormalizerChain();
         normalizerChain.add(new AnalyzerNormalizer(client, settings));
-        /*
-        normalizerChain.add(new HankakuKanaToZenkakuKana());
-        normalizerChain.add(new FullWidthToHalfWidthAlphabetNormalizer());
-        normalizerChain.add(new ICUNormalizer("Any-Lower"));
-        */
         return normalizerChain;
     }
 
