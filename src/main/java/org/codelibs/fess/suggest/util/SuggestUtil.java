@@ -243,7 +243,7 @@ public final class SuggestUtil {
                 final SearchHit[] hits = searchResponse.getHits().getHits();
 
                 final BulkRequestBuilder bulkRequestBuiler = client.prepareBulk();
-                Stream.of(hits).map(SearchHit::getId).forEach(id -> bulkRequestBuiler.add(new DeleteRequest(index, type, id)));
+                Stream.of(hits).map(SearchHit::getId).forEach(id -> bulkRequestBuiler.add(new DeleteRequest(index, id)));
 
                 final BulkResponse bulkResponse = bulkRequestBuiler.execute().actionGet(settings.getBulkTimeout());
                 if (bulkResponse.hasFailures()) {

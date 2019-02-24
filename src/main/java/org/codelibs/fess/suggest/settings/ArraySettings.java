@@ -196,8 +196,8 @@ public class ArraySettings {
             }
             if (empty) {
                 client.admin().indices().preparePutMapping(actualIndex)
-                        .setSource(XContentFactory.jsonBuilder().startObject().startObject(settingsId).startObject("properties")
-                                .startObject(FieldNames.ARRAY_KEY).field("type", "keyword").endObject().endObject().endObject().endObject())
+                        .setSource(XContentFactory.jsonBuilder().startObject().startObject("properties")
+                                .startObject(FieldNames.ARRAY_KEY).field("type", "keyword").endObject().endObject().endObject())
                         .execute().actionGet(settings.getIndicesTimeout());
             }
         } catch (final IOException e) {
