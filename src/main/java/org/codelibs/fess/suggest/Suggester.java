@@ -77,11 +77,11 @@ public class Suggester {
     }
 
     public SuggestRequestBuilder suggest() {
-        return new SuggestRequestBuilder(client, readingConverter, normalizer).setIndex(getSearchAlias(index)).setType(type);
+        return new SuggestRequestBuilder(client, readingConverter, normalizer).setIndex(getSearchAlias(index));
     }
 
     public PopularWordsRequestBuilder popularWords() {
-        return new PopularWordsRequestBuilder(client).setIndex(getSearchAlias(index)).setType(type);
+        return new PopularWordsRequestBuilder(client).setIndex(getSearchAlias(index));
     }
 
     public RefreshResponse refresh() {
@@ -253,7 +253,7 @@ public class Suggester {
     }
 
     private long getNum(final QueryBuilder queryBuilder) {
-        final SearchResponse searchResponse = client.prepareSearch().setIndices(getSearchAlias(index)).setTypes(type).setSize(0)
+        final SearchResponse searchResponse = client.prepareSearch().setIndices(getSearchAlias(index)).setSize(0)
                 .setQuery(queryBuilder).execute().actionGet(suggestSettings.getSearchTimeout());
         return searchResponse.getHits().getTotalHits().value;
     }

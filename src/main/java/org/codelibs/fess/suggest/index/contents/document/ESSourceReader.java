@@ -127,7 +127,7 @@ public class ESSourceReader implements DocumentReader {
             try {
                 final SearchResponse response;
                 if (scrollId == null) {
-                    final SearchRequestBuilder builder = client.prepareSearch().setIndices(indexName).setTypes(typeName)
+                    final SearchRequestBuilder builder = client.prepareSearch().setIndices(indexName)
                             .setScroll(settings.getScrollTimeout()).setQuery(queryBuilder).setSize(scrollSize);
                     for (final SortBuilder<?> sortBuilder : sortList) {
                         builder.addSort(sortBuilder);
@@ -186,7 +186,7 @@ public class ESSourceReader implements DocumentReader {
     }
 
     protected long getTotal() {
-        final SearchResponse response = client.prepareSearch().setIndices(indexName).setTypes(typeName).setQuery(queryBuilder).setSize(0)
+        final SearchResponse response = client.prepareSearch().setIndices(indexName).setQuery(queryBuilder).setSize(0)
                 .execute().actionGet(settings.getSearchTimeout());
         return response.getHits().getTotalHits().value;
     }

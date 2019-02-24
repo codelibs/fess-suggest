@@ -89,7 +89,7 @@ public class SuggestSettings {
         boolean doIndexCreate = false;
         boolean doCreate = false;
         try {
-            final GetResponse getResponse = client.prepareGet().setIndex(settingsIndexName).setType(settingsTypeName).setId(settingsId)
+            final GetResponse getResponse = client.prepareGet().setIndex(settingsIndexName).setId(settingsId)
                     .execute().actionGet(getSearchTimeout());
 
             if (!getResponse.isExists()) {
@@ -134,7 +134,7 @@ public class SuggestSettings {
     }
 
     public Object get(final String key) {
-        final GetResponse getResponse = client.prepareGet().setIndex(settingsIndexName).setType(settingsTypeName).setId(settingsId)
+        final GetResponse getResponse = client.prepareGet().setIndex(settingsIndexName).setId(settingsId)
                 .execute().actionGet(getSearchTimeout());
         if (!getResponse.isExists()) {
             return null;
@@ -210,7 +210,7 @@ public class SuggestSettings {
 
     public void set(final String key, final Object value) {
         try {
-            client.prepareUpdate().setIndex(settingsIndexName).setType(settingsTypeName).setId(settingsId).setDocAsUpsert(true)
+            client.prepareUpdate().setIndex(settingsIndexName).setId(settingsId).setDocAsUpsert(true)
                     .setDoc(key, value).setRetryOnConflict(5).execute().actionGet(getIndexTimeout());
             client.admin().indices().prepareRefresh().setIndices(settingsIndexName).execute().actionGet(getIndicesTimeout());
         } catch (final Exception e) {
@@ -222,7 +222,7 @@ public class SuggestSettings {
         try {
             final XContentBuilder builder = JsonXContent.contentBuilder().map(map);
             builder.flush();
-            client.prepareUpdate().setIndex(settingsIndexName).setType(settingsTypeName).setId(settingsId).setDocAsUpsert(true)
+            client.prepareUpdate().setIndex(settingsIndexName).setId(settingsId).setDocAsUpsert(true)
                     .setDoc(builder).setRetryOnConflict(5).execute().actionGet(getIndexTimeout());
             client.admin().indices().prepareRefresh().setIndices(settingsIndexName).execute().actionGet(getIndicesTimeout());
         } catch (final Exception e) {

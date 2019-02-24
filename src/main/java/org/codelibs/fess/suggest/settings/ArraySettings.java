@@ -101,7 +101,7 @@ public class ArraySettings {
     protected Map<String, Object>[] getFromArrayIndex(final String index, final String type, final String key) {
         final String actualIndex = index + "." + type.toLowerCase(Locale.ENGLISH);
         try {
-            SearchResponse response = client.prepareSearch().setIndices(actualIndex).setTypes(type).setScroll(settings.getScrollTimeout())
+            SearchResponse response = client.prepareSearch().setIndices(actualIndex).setScroll(settings.getScrollTimeout())
                     .setQuery(QueryBuilders.termQuery(FieldNames.ARRAY_KEY, key)).setSize(1000).execute()
                     .actionGet(settings.getSearchTimeout());
 
@@ -150,7 +150,7 @@ public class ArraySettings {
         try {
             final XContentBuilder builder = JsonXContent.contentBuilder().map(source);
             builder.flush();
-            client.prepareUpdate().setIndex(actualIndex).setType(type).setId(id).setDocAsUpsert(true).setDoc(builder).execute()
+            client.prepareUpdate().setIndex(actualIndex).setId(id).setDocAsUpsert(true).setDoc(builder).execute()
                     .actionGet(settings.getIndexTimeout());
             client.admin().indices().prepareRefresh().setIndices(actualIndex).execute().actionGet(settings.getIndicesTimeout());
         } catch (final Exception e) {
@@ -170,7 +170,7 @@ public class ArraySettings {
     protected void deleteFromArray(final String index, final String type, final String id) {
         final String actualIndex = index + "." + type.toLowerCase(Locale.ENGLISH);
         try {
-            client.prepareDelete().setIndex(actualIndex).setType(type).setId(id).execute().actionGet(settings.getIndexTimeout());
+            client.prepareDelete().setIndex(actualIndex).setId(id).execute().actionGet(settings.getIndexTimeout());
             client.admin().indices().prepareRefresh().setIndices(actualIndex).execute().actionGet(settings.getIndicesTimeout());
         } catch (final Exception e) {
             throw new SuggestSettingsException("Failed to delete from array.", e);
@@ -182,7 +182,7 @@ public class ArraySettings {
         try {
             boolean empty;
             try {
-                empty = client.admin().indices().prepareGetMappings(actualIndex).setTypes(type).execute()
+                empty = client.admin().indices().prepareGetMappings(actualIndex).execute()
                         .actionGet(settings.getIndicesTimeout()).getMappings().isEmpty();
             } catch (final IndexNotFoundException e) {
                 empty = true;
@@ -195,7 +195,7 @@ public class ArraySettings {
                         .actionGet(settings.getClusterTimeout());
             }
             if (empty) {
-                client.admin().indices().preparePutMapping(actualIndex).setType(type)
+                client.admin().indices().preparePutMapping(actualIndex)
                         .setSource(XContentFactory.jsonBuilder().startObject().startObject(settingsId).startObject("properties")
                                 .startObject(FieldNames.ARRAY_KEY).field("type", "keyword").endObject().endObject().endObject().endObject())
                         .execute().actionGet(settings.getIndicesTimeout());

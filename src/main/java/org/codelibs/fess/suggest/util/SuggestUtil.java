@@ -235,7 +235,7 @@ public final class SuggestUtil {
     public static boolean deleteByQuery(final Client client, final SuggestSettings settings, final String index, final String type,
             final QueryBuilder queryBuilder) {
         try {
-            SearchResponse searchResponse = client.prepareSearch(index).setTypes(type).setQuery(queryBuilder).setSize(500)
+            SearchResponse searchResponse = client.prepareSearch(index).setQuery(queryBuilder).setSize(500)
                     .setScroll(settings.getScrollTimeout()).execute().actionGet(settings.getSearchTimeout());
 
             while (searchResponse.getHits().getHits().length > 0) {
