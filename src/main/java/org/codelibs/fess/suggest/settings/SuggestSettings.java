@@ -43,8 +43,6 @@ public class SuggestSettings {
 
     protected final String settingsIndexName;
 
-    protected final String settingsTypeName;
-
     protected final Map<String, Object> initialSettings;
 
     protected boolean initialized = false;
@@ -64,11 +62,10 @@ public class SuggestSettings {
     }
 
     public SuggestSettings(final Client client, final String settingsId, final Map<String, Object> initialSettings,
-            final String settingsIndexName, final String settingsTypeName, final TimeoutSettings timeoutSettings) {
+            final String settingsIndexName, final TimeoutSettings timeoutSettings) {
         this.client = client;
         this.settingsId = settingsId;
         this.settingsIndexName = settingsIndexName;
-        this.settingsTypeName = settingsTypeName;
         this.initialSettings = initialSettings;
         this.timeoutSettings = timeoutSettings;
 
@@ -89,8 +86,8 @@ public class SuggestSettings {
         boolean doIndexCreate = false;
         boolean doCreate = false;
         try {
-            final GetResponse getResponse = client.prepareGet().setIndex(settingsIndexName).setId(settingsId)
-                    .execute().actionGet(getSearchTimeout());
+            final GetResponse getResponse =
+                    client.prepareGet().setIndex(settingsIndexName).setId(settingsId).execute().actionGet(getSearchTimeout());
 
             if (!getResponse.isExists()) {
                 doCreate = true;
@@ -134,8 +131,8 @@ public class SuggestSettings {
     }
 
     public Object get(final String key) {
-        final GetResponse getResponse = client.prepareGet().setIndex(settingsIndexName).setId(settingsId)
-                .execute().actionGet(getSearchTimeout());
+        final GetResponse getResponse =
+                client.prepareGet().setIndex(settingsIndexName).setId(settingsId).execute().actionGet(getSearchTimeout());
         if (!getResponse.isExists()) {
             return null;
         }
@@ -210,8 +207,8 @@ public class SuggestSettings {
 
     public void set(final String key, final Object value) {
         try {
-            client.prepareUpdate().setIndex(settingsIndexName).setId(settingsId).setDocAsUpsert(true)
-                    .setDoc(key, value).setRetryOnConflict(5).execute().actionGet(getIndexTimeout());
+            client.prepareUpdate().setIndex(settingsIndexName).setId(settingsId).setDocAsUpsert(true).setDoc(key, value)
+                    .setRetryOnConflict(5).execute().actionGet(getIndexTimeout());
             client.admin().indices().prepareRefresh().setIndices(settingsIndexName).execute().actionGet(getIndicesTimeout());
         } catch (final Exception e) {
             throw new SuggestSettingsException("Failed to update suggestSettings.", e);
@@ -222,8 +219,8 @@ public class SuggestSettings {
         try {
             final XContentBuilder builder = JsonXContent.contentBuilder().map(map);
             builder.flush();
-            client.prepareUpdate().setIndex(settingsIndexName).setId(settingsId).setDocAsUpsert(true)
-                    .setDoc(builder).setRetryOnConflict(5).execute().actionGet(getIndexTimeout());
+            client.prepareUpdate().setIndex(settingsIndexName).setId(settingsId).setDocAsUpsert(true).setDoc(builder).setRetryOnConflict(5)
+                    .execute().actionGet(getIndexTimeout());
             client.admin().indices().prepareRefresh().setIndices(settingsIndexName).execute().actionGet(getIndicesTimeout());
         } catch (final Exception e) {
             throw new SuggestSettingsException("Failed to update suggestSettings.", e);
@@ -250,10 +247,6 @@ public class SuggestSettings {
         return settingsIndexName;
     }
 
-    public String getSettingsTypeName() {
-        return settingsTypeName;
-    }
-
     public boolean isInitialized() {
         return initialized;
     }
@@ -265,7 +258,6 @@ public class SuggestSettings {
     private Map<String, Object> defaultSettings() {
         final Map<String, Object> defaultSettings = new HashMap<>();
         defaultSettings.put(DefaultKeys.INDEX, (settingsId + ".suggest").toLowerCase());
-        defaultSettings.put(DefaultKeys.TYPE, "doc");
         defaultSettings.put(DefaultKeys.TAG_FIELD_NAME, "label,virtual_host");
         defaultSettings.put(DefaultKeys.ROLE_FIELD_NAME, "role");
         defaultSettings.put(DefaultKeys.LANG_FIELD_NAME, "lang");
@@ -299,7 +291,6 @@ public class SuggestSettings {
 
     public static class DefaultKeys {
         public static final String INDEX = "index";
-        public static final String TYPE = "type";
         public static final String SUPPORTED_FIELDS = "supportedFields";
         public static final String TAG_FIELD_NAME = "tagFieldName";
         public static final String ROLE_FIELD_NAME = "roleFieldName";

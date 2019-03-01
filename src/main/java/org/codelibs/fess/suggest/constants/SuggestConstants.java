@@ -28,4 +28,6 @@ public final class SuggestConstants {
     public static final String TEXT_SEPARATOR = " ";
 
     public static final String DEFAULT_ROLE = "_guest_";
+
+    public static final String DEFAULT_TYPE = "_doc";
 }

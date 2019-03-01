@@ -60,7 +60,6 @@ public class SuggesterBuilderTest extends TestCase {
         assertNotNull(suggester.getReadingConverter());
         assertNotNull(suggester.settings());
         assertTrue(!Strings.isNullOrEmpty(suggester.index));
-        assertTrue(!Strings.isNullOrEmpty(suggester.type));
     }
 
     public void test_buildWithParameters() throws Exception {
@@ -82,15 +81,13 @@ public class SuggesterBuilderTest extends TestCase {
 
         final Normalizer normalizer = (text, field, lang) -> null;
 
-        final Suggester suggester = Suggester.builder()
-                .settings(SuggestSettings.builder().setSettingsIndexName(settingsIndexName).setSettingsTypeName(settingsTypeName))
+        final Suggester suggester = Suggester.builder().settings(SuggestSettings.builder().setSettingsIndexName(settingsIndexName))
                 .readingConverter(converter).normalizer(normalizer).build(runner.client(), id);
 
         assertEquals(runner.client(), suggester.client);
 
         SuggestSettings settings = suggester.settings();
         assertEquals(settingsIndexName, settings.getSettingsIndexName());
-        assertEquals(settingsTypeName, settings.getSettingsTypeName());
         assertEquals(id, settings.getSettingsId());
 
         assertEquals(converter, suggester.getReadingConverter());

@@ -26,11 +26,11 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.index.query.QueryBuilder;
 
 public interface SuggestWriter {
-    SuggestWriterResult write(Client client, SuggestSettings settings, String index, String type, SuggestItem[] items, boolean update);
+    SuggestWriterResult write(Client client, SuggestSettings settings, String index, SuggestItem[] items, boolean update);
 
-    SuggestWriterResult delete(Client client, SuggestSettings settings, String index, String type, String id);
+    SuggestWriterResult delete(Client client, SuggestSettings settings, String index, String id);
 
-    SuggestWriterResult deleteByQuery(Client client, SuggestSettings settings, String index, String type, QueryBuilder queryBuilder);
+    SuggestWriterResult deleteByQuery(Client client, SuggestSettings settings, String index, QueryBuilder queryBuilder);
 
     default SuggestItem[] mergeItems(final SuggestItem[] items) {
         final Set<String> mergedIdSet = new HashSet<>();

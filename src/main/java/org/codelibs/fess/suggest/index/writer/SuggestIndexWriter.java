@@ -32,8 +32,8 @@ import org.elasticsearch.index.query.QueryBuilder;
 
 public class SuggestIndexWriter implements SuggestWriter {
     @Override
-    public SuggestWriterResult write(final Client client, final SuggestSettings settings, final String index, final String type,
-            final SuggestItem[] items, final boolean update) {
+    public SuggestWriterResult write(final Client client, final SuggestSettings settings, final String index, final SuggestItem[] items,
+            final boolean update) {
         final BulkRequestBuilder bulkRequestBuilder = client.prepareBulk();
 
         final SuggestItem[] mergedItems = mergeItems(items);
@@ -42,8 +42,7 @@ public class SuggestIndexWriter implements SuggestWriter {
         }
 
         for (final SuggestItem item : mergedItems) {
-            final GetResponse getResponse =
-                    client.prepareGet().setIndex(index).setId(item.getId()).get(TimeValue.timeValueSeconds(30));
+            final GetResponse getResponse = client.prepareGet().setIndex(index).setId(item.getId()).get(TimeValue.timeValueSeconds(30));
             if (update && getResponse.isExists()) {
                 final IndexRequestBuilder indexRequestBuilder = new IndexRequestBuilder(client, IndexAction.INSTANCE, index);
                 indexRequestBuilder.setId(item.getId()).setOpType(IndexRequest.OpType.INDEX)
@@ -70,8 +69,7 @@ public class SuggestIndexWriter implements SuggestWriter {
     }
 
     @Override
-    public SuggestWriterResult delete(final Client client, final SuggestSettings settings, final String index, final String type,
-            final String id) {
+    public SuggestWriterResult delete(final Client client, final SuggestSettings settings, final String index, final String id) {
         final SuggestWriterResult result = new SuggestWriterResult();
         try {
             client.prepareDelete().setIndex(index).setId(id).execute().actionGet(settings.getIndexTimeout());
@@ -82,11 +80,11 @@ public class SuggestIndexWriter implements SuggestWriter {
     }
 
     @Override
-    public SuggestWriterResult deleteByQuery(final Client client, final SuggestSettings settings, final String index, final String type,
+    public SuggestWriterResult deleteByQuery(final Client client, final SuggestSettings settings, final String index,
             final QueryBuilder queryBuilder) {
         final SuggestWriterResult result = new SuggestWriterResult();
         try {
-            SuggestUtil.deleteByQuery(client, settings, index, type, queryBuilder);
+            SuggestUtil.deleteByQuery(client, settings, index, queryBuilder);
         } catch (final Exception e) {
             result.addFailure(e);
         }

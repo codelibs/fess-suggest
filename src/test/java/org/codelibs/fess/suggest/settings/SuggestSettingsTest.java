@@ -66,7 +66,6 @@ public class SuggestSettingsTest {
     @Test
     public void test_defaultSettings() throws Exception {
         assertEquals("settings-test.suggest", settings.getAsString(SuggestSettings.DefaultKeys.INDEX, ""));
-        assertEquals("doc", settings.getAsString(SuggestSettings.DefaultKeys.TYPE, ""));
         assertEquals("content", settings.array().get(SuggestSettings.DefaultKeys.SUPPORTED_FIELDS)[0]);
         assertEquals("label,virtual_host", settings.getAsString(SuggestSettings.DefaultKeys.TAG_FIELD_NAME, ""));
         assertEquals("role", settings.getAsString(SuggestSettings.DefaultKeys.ROLE_FIELD_NAME, ""));

@@ -232,7 +232,7 @@ public final class SuggestUtil {
         throw new IllegalArgumentException("The value should be String or List, but " + value.getClass());
     }
 
-    public static boolean deleteByQuery(final Client client, final SuggestSettings settings, final String index, final String type,
+    public static boolean deleteByQuery(final Client client, final SuggestSettings settings, final String index,
             final QueryBuilder queryBuilder) {
         try {
             SearchResponse searchResponse = client.prepareSearch(index).setQuery(queryBuilder).setSize(500)

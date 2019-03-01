@@ -161,7 +161,7 @@ public class ArraySettings {
     protected void deleteKeyFromArray(final String index, final String type, final String key) {
         final String actualIndex = index + "." + type.toLowerCase(Locale.ENGLISH);
         try {
-            SuggestUtil.deleteByQuery(client, settings, actualIndex, type, QueryBuilders.termQuery(FieldNames.ARRAY_KEY, key));
+            SuggestUtil.deleteByQuery(client, settings, actualIndex, QueryBuilders.termQuery(FieldNames.ARRAY_KEY, key));
         } catch (final Exception e) {
             throw new SuggestSettingsException("Failed to delete all from array.", e);
         }
@@ -182,8 +182,8 @@ public class ArraySettings {
         try {
             boolean empty;
             try {
-                empty = client.admin().indices().prepareGetMappings(actualIndex).execute()
-                        .actionGet(settings.getIndicesTimeout()).getMappings().isEmpty();
+                empty = client.admin().indices().prepareGetMappings(actualIndex).execute().actionGet(settings.getIndicesTimeout())
+                        .getMappings().isEmpty();
             } catch (final IndexNotFoundException e) {
                 empty = true;
                 final CreateIndexResponse response = client.admin().indices().prepareCreate(actualIndex)
@@ -195,9 +195,9 @@ public class ArraySettings {
                         .actionGet(settings.getClusterTimeout());
             }
             if (empty) {
-                client.admin().indices().preparePutMapping(actualIndex)
-                        .setSource(XContentFactory.jsonBuilder().startObject().startObject("properties")
-                                .startObject(FieldNames.ARRAY_KEY).field("type", "keyword").endObject().endObject().endObject())
+                client.admin().indices().preparePutMapping(actualIndex).setType("_doc")
+                        .setSource(XContentFactory.jsonBuilder().startObject().startObject("properties").startObject(FieldNames.ARRAY_KEY)
+                                .field("type", "keyword").endObject().endObject().endObject())
                         .execute().actionGet(settings.getIndicesTimeout());
             }
         } catch (final IOException e) {

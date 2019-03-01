@@ -28,6 +28,7 @@ import java.util.stream.Stream;
 import org.codelibs.core.lang.StringUtil;
 import org.codelibs.fess.suggest.analysis.SuggestAnalyzer;
 import org.codelibs.fess.suggest.constants.FieldNames;
+import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.converter.ReadingConverter;
 import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.codelibs.fess.suggest.index.SuggestIndexer;
@@ -58,7 +59,6 @@ public class Suggester {
     protected final SuggestAnalyzer analyzer;
 
     protected final String index;
-    protected final String type;
 
     protected final ExecutorService threadPool;
 
@@ -72,7 +72,6 @@ public class Suggester {
         this.normalizer = normalizer;
         this.analyzer = analyzer;
         this.index = settings.getAsString(SuggestSettings.DefaultKeys.INDEX, StringUtil.EMPTY);
-        this.type = settings.getAsString(SuggestSettings.DefaultKeys.TYPE, StringUtil.EMPTY);
         this.threadPool = threadPool;
     }
 
@@ -103,8 +102,9 @@ public class Suggester {
                 final String settingsSource = getDefaultIndexSettings();
                 final String indexName = createIndexName(index);
                 client.admin().indices().prepareCreate(indexName).setSettings(settingsSource, XContentType.JSON)
-                        .addMapping(type, mappingSource, XContentType.JSON).addAlias(new Alias(getSearchAlias(index)))
-                        .addAlias(new Alias(getUpdateAlias(index))).execute().actionGet(suggestSettings.getIndicesTimeout());
+                        .addMapping(SuggestConstants.DEFAULT_TYPE, mappingSource, XContentType.JSON)
+                        .addAlias(new Alias(getSearchAlias(index))).addAlias(new Alias(getUpdateAlias(index))).execute()
+                        .actionGet(suggestSettings.getIndicesTimeout());
 
                 client.admin().cluster().prepareHealth().setWaitForYellowStatus().execute().actionGet(suggestSettings.getClusterTimeout());
                 created = true;
@@ -131,7 +131,8 @@ public class Suggester {
             final String indexName = createIndexName(index);
             CreateIndexResponse createIndexResponse =
                     client.admin().indices().prepareCreate(indexName).setSettings(settingsSource, XContentType.JSON)
-                            .addMapping(type, mappingSource, XContentType.JSON).execute().actionGet(suggestSettings.getIndicesTimeout());
+                            .addMapping(SuggestConstants.DEFAULT_TYPE, mappingSource, XContentType.JSON).execute()
+                            .actionGet(suggestSettings.getIndicesTimeout());
             if (!createIndexResponse.isAcknowledged()) {
                 throw new SuggesterException("Failed to create index");
             }
@@ -228,16 +229,12 @@ public class Suggester {
     }
 
     protected SuggestIndexer createDefaultIndexer() {
-        return new SuggestIndexer(client, getUpdateAlias(index), type, readingConverter, contentsReadingConverter, normalizer, analyzer,
+        return new SuggestIndexer(client, getUpdateAlias(index), readingConverter, contentsReadingConverter, normalizer, analyzer,
                 suggestSettings, threadPool);
     }
 
     public String getIndex() {
         return index;
-    }
-
-    public String getType() {
-        return type;
     }
 
     public long getAllWordsNum() {
@@ -253,8 +250,8 @@ public class Suggester {
     }
 
     private long getNum(final QueryBuilder queryBuilder) {
-        final SearchResponse searchResponse = client.prepareSearch().setIndices(getSearchAlias(index)).setSize(0)
-                .setQuery(queryBuilder).execute().actionGet(suggestSettings.getSearchTimeout());
+        final SearchResponse searchResponse = client.prepareSearch().setIndices(getSearchAlias(index)).setSize(0).setQuery(queryBuilder)
+                .execute().actionGet(suggestSettings.getSearchTimeout());
         return searchResponse.getHits().getTotalHits().value;
     }
 

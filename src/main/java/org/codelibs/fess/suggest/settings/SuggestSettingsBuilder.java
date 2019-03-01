@@ -25,19 +25,12 @@ import org.elasticsearch.client.Client;
 public class SuggestSettingsBuilder {
     protected String settingsIndexName = ".suggest";
 
-    protected String settingsTypeName = "suggestSettings";
-
     protected TimeoutSettings timeoutSettings = new TimeoutSettings();
 
     protected Map<String, Object> initialSettings = new HashMap<>();
 
     public SuggestSettingsBuilder setSettingsIndexName(final String settingsIndexName) {
         this.settingsIndexName = settingsIndexName.toLowerCase(Locale.ENGLISH);
-        return this;
-    }
-
-    public SuggestSettingsBuilder setSettingsTypeName(final String settingsTypeName) {
-        this.settingsTypeName = settingsTypeName.toLowerCase(Locale.ENGLISH);
         return this;
     }
 
@@ -77,6 +70,6 @@ public class SuggestSettingsBuilder {
     }
 
     public SuggestSettings build(final Client client, final String id) {
-        return new SuggestSettings(client, id, initialSettings, settingsIndexName, settingsTypeName, timeoutSettings);
+        return new SuggestSettings(client, id, initialSettings, settingsIndexName, timeoutSettings);
     }
 }

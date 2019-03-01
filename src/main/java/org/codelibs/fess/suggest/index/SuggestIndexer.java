@@ -54,7 +54,6 @@ import org.elasticsearch.search.SearchHit;
 public class SuggestIndexer {
     protected final Client client;
     protected String index;
-    protected String type;
     protected SuggestSettings settings;
 
     protected String[] supportedFields;
@@ -74,12 +73,11 @@ public class SuggestIndexer {
 
     protected ExecutorService threadPool;
 
-    public SuggestIndexer(final Client client, final String index, final String type, final ReadingConverter readingConverter,
+    public SuggestIndexer(final Client client, final String index, final ReadingConverter readingConverter,
             final ReadingConverter contentsReadingConverter, final Normalizer normalizer, final SuggestAnalyzer analyzer,
             final SuggestSettings settings, final ExecutorService threadPool) {
         this.client = client;
         this.index = index;
-        this.type = type;
 
         this.supportedFields = settings.array().get(SuggestSettings.DefaultKeys.SUPPORTED_FIELDS);
         this.badWords = settings.badword().get(true);
@@ -111,16 +109,16 @@ public class SuggestIndexer {
 
         try {
             final long start = System.currentTimeMillis();
-            final SuggestWriterResult result = suggestWriter.write(client, settings, index, type, array, true);
+            final SuggestWriterResult result = suggestWriter.write(client, settings, index, array, true);
             return new SuggestIndexResponse(items.length, items.length, result.getFailures(), System.currentTimeMillis() - start);
         } catch (Exception e) {
-            throw new SuggestIndexException("Failed to write items[" + items.length + "] to " + index + "/" + type, e);
+            throw new SuggestIndexException("Failed to write items[" + items.length + "] to " + index, e);
         }
     }
 
     public SuggestDeleteResponse delete(final String id) {
         final long start = System.currentTimeMillis();
-        final SuggestWriterResult result = suggestWriter.delete(client, settings, index, type, id);
+        final SuggestWriterResult result = suggestWriter.delete(client, settings, index, id);
         return new SuggestDeleteResponse(result.getFailures(), System.currentTimeMillis() - start);
     }
 
@@ -130,7 +128,7 @@ public class SuggestIndexer {
 
     public SuggestDeleteResponse deleteByQuery(final QueryBuilder queryBuilder) {
         final long start = System.currentTimeMillis();
-        final SuggestWriterResult result = suggestWriter.deleteByQuery(client, settings, index, type, queryBuilder);
+        final SuggestWriterResult result = suggestWriter.deleteByQuery(client, settings, index, queryBuilder);
         return new SuggestDeleteResponse(result.getFailures(), System.currentTimeMillis() - start);
     }
 
@@ -164,7 +162,7 @@ public class SuggestIndexer {
                 updateItems.add(item);
             }
             final SuggestWriterResult result =
-                    suggestWriter.write(client, settings, index, type, updateItems.toArray(new SuggestItem[updateItems.size()]), false);
+                    suggestWriter.write(client, settings, index, updateItems.toArray(new SuggestItem[updateItems.size()]), false);
             if (result.hasFailure()) {
                 throw new SuggestIndexException(result.getFailures().get(0));
             }
@@ -200,7 +198,7 @@ public class SuggestIndexer {
                 updateItems.add(item);
             }
             final SuggestWriterResult result =
-                    suggestWriter.write(client, settings, index, type, updateItems.toArray(new SuggestItem[updateItems.size()]), false);
+                    suggestWriter.write(client, settings, index, updateItems.toArray(new SuggestItem[updateItems.size()]), false);
             if (result.hasFailure()) {
                 throw new SuggestIndexException(result.getFailures().get(0));
             }
@@ -428,11 +426,6 @@ public class SuggestIndexer {
 
     public SuggestIndexer setIndexName(final String index) {
         this.index = index;
-        return this;
-    }
-
-    public SuggestIndexer setTypeName(final String type) {
-        this.type = type;
         return this;
     }
 
