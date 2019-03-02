@@ -18,8 +18,8 @@ package org.codelibs.fess.suggest.util;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
@@ -45,6 +45,7 @@ import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.normalizer.NormalizerChain;
 import org.codelibs.fess.suggest.settings.AnalyzerSettings;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
+import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.delete.DeleteRequest;
@@ -235,22 +236,32 @@ public final class SuggestUtil {
     public static boolean deleteByQuery(final Client client, final SuggestSettings settings, final String index,
             final QueryBuilder queryBuilder) {
         try {
-            SearchResponse searchResponse = client.prepareSearch(index).setQuery(queryBuilder).setSize(500)
-                    .setScroll(settings.getScrollTimeout()).execute().actionGet(settings.getSearchTimeout());
+            SearchResponse response = client.prepareSearch(index).setQuery(queryBuilder).setSize(500).setScroll(settings.getScrollTimeout())
+                    .execute().actionGet(settings.getSearchTimeout());
+            String scrollId = response.getScrollId();
+            try {
+                while (scrollId != null) {
+                    final SearchHit[] hits = response.getHits().getHits();
+                    if (hits.length == 0) {
+                        break;
+                    }
 
-            while (searchResponse.getHits().getHits().length > 0) {
-                final String scrollId = searchResponse.getScrollId();
-                final SearchHit[] hits = searchResponse.getHits().getHits();
+                    final BulkRequestBuilder bulkRequestBuiler = client.prepareBulk();
+                    Stream.of(hits).map(SearchHit::getId).forEach(id -> bulkRequestBuiler.add(new DeleteRequest(index, id)));
 
-                final BulkRequestBuilder bulkRequestBuiler = client.prepareBulk();
-                Stream.of(hits).map(SearchHit::getId).forEach(id -> bulkRequestBuiler.add(new DeleteRequest(index, id)));
-
-                final BulkResponse bulkResponse = bulkRequestBuiler.execute().actionGet(settings.getBulkTimeout());
-                if (bulkResponse.hasFailures()) {
-                    throw new SuggesterException(bulkResponse.buildFailureMessage());
+                    final BulkResponse bulkResponse = bulkRequestBuiler.execute().actionGet(settings.getBulkTimeout());
+                    if (bulkResponse.hasFailures()) {
+                        throw new SuggesterException(bulkResponse.buildFailureMessage());
+                    }
+                    response = client.prepareSearchScroll(scrollId).setScroll(settings.getScrollTimeout()).execute()
+                            .actionGet(settings.getSearchTimeout());
+                    if (!scrollId.equals(response.getScrollId())) {
+                        SuggestUtil.deleteScrollContext(client, scrollId);
+                    }
+                    scrollId = response.getScrollId();
                 }
-                searchResponse = client.prepareSearchScroll(scrollId).setScroll(settings.getScrollTimeout()).execute()
-                        .actionGet(settings.getSearchTimeout());
+            } finally {
+                SuggestUtil.deleteScrollContext(client, scrollId);
             }
             client.admin().indices().prepareRefresh(index).execute().actionGet(settings.getIndicesTimeout());
         } catch (final Exception e) {
@@ -258,6 +269,12 @@ public final class SuggestUtil {
         }
 
         return true;
+    }
+
+    public static void deleteScrollContext(final Client client, final String scrollId) {
+        if (scrollId != null) {
+            client.prepareClearScroll().addScrollId(scrollId).execute(ActionListener.wrap(res -> {}, e -> {}));
+        }
     }
 
     public static String escapeWildcardQuery(final String query) {
