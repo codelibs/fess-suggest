@@ -150,7 +150,7 @@ public class SuggestIndexer {
         }
 
         final List<SuggestItem> updateItems = new ArrayList<>();
-        SearchResponse response = client.prepareSearch(index).setSize(1000).setScroll(settings.getScrollTimeout())
+        SearchResponse response = client.prepareSearch(index).setSize(500).setScroll(settings.getScrollTimeout())
                 .setQuery(QueryBuilders.rangeQuery(FieldNames.DOC_FREQ).gte(1)).execute().actionGet(settings.getSearchTimeout());
         while (response.getHits().getHits().length > 0) {
             final SearchHit[] hits = response.getHits().getHits();
@@ -186,7 +186,7 @@ public class SuggestIndexer {
         }
 
         final List<SuggestItem> updateItems = new ArrayList<>();
-        SearchResponse response = client.prepareSearch(index).setSize(1000).setScroll(settings.getScrollTimeout())
+        SearchResponse response = client.prepareSearch(index).setSize(500).setScroll(settings.getScrollTimeout())
                 .setQuery(QueryBuilders.rangeQuery(FieldNames.QUERY_FREQ).gte(1)).execute().actionGet(settings.getSearchTimeout());
         while (response.getHits().getHits().length > 0) {
             final SearchHit[] hits = response.getHits().getHits();

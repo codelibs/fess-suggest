@@ -251,7 +251,7 @@ public class Suggester {
 
     private long getNum(final QueryBuilder queryBuilder) {
         final SearchResponse searchResponse = client.prepareSearch().setIndices(getSearchAlias(index)).setSize(0).setQuery(queryBuilder)
-                .execute().actionGet(suggestSettings.getSearchTimeout());
+                .setTrackTotalHits(true).execute().actionGet(suggestSettings.getSearchTimeout());
         return searchResponse.getHits().getTotalHits().value;
     }
 

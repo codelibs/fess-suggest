@@ -186,8 +186,8 @@ public class ESSourceReader implements DocumentReader {
     }
 
     protected long getTotal() {
-        final SearchResponse response = client.prepareSearch().setIndices(indexName).setQuery(queryBuilder).setSize(0).execute()
-                .actionGet(settings.getSearchTimeout());
+        final SearchResponse response = client.prepareSearch().setIndices(indexName).setQuery(queryBuilder).setSize(0)
+                .setTrackTotalHits(true).execute().actionGet(settings.getSearchTimeout());
         return response.getHits().getTotalHits().value;
     }
 

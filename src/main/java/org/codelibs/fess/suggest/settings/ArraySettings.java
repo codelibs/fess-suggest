@@ -102,7 +102,7 @@ public class ArraySettings {
         final String actualIndex = index + "." + type.toLowerCase(Locale.ENGLISH);
         try {
             SearchResponse response = client.prepareSearch().setIndices(actualIndex).setScroll(settings.getScrollTimeout())
-                    .setQuery(QueryBuilders.termQuery(FieldNames.ARRAY_KEY, key)).setSize(1000).execute()
+                    .setQuery(QueryBuilders.termQuery(FieldNames.ARRAY_KEY, key)).setSize(500).execute()
                     .actionGet(settings.getSearchTimeout());
 
             final Map<String, Object>[] array = new Map[(int) response.getHits().getTotalHits().value];
