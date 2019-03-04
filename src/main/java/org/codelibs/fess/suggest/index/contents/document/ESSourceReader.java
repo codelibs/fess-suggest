@@ -138,7 +138,7 @@ public class ESSourceReader implements DocumentReader {
                 } else {
                     response = client.prepareSearchScroll(scrollId).setScroll(settings.getScrollTimeout()).execute()
                             .actionGet(settings.getSearchTimeout());
-                    if (scrollId.equals(response.getScrollId())) {
+                    if (!scrollId.equals(response.getScrollId())) {
                         SuggestUtil.deleteScrollContext(client, scrollId);
                     }
                     scrollId = response.getScrollId();
