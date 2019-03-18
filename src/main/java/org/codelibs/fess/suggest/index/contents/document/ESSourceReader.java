@@ -25,6 +25,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.codelibs.fess.suggest.settings.SuggestSettings;
+import org.codelibs.fess.suggest.util.SuggestUtil;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
@@ -137,10 +138,14 @@ public class ESSourceReader implements DocumentReader {
                 } else {
                     response = client.prepareSearchScroll(scrollId).setScroll(settings.getScrollTimeout()).execute()
                             .actionGet(settings.getSearchTimeout());
+                    if (!scrollId.equals(response.getScrollId())) {
+                        SuggestUtil.deleteScrollContext(client, scrollId);
+                    }
                     scrollId = response.getScrollId();
                 }
                 final SearchHit[] hits = response.getHits().getHits();
                 if (scrollId == null || hits.length == 0) {
+                    SuggestUtil.deleteScrollContext(client, scrollId);
                     isFinished.set(true);
                 }
 

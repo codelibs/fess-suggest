@@ -152,25 +152,36 @@ public class SuggestIndexer {
         }
 
         final List<SuggestItem> updateItems = new ArrayList<>();
-        SearchResponse response = client.prepareSearch(index).setTypes(type).setSize(1000).setScroll(settings.getScrollTimeout())
+        SearchResponse response = client.prepareSearch(index).setTypes(type).setSize(500).setScroll(settings.getScrollTimeout())
                 .setQuery(QueryBuilders.rangeQuery(FieldNames.DOC_FREQ).gte(1)).execute().actionGet(settings.getSearchTimeout());
-        while (response.getHits().getHits().length > 0) {
-            final SearchHit[] hits = response.getHits().getHits();
-            for (final SearchHit hit : hits) {
-                final SuggestItem item = SuggestItem.parseSource(hit.getSourceAsMap());
-                item.setDocFreq(0);
-                item.setKinds(Stream.of(item.getKinds()).filter(kind -> kind != SuggestItem.Kind.DOCUMENT)
-                        .toArray(count -> new SuggestItem.Kind[count]));
-                updateItems.add(item);
-            }
-            final SuggestWriterResult result =
-                    suggestWriter.write(client, settings, index, type, updateItems.toArray(new SuggestItem[updateItems.size()]), false);
-            if (result.hasFailure()) {
-                throw new SuggestIndexException(result.getFailures().get(0));
-            }
+        String scrollId = response.getScrollId();
+        try {
+            while (scrollId != null) {
+                final SearchHit[] hits = response.getHits().getHits();
+                if (hits.length == 0) {
+                    break;
+                }
+                for (final SearchHit hit : hits) {
+                    final SuggestItem item = SuggestItem.parseSource(hit.getSourceAsMap());
+                    item.setDocFreq(0);
+                    item.setKinds(Stream.of(item.getKinds()).filter(kind -> kind != SuggestItem.Kind.DOCUMENT)
+                            .toArray(count -> new SuggestItem.Kind[count]));
+                    updateItems.add(item);
+                }
+                final SuggestWriterResult result =
+                        suggestWriter.write(client, settings, index, type, updateItems.toArray(new SuggestItem[updateItems.size()]), false);
+                if (result.hasFailure()) {
+                    throw new SuggestIndexException(result.getFailures().get(0));
+                }
 
-            final String scrollId = response.getScrollId();
-            response = client.prepareSearchScroll(scrollId).execute().actionGet(settings.getSearchTimeout());
+                response = client.prepareSearchScroll(scrollId).execute().actionGet(settings.getSearchTimeout());
+                if (!scrollId.equals(response.getScrollId())) {
+                    SuggestUtil.deleteScrollContext(client, scrollId);
+                }
+                scrollId = response.getScrollId();
+            }
+        } finally {
+            SuggestUtil.deleteScrollContext(client, scrollId);
         }
 
         return new SuggestDeleteResponse(null, System.currentTimeMillis() - start);
