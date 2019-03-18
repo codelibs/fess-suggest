@@ -102,20 +102,31 @@ public class ArraySettings {
         final String actualIndex = index + "." + type.toLowerCase(Locale.ENGLISH);
         try {
             SearchResponse response = client.prepareSearch().setIndices(actualIndex).setTypes(type).setScroll(settings.getScrollTimeout())
-                    .setQuery(QueryBuilders.termQuery(FieldNames.ARRAY_KEY, key)).setSize(1000).execute()
+                    .setQuery(QueryBuilders.termQuery(FieldNames.ARRAY_KEY, key)).setSize(500).execute()
                     .actionGet(settings.getSearchTimeout());
+            String scrollId = response.getScrollId();
 
             final Map<String, Object>[] array = new Map[(int) response.getHits().getTotalHits()];
 
             int count = 0;
-            while (response.getHits().getHits().length > 0) {
-                final String scrollId = response.getScrollId();
-                final SearchHit[] hits = response.getHits().getHits();
-                for (final SearchHit hit : hits) {
-                    array[count++] = hit.getSourceAsMap();
+            try {
+                while (scrollId != null) {
+                    final SearchHit[] hits = response.getHits().getHits();
+                    if (hits.length == 0) {
+                        break;
+                    }
+                    for (final SearchHit hit : hits) {
+                        array[count++] = hit.getSourceAsMap();
+                    }
+                    response = client.prepareSearchScroll(scrollId).setScroll(settings.getScrollTimeout()).execute()
+                            .actionGet(settings.getSearchTimeout());
+                    if (!scrollId.equals(response.getScrollId())) {
+                        SuggestUtil.deleteScrollContext(client, scrollId);
+                    }
+                    scrollId = response.getScrollId();
                 }
-                response = client.prepareSearchScroll(scrollId).setScroll(settings.getScrollTimeout()).execute()
-                        .actionGet(settings.getSearchTimeout());
+            } finally {
+                SuggestUtil.deleteScrollContext(client, scrollId);
             }
 
             Arrays.sort(array, (o1, o2) -> {

@@ -18,7 +18,11 @@ package org.codelibs.fess.suggest.settings;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -27,16 +31,12 @@ import org.codelibs.core.lang.StringUtil;
 import org.codelibs.fess.suggest.analysis.SuggestAnalyzer;
 import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.exception.SuggestSettingsException;
-import org.codelibs.fess.suggest.exception.SuggesterException;
+import org.codelibs.fess.suggest.util.SuggestUtil;
 import org.elasticsearch.action.admin.indices.analyze.AnalyzeResponse;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.elasticsearch.action.admin.indices.settings.get.GetSettingsResponse;
-import org.elasticsearch.action.bulk.BulkRequestBuilder;
-import org.elasticsearch.action.bulk.BulkResponse;
-import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -264,35 +264,46 @@ public class AnalyzerSettings {
     }
 
     protected Map<String, FieldAnalyzerMapping> getFieldAnalyzerMapping() {
-        final Map<String, FieldAnalyzerMapping> fieldAnalyzerMappingMap = new HashMap<>();
-        SearchResponse searchResponse = client.prepareSearch(analyzerSettingsIndexName)
+        final Map<String, FieldAnalyzerMapping> mappingMap = new HashMap<>();
+        SearchResponse response = client.prepareSearch(analyzerSettingsIndexName)
                 .setQuery(QueryBuilders.termQuery(FieldNames.ANALYZER_SETTINGS_TYPE, settingsFieldAnalyzerMappingType))
                 .setScroll(settings.getScrollTimeout()).execute().actionGet(settings.getSearchTimeout());
-        while (searchResponse.getHits().getHits().length > 0) {
-            final String scrollId = searchResponse.getScrollId();
-            final SearchHit[] hits = searchResponse.getHits().getHits();
-            for (SearchHit hit : hits) {
-                final Map<String, Object> source = hit.getSourceAsMap();
-                final String fieldReadingAnalyzer = source.get(FieldNames.ANALYZER_SETTINGS_READING_ANALYZER) == null ? null
-                        : source.get(FieldNames.ANALYZER_SETTINGS_READING_ANALYZER).toString();
-                final String fieldReadingTermAnalyzer = source.get(FieldNames.ANALYZER_SETTINGS_READING_TERM_ANALYZER) == null ? null
-                        : source.get(FieldNames.ANALYZER_SETTINGS_READING_TERM_ANALYZER).toString();
-                final String fieldNormalizeAnalyzer = source.get(FieldNames.ANALYZER_SETTINGS_NORMALIZE_ANALYZER) == null ? null
-                        : source.get(FieldNames.ANALYZER_SETTINGS_NORMALIZE_ANALYZER).toString();
-                final String fieldContentsAnalyzer = source.get(FieldNames.ANALYZER_SETTINGS_CONTENTS_ANALYZER) == null ? null
-                        : source.get(FieldNames.ANALYZER_SETTINGS_CONTENTS_ANALYZER).toString();
-                final String fieldContentsReadingAnalyzer =
-                        source.get(FieldNames.ANALYZER_SETTINGS_CONTENTS_READING_ANALYZER) == null ? null
-                                : source.get(FieldNames.ANALYZER_SETTINGS_CONTENTS_READING_ANALYZER).toString();
+        String scrollId = response.getScrollId();
+        try {
+            while (scrollId != null) {
+                final SearchHit[] hits = response.getHits().getHits();
+                if (hits.length == 0) {
+                    break;
+                }
+                for (SearchHit hit : hits) {
+                    final Map<String, Object> source = hit.getSourceAsMap();
+                    final String fieldReadingAnalyzer = source.get(FieldNames.ANALYZER_SETTINGS_READING_ANALYZER) == null ? null
+                            : source.get(FieldNames.ANALYZER_SETTINGS_READING_ANALYZER).toString();
+                    final String fieldReadingTermAnalyzer = source.get(FieldNames.ANALYZER_SETTINGS_READING_TERM_ANALYZER) == null ? null
+                            : source.get(FieldNames.ANALYZER_SETTINGS_READING_TERM_ANALYZER).toString();
+                    final String fieldNormalizeAnalyzer = source.get(FieldNames.ANALYZER_SETTINGS_NORMALIZE_ANALYZER) == null ? null
+                            : source.get(FieldNames.ANALYZER_SETTINGS_NORMALIZE_ANALYZER).toString();
+                    final String fieldContentsAnalyzer = source.get(FieldNames.ANALYZER_SETTINGS_CONTENTS_ANALYZER) == null ? null
+                            : source.get(FieldNames.ANALYZER_SETTINGS_CONTENTS_ANALYZER).toString();
+                    final String fieldContentsReadingAnalyzer =
+                            source.get(FieldNames.ANALYZER_SETTINGS_CONTENTS_READING_ANALYZER) == null ? null
+                                    : source.get(FieldNames.ANALYZER_SETTINGS_CONTENTS_READING_ANALYZER).toString();
 
-                fieldAnalyzerMappingMap.put(source.get(FieldNames.ANALYZER_SETTINGS_FIELD_NAME).toString(),
-                        new FieldAnalyzerMapping(fieldReadingAnalyzer, fieldReadingTermAnalyzer, fieldNormalizeAnalyzer,
-                                fieldContentsAnalyzer, fieldContentsReadingAnalyzer));
+                    mappingMap.put(source.get(FieldNames.ANALYZER_SETTINGS_FIELD_NAME).toString(),
+                            new FieldAnalyzerMapping(fieldReadingAnalyzer, fieldReadingTermAnalyzer, fieldNormalizeAnalyzer,
+                                    fieldContentsAnalyzer, fieldContentsReadingAnalyzer));
+                }
+                response = client.prepareSearchScroll(scrollId).setScroll(settings.getScrollTimeout()).execute()
+                        .actionGet(settings.getSearchTimeout());
+                if (!scrollId.equals(response.getScrollId())) {
+                    SuggestUtil.deleteScrollContext(client, scrollId);
+                }
+                scrollId = response.getScrollId();
             }
-            searchResponse = client.prepareSearchScroll(scrollId).setScroll(settings.getScrollTimeout()).execute()
-                    .actionGet(settings.getSearchTimeout());
+        } finally {
+            SuggestUtil.deleteScrollContext(client, scrollId);
         }
-        return fieldAnalyzerMappingMap;
+        return mappingMap;
     }
 
     public Set<String> checkAnalyzer() {
