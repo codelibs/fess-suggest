@@ -106,9 +106,8 @@ public class Suggester {
             final IndicesExistsResponse response =
                     client.admin().indices().prepareExists(getUpdateAlias(index)).execute().actionGet(suggestSettings.getIndicesTimeout());
             if (response.isExists()) {
-                GetAliasesResponse getAliasesResponse =
-                        client.admin().indices().prepareGetAliases(getUpdateAlias(index)).execute()
-                                .actionGet(suggestSettings.getIndicesTimeout());
+                GetAliasesResponse getAliasesResponse = client.admin().indices().prepareGetAliases(getUpdateAlias(index)).execute()
+                        .actionGet(suggestSettings.getIndicesTimeout());
                 getAliasesResponse.getAliases().keysIt().forEachRemaining(prevIndices::add);
             }
 
@@ -143,8 +142,8 @@ public class Suggester {
             if (updateIndicesResponse.isExists()) {
                 GetAliasesResponse getAliasesResponse =
                         client.admin().indices().prepareGetAliases(updateAlias).execute().actionGet(suggestSettings.getIndicesTimeout());
-                getAliasesResponse.getAliases().forEach(
-                        x -> x.value.stream().filter(y -> updateAlias.equals(y.alias())).forEach(y -> updateIndices.add(x.key)));
+                getAliasesResponse.getAliases()
+                        .forEach(x -> x.value.stream().filter(y -> updateAlias.equals(y.alias())).forEach(y -> updateIndices.add(x.key)));
             }
             if (updateIndices.size() != 1) {
                 throw new SuggesterException("Unexpected update indices num:" + updateIndices.size());
@@ -158,8 +157,8 @@ public class Suggester {
             if (searchIndicesResponse.isExists()) {
                 GetAliasesResponse getAliasesResponse =
                         client.admin().indices().prepareGetAliases(searchAlias).execute().actionGet(suggestSettings.getIndicesTimeout());
-                getAliasesResponse.getAliases().forEach(
-                        x -> x.value.stream().filter(y -> searchAlias.equals(y.alias())).forEach(y -> searchIndices.add(x.key)));
+                getAliasesResponse.getAliases()
+                        .forEach(x -> x.value.stream().filter(y -> searchAlias.equals(y.alias())).forEach(y -> searchIndices.add(x.key)));
             }
             if (searchIndices.size() != 1) {
                 throw new SuggesterException("Unexpected search indices num:" + searchIndices.size());
@@ -238,9 +237,8 @@ public class Suggester {
     }
 
     private long getNum(final QueryBuilder queryBuilder) {
-        final SearchResponse searchResponse =
-                client.prepareSearch().setIndices(getSearchAlias(index)).setTypes(type).setSize(0).setQuery(queryBuilder).execute()
-                        .actionGet(suggestSettings.getSearchTimeout());
+        final SearchResponse searchResponse = client.prepareSearch().setIndices(getSearchAlias(index)).setTypes(type).setSize(0)
+                .setQuery(queryBuilder).execute().actionGet(suggestSettings.getSearchTimeout());
         return searchResponse.getHits().getTotalHits();
     }
 
@@ -258,9 +256,8 @@ public class Suggester {
 
     private String getDefaultMappings() throws IOException {
         final StringBuilder mappingSource = new StringBuilder();
-        try (BufferedReader br =
-                new BufferedReader(new InputStreamReader(this.getClass().getClassLoader()
-                        .getResourceAsStream("suggest_indices/suggest/mappings-default.json")))) {
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(
+                this.getClass().getClassLoader().getResourceAsStream("suggest_indices/suggest/mappings-default.json")))) {
 
             String line;
             while ((line = br.readLine()) != null) {
@@ -272,9 +269,8 @@ public class Suggester {
 
     private String getDefaultIndexSettings() throws IOException {
         final StringBuilder settingsSource = new StringBuilder();
-        try (BufferedReader br =
-                new BufferedReader(new InputStreamReader(this.getClass().getClassLoader()
-                        .getResourceAsStream("suggest_indices/suggest.json")))) {
+        try (BufferedReader br = new BufferedReader(
+                new InputStreamReader(this.getClass().getClassLoader().getResourceAsStream("suggest_indices/suggest.json")))) {
             String line;
             while ((line = br.readLine()) != null) {
                 settingsSource.append(line);

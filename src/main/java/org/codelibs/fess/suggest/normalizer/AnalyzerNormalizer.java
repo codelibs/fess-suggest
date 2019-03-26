@@ -42,10 +42,9 @@ public class AnalyzerNormalizer implements Normalizer {
 
         @Override
         public String normalize(final String text, final String field, final String... dummy) {
-            final AnalyzeResponse termResponse =
-                    client.admin().indices().prepareAnalyze(analyzerSettings.getAnalyzerSettingsIndexName(), text)
-                            .setAnalyzer(analyzerSettings.getNormalizeAnalyzerName(field, lang)).execute()
-                            .actionGet(settings.getIndicesTimeout());
+            final AnalyzeResponse termResponse = client.admin().indices()
+                    .prepareAnalyze(analyzerSettings.getAnalyzerSettingsIndexName(), text)
+                    .setAnalyzer(analyzerSettings.getNormalizeAnalyzerName(field, lang)).execute().actionGet(settings.getIndicesTimeout());
 
             final List<AnalyzeResponse.AnalyzeToken> termTokenList = termResponse.getTokens();
             if (termTokenList.isEmpty()) {

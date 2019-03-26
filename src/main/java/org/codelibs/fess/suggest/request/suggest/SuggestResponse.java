@@ -18,7 +18,8 @@ public class SuggestResponse implements Response {
 
     protected final List<SuggestItem> items;
 
-    public SuggestResponse(final String index, final long tookMs, final List<String> words, final long total, final List<SuggestItem> items) {
+    public SuggestResponse(final String index, final long tookMs, final List<String> words, final long total,
+            final List<SuggestItem> items) {
         this.index = index;
         this.tookMs = tookMs;
         this.words = words;

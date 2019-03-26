@@ -59,10 +59,9 @@ public class AnalyzerConverter implements ReadingConverter {
 
         @Override
         public List<String> convert(final String text, final String field, final String... dummy) throws IOException {
-            final AnalyzeResponse readingResponse =
-                    client.admin().indices().prepareAnalyze(analyzerSettings.getAnalyzerSettingsIndexName(), text)
-                            .setAnalyzer(analyzerSettings.getReadingAnalyzerName(field, lang)).execute()
-                            .actionGet(settings.getIndicesTimeout());
+            final AnalyzeResponse readingResponse = client.admin().indices()
+                    .prepareAnalyze(analyzerSettings.getAnalyzerSettingsIndexName(), text)
+                    .setAnalyzer(analyzerSettings.getReadingAnalyzerName(field, lang)).execute().actionGet(settings.getIndicesTimeout());
 
             final AnalyzeResponse termResponse =
                     client.admin().indices().prepareAnalyze(analyzerSettings.getAnalyzerSettingsIndexName(), text)

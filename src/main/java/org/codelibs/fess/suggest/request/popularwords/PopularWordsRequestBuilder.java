@@ -38,6 +38,11 @@ public class PopularWordsRequestBuilder extends RequestBuilder<PopularWordsReque
         return this;
     }
 
+    public PopularWordsRequestBuilder addLanguage(final String lang) {
+        request.addLanguage(lang);
+        return this;
+    }
+
     public PopularWordsRequestBuilder setSeed(final String seed) {
         request.setSeed(seed);
         return this;

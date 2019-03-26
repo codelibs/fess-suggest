@@ -22,9 +22,8 @@ public class SuggesterBuilderTest extends TestCase {
         runner.onBuild((number, settingsBuilder) -> {
             settingsBuilder.put("http.cors.enabled", true);
             settingsBuilder.putList("discovery.zen.ping.unicast.hosts", "localhost:9301-9399");
-        }).build(
-                newConfigs().clusterName("ArraySettingsTest").numOfNode(1)
-                        .pluginTypes("org.codelibs.elasticsearch.kuromoji.neologd.KuromojiNeologdPlugin"));
+        }).build(newConfigs().clusterName("ArraySettingsTest").numOfNode(1)
+                .pluginTypes("org.codelibs.elasticsearch.kuromoji.neologd.KuromojiNeologdPlugin"));
         runner.ensureYellow();
     }
 
@@ -67,10 +66,9 @@ public class SuggesterBuilderTest extends TestCase {
 
         final Normalizer normalizer = (text, field, lang) -> null;
 
-        final Suggester suggester =
-                Suggester.builder()
-                        .settings(SuggestSettings.builder().setSettingsIndexName(settingsIndexName).setSettingsTypeName(settingsTypeName))
-                        .readingConverter(converter).normalizer(normalizer).build(runner.client(), id);
+        final Suggester suggester = Suggester.builder()
+                .settings(SuggestSettings.builder().setSettingsIndexName(settingsIndexName).setSettingsTypeName(settingsTypeName))
+                .readingConverter(converter).normalizer(normalizer).build(runner.client(), id);
 
         assertEquals(runner.client(), suggester.client);
 

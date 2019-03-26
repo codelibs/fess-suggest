@@ -37,7 +37,7 @@ public class KatakanaConverter implements ReadingConverter {
         if (initialized) {
             return;
         }
-
+        
         if (tokenizerFactory == null) {
             final String path = System.getProperty(SuggestConstants.USER_DICT_PATH);
             final String encoding = System.getProperty(SuggestConstants.USER_DICT_ENCODING);

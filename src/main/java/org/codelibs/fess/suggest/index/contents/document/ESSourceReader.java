@@ -112,18 +112,16 @@ public class ESSourceReader implements DocumentReader {
             try {
                 final SearchResponse response;
                 if (scrollId == null) {
-                    final SearchRequestBuilder builder =
-                            client.prepareSearch().setIndices(indexName).setTypes(typeName).setScroll(settings.getScrollTimeout())
-                                    .setQuery(queryBuilder).setSize(scrollSize);
+                    final SearchRequestBuilder builder = client.prepareSearch().setIndices(indexName).setTypes(typeName)
+                            .setScroll(settings.getScrollTimeout()).setQuery(queryBuilder).setSize(scrollSize);
                     for (final SortBuilder<?> sortBuilder : sortList) {
                         builder.addSort(sortBuilder);
                     }
                     response = builder.execute().actionGet(settings.getSearchTimeout());
                     scrollId = response.getScrollId();
                 } else {
-                    response =
-                            client.prepareSearchScroll(scrollId).setScroll(settings.getScrollTimeout()).execute()
-                                    .actionGet(settings.getSearchTimeout());
+                    response = client.prepareSearchScroll(scrollId).setScroll(settings.getScrollTimeout()).execute()
+                            .actionGet(settings.getSearchTimeout());
                     scrollId = response.getScrollId();
                 }
                 final SearchHit[] hits = response.getHits().getHits();
@@ -173,9 +171,8 @@ public class ESSourceReader implements DocumentReader {
     }
 
     protected long getTotal() {
-        final SearchResponse response =
-                client.prepareSearch().setIndices(indexName).setTypes(typeName).setQuery(queryBuilder).setSize(0).execute()
-                        .actionGet(settings.getSearchTimeout());
+        final SearchResponse response = client.prepareSearch().setIndices(indexName).setTypes(typeName).setQuery(queryBuilder).setSize(0)
+                .execute().actionGet(settings.getSearchTimeout());
         return response.getHits().getTotalHits();
     }
 

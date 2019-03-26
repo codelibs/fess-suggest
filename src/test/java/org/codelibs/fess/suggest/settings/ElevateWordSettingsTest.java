@@ -27,9 +27,8 @@ public class ElevateWordSettingsTest {
         runner.onBuild((number, settingsBuilder) -> {
             settingsBuilder.put("http.cors.enabled", true);
             settingsBuilder.putList("discovery.zen.ping.unicast.hosts", "localhost:9301-9399");
-        }).build(
-                newConfigs().clusterName("ArraySettingsTest").numOfNode(1)
-                        .pluginTypes("org.codelibs.elasticsearch.kuromoji.neologd.KuromojiNeologdPlugin"));
+        }).build(newConfigs().clusterName("ArraySettingsTest").numOfNode(1)
+                .pluginTypes("org.codelibs.elasticsearch.kuromoji.neologd.KuromojiNeologdPlugin"));
         runner.ensureYellow();
     }
 
@@ -61,9 +60,8 @@ public class ElevateWordSettingsTest {
                 new ElevateWord("a", 1.0f, Collections.singletonList("a"), Collections.singletonList("content"), null, null);
         ElevateWord elevateWord2 =
                 new ElevateWord("b", 0.0f, Collections.singletonList("b"), Collections.singletonList("content"), null, null);
-        ElevateWord elevateWord3 =
-                new ElevateWord("c", 100.0f, Collections.singletonList("c"), Collections.singletonList("content"),
-                        Collections.singletonList("tag1"), Collections.singletonList("role1"));
+        ElevateWord elevateWord3 = new ElevateWord("c", 100.0f, Collections.singletonList("c"), Collections.singletonList("content"),
+                Collections.singletonList("tag1"), Collections.singletonList("role1"));
 
         settings.elevateWord().add(elevateWord1);
         settings.elevateWord().add(elevateWord2);

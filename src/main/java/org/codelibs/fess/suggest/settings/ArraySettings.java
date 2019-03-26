@@ -86,10 +86,9 @@ public class ArraySettings {
     protected Map<String, Object>[] getFromArrayIndex(final String index, final String type, final String key) {
         final String actualIndex = index + "." + type.toLowerCase(Locale.ENGLISH);
         try {
-            SearchResponse response =
-                    client.prepareSearch().setIndices(actualIndex).setTypes(type).setScroll(settings.getScrollTimeout())
-                            .setQuery(QueryBuilders.termQuery(FieldNames.ARRAY_KEY, key)).setSize(1000).execute()
-                            .actionGet(settings.getSearchTimeout());
+            SearchResponse response = client.prepareSearch().setIndices(actualIndex).setTypes(type).setScroll(settings.getScrollTimeout())
+                    .setQuery(QueryBuilders.termQuery(FieldNames.ARRAY_KEY, key)).setSize(1000).execute()
+                    .actionGet(settings.getSearchTimeout());
 
             final Map<String, Object>[] array = new Map[(int) response.getHits().getTotalHits()];
 
@@ -100,9 +99,8 @@ public class ArraySettings {
                 for (final SearchHit hit : hits) {
                     array[count++] = hit.getSourceAsMap();
                 }
-                response =
-                        client.prepareSearchScroll(scrollId).setScroll(settings.getScrollTimeout()).execute()
-                                .actionGet(settings.getSearchTimeout());
+                response = client.prepareSearchScroll(scrollId).setScroll(settings.getScrollTimeout()).execute()
+                        .actionGet(settings.getSearchTimeout());
             }
 
             Arrays.sort(array, (o1, o2) -> {
@@ -169,14 +167,12 @@ public class ArraySettings {
         try {
             boolean empty;
             try {
-                empty =
-                        client.admin().indices().prepareGetMappings(actualIndex).setTypes(type).execute()
-                                .actionGet(settings.getIndicesTimeout()).getMappings().isEmpty();
+                empty = client.admin().indices().prepareGetMappings(actualIndex).setTypes(type).execute()
+                        .actionGet(settings.getIndicesTimeout()).getMappings().isEmpty();
             } catch (final IndexNotFoundException e) {
                 empty = true;
-                final CreateIndexResponse response =
-                        client.admin().indices().prepareCreate(actualIndex).setSettings(loadIndexSettings(), XContentType.JSON).execute()
-                                .actionGet(settings.getIndicesTimeout());
+                final CreateIndexResponse response = client.admin().indices().prepareCreate(actualIndex)
+                        .setSettings(loadIndexSettings(), XContentType.JSON).execute().actionGet(settings.getIndicesTimeout());
                 if (!response.isAcknowledged()) {
                     throw new SuggestSettingsException("Failed to create " + actualIndex + "/" + type + " index.", e);
                 }
@@ -184,14 +180,10 @@ public class ArraySettings {
                         .actionGet(settings.getClusterTimeout());
             }
             if (empty) {
-                client.admin()
-                        .indices()
-                        .preparePutMapping(actualIndex)
-                        .setType(type)
-                        .setSource(
-                                XContentFactory.jsonBuilder().startObject().startObject(settingsId).startObject("properties")
-                                        .startObject(FieldNames.ARRAY_KEY).field("type", "keyword").endObject().endObject().endObject()
-                                        .endObject()).execute().actionGet(settings.getIndicesTimeout());
+                client.admin().indices().preparePutMapping(actualIndex).setType(type)
+                        .setSource(XContentFactory.jsonBuilder().startObject().startObject(settingsId).startObject("properties")
+                                .startObject(FieldNames.ARRAY_KEY).field("type", "keyword").endObject().endObject().endObject().endObject())
+                        .execute().actionGet(settings.getIndicesTimeout());
             }
         } catch (final IOException e) {
             throw new SuggestSettingsException("Failed to create mappings.");
@@ -201,9 +193,8 @@ public class ArraySettings {
     protected String loadIndexSettings() throws IOException {
         final String dictionaryPath = System.getProperty("fess.dictionary.path", StringUtil.EMPTY);
         final StringBuilder sb = new StringBuilder();
-        try (BufferedReader br =
-                new BufferedReader(new InputStreamReader(this.getClass().getClassLoader()
-                        .getResourceAsStream("suggest_indices/suggest_settings_array.json")));) {
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(
+                this.getClass().getClassLoader().getResourceAsStream("suggest_indices/suggest_settings_array.json")));) {
 
             String line;
             while ((line = br.readLine()) != null) {
