@@ -53,6 +53,8 @@ public class PopularWordsRequest extends Request<PopularWordsResponse> {
 
     private final List<String> fields = new ArrayList<>();
 
+    private final List<String> languages = new ArrayList<>();
+
     private String seed = String.valueOf(System.currentTimeMillis());
 
     private int windowSize = 20;
@@ -93,6 +95,10 @@ public class PopularWordsRequest extends Request<PopularWordsResponse> {
 
     public void addField(final String field) {
         this.fields.add(field);
+    }
+
+    public void addLanguage(final String lang) {
+        this.languages.add(lang);
     }
 
     public void setDetail(final boolean detail) {
@@ -154,6 +160,9 @@ public class PopularWordsRequest extends Request<PopularWordsResponse> {
         }
         if (!fields.isEmpty()) {
             queryBuilder.must(QueryBuilders.termsQuery(FieldNames.FIELDS, fields));
+        }
+        if (!languages.isEmpty()) {
+            queryBuilder.must(QueryBuilders.termsQuery(FieldNames.LANGUAGES, languages));
         }
         if (!excludeWords.isEmpty()) {
             queryBuilder.mustNot(QueryBuilders.termsQuery(FieldNames.TEXT, excludeWords));
