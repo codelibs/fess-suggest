@@ -36,7 +36,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<lucene.version>8.0.0</lucene.version>
-		<elasticsearch.version>7.0.0</elasticsearch.version>
+		<elasticsearch.version>7.0.1</elasticsearch.version>
 		<groovy.version>2.4.15</groovy.version>
 		<log4j.version>2.11.1</log4j.version>
 		<jna.version>4.5.1</jna.version>
