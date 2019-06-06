@@ -43,7 +43,7 @@ public class ElevateWordSettingsTest {
             settingsBuilder.put("http.cors.enabled", true);
             settingsBuilder.putList("discovery.zen.ping.unicast.hosts", "localhost:9301-9399");
         }).build(newConfigs().clusterName("ArraySettingsTest").numOfNode(1)
-                .pluginTypes("org.codelibs.elasticsearch.kuromoji.neologd.KuromojiNeologdPlugin"));
+                .pluginTypes("org.codelibs.elasticsearch.kuromoji.ipadic.neologd.KuromojiNeologdPlugin"));
         runner.ensureYellow();
     }
 

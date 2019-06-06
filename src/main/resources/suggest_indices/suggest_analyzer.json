@@ -7,8 +7,8 @@
   },
   "analysis" : {
     "tokenizer" : {
-      "kuromoji_neologd_normal" : {
-        "type" : "kuromoji_neologd_tokenizer",
+      "kuromoji_ipadic_neologd_normal" : {
+        "type" : "kuromoji_ipadic_neologd_tokenizer",
         "mode" : "normal",
         "discard_punctuation" : "false"
       },
@@ -20,12 +20,12 @@
     "analyzer" : {
       "reading_analyzer" : {
         "type" : "custom",
-        "tokenizer" : "kuromoji_neologd_normal",
+        "tokenizer" : "kuromoji_ipadic_neologd_normal",
         "filter" : ["reading_form"]
       },
       "reading_term_analyzer" : {
         "type" : "custom",
-        "tokenizer" : "kuromoji_neologd_normal"
+        "tokenizer" : "kuromoji_ipadic_neologd_normal"
       },
       "normalize_analyzer" : {
         "type" : "custom",
@@ -35,24 +35,24 @@
       },
       "contents_analyzer" : {
         "type" : "custom",
-        "tokenizer" : "kuromoji_neologd_normal",
+        "tokenizer" : "kuromoji_ipadic_neologd_normal",
         "char_filter" : ["mapping_char"],
         "filter" : ["lowercase", "stopword_en_filter", "pos_filter", "content_length_filter", "limit_token_count_filter"]
       },
       "contents_reading_analyzer" : {
         "type" : "custom",
-        "tokenizer" : "kuromoji_neologd_normal",
+        "tokenizer" : "kuromoji_ipadic_neologd_normal",
         "char_filter" : ["mapping_char"],
         "filter" : ["lowercase", "stopword_en_filter", "pos_filter", "content_length_filter", "limit_token_count_filter", "reading_form"]
       },
       "reading_analyzer_ja" : {
         "type" : "custom",
-        "tokenizer" : "kuromoji_neologd_normal",
+        "tokenizer" : "kuromoji_ipadic_neologd_normal",
         "filter" : ["reading_form"]
       },
       "reading_term_analyzer_ja" : {
         "type" : "custom",
-        "tokenizer" : "kuromoji_neologd_normal"
+        "tokenizer" : "kuromoji_ipadic_neologd_normal"
       },
       "normalize_analyzer_ja" : {
         "type" : "custom",
@@ -62,13 +62,13 @@
       },
       "contents_analyzer_ja" : {
         "type" : "custom",
-        "tokenizer" : "kuromoji_neologd_normal",
+        "tokenizer" : "kuromoji_ipadic_neologd_normal",
         "char_filter" : ["mapping_char"],
         "filter" : ["lowercase", "stopword_en_filter", "pos_filter", "content_length_filter", "limit_token_count_filter"]
       },
       "contents_reading_analyzer_ja" : {
         "type" : "custom",
-        "tokenizer" : "kuromoji_neologd_normal",
+        "tokenizer" : "kuromoji_ipadic_neologd_normal",
         "char_filter" : ["mapping_char"],
         "filter" : ["lowercase", "stopword_en_filter", "pos_filter", "content_length_filter", "limit_token_count_filter", "reading_form"]
       },
@@ -1296,10 +1296,10 @@
     },
     "filter" : {
       "reading_form" : {
-        "type" : "kuromoji_neologd_readingform"
+        "type" : "kuromoji_ipadic_neologd_readingform"
       },
       "pos_filter" : {
-        "type" : "kuromoji_neologd_part_of_speech",
+        "type" : "kuromoji_ipadic_neologd_part_of_speech",
         "stoptags" : [
           "その他",
           "その他-間投",
