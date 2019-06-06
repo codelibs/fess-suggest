@@ -209,7 +209,7 @@
 		<dependency>
 			<groupId>org.codelibs</groupId>
 			<artifactId>elasticsearch-analysis-kuromoji-ipadic-neologd</artifactId>
-			<version>6.8.0</version>
+			<version>6.7.0</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
