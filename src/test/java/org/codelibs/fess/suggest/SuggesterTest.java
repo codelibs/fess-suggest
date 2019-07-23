@@ -323,7 +323,7 @@ public class SuggesterTest {
         String field = "testField";
 
         Map<String, String> analyzerMapping = new HashMap<>();
-        analyzerMapping.put(FieldNames.ANALYZER_SETTINGS_TYPE, AnalyzerSettings.settingsFieldAnalyzerMappingType);
+        analyzerMapping.put(FieldNames.ANALYZER_SETTINGS_TYPE, AnalyzerSettings.FIELD_ANALYZER_MAPPING);
         analyzerMapping.put(FieldNames.ANALYZER_SETTINGS_FIELD_NAME, field);
         analyzerMapping.put(FieldNames.ANALYZER_SETTINGS_CONTENTS_ANALYZER, "title_contents_analyzer");
         analyzerMapping.put(FieldNames.ANALYZER_SETTINGS_CONTENTS_READING_ANALYZER, "");

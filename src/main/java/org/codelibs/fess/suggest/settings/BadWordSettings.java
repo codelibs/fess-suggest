@@ -88,8 +88,8 @@ public class BadWordSettings {
         }
 
         final List<String> list = new ArrayList<>();
-        try (BufferedReader br = new BufferedReader(
-                new InputStreamReader(Thread.currentThread().getContextClassLoader().getResourceAsStream("suggest_settings/default-badwords.txt")))) {
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(
+                Thread.currentThread().getContextClassLoader().getResourceAsStream("suggest_settings/default-badwords.txt")))) {
 
             String line;
             while ((line = br.readLine()) != null) {
