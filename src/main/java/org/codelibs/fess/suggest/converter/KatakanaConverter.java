@@ -96,9 +96,9 @@ public class KatakanaConverter implements ReadingConverter {
                 final String term = att.toString();
                 final int pos = inputStr.indexOf(term, offset);
                 if (pos > 0) {
-                    final String tmp = inputStr.substring(offset, offset + pos);
+                    final String tmp = inputStr.substring(offset, pos);
                     kanaBuf.append(transliterator.transliterate(tmp));
-                    offset += pos;
+                    offset = pos;
                 } else if (pos == -1) {
                     continue;
                 }

@@ -99,9 +99,9 @@ public class AnalyzerConverter implements ReadingConverter {
 
                     final int pos = text.indexOf(term, offset);
                     if (pos > 0) {
-                        final String tmp = text.substring(offset, offset + pos);
+                        final String tmp = text.substring(offset, pos);
                         readingBuf.append(transliterator.transliterate(tmp));
-                        offset += pos;
+                        offset = pos;
                     } else if (pos == -1) {
                         continue;
                     }
