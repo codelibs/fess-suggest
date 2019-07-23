@@ -87,26 +87,28 @@ public class AnalyzerConverter implements ReadingConverter {
             final List<AnalyzeResponse.AnalyzeToken> termTokenList = termResponse.getTokens();
 
             final StringBuilder readingBuf = new StringBuilder(text.length());
-            int offset = 0;
-            for (int i = 0; i < readingTokenList.size(); i++) {
-                final String term = termTokenList.get(i).getTerm();
-                String reading = readingTokenList.get(i).getTerm();
-                if (Strings.isNullOrEmpty(reading)) {
-                    reading = term;
-                }
-                reading = transliterator.transliterate(reading);
+            if (readingTokenList != null && termTokenList != null) {
+                int offset = 0;
+                for (int i = 0; i < readingTokenList.size(); i++) {
+                    final String term = termTokenList.get(i).getTerm();
+                    String reading = readingTokenList.get(i).getTerm();
+                    if (Strings.isNullOrEmpty(reading)) {
+                        reading = term;
+                    }
+                    reading = transliterator.transliterate(reading);
 
-                final int pos = text.substring(offset).indexOf(term);
-                if (pos > 0) {
-                    final String tmp = text.substring(offset, offset + pos);
-                    readingBuf.append(transliterator.transliterate(tmp));
-                    offset += pos;
-                } else if (pos == -1) {
-                    continue;
-                }
+                    final int pos = text.substring(offset).indexOf(term);
+                    if (pos > 0) {
+                        final String tmp = text.substring(offset, offset + pos);
+                        readingBuf.append(transliterator.transliterate(tmp));
+                        offset += pos;
+                    } else if (pos == -1) {
+                        continue;
+                    }
 
-                readingBuf.append(reading);
-                offset += term.length();
+                    readingBuf.append(reading);
+                    offset += term.length();
+                }
             }
 
             final List<String> list = new ArrayList<>(1);
