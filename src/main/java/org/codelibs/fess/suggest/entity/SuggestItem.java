@@ -15,7 +15,6 @@
  */
 package org.codelibs.fess.suggest.entity;
 
-import java.io.Serializable;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -33,9 +32,7 @@ import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.util.SuggestUtil;
 import org.elasticsearch.common.Nullable;
 
-public class SuggestItem implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class SuggestItem {
 
     public enum Kind {
         DOCUMENT("document"), QUERY("query"), USER("user");

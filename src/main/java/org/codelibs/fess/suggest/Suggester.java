@@ -134,7 +134,7 @@ public class Suggester {
                             .addMapping(SuggestConstants.DEFAULT_TYPE, mappingSource, XContentType.JSON).execute()
                             .actionGet(suggestSettings.getIndicesTimeout());
             if (!createIndexResponse.isAcknowledged()) {
-                throw new SuggesterException("Failed to create index");
+                throw new SuggesterException("Could not create index: " + indexName);
             }
             client.admin().cluster().prepareHealth().setWaitForYellowStatus().execute().actionGet(suggestSettings.getClusterTimeout());
 
@@ -145,7 +145,7 @@ public class Suggester {
             }
             aliasesRequestBuilder.execute().actionGet(suggestSettings.getIndicesTimeout());
         } catch (final Exception e) {
-            throw new SuggesterException("Failed to create index.", e);
+            throw new SuggesterException("Failed to replace with new index.", e);
         }
     }
 

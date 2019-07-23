@@ -94,7 +94,7 @@ public class KatakanaConverter implements ReadingConverter {
             while (stream.incrementToken()) {
                 final CharTermAttribute att = stream.getAttribute(CharTermAttribute.class);
                 final String term = att.toString();
-                final int pos = inputStr.substring(offset).indexOf(term);
+                final int pos = inputStr.indexOf(term, offset);
                 if (pos > 0) {
                     final String tmp = inputStr.substring(offset, offset + pos);
                     kanaBuf.append(transliterator.transliterate(tmp));

@@ -15,13 +15,10 @@
  */
 package org.codelibs.fess.suggest.entity;
 
-import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 
-public class ElevateWord implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class ElevateWord {
 
     protected final String elevateWord;
     protected final float boost;

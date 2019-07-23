@@ -35,7 +35,7 @@ public class HankakuKanaToZenkakuKana implements Normalizer {
         } else if (s.length() == 1) {
             return hankakuKatakanaToZenkakuKatakana(s.charAt(0)) + "";
         } else {
-            final StringBuffer sb = new StringBuffer(s);
+            final StringBuilder sb = new StringBuilder(s);
             int i;
             for (i = 0; i < sb.length() - 1; i++) {
                 final char originalChar1 = sb.charAt(i);
@@ -114,10 +114,12 @@ public class HankakuKanaToZenkakuKana implements Normalizer {
                     return 'ベ';
                 case 'ﾎ':
                     return 'ボ';
+                default:
+                    break;
                 }
             }
         } else if (c2 == 'ﾟ') {
-            if ("ﾊﾋﾌﾍﾎ".indexOf(c1) > 0) {
+            if ("ﾊﾋﾌﾍﾎ".indexOf(c1) >= 0) {
                 switch (c1) {
                 case 'ﾊ':
                     return 'パ';
@@ -129,6 +131,8 @@ public class HankakuKanaToZenkakuKana implements Normalizer {
                     return 'ペ';
                 case 'ﾎ':
                     return 'ポ';
+                default:
+                    break;
                 }
             }
         }

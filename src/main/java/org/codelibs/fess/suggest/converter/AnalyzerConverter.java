@@ -42,7 +42,7 @@ public class AnalyzerConverter implements ReadingConverter {
 
     @Override
     public void init() throws IOException {
-
+        // nothing
     }
 
     @Override
@@ -69,7 +69,7 @@ public class AnalyzerConverter implements ReadingConverter {
 
         @Override
         public void init() throws IOException {
-
+            // nothing
         }
 
         @Override
@@ -97,7 +97,7 @@ public class AnalyzerConverter implements ReadingConverter {
                     }
                     reading = transliterator.transliterate(reading);
 
-                    final int pos = text.substring(offset).indexOf(term);
+                    final int pos = text.indexOf(term, offset);
                     if (pos > 0) {
                         final String tmp = text.substring(offset, offset + pos);
                         readingBuf.append(transliterator.transliterate(tmp));

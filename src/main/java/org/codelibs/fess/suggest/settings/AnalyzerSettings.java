@@ -43,12 +43,12 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 
 public class AnalyzerSettings {
-    public static final String readingAnalyzerName = "reading_analyzer";
-    public static final String readingTermAnalyzerName = "reading_term_analyzer";
-    public static final String normalizeAnalyzerName = "normalize_analyzer";
-    public static final String contentsAnalyzerName = "contents_analyzer";
-    public static final String contentsReadingAnalyzerName = "contents_reading_analyzer";
-    public static final String settingsFieldAnalyzerMappingType = "fieldAnalyzerMapping";
+    public static final String READING_ANALYZER = "reading_analyzer";
+    public static final String READING_TERM_ANALYZER = "reading_term_analyzer";
+    public static final String NORMALIZE_ANALYZER = "normalize_analyzer";
+    public static final String CONTENTS_ANALYZER = "contents_analyzer";
+    public static final String CONTENTS_READING_ANALYZER = "contents_reading_analyzer";
+    public static final String FIELD_ANALYZER_MAPPING = "fieldAnalyzerMapping";
 
     public static final String DOC_TYPE_NAME = "_doc";
 
@@ -59,7 +59,7 @@ public class AnalyzerSettings {
     protected static Map<String, Set<String>> analyzerMap = new ConcurrentHashMap<>();
     protected static Map<String, Map<String, FieldAnalyzerMapping>> fieldAnalyzerMappingMap = new ConcurrentHashMap<>();
 
-    public static final String[] SUPPORTED_LANGUAGES = new String[] { "ar", "bg", "bn", "ca", "cs", "da", "de", "el", "en", "es", "et",
+   protected static final String[] SUPPORTED_LANGUAGES = new String[] { "ar", "bg", "bn", "ca", "cs", "da", "de", "el", "en", "es", "et",
             "fa", "fi", "fr", "gu", "he", "hi", "hr", "hu", "id", "it", "ja", "ko", "lt", "lv", "mk", "ml", "nl", "no", "pa", "pl", "pt",
             "ro", "ru", "si", "sq", "sv", "ta", "te", "th", "tl", "tr", "uk", "ur", "vi", "zh-cn", "zh-tw" };
 
@@ -95,7 +95,7 @@ public class AnalyzerSettings {
                 && fieldAnalyzerMapping.get(field).readingAnalyzer != null) {
             analyzerName = fieldAnalyzerMapping.get(field).readingAnalyzer;
         } else {
-            analyzerName = readingAnalyzerName;
+            analyzerName = READING_ANALYZER;
         }
         final String analyzerNameWithlang = isSupportedLanguage(lang) ? analyzerName + '_' + lang : analyzerName;
         if (analyzerNames.contains(analyzerNameWithlang)) {
@@ -113,7 +113,7 @@ public class AnalyzerSettings {
                 && fieldAnalyzerMapping.get(field).readingTermAnalyzer != null) {
             analyzerName = fieldAnalyzerMapping.get(field).readingTermAnalyzer;
         } else {
-            analyzerName = readingTermAnalyzerName;
+            analyzerName = READING_TERM_ANALYZER;
         }
         final String analyzerNameWithlang = isSupportedLanguage(lang) ? analyzerName + '_' + lang : analyzerName;
         if (analyzerNames.contains(analyzerNameWithlang)) {
@@ -131,7 +131,7 @@ public class AnalyzerSettings {
                 && fieldAnalyzerMapping.get(field).normalizeAnalyzer != null) {
             analyzerName = fieldAnalyzerMapping.get(field).normalizeAnalyzer;
         } else {
-            analyzerName = normalizeAnalyzerName;
+            analyzerName = NORMALIZE_ANALYZER;
         }
         final String analyzerNameWithlang = isSupportedLanguage(lang) ? analyzerName + '_' + lang : analyzerName;
         if (analyzerNames.contains(analyzerNameWithlang)) {
@@ -149,7 +149,7 @@ public class AnalyzerSettings {
                 && fieldAnalyzerMapping.get(field).contentsAnalyzer != null) {
             analyzerName = fieldAnalyzerMapping.get(field).contentsAnalyzer;
         } else {
-            analyzerName = contentsAnalyzerName;
+            analyzerName = CONTENTS_ANALYZER;
         }
         final String analyzerNameWithlang = isSupportedLanguage(lang) ? analyzerName + '_' + lang : analyzerName;
         if (analyzerNames.contains(analyzerNameWithlang)) {
@@ -167,7 +167,7 @@ public class AnalyzerSettings {
                 && fieldAnalyzerMapping.get(field).contentsReadingAnalyzer != null) {
             analyzerName = fieldAnalyzerMapping.get(field).contentsReadingAnalyzer;
         } else {
-            analyzerName = contentsReadingAnalyzerName;
+            analyzerName = CONTENTS_READING_ANALYZER;
         }
         final String analyzerNameWithlang = isSupportedLanguage(lang) ? analyzerName + '_' + lang : analyzerName;
         if (analyzerNames.contains(analyzerNameWithlang)) {
@@ -266,7 +266,7 @@ public class AnalyzerSettings {
     protected Map<String, FieldAnalyzerMapping> getFieldAnalyzerMapping() {
         final Map<String, FieldAnalyzerMapping> mappingMap = new HashMap<>();
         SearchResponse response = client.prepareSearch(analyzerSettingsIndexName)
-                .setQuery(QueryBuilders.termQuery(FieldNames.ANALYZER_SETTINGS_TYPE, settingsFieldAnalyzerMappingType))
+                .setQuery(QueryBuilders.termQuery(FieldNames.ANALYZER_SETTINGS_TYPE, FIELD_ANALYZER_MAPPING))
                 .setScroll(settings.getScrollTimeout()).execute().actionGet(settings.getSearchTimeout());
         String scrollId = response.getScrollId();
         try {

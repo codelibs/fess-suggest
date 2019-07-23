@@ -38,7 +38,7 @@ public class KatakanaToAlphabetConverter implements ReadingConverter {
 
     @Override
     public void init() throws IOException {
-
+        // nothing
     }
 
     @Override

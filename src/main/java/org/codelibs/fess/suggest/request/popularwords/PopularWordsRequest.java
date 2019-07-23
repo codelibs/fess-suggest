@@ -38,7 +38,6 @@ import org.elasticsearch.index.query.functionscore.FunctionScoreQueryBuilder;
 import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.rescore.QueryRescorerBuilder;
-import org.elasticsearch.search.rescore.RescorerBuilder;
 
 public class PopularWordsRequest extends Request<PopularWordsResponse> {
     private String index = null;
@@ -175,7 +174,7 @@ public class PopularWordsRequest extends Request<PopularWordsResponse> {
         return functionScoreQueryBuilder;
     }
 
-    protected RescorerBuilder<?> buildRescore() {
+    protected QueryRescorerBuilder buildRescore() {
         return new QueryRescorerBuilder(QueryBuilders.functionScoreQuery(ScoreFunctionBuilders.randomFunction().seed(seed).setField("_id")))
                 .setQueryWeight(0).setRescoreQueryWeight(1);
     }

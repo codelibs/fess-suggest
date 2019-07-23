@@ -82,14 +82,14 @@ public class BadWordSettings {
         return null;
     }
 
-    protected void updateDefaultBadwords() {
+    protected static void updateDefaultBadwords() {
         if (defaultWords != null) {
             return;
         }
 
         final List<String> list = new ArrayList<>();
         try (BufferedReader br = new BufferedReader(
-                new InputStreamReader(this.getClass().getClassLoader().getResourceAsStream("suggest_settings/default-badwords.txt")))) {
+                new InputStreamReader(Thread.currentThread().getContextClassLoader().getResourceAsStream("suggest_settings/default-badwords.txt")))) {
 
             String line;
             while ((line = br.readLine()) != null) {

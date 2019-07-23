@@ -62,7 +62,7 @@ public final class SuggestUtil {
 
     private static final Base64.Encoder encoder = Base64.getEncoder();
 
-    private static final int idMaxLength = 445;
+    private static final int ID_MAX_LENGTH = 445;
 
     private SuggestUtil() {
     }
@@ -70,7 +70,7 @@ public final class SuggestUtil {
     public static String createSuggestTextId(final String text) {
         final String id = encoder.encodeToString(text.getBytes(CoreLibConstants.CHARSET_UTF_8));
         if (id.length() > 445) {
-            return id.substring(0, idMaxLength);
+            return id.substring(0, ID_MAX_LENGTH);
         }
         return id;
     }
