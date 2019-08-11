@@ -21,7 +21,8 @@ import java.util.List;
 
 import org.codelibs.fess.suggest.settings.AnalyzerSettings;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
-import org.elasticsearch.action.admin.indices.analyze.AnalyzeResponse;
+import org.elasticsearch.action.admin.indices.analyze.AnalyzeAction;
+import org.elasticsearch.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.Strings;
 
@@ -74,17 +75,17 @@ public class AnalyzerConverter implements ReadingConverter {
 
         @Override
         public List<String> convert(final String text, final String field, final String... dummy) throws IOException {
-            final AnalyzeResponse readingResponse = client.admin().indices()
+            final AnalyzeAction.Response readingResponse = client.admin().indices()
                     .prepareAnalyze(analyzerSettings.getAnalyzerSettingsIndexName(), text)
                     .setAnalyzer(analyzerSettings.getReadingAnalyzerName(field, lang)).execute().actionGet(settings.getIndicesTimeout());
 
-            final AnalyzeResponse termResponse =
+            final AnalyzeAction.Response termResponse =
                     client.admin().indices().prepareAnalyze(analyzerSettings.getAnalyzerSettingsIndexName(), text)
                             .setAnalyzer(analyzerSettings.getReadingTermAnalyzerName(field, lang)).execute()
                             .actionGet(settings.getIndicesTimeout());
 
-            final List<AnalyzeResponse.AnalyzeToken> readingTokenList = readingResponse.getTokens();
-            final List<AnalyzeResponse.AnalyzeToken> termTokenList = termResponse.getTokens();
+            final List<AnalyzeToken> readingTokenList = readingResponse.getTokens();
+            final List<AnalyzeToken> termTokenList = termResponse.getTokens();
 
             final StringBuilder readingBuf = new StringBuilder(text.length());
             if (readingTokenList != null && termTokenList != null) {

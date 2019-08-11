@@ -19,7 +19,8 @@ import java.util.List;
 
 import org.codelibs.fess.suggest.settings.AnalyzerSettings;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
-import org.elasticsearch.action.admin.indices.analyze.AnalyzeResponse;
+import org.elasticsearch.action.admin.indices.analyze.AnalyzeAction;
+import org.elasticsearch.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken;
 import org.elasticsearch.client.Client;
 
 public class AnalyzerNormalizer implements Normalizer {
@@ -57,11 +58,11 @@ public class AnalyzerNormalizer implements Normalizer {
 
         @Override
         public String normalize(final String text, final String field, final String... dummy) {
-            final AnalyzeResponse termResponse = client.admin().indices()
+            final AnalyzeAction.Response termResponse = client.admin().indices()
                     .prepareAnalyze(analyzerSettings.getAnalyzerSettingsIndexName(), text)
                     .setAnalyzer(analyzerSettings.getNormalizeAnalyzerName(field, lang)).execute().actionGet(settings.getIndicesTimeout());
 
-            final List<AnalyzeResponse.AnalyzeToken> termTokenList = termResponse.getTokens();
+            final List<AnalyzeToken> termTokenList = termResponse.getTokens();
             if (termTokenList.isEmpty()) {
                 return text;
             }

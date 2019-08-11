@@ -26,7 +26,7 @@ import org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner;
 import org.codelibs.fess.suggest.Suggester;
 import org.codelibs.fess.suggest.analysis.SuggestAnalyzer;
 import org.codelibs.fess.suggest.util.SuggestUtil;
-import org.elasticsearch.action.admin.indices.analyze.AnalyzeResponse;
+import org.elasticsearch.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken;
 import org.elasticsearch.index.IndexNotFoundException;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -73,8 +73,8 @@ public class AnalyzerSettingsTest {
     public void test_defaultAnalyzer() {
         String text = "Fess (フェス) は「5 分で簡単に構築可能な全文検索サーバー」です。 Java 実行環境があればどの OS でも実行可能です。 Fess は Apache ライセンスで提供され、無料 (フリーソフト) でご利用いただけます。";
         SuggestAnalyzer analyzer = SuggestUtil.createDefaultAnalyzer(runner.client(), settings);
-        final List<AnalyzeResponse.AnalyzeToken> tokens = analyzer.analyze(text, "", null);
-        final List<AnalyzeResponse.AnalyzeToken> readingTokens = analyzer.analyzeAndReading(text, "", null);
+        final List<AnalyzeToken> tokens = analyzer.analyze(text, "", null);
+        final List<AnalyzeToken> readingTokens = analyzer.analyzeAndReading(text, "", null);
 
         int matchCount = 0;
         for (int i = 0; i < tokens.size(); i++) {

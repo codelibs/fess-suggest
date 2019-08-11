@@ -17,10 +17,10 @@ package org.codelibs.fess.suggest.analysis;
 
 import java.util.List;
 
-import org.elasticsearch.action.admin.indices.analyze.AnalyzeResponse;
+import org.elasticsearch.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken;
 
 public interface SuggestAnalyzer {
-    List<AnalyzeResponse.AnalyzeToken> analyze(String text, String field, String lang);
+    List<AnalyzeToken> analyze(String text, String field, String lang);
 
-    List<AnalyzeResponse.AnalyzeToken> analyzeAndReading(String text, String field, String lang);
+    List<AnalyzeToken> analyzeAndReading(String text, String field, String lang);
 }

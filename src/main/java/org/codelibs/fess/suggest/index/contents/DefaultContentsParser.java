@@ -29,7 +29,7 @@ import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.codelibs.fess.suggest.index.contents.querylog.QueryLog;
 import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.util.SuggestUtil;
-import org.elasticsearch.action.admin.indices.analyze.AnalyzeResponse;
+import org.elasticsearch.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken;
 
 public class DefaultContentsParser implements ContentsParser {
     @Override
@@ -137,18 +137,18 @@ public class DefaultContentsParser implements ContentsParser {
             final String text = textObj.toString();
             final String lang = document.get(langFieldName) == null ? null : document.get(langFieldName).toString();
 
-            final List<AnalyzeResponse.AnalyzeToken> tokens = analyzer.analyze(text, field, lang);
+            final List<AnalyzeToken> tokens = analyzer.analyze(text, field, lang);
             if (tokens == null) {
                 continue;
             }
-            List<AnalyzeResponse.AnalyzeToken> readingTokens = analyzer.analyzeAndReading(text, field, lang);
+            List<AnalyzeToken> readingTokens = analyzer.analyzeAndReading(text, field, lang);
             if (readingTokens != null && readingTokens.size() != tokens.size()) {
                 readingTokens = null;
             }
 
             try {
                 for (int i = 0; i < tokens.size(); i++) {
-                    final AnalyzeResponse.AnalyzeToken token = tokens.get(i);
+                    final AnalyzeToken token = tokens.get(i);
                     final String word = token.getTerm();
                     if (StringUtil.isBlank(word)) {
                         continue;
@@ -199,11 +199,11 @@ public class DefaultContentsParser implements ContentsParser {
     protected boolean isExcludeSearchword(final String searchWord, final String field, final String[] langs,
             final SuggestAnalyzer analyzer) {
         if (langs == null || langs.length == 0) {
-            final List<AnalyzeResponse.AnalyzeToken> tokens = analyzer.analyze(searchWord, "", null);
+            final List<AnalyzeToken> tokens = analyzer.analyze(searchWord, "", null);
             return tokens == null || tokens.size() == 0;
         } else {
             for (final String lang : langs) {
-                final List<AnalyzeResponse.AnalyzeToken> tokens = analyzer.analyze(searchWord, field, lang);
+                final List<AnalyzeToken> tokens = analyzer.analyze(searchWord, field, lang);
                 if (tokens != null && tokens.size() > 0) {
                     return false;
                 }
