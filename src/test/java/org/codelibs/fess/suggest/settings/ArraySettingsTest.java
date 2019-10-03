@@ -42,7 +42,7 @@ public class ArraySettingsTest {
             // settingsBuilder.putList("discovery.seed_hosts", "127.0.0.1:9301");
             // settingsBuilder.putList("cluster.initial_master_nodes", "127.0.0.1:9301");
         }).build(newConfigs().clusterName("ArraySettingsTest").numOfNode(1)
-                .pluginTypes("org.codelibs.elasticsearch.kuromoji.ipadic.neologd.KuromojiNeologdPlugin"));
+                .pluginTypes("org.codelibs.elasticsearch.extension.ExtensionPlugin"));
         runner.ensureYellow();
     }
 

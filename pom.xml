@@ -203,8 +203,8 @@
 		</dependency>
 		<dependency>
 			<groupId>org.codelibs</groupId>
-			<artifactId>elasticsearch-analysis-kuromoji-ipadic-neologd</artifactId>
-			<version>7.1.0</version>
+			<artifactId>elasticsearch-analysis-extension</artifactId>
+			<version>7.4.0-SNAPSHOT</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>

@@ -8,7 +8,7 @@
   "analysis" : {
     "tokenizer" : {
       "kuromoji_neologd_normal" : {
-        "type" : "kuromoji_ipadic_neologd_tokenizer",
+        "type" : "reloadable_kuromoji_tokenizer",
         "mode" : "normal",
         "discard_punctuation" : "false"
       },
@@ -1296,10 +1296,10 @@
     },
     "filter" : {
       "reading_form" : {
-        "type" : "kuromoji_ipadic_neologd_readingform"
+        "type" : "reloadable_kuromoji_readingform"
       },
       "pos_filter" : {
-        "type" : "kuromoji_ipadic_neologd_part_of_speech",
+        "type" : "reloadable_kuromoji_part_of_speech",
         "stoptags" : [
           "その他",
           "その他-間投",
