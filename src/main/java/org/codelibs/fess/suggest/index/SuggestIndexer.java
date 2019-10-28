@@ -44,6 +44,7 @@ import org.codelibs.fess.suggest.index.writer.SuggestWriterResult;
 import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.codelibs.fess.suggest.util.SuggestUtil;
+import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.index.query.Operator;
@@ -301,10 +302,19 @@ public class SuggestIndexer {
             if (parallel) {
                 stream.parallel();
             }
-            final SuggestItem[] array = stream
-                    .flatMap(document -> contentsParser.parseDocument(document, supportedFields, tagFieldNames, roleFieldName,
-                            langFieldName, readingConverter, contentsReadingConverter, normalizer, analyzer).stream())
-                    .toArray(n -> new SuggestItem[n]);
+            final SuggestItem[] array = stream.flatMap(document -> {
+                try {
+                    return contentsParser.parseDocument(document, supportedFields, tagFieldNames, roleFieldName, langFieldName,
+                            readingConverter, contentsReadingConverter, normalizer, analyzer).stream();
+                } catch (ElasticsearchStatusException | IllegalStateException e) {
+                    final String msg = e.getMessage();
+                    if (StringUtil.isNotEmpty(msg) || msg.contains("index.analyze.max_token_count")) {
+                        // TODO log
+                        return Stream.empty();
+                    }
+                    throw e;
+                }
+            }).toArray(n -> new SuggestItem[n]);
             final SuggestIndexResponse response = index(array);
             return new SuggestIndexResponse(array.length, documents.length, response.getErrors(), System.currentTimeMillis() - start);
         } catch (final Exception e) {
