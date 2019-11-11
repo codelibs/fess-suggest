@@ -25,6 +25,8 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 import org.codelibs.core.CoreLibConstants;
@@ -44,6 +46,8 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 
 public class ArraySettings {
+    private static final Logger logger = Logger.getLogger(ArraySettings.class.getName());
+
     protected final Client client;
     protected final String arraySettingsIndexName;
     protected final String settingsId;
@@ -73,6 +77,10 @@ public class ArraySettings {
     }
 
     public void add(final String key, final Object value) {
+        if (logger.isLoggable(Level.FINER)) {
+            logger.finer("Add analyzer settings. " + arraySettingsIndexName + " key:" + key + " value:" + value);
+        }
+
         final Map<String, Object> source = new HashMap<>();
         source.put(FieldNames.ARRAY_KEY, key);
         source.put(FieldNames.ARRAY_VALUE, value);
@@ -86,6 +94,9 @@ public class ArraySettings {
     }
 
     public void delete(final String key, final String value) {
+        if (logger.isLoggable(Level.FINER)) {
+            logger.finer("Delete analyzer settings. " + arraySettingsIndexName + " key:" + key + " value:" + value);
+        }
         deleteFromArray(arraySettingsIndexName, settingsId, createId(key, value));
     }
 

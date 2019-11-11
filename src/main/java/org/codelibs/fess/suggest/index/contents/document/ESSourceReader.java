@@ -23,6 +23,8 @@ import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.codelibs.fess.suggest.util.SuggestUtil;
@@ -35,6 +37,8 @@ import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.sort.SortBuilder;
 
 public class ESSourceReader implements DocumentReader {
+    private static final Logger logger = Logger.getLogger(ESSourceReader.class.getName());
+
     protected final Queue<Map<String, Object>> queue = new ConcurrentLinkedQueue<>();
     protected final AtomicBoolean isFinished = new AtomicBoolean(false);
     protected final Random random = new Random();
@@ -87,6 +91,9 @@ public class ESSourceReader implements DocumentReader {
     }
 
     public void setLimitOfDocumentSize(final long limitOfDocumentSize) {
+        if (logger.isLoggable(Level.INFO)) {
+            logger.info("Set document limit:" + limitOfDocumentSize);
+        }
         this.limitOfDocumentSize = limitOfDocumentSize;
     }
 
@@ -99,6 +106,10 @@ public class ESSourceReader implements DocumentReader {
     }
 
     public void setLimitDocNumPercentage(final String limitPercentage) {
+        if (logger.isLoggable(Level.INFO)) {
+            logger.info("Set document limitPercentage:" + limitPercentage);
+        }
+
         if (limitPercentage.endsWith("%")) {
             this.limitPercentage = Integer.parseInt(limitPercentage.substring(0, limitPercentage.length() - 1));
         } else {

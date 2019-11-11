@@ -23,6 +23,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 import org.codelibs.core.lang.StringUtil;
@@ -37,6 +39,8 @@ import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.index.IndexNotFoundException;
 
 public class SuggestSettings {
+    private static final Logger logger = Logger.getLogger(SuggestSettings.class.getName());
+
     protected final String settingsId;
 
     protected final Client client;
@@ -206,6 +210,9 @@ public class SuggestSettings {
     }
 
     public void set(final String key, final Object value) {
+        if (logger.isLoggable(Level.FINER)) {
+            logger.finer("Set suggest settings. " + settingsIndexName + " key:" + key + " value:" + value);
+        }
         try {
             client.prepareUpdate().setIndex(settingsIndexName).setId(settingsId).setDocAsUpsert(true).setDoc(key, value)
                     .setRetryOnConflict(5).execute().actionGet(getIndexTimeout());
@@ -216,6 +223,9 @@ public class SuggestSettings {
     }
 
     public void set(final Map<String, Object> map) {
+        if (logger.isLoggable(Level.FINER)) {
+            logger.finer("Set suggest settings. " + settingsIndexName + " " + map.toString());
+        }
         try {
             final XContentBuilder builder = JsonXContent.contentBuilder().map(map);
             builder.flush();
