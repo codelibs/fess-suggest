@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.codelibs.fess</groupId>
 	<artifactId>fess-suggest</artifactId>
-	<version>7.4.3-SNAPSHOT</version>
+	<version>7.5.0-SNAPSHOT</version>
 	<packaging>jar</packaging>
 	<name>fess-suggest</name>
 	<url>https://fess.codelibs.org/</url>
@@ -35,9 +35,9 @@
 	</parent>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<lucene.version>8.2.0</lucene.version>
-		<elasticsearch.version>7.4.2</elasticsearch.version>
-		<groovy.version>2.5.8</groovy.version>
+		<lucene.version>8.3.0</lucene.version>
+		<elasticsearch.version>7.5.0</elasticsearch.version>
+		<groovy.version>3.0.0-rc-1</groovy.version>
 		<log4j.version>2.11.1</log4j.version>
 		<jna.version>4.5.1</jna.version>
 	</properties>
@@ -158,7 +158,7 @@
 		<dependency>
 			<groupId>com.ibm.icu</groupId>
 			<artifactId>icu4j</artifactId>
-			<version>60.1</version>
+			<version>65.1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.codelibs</groupId>
@@ -204,7 +204,7 @@
 		<dependency>
 			<groupId>org.codelibs</groupId>
 			<artifactId>elasticsearch-analysis-extension</artifactId>
-			<version>7.4.0</version>
+			<version>7.5.0-SNAPSHOT</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
