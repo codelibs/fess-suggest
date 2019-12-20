@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.codelibs.fess</groupId>
 	<artifactId>fess-suggest</artifactId>
-	<version>7.5.0</version>
+	<version>7.5.1-SNAPSHOT</version>
 	<packaging>jar</packaging>
 	<name>fess-suggest</name>
 	<url>https://fess.codelibs.org/</url>
