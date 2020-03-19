@@ -175,8 +175,9 @@ public class PopularWordsRequest extends Request<PopularWordsResponse> {
     }
 
     protected QueryRescorerBuilder buildRescore() {
-        return new QueryRescorerBuilder(QueryBuilders.functionScoreQuery(ScoreFunctionBuilders.randomFunction().seed(seed).setField("_id")))
-                .setQueryWeight(0).setRescoreQueryWeight(1);
+        return new QueryRescorerBuilder(
+                QueryBuilders.functionScoreQuery(ScoreFunctionBuilders.randomFunction().seed(seed).setField("_seq_no"))).setQueryWeight(0)
+                        .setRescoreQueryWeight(1);
     }
 
     protected PopularWordsResponse createResponse(final SearchResponse searchResponse) {
