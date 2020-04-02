@@ -28,7 +28,6 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.sun.management.OperatingSystemMXBean;
 import org.codelibs.core.lang.StringUtil;
 import org.codelibs.fess.suggest.analysis.SuggestAnalyzer;
 import org.codelibs.fess.suggest.concurrent.Deferred;
@@ -55,6 +54,8 @@ import org.elasticsearch.index.query.Operator;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
+
+import com.sun.management.OperatingSystemMXBean;
 
 public class SuggestIndexer {
     private final static Logger logger = Logger.getLogger(SuggestIndexer.class.getName());
@@ -118,7 +119,7 @@ public class SuggestIndexer {
             final long start = System.currentTimeMillis();
             final SuggestWriterResult result = suggestWriter.write(client, settings, index, array, true);
             return new SuggestIndexResponse(items.length, items.length, result.getFailures(), System.currentTimeMillis() - start);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new SuggestIndexException("Failed to write items[" + items.length + "] to " + index, e);
         }
     }
@@ -416,7 +417,7 @@ public class SuggestIndexer {
             final SuggestIndexResponse response = index(item);
             return new SuggestIndexResponse(1, 1, response.getErrors(), System.currentTimeMillis() - start);
         } catch (final Exception e) {
-            String msg = "Failed to index from document: searchWord=" + searchWord//
+            final String msg = "Failed to index from document: searchWord=" + searchWord//
                     + ", fields=" + Arrays.toString(fields)//
                     + ", tags=" + Arrays.toString(tags)//
                     + ", roles=" + Arrays.toString(roles)//

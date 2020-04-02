@@ -133,7 +133,7 @@ public class Suggester {
             final IndicesExistsResponse response =
                     client.admin().indices().prepareExists(getUpdateAlias(index)).execute().actionGet(suggestSettings.getIndicesTimeout());
             if (response.isExists()) {
-                GetAliasesResponse getAliasesResponse = client.admin().indices().prepareGetAliases(getUpdateAlias(index)).execute()
+                final GetAliasesResponse getAliasesResponse = client.admin().indices().prepareGetAliases(getUpdateAlias(index)).execute()
                         .actionGet(suggestSettings.getIndicesTimeout());
                 getAliasesResponse.getAliases().keysIt().forEachRemaining(prevIndices::add);
             }
@@ -145,7 +145,7 @@ public class Suggester {
                 logger.info("Create next index: " + indexName);
             }
 
-            CreateIndexResponse createIndexResponse =
+            final CreateIndexResponse createIndexResponse =
                     client.admin().indices().prepareCreate(indexName).setSettings(settingsSource, XContentType.JSON)
                             .addMapping(SuggestConstants.DEFAULT_TYPE, mappingSource, XContentType.JSON).execute()
                             .actionGet(suggestSettings.getIndicesTimeout());
@@ -174,7 +174,7 @@ public class Suggester {
             final IndicesExistsResponse updateIndicesResponse =
                     client.admin().indices().prepareExists(updateAlias).execute().actionGet(suggestSettings.getIndicesTimeout());
             if (updateIndicesResponse.isExists()) {
-                GetAliasesResponse getAliasesResponse =
+                final GetAliasesResponse getAliasesResponse =
                         client.admin().indices().prepareGetAliases(updateAlias).execute().actionGet(suggestSettings.getIndicesTimeout());
                 getAliasesResponse.getAliases()
                         .forEach(x -> x.value.stream().filter(y -> updateAlias.equals(y.alias())).forEach(y -> updateIndices.add(x.key)));
@@ -190,7 +190,7 @@ public class Suggester {
             final IndicesExistsResponse searchIndicesResponse =
                     client.admin().indices().prepareExists(searchAlias).execute().actionGet(suggestSettings.getIndicesTimeout());
             if (searchIndicesResponse.isExists()) {
-                GetAliasesResponse getAliasesResponse =
+                final GetAliasesResponse getAliasesResponse =
                         client.admin().indices().prepareGetAliases(searchAlias).execute().actionGet(suggestSettings.getIndicesTimeout());
                 getAliasesResponse.getAliases()
                         .forEach(x -> x.value.stream().filter(y -> searchAlias.equals(y.alias())).forEach(y -> searchIndices.add(x.key)));
@@ -217,7 +217,7 @@ public class Suggester {
     }
 
     public void removeDisableIndices() {
-        GetIndexResponse response =
+        final GetIndexResponse response =
                 client.admin().indices().prepareGetIndex().addIndices("*").execute().actionGet(suggestSettings.getIndicesTimeout());
         Stream.of(response.getIndices()).filter(s -> {
             if (!isSuggestIndex(s)) {

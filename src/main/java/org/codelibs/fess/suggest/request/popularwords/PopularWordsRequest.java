@@ -166,8 +166,6 @@ public class PopularWordsRequest extends Request<PopularWordsResponse> {
         if (!excludeWords.isEmpty()) {
             queryBuilder.mustNot(QueryBuilders.termsQuery(FieldNames.TEXT, excludeWords));
         }
-
-        ;
         final FunctionScoreQueryBuilder functionScoreQueryBuilder = QueryBuilders.functionScoreQuery(queryBuilder,
                 ScoreFunctionBuilders.fieldValueFactorFunction(FieldNames.QUERY_FREQ).missing(0));
         functionScoreQueryBuilder.boostMode(CombineFunction.REPLACE);

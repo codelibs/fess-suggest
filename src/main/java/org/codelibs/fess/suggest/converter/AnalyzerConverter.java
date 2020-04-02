@@ -30,7 +30,7 @@ import com.ibm.icu.text.Transliterator;
 
 public class AnalyzerConverter implements ReadingConverter {
     protected final Client client;
-    private SuggestSettings settings;
+    private final SuggestSettings settings;
     protected final AnalyzerSettings analyzerSettings;
 
     protected final Transliterator transliterator = Transliterator.getInstance("Hiragana-Katakana");

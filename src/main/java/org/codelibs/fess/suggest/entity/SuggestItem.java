@@ -245,7 +245,7 @@ public class SuggestItem {
         map.put(FieldNames.TAGS, tags);
         map.put(FieldNames.ROLES, roles);
         map.put(FieldNames.LANGUAGES, languages);
-        map.put(FieldNames.KINDS, Stream.of(kinds).map(kind -> kind.toString()).toArray());
+        map.put(FieldNames.KINDS, Stream.of(kinds).map(Kind::toString).toArray());
         map.put(FieldNames.QUERY_FREQ, queryFreq);
         map.put(FieldNames.DOC_FREQ, docFreq);
         map.put(FieldNames.USER_BOOST, userBoost);
@@ -364,10 +364,10 @@ public class SuggestItem {
         if (kindsObj instanceof List) {
             @SuppressWarnings("unchecked")
             final List<String> existingFields = (List<String>) kindsObj;
-            concatValues(existingFields, Stream.of(kinds).map(kind -> kind.toString()).toArray(count -> new String[count]));
+            concatValues(existingFields, Stream.of(kinds).map(Kind::toString).toArray(count -> new String[count]));
             map.put(FieldNames.KINDS, existingFields);
         } else {
-            map.put(FieldNames.KINDS, Stream.of(kinds).map(kind -> kind.toString()).toArray());
+            map.put(FieldNames.KINDS, Stream.of(kinds).map(Kind::toString).toArray());
         }
 
         final long updatedQueryFreq;

@@ -55,7 +55,7 @@ public class ESSourceReader implements DocumentReader {
     protected QueryBuilder queryBuilder = QueryBuilders.matchAllQuery();
     protected int limitPercentage = 100;
     protected long limitNumber = -1;
-    protected List<SortBuilder<?>> sortList = new ArrayList<>();;
+    protected List<SortBuilder<?>> sortList = new ArrayList<>();
 
     protected String scrollId = null;
 

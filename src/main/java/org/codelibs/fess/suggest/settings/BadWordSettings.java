@@ -107,10 +107,11 @@ public class BadWordSettings {
 
             String line;
             while ((line = br.readLine()) != null) {
-                if (line.length() > 0 && !line.startsWith("#"))
+                if (line.length() > 0 && !line.startsWith("#")) {
                     list.add(line.trim());
+                }
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new SuggestSettingsException("Failed to load default badwords.", e);
         }
         defaultWords = list.toArray(new String[list.size()]);

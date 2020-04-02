@@ -188,7 +188,7 @@ public class DefaultContentsParser implements ContentsParser {
         } else if (value instanceof String[]) {
             return (String[]) value;
         } else if (value instanceof List) {
-            return ((List<?>) value).stream().map(v -> v.toString()).toArray(n -> new String[n]);
+            return ((List<?>) value).stream().map(Object::toString).toArray(n -> new String[n]);
         } else if (value != null) {
             return new String[] { value.toString() };
         }

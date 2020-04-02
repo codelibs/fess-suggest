@@ -55,7 +55,7 @@ public class AnalyzerSettings {
 
     protected final Client client;
     protected final String analyzerSettingsIndexName;
-    private SuggestSettings settings;
+    private final SuggestSettings settings;
 
     protected static Map<String, Set<String>> analyzerMap = new ConcurrentHashMap<>();
     protected static Map<String, Map<String, FieldAnalyzerMapping>> fieldAnalyzerMappingMap = new ConcurrentHashMap<>();
@@ -64,7 +64,7 @@ public class AnalyzerSettings {
             "fa", "fi", "fr", "gu", "he", "hi", "hr", "hu", "id", "it", "ja", "ko", "lt", "lv", "mk", "ml", "nl", "no", "pa", "pl", "pt",
             "ro", "ru", "si", "sq", "sv", "ta", "te", "th", "tl", "tr", "uk", "ur", "vi", "zh-cn", "zh-tw" };
 
-    public AnalyzerSettings(final Client client, SuggestSettings settings, final String settingsIndexName) {
+    public AnalyzerSettings(final Client client, final SuggestSettings settings, final String settingsIndexName) {
         this.client = client;
         this.settings = settings;
         analyzerSettingsIndexName = createAnalyzerSettingsIndexName(settingsIndexName);
@@ -276,7 +276,7 @@ public class AnalyzerSettings {
                 if (hits.length == 0) {
                     break;
                 }
-                for (SearchHit hit : hits) {
+                for (final SearchHit hit : hits) {
                     final Map<String, Object> source = hit.getSourceAsMap();
                     final String fieldReadingAnalyzer = source.get(FieldNames.ANALYZER_SETTINGS_READING_ANALYZER) == null ? null
                             : source.get(FieldNames.ANALYZER_SETTINGS_READING_ANALYZER).toString();
@@ -362,8 +362,8 @@ public class AnalyzerSettings {
         protected final String contentsAnalyzer;
         protected final String contentsReadingAnalyzer;
 
-        public FieldAnalyzerMapping(String readingAnalyzer, String readingTermAnalyzer, String normalizeAnalyzer, String contentsAnalyzer,
-                String contentsReadingAnalyzer) {
+        public FieldAnalyzerMapping(final String readingAnalyzer, final String readingTermAnalyzer, final String normalizeAnalyzer,
+                final String contentsAnalyzer, final String contentsReadingAnalyzer) {
             this.readingAnalyzer = readingAnalyzer;
             this.readingTermAnalyzer = readingTermAnalyzer;
             this.normalizeAnalyzer = normalizeAnalyzer;

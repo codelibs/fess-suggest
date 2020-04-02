@@ -26,7 +26,7 @@ import org.elasticsearch.client.Client;
 public class AnalyzerNormalizer implements Normalizer {
     protected final Client client;
     protected final AnalyzerSettings analyzerSettings;
-    private SuggestSettings settings;
+    private final SuggestSettings settings;
 
     public AnalyzerNormalizer(final Client client, final SuggestSettings settings) {
         this.client = client;
