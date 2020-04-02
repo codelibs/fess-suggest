@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.codelibs.core.lang.StringUtil;
+import org.codelibs.core.lang.ThreadUtil;
 import org.codelibs.fess.suggest.analysis.SuggestAnalyzer;
 import org.codelibs.fess.suggest.concurrent.Deferred;
 import org.codelibs.fess.suggest.constants.FieldNames;
@@ -348,10 +349,16 @@ public class SuggestIndexer {
         }
     }
 
+    @Deprecated
     public Deferred<SuggestIndexResponse>.Promise indexFromDocument(final Supplier<DocumentReader> reader, final int docPerReq,
             final long requestInterval) {
+        return indexFromDocument(reader, docPerReq, () -> ThreadUtil.sleep(requestInterval));
+    }
+
+    public Deferred<SuggestIndexResponse>.Promise indexFromDocument(final Supplier<DocumentReader> reader, final int docPerReq,
+            final Runnable waitController) {
         if (logger.isLoggable(Level.INFO)) {
-            logger.info("Start index by DocumentReader. interval:" + requestInterval + " docPerReq:" + docPerReq);
+            logger.info("Start index by DocumentReader. docPerReq:" + docPerReq);
         }
         final Deferred<SuggestIndexResponse> deferred = new Deferred<>();
         threadPool.execute(() -> {
@@ -377,7 +384,7 @@ public class SuggestIndexer {
                         client.admin().indices().prepareRefresh(index).execute().actionGet(settings.getIndicesTimeout());
                         docs.clear();
 
-                        Thread.sleep(requestInterval);
+                        waitController.run();
                     }
                 }
 
