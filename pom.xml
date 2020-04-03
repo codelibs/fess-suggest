@@ -163,7 +163,7 @@
 		<dependency>
 			<groupId>org.codelibs</groupId>
 			<artifactId>corelib</artifactId>
-			<version>0.5.4-SNAPSHOT</version>
+			<version>0.5.4</version>
 		</dependency>
 		<dependency>
 			<groupId>org.elasticsearch</groupId>
