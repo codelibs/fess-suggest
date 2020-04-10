@@ -79,7 +79,7 @@ public class Suggester {
         this.threadPool = threadPool;
 
         if (logger.isLoggable(Level.FINER)) {
-            logger.finer("Create suggester instance for " + this.index);
+            logger.finer(() -> String.format("Create suggester instance for %s", this.index));
         }
     }
 
@@ -109,7 +109,7 @@ public class Suggester {
                 final String settingsSource = getDefaultIndexSettings();
                 final String indexName = createIndexName(index);
                 if (logger.isLoggable(Level.INFO)) {
-                    logger.info("Create suggest index: " + indexName);
+                    logger.info(() -> String.format("Create suggest index: %s", indexName));
                 }
 
                 client.admin().indices().prepareCreate(indexName).setSettings(settingsSource, XContentType.JSON)
@@ -142,7 +142,7 @@ public class Suggester {
             final String settingsSource = getDefaultIndexSettings();
             final String indexName = createIndexName(index);
             if (logger.isLoggable(Level.INFO)) {
-                logger.info("Create next index: " + indexName);
+                logger.info(() -> String.format("Create next index: %s", indexName));
             }
 
             final CreateIndexResponse createIndexResponse =
@@ -150,7 +150,7 @@ public class Suggester {
                             .addMapping(SuggestConstants.DEFAULT_TYPE, mappingSource, XContentType.JSON).execute()
                             .actionGet(suggestSettings.getIndicesTimeout());
             if (!createIndexResponse.isAcknowledged()) {
-                logger.severe("Could not create next index: " + indexName);
+                logger.severe(() -> String.format("Could not create next index: %s", indexName));
                 throw new SuggesterException("Could not create next index: " + indexName);
             }
             client.admin().cluster().prepareHealth().setWaitForYellowStatus().execute().actionGet(suggestSettings.getClusterTimeout());
@@ -180,7 +180,7 @@ public class Suggester {
                         .forEach(x -> x.value.stream().filter(y -> updateAlias.equals(y.alias())).forEach(y -> updateIndices.add(x.key)));
             }
             if (updateIndices.size() != 1) {
-                logger.severe("Unexpected update indices num:" + updateIndices.size());
+                logger.severe(() -> String.format("Unexpected update indices num:%s", updateIndices.size()));
                 throw new SuggesterException("Unexpected update indices num:" + updateIndices.size());
             }
             final String updateIndex = updateIndices.get(0);
@@ -196,7 +196,7 @@ public class Suggester {
                         .forEach(x -> x.value.stream().filter(y -> searchAlias.equals(y.alias())).forEach(y -> searchIndices.add(x.key)));
             }
             if (searchIndices.size() != 1) {
-                logger.severe("Unexpected update indices num:" + searchIndices.size());
+                logger.severe(() -> String.format("Unexpected update indices num:%s", searchIndices.size()));
                 throw new SuggesterException("Unexpected search indices num:" + searchIndices.size());
             }
             final String searchIndex = searchIndices.get(0);
@@ -206,7 +206,7 @@ public class Suggester {
             }
 
             if (logger.isLoggable(Level.INFO)) {
-                logger.info("Switch suggest.search index. " + searchIndex + " => " + updateIndex);
+                logger.info(() -> String.format("Switch suggest.search index. %s => %s", searchIndex, updateIndex));
             }
             client.admin().indices().prepareAliases().removeAlias(searchIndex, searchAlias).addAlias(updateIndex, searchAlias).execute()
                     .actionGet(suggestSettings.getIndicesTimeout());
@@ -230,7 +230,7 @@ public class Suggester {
             return list.isEmpty();
         }).forEach(s -> {
             if (logger.isLoggable(Level.INFO)) {
-                logger.info("Delete index: " + s);
+                logger.info(() -> String.format("Delete index: %s", s));
             }
             client.admin().indices().prepareDelete(s).execute().actionGet(suggestSettings.getIndicesTimeout());
         });

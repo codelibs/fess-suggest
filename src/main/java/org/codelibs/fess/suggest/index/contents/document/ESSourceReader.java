@@ -92,7 +92,7 @@ public class ESSourceReader implements DocumentReader {
 
     public void setLimitOfDocumentSize(final long limitOfDocumentSize) {
         if (logger.isLoggable(Level.INFO)) {
-            logger.info("Set document limit:" + limitOfDocumentSize);
+            logger.info(() -> String.format("Set document limit:%s", limitOfDocumentSize));
         }
         this.limitOfDocumentSize = limitOfDocumentSize;
     }
@@ -107,7 +107,7 @@ public class ESSourceReader implements DocumentReader {
 
     public void setLimitDocNumPercentage(final String limitPercentage) {
         if (logger.isLoggable(Level.INFO)) {
-            logger.info("Set document limitPercentage:" + limitPercentage);
+            logger.info(() -> String.format("Set document limitPercentage:%s", limitPercentage));
         }
 
         if (limitPercentage.endsWith("%")) {

@@ -78,7 +78,7 @@ public class ArraySettings {
 
     public void add(final String key, final Object value) {
         if (logger.isLoggable(Level.FINER)) {
-            logger.finer("Add analyzer settings. " + arraySettingsIndexName + " key:" + key + " value:" + value);
+            logger.finer(() -> String.format("Add analyzer settings. %s key: %s value: %s", arraySettingsIndexName, key, value));
         }
 
         final Map<String, Object> source = new HashMap<>();
@@ -95,7 +95,7 @@ public class ArraySettings {
 
     public void delete(final String key, final String value) {
         if (logger.isLoggable(Level.FINER)) {
-            logger.finer("Delete analyzer settings. " + arraySettingsIndexName + " key:" + key + " value:" + value);
+            logger.finer(() -> String.format("Delete analyzer settings. %s key: %s value: %s", arraySettingsIndexName, key, value));
         }
         deleteFromArray(arraySettingsIndexName, settingsId, createId(key, value));
     }

@@ -75,7 +75,8 @@ public class ElevateWordSettings {
 
     public void add(final ElevateWord elevateWord) {
         if (logger.isLoggable(Level.FINER)) {
-            logger.finer("Add elevateword. " + arraySettings.arraySettingsIndexName + " elevateword:" + elevateWord.getElevateWord());
+            logger.finer(() -> String.format("Add elevateword. %s  elevateword: %s", arraySettings.arraySettingsIndexName,
+                    elevateWord.getElevateWord()));
         }
 
         final Map<String, Object> source = new HashMap<>();
@@ -94,14 +95,14 @@ public class ElevateWordSettings {
 
     public void delete(final String elevateWord) {
         if (logger.isLoggable(Level.FINER)) {
-            logger.finer("Delete elevateword. " + arraySettings.arraySettingsIndexName + " elevateword:" + elevateWord);
+            logger.finer(() -> String.format("Delete elevateword. %s elevateword:%s", arraySettings.arraySettingsIndexName, elevateWord));
         }
         arraySettings.delete(ELEVATE_WORD_SETTINGD_KEY, elevateWord);
     }
 
     public void deleteAll() {
         if (logger.isLoggable(Level.FINER)) {
-            logger.finer("Delete all elevateword. " + arraySettings.arraySettingsIndexName);
+            logger.finer(() -> String.format("Delete all elevateword. %s", arraySettings.arraySettingsIndexName));
         }
         arraySettings.delete(ELEVATE_WORD_SETTINGD_KEY);
     }
