@@ -211,7 +211,7 @@ public class SuggestSettings {
 
     public void set(final String key, final Object value) {
         if (logger.isLoggable(Level.FINER)) {
-            logger.finer("Set suggest settings. " + settingsIndexName + " key:" + key + " value:" + value);
+            logger.finer(() -> String.format("Set suggest settings. %s key: %s value: %s", settingsIndexName, key, value));
         }
         try {
             client.prepareUpdate().setIndex(settingsIndexName).setId(settingsId).setDocAsUpsert(true).setDoc(key, value)
@@ -224,7 +224,7 @@ public class SuggestSettings {
 
     public void set(final Map<String, Object> map) {
         if (logger.isLoggable(Level.FINER)) {
-            logger.finer("Set suggest settings. " + settingsIndexName + " " + map.toString());
+            logger.finer(() -> String.format("Set suggest settings. %s %s", settingsIndexName, map.toString()));
         }
         try {
             final XContentBuilder builder = JsonXContent.contentBuilder().map(map);

@@ -247,7 +247,7 @@ public class SuggestIndexer {
 
     public SuggestIndexResponse indexFromQueryLog(final QueryLog[] queryLogs) {
         if (logger.isLoggable(Level.INFO)) {
-            logger.info("Index from querylog. num:" + queryLogs.length);
+            logger.info(() -> String.format("Index from querylog. num:%s", queryLogs.length));
         }
         try {
             final long start = System.currentTimeMillis();
@@ -321,7 +321,7 @@ public class SuggestIndexer {
                     final String msg = e.getMessage();
                     if (StringUtil.isNotEmpty(msg) || msg.contains("index.analyze.max_token_count")) {
                         if (logger.isLoggable(Level.WARNING)) {
-                            logger.warning("Failed to parse document. " + msg);
+                            logger.warning(() -> String.format("Failed to parse document. %s", msg));
                         }
                         return Stream.empty();
                     }
@@ -358,7 +358,7 @@ public class SuggestIndexer {
     public Deferred<SuggestIndexResponse>.Promise indexFromDocument(final Supplier<DocumentReader> reader, final int docPerReq,
             final Runnable waitController) {
         if (logger.isLoggable(Level.INFO)) {
-            logger.info("Start index by DocumentReader. docPerReq:" + docPerReq);
+            logger.info(() -> String.format("Start index by DocumentReader. docPerReq:%s", docPerReq));
         }
         final Deferred<SuggestIndexResponse> deferred = new Deferred<>();
         threadPool.execute(() -> {
@@ -400,7 +400,7 @@ public class SuggestIndexer {
     public SuggestIndexResponse indexFromSearchWord(final String searchWord, final String[] fields, final String[] tags,
             final String[] roles, final int num, final String[] langs) {
         if (logger.isLoggable(Level.FINE)) {
-            logger.fine("Index from searchWord. word:" + searchWord);
+            logger.fine(() -> String.format("Index from searchWord. word:%s", searchWord));
         }
 
         final long start = System.currentTimeMillis();

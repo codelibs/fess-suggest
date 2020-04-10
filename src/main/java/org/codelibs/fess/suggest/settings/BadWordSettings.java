@@ -62,7 +62,7 @@ public class BadWordSettings {
 
     public void add(final String badWord) {
         if (logger.isLoggable(Level.FINER)) {
-            logger.finer("Add badword. " + arraySettings.arraySettingsIndexName + " badword:" + badWord);
+            logger.finer(() -> String.format("Add badword. %s badword:%s", arraySettings.arraySettingsIndexName, badWord));
         }
 
         final String validationError = getValidationError(badWord);
@@ -74,14 +74,14 @@ public class BadWordSettings {
 
     public void delete(final String badWord) {
         if (logger.isLoggable(Level.FINER)) {
-            logger.finer("Delete badword. " + arraySettings.arraySettingsIndexName + " badword:" + badWord);
+            logger.finer(() -> String.format("Delete badword. %s badword:%s", arraySettings.arraySettingsIndexName, badWord));
         }
         arraySettings.delete(BAD_WORD_SETTINGD_KEY, badWord);
     }
 
     public void deleteAll() {
         if (logger.isLoggable(Level.FINER)) {
-            logger.finer("Add all badword. " + arraySettings.arraySettingsIndexName);
+            logger.finer(() -> String.format("Add all badword. %s", arraySettings.arraySettingsIndexName));
         }
         arraySettings.delete(BAD_WORD_SETTINGD_KEY);
     }
