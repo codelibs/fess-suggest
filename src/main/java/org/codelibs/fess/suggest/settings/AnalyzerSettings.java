@@ -18,6 +18,7 @@ package org.codelibs.fess.suggest.settings;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -229,8 +230,14 @@ public class AnalyzerSettings {
     }
 
     public class DefaultContentsAnalyzer implements SuggestAnalyzer {
+
+        private final int maxContentLenth = settings.getAsInt(SuggestSettings.DefaultKeys.MAX_CONTENT_LENGTH, 50000);
+
         @Override
         public List<AnalyzeToken> analyze(final String text, final String field, final String lang) {
+            if (text == null || text.length() > maxContentLenth) {
+                return Collections.emptyList();
+            }
             final AnalyzeAction.Response analyzeResponse = client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text)
                     .setAnalyzer(getContentsAnalyzerName(field, lang)).execute().actionGet(settings.getIndicesTimeout());
             return analyzeResponse.getTokens();

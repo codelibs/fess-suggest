@@ -306,6 +306,7 @@ public class SuggestSettings {
         public static final String ROLE_FIELD_NAME = "roleFieldName";
         public static final String LANG_FIELD_NAME = "langFieldName";
         public static final String PARALLEL_PROCESSING = "parallel";
+        public static final String MAX_CONTENT_LENGTH = "maxContextLength";
 
         private DefaultKeys() {
         }
