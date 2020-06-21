@@ -47,7 +47,7 @@ import org.elasticsearch.action.admin.indices.get.GetIndexResponse;
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.cluster.metadata.AliasMetaData;
+import org.elasticsearch.cluster.metadata.AliasMetadata;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -223,7 +223,7 @@ public class Suggester {
             if (!isSuggestIndex(s)) {
                 return false;
             }
-            final List<AliasMetaData> list = response.getAliases().get(s);
+            final List<AliasMetadata> list = response.getAliases().get(s);
             if (list == null) {
                 return true;
             }
