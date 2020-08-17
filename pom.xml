@@ -96,7 +96,7 @@
 					</includes>
 					<encoding>UTF-8</encoding>
 					<properties>
-						<year>2019</year>
+						<year>2020</year>
 					</properties>
 					<headerDefinitions>
 						<headerDefinition>${basedir}/src/etc/header-definition.xml</headerDefinition>
