@@ -83,14 +83,15 @@ public class SuggestIndexer {
     protected ExecutorService threadPool;
 
     public SuggestIndexer(final Client client, final String index, final ReadingConverter readingConverter,
-            final ReadingConverter contentsReadingConverter, final Normalizer normalizer, final SuggestAnalyzer analyzer,
-            final SuggestSettings settings, final ExecutorService threadPool) {
+            final ReadingConverter contentsReadingConverter, final Normalizer normalizer,
+            final SuggestAnalyzer analyzer, final SuggestSettings settings, final ExecutorService threadPool) {
         this.client = client;
         this.index = index;
 
         this.supportedFields = settings.array().get(SuggestSettings.DefaultKeys.SUPPORTED_FIELDS);
         this.badWords = settings.badword().get(true);
-        this.tagFieldNames = settings.getAsString(SuggestSettings.DefaultKeys.TAG_FIELD_NAME, StringUtil.EMPTY).split(",");
+        this.tagFieldNames = settings.getAsString(SuggestSettings.DefaultKeys.TAG_FIELD_NAME, StringUtil.EMPTY)
+                .split(",");
         this.roleFieldName = settings.getAsString(SuggestSettings.DefaultKeys.ROLE_FIELD_NAME, StringUtil.EMPTY);
         this.langFieldName = settings.getAsString(SuggestSettings.DefaultKeys.LANG_FIELD_NAME, StringUtil.EMPTY);
         this.parallel = settings.getAsBoolean(SuggestSettings.DefaultKeys.PARALLEL_PROCESSING, false);
@@ -106,20 +107,22 @@ public class SuggestIndexer {
         this.threadPool = threadPool;
     }
 
-    //TODO return result
+    // TODO return result
     public SuggestIndexResponse index(final SuggestItem item) {
         return index(new SuggestItem[] { item });
     }
 
-    //TODO return result
+    // TODO return result
     public SuggestIndexResponse index(final SuggestItem[] items) {
         // TODO parallel?
-        final SuggestItem[] array = Stream.of(items).filter(item -> !item.isBadWord(badWords)).toArray(n -> new SuggestItem[n]);
+        final SuggestItem[] array = Stream.of(items).filter(item -> !item.isBadWord(badWords))
+                .toArray(n -> new SuggestItem[n]);
 
         try {
             final long start = System.currentTimeMillis();
             final SuggestWriterResult result = suggestWriter.write(client, settings, index, array, true);
-            return new SuggestIndexResponse(items.length, items.length, result.getFailures(), System.currentTimeMillis() - start);
+            return new SuggestIndexResponse(items.length, items.length, result.getFailures(),
+                    System.currentTimeMillis() - start);
         } catch (final Exception e) {
             throw new SuggestIndexException("Failed to write items[" + items.length + "] to " + index, e);
         }
@@ -150,8 +153,8 @@ public class SuggestIndexer {
     public SuggestDeleteResponse deleteDocumentWords() {
         final long start = System.currentTimeMillis();
 
-        final SuggestDeleteResponse deleteResponse =
-                deleteByQuery(QueryBuilders.boolQuery().must(QueryBuilders.rangeQuery(FieldNames.DOC_FREQ).gte(1))
+        final SuggestDeleteResponse deleteResponse = deleteByQuery(
+                QueryBuilders.boolQuery().must(QueryBuilders.rangeQuery(FieldNames.DOC_FREQ).gte(1))
                         .mustNot(QueryBuilders.matchPhraseQuery(FieldNames.KINDS, SuggestItem.Kind.QUERY.toString()))
                         .mustNot(QueryBuilders.matchPhraseQuery(FieldNames.KINDS, SuggestItem.Kind.USER.toString())));
         if (deleteResponse.hasError()) {
@@ -160,7 +163,8 @@ public class SuggestIndexer {
 
         final List<SuggestItem> updateItems = new ArrayList<>();
         SearchResponse response = client.prepareSearch(index).setSize(500).setScroll(settings.getScrollTimeout())
-                .setQuery(QueryBuilders.rangeQuery(FieldNames.DOC_FREQ).gte(1)).execute().actionGet(settings.getSearchTimeout());
+                .setQuery(QueryBuilders.rangeQuery(FieldNames.DOC_FREQ).gte(1)).execute()
+                .actionGet(settings.getSearchTimeout());
         String scrollId = response.getScrollId();
         try {
             while (scrollId != null) {
@@ -175,8 +179,8 @@ public class SuggestIndexer {
                             .toArray(count -> new SuggestItem.Kind[count]));
                     updateItems.add(item);
                 }
-                final SuggestWriterResult result =
-                        suggestWriter.write(client, settings, index, updateItems.toArray(new SuggestItem[updateItems.size()]), false);
+                final SuggestWriterResult result = suggestWriter.write(client, settings, index,
+                        updateItems.toArray(new SuggestItem[updateItems.size()]), false);
                 if (result.hasFailure()) {
                     throw new SuggestIndexException(result.getFailures().get(0));
                 }
@@ -197,8 +201,8 @@ public class SuggestIndexer {
     public SuggestDeleteResponse deleteQueryWords() {
         final long start = System.currentTimeMillis();
 
-        final SuggestDeleteResponse deleteResponse =
-                deleteByQuery(QueryBuilders.boolQuery().must(QueryBuilders.rangeQuery(FieldNames.QUERY_FREQ).gte(1))
+        final SuggestDeleteResponse deleteResponse = deleteByQuery(
+                QueryBuilders.boolQuery().must(QueryBuilders.rangeQuery(FieldNames.QUERY_FREQ).gte(1))
                         .mustNot(QueryBuilders.matchPhraseQuery(FieldNames.KINDS, SuggestItem.Kind.DOCUMENT.toString()))
                         .mustNot(QueryBuilders.matchPhraseQuery(FieldNames.KINDS, SuggestItem.Kind.USER.toString())));
         if (deleteResponse.hasError()) {
@@ -207,7 +211,8 @@ public class SuggestIndexer {
 
         final List<SuggestItem> updateItems = new ArrayList<>();
         SearchResponse response = client.prepareSearch(index).setSize(500).setScroll(settings.getScrollTimeout())
-                .setQuery(QueryBuilders.rangeQuery(FieldNames.QUERY_FREQ).gte(1)).execute().actionGet(settings.getSearchTimeout());
+                .setQuery(QueryBuilders.rangeQuery(FieldNames.QUERY_FREQ).gte(1)).execute()
+                .actionGet(settings.getSearchTimeout());
         String scrollId = response.getScrollId();
         try {
             while (scrollId != null) {
@@ -222,8 +227,8 @@ public class SuggestIndexer {
                             .toArray(count -> new SuggestItem.Kind[count]));
                     updateItems.add(item);
                 }
-                final SuggestWriterResult result =
-                        suggestWriter.write(client, settings, index, updateItems.toArray(new SuggestItem[updateItems.size()]), false);
+                final SuggestWriterResult result = suggestWriter.write(client, settings, index,
+                        updateItems.toArray(new SuggestItem[updateItems.size()]), false);
                 if (result.hasFailure()) {
                     throw new SuggestIndexException(result.getFailures().get(0));
                 }
@@ -255,20 +260,20 @@ public class SuggestIndexer {
             if (parallel) {
                 stream.parallel();
             }
-            final SuggestItem[] array = stream
-                    .flatMap(queryLog -> contentsParser
-                            .parseQueryLog(queryLog, supportedFields, tagFieldNames, roleFieldName, readingConverter, normalizer).stream())
+            final SuggestItem[] array = stream.flatMap(queryLog -> contentsParser.parseQueryLog(queryLog,
+                    supportedFields, tagFieldNames, roleFieldName, readingConverter, normalizer).stream())
                     .toArray(n -> new SuggestItem[n]);
             final SuggestIndexResponse response = index(array);
-            return new SuggestIndexResponse(array.length, queryLogs.length, response.getErrors(), System.currentTimeMillis() - start);
+            return new SuggestIndexResponse(array.length, queryLogs.length, response.getErrors(),
+                    System.currentTimeMillis() - start);
         } catch (final Exception e) {
             throw new SuggestIndexException("Failed to index from query_string.", e);
         }
     }
 
     // TODO replace queryLogReader with lambda reader
-    public Deferred<SuggestIndexResponse>.Promise indexFromQueryLog(final QueryLogReader queryLogReader, final int docPerReq,
-            final long requestInterval) {
+    public Deferred<SuggestIndexResponse>.Promise indexFromQueryLog(final QueryLogReader queryLogReader,
+            final int docPerReq, final long requestInterval) {
         final Deferred<SuggestIndexResponse> deferred = new Deferred<>();
         threadPool.execute(() -> {
             final long start = System.currentTimeMillis();
@@ -286,7 +291,8 @@ public class SuggestIndexer {
                     queryLogs.add(queryLog);
                     queryLog = queryLogReader.read();
                     if ((queryLog == null && !queryLogs.isEmpty()) || queryLogs.size() >= docPerReq) {
-                        final SuggestIndexResponse res = indexFromQueryLog(queryLogs.toArray(new QueryLog[queryLogs.size()]));
+                        final SuggestIndexResponse res = indexFromQueryLog(
+                                queryLogs.toArray(new QueryLog[queryLogs.size()]));
                         errors.addAll(res.getErrors());
                         numberOfSuggestDocs += res.getNumberOfSuggestDocs();
                         numberOfInputDocs += res.getNumberOfInputDocs();
@@ -295,8 +301,8 @@ public class SuggestIndexer {
                         Thread.sleep(requestInterval);
                     }
                 }
-                deferred.resolve(
-                        new SuggestIndexResponse(numberOfSuggestDocs, numberOfInputDocs, errors, System.currentTimeMillis() - start));
+                deferred.resolve(new SuggestIndexResponse(numberOfSuggestDocs, numberOfInputDocs, errors,
+                        System.currentTimeMillis() - start));
             } catch (final Throwable t) {
                 deferred.reject(t);
             } finally {
@@ -315,8 +321,8 @@ public class SuggestIndexer {
             }
             final SuggestItem[] array = stream.flatMap(document -> {
                 try {
-                    return contentsParser.parseDocument(document, supportedFields, tagFieldNames, roleFieldName, langFieldName,
-                            readingConverter, contentsReadingConverter, normalizer, analyzer).stream();
+                    return contentsParser.parseDocument(document, supportedFields, tagFieldNames, roleFieldName,
+                            langFieldName, readingConverter, contentsReadingConverter, normalizer, analyzer).stream();
                 } catch (ElasticsearchStatusException | IllegalStateException e) {
                     final String msg = e.getMessage();
                     if (StringUtil.isNotEmpty(msg) || msg.contains("index.analyze.max_token_count")) {
@@ -333,14 +339,14 @@ public class SuggestIndexer {
             final long indexTime = System.currentTimeMillis();
 
             if (logger.isLoggable(Level.INFO)) {
-                final OperatingSystemMXBean operatingSystemMXBean =
-                        (com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+                final OperatingSystemMXBean operatingSystemMXBean = (com.sun.management.OperatingSystemMXBean) ManagementFactory
+                        .getOperatingSystemMXBean();
                 final double cpuLoad = operatingSystemMXBean.getProcessCpuLoad();
                 final long maxMemory = Runtime.getRuntime().maxMemory();
                 logger.info(String.format(
                         "Index %d words from %d documents. (parse:{%dmsec}, index:{%dmsec}, Cpu:{%f}, Mem:{heap:%dMB, used:%dMB)",
-                        array.length, documents.length, parseTime - start, indexTime - start, cpuLoad, maxMemory / (1024 * 1024),
-                        (maxMemory - Runtime.getRuntime().freeMemory()) / (1024 * 1024)));
+                        array.length, documents.length, parseTime - start, indexTime - start, cpuLoad,
+                        maxMemory / (1024 * 1024), (maxMemory - Runtime.getRuntime().freeMemory()) / (1024 * 1024)));
             }
             return new SuggestIndexResponse(array.length, documents.length, response.getErrors(), indexTime - start);
         } catch (final Exception e) {
@@ -350,13 +356,13 @@ public class SuggestIndexer {
     }
 
     @Deprecated
-    public Deferred<SuggestIndexResponse>.Promise indexFromDocument(final Supplier<DocumentReader> reader, final int docPerReq,
-            final long requestInterval) {
+    public Deferred<SuggestIndexResponse>.Promise indexFromDocument(final Supplier<DocumentReader> reader,
+            final int docPerReq, final long requestInterval) {
         return indexFromDocument(reader, docPerReq, () -> ThreadUtil.sleep(requestInterval));
     }
 
-    public Deferred<SuggestIndexResponse>.Promise indexFromDocument(final Supplier<DocumentReader> reader, final int docPerReq,
-            final Runnable waitController) {
+    public Deferred<SuggestIndexResponse>.Promise indexFromDocument(final Supplier<DocumentReader> reader,
+            final int docPerReq, final Runnable waitController) {
         if (logger.isLoggable(Level.INFO)) {
             logger.info(() -> String.format("Start index by DocumentReader. docPerReq:%s", docPerReq));
         }
@@ -381,15 +387,16 @@ public class SuggestIndexer {
                         errors.addAll(res.getErrors());
                         numberOfSuggestDocs += res.getNumberOfSuggestDocs();
                         numberOfInputDocs += res.getNumberOfInputDocs();
-                        client.admin().indices().prepareRefresh(index).execute().actionGet(settings.getIndicesTimeout());
+                        client.admin().indices().prepareRefresh(index).execute()
+                                .actionGet(settings.getIndicesTimeout());
                         docs.clear();
 
                         waitController.run();
                     }
                 }
 
-                deferred.resolve(
-                        new SuggestIndexResponse(numberOfSuggestDocs, numberOfInputDocs, errors, System.currentTimeMillis() - start));
+                deferred.resolve(new SuggestIndexResponse(numberOfSuggestDocs, numberOfInputDocs, errors,
+                        System.currentTimeMillis() - start));
             } catch (final Throwable t) {
                 deferred.reject(t);
             }
@@ -416,8 +423,8 @@ public class SuggestIndexer {
         }
         final String[] words = buf.toString().trim().split(" ");
         try {
-            final SuggestItem item =
-                    contentsParser.parseSearchWords(words, null, fields, tags, roles, num, readingConverter, normalizer, analyzer, langs);
+            final SuggestItem item = contentsParser.parseSearchWords(words, null, fields, tags, roles, num,
+                    readingConverter, normalizer, analyzer, langs);
             if (item == null) {
                 return new SuggestIndexResponse(0, 1, null, System.currentTimeMillis() - start);
             }
@@ -454,10 +461,10 @@ public class SuggestIndexer {
 
     public SuggestIndexResponse addElevateWord(final ElevateWord elevateWord, final boolean apply) {
         final String normalizedWord = normalizer.normalize(elevateWord.getElevateWord(), "");
-        final List<String> normalizedReadings =
-                elevateWord.getReadings().stream().map(reading -> normalizer.normalize(reading, "")).collect(Collectors.toList());
-        final ElevateWord normalized = new ElevateWord(normalizedWord, elevateWord.getBoost(), normalizedReadings, elevateWord.getFields(),
-                elevateWord.getTags(), elevateWord.getRoles());
+        final List<String> normalizedReadings = elevateWord.getReadings().stream()
+                .map(reading -> normalizer.normalize(reading, "")).collect(Collectors.toList());
+        final ElevateWord normalized = new ElevateWord(normalizedWord, elevateWord.getBoost(), normalizedReadings,
+                elevateWord.getFields(), elevateWord.getTags(), elevateWord.getRoles());
         settings.elevateWord().add(normalized);
         if (apply) {
             return index(normalized.toSuggestItem());
@@ -489,13 +496,14 @@ public class SuggestIndexer {
             numberOfInputDocs += res.getNumberOfInputDocs();
             errors.addAll(res.getErrors());
         }
-        return new SuggestIndexResponse(numberOfSuggestDocs, numberOfInputDocs, errors, System.currentTimeMillis() - start);
+        return new SuggestIndexResponse(numberOfSuggestDocs, numberOfInputDocs, errors,
+                System.currentTimeMillis() - start);
     }
 
     public SuggestDeleteResponse deleteOldWords(final ZonedDateTime threshold) {
         final long start = System.currentTimeMillis();
-        final String query = FieldNames.TIMESTAMP + ":[* TO " + threshold.toInstant().toEpochMilli() + "] NOT " + FieldNames.KINDS + ':'
-                + SuggestItem.Kind.USER;
+        final String query = FieldNames.TIMESTAMP + ":[* TO " + threshold.toInstant().toEpochMilli() + "] NOT "
+                + FieldNames.KINDS + ':' + SuggestItem.Kind.USER;
         deleteByQuery(query);
         return new SuggestDeleteResponse(null, System.currentTimeMillis() - start);
     }

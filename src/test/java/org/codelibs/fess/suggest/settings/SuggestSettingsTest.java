@@ -90,7 +90,8 @@ public class SuggestSettingsTest {
         SuggestSettings anotherSettingsInstance = SuggestSettings.builder().build(runner.client(), id + "-2");
         anotherSettingsInstance.init();
         assertNotSame(indexName, anotherSettingsInstance.getAsString(SuggestSettings.DefaultKeys.INDEX, ""));
-        assertEquals("settings-test-2.suggest", anotherSettingsInstance.getAsString(SuggestSettings.DefaultKeys.INDEX, ""));
+        assertEquals("settings-test-2.suggest",
+                anotherSettingsInstance.getAsString(SuggestSettings.DefaultKeys.INDEX, ""));
     }
 
     @Test

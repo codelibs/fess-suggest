@@ -77,12 +77,13 @@ public class AnalyzerConverter implements ReadingConverter {
         public List<String> convert(final String text, final String field, final String... dummy) throws IOException {
             final AnalyzeAction.Response readingResponse = client.admin().indices()
                     .prepareAnalyze(analyzerSettings.getAnalyzerSettingsIndexName(), text)
-                    .setAnalyzer(analyzerSettings.getReadingAnalyzerName(field, lang)).execute().actionGet(settings.getIndicesTimeout());
+                    .setAnalyzer(analyzerSettings.getReadingAnalyzerName(field, lang)).execute()
+                    .actionGet(settings.getIndicesTimeout());
 
-            final AnalyzeAction.Response termResponse =
-                    client.admin().indices().prepareAnalyze(analyzerSettings.getAnalyzerSettingsIndexName(), text)
-                            .setAnalyzer(analyzerSettings.getReadingTermAnalyzerName(field, lang)).execute()
-                            .actionGet(settings.getIndicesTimeout());
+            final AnalyzeAction.Response termResponse = client.admin().indices()
+                    .prepareAnalyze(analyzerSettings.getAnalyzerSettingsIndexName(), text)
+                    .setAnalyzer(analyzerSettings.getReadingTermAnalyzerName(field, lang)).execute()
+                    .actionGet(settings.getIndicesTimeout());
 
             final List<AnalyzeToken> readingTokenList = readingResponse.getTokens();
             final List<AnalyzeToken> termTokenList = termResponse.getTokens();

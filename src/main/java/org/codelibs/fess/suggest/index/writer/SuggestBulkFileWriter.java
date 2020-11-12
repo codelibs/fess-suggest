@@ -22,13 +22,14 @@ import org.elasticsearch.index.query.QueryBuilder;
 
 public class SuggestBulkFileWriter implements SuggestWriter {
     @Override
-    public SuggestWriterResult write(final Client client, final SuggestSettings settings, final String index, final SuggestItem[] items,
-            final boolean update) {
+    public SuggestWriterResult write(final Client client, final SuggestSettings settings, final String index,
+            final SuggestItem[] items, final boolean update) {
         throw new UnsupportedOperationException("not yet.");
     }
 
     @Override
-    public SuggestWriterResult delete(final Client client, final SuggestSettings settings, final String index, final String id) {
+    public SuggestWriterResult delete(final Client client, final SuggestSettings settings, final String index,
+            final String id) {
         throw new UnsupportedOperationException("not yet.");
     }
 

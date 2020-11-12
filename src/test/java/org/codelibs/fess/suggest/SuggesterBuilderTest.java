@@ -82,8 +82,9 @@ public class SuggesterBuilderTest extends TestCase {
 
         final Normalizer normalizer = (text, field, lang) -> null;
 
-        final Suggester suggester = Suggester.builder().settings(SuggestSettings.builder().setSettingsIndexName(settingsIndexName))
-                .readingConverter(converter).normalizer(normalizer).build(runner.client(), id);
+        final Suggester suggester = Suggester.builder()
+                .settings(SuggestSettings.builder().setSettingsIndexName(settingsIndexName)).readingConverter(converter)
+                .normalizer(normalizer).build(runner.client(), id);
 
         assertEquals(runner.client(), suggester.client);
 

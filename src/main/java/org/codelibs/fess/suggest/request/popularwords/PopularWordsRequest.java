@@ -126,7 +126,8 @@ public class PopularWordsRequest extends Request<PopularWordsResponse> {
             @Override
             public void onResponse(final SearchResponse searchResponse) {
                 if (searchResponse.getFailedShards() > 0) {
-                    deferred.reject(new SuggesterException("Search failure. Failed shards num:" + searchResponse.getFailedShards()));
+                    deferred.reject(new SuggesterException(
+                            "Search failure. Failed shards num:" + searchResponse.getFailedShards()));
                 } else {
                     deferred.resolve(createResponse(searchResponse));
                 }
@@ -174,8 +175,8 @@ public class PopularWordsRequest extends Request<PopularWordsResponse> {
 
     protected QueryRescorerBuilder buildRescore() {
         return new QueryRescorerBuilder(
-                QueryBuilders.functionScoreQuery(ScoreFunctionBuilders.randomFunction().seed(seed).setField("_seq_no"))).setQueryWeight(0)
-                        .setRescoreQueryWeight(1);
+                QueryBuilders.functionScoreQuery(ScoreFunctionBuilders.randomFunction().seed(seed).setField("_seq_no")))
+                        .setQueryWeight(0).setRescoreQueryWeight(1);
     }
 
     protected PopularWordsResponse createResponse(final SearchResponse searchResponse) {
@@ -200,7 +201,7 @@ public class PopularWordsRequest extends Request<PopularWordsResponse> {
             }
         }
 
-        return new PopularWordsResponse(index, searchResponse.getTook().getMillis(), words, searchResponse.getHits().getTotalHits().value,
-                items);
+        return new PopularWordsResponse(index, searchResponse.getTook().getMillis(), words,
+                searchResponse.getHits().getTotalHits().value, items);
     }
 }

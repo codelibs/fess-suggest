@@ -33,20 +33,23 @@ import org.elasticsearch.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken
 
 public class DefaultContentsParser implements ContentsParser {
     @Override
-    public SuggestItem parseSearchWords(final String[] words, final String[][] readings, final String[] fields, final String[] tags,
-            final String[] roles, final long score, final ReadingConverter readingConverter, final Normalizer normalizer,
-            final SuggestAnalyzer analyzer, final String[] langs) {
+    public SuggestItem parseSearchWords(final String[] words, final String[][] readings, final String[] fields,
+            final String[] tags, final String[] roles, final long score, final ReadingConverter readingConverter,
+            final Normalizer normalizer, final SuggestAnalyzer analyzer, final String[] langs) {
         try {
             final List<String> wordsList = new ArrayList<>(words.length);
             final List<String[]> readingList = new ArrayList<>(words.length);
 
             for (int i = 0; i < words.length; i++) {
-                if (isExcludeSearchword(words[i], fields != null && fields.length > 0 ? fields[0] : "", langs, analyzer)) {
+                if (isExcludeSearchword(words[i], fields != null && fields.length > 0 ? fields[0] : "", langs,
+                        analyzer)) {
                     continue;
                 }
 
-                final String word = normalizer.normalize(words[i], fields != null && fields.length > 0 ? fields[0] : "", langs);
-                final List<String> l = readingConverter.convert(word, fields != null && fields.length > 0 ? fields[0] : "", langs);
+                final String word = normalizer.normalize(words[i], fields != null && fields.length > 0 ? fields[0] : "",
+                        langs);
+                final List<String> l = readingConverter.convert(word,
+                        fields != null && fields.length > 0 ? fields[0] : "", langs);
                 if (readings != null && readings.length > i && readings[i].length > 0) {
                     for (final String reading : readings[i]) {
                         if (!l.contains(reading)) {
@@ -61,8 +64,9 @@ public class DefaultContentsParser implements ContentsParser {
             if (wordsList.isEmpty()) {
                 return null;
             }
-            return new SuggestItem(wordsList.toArray(new String[wordsList.size()]), readingList.toArray(new String[readingList.size()][]),
-                    fields, 0, score, -1, tags, roles, langs, SuggestItem.Kind.QUERY);
+            return new SuggestItem(wordsList.toArray(new String[wordsList.size()]),
+                    readingList.toArray(new String[readingList.size()][]), fields, 0, score, -1, tags, roles, langs,
+                    SuggestItem.Kind.QUERY);
         } catch (final IOException e) {
             throw new SuggesterException("Failed to SuggestItem from search words.", e);
         }
@@ -83,7 +87,8 @@ public class DefaultContentsParser implements ContentsParser {
         }
         final String[] tags = tagList.toArray(new String[tagList.size()]);
         final String[] roles1 = SuggestUtil.parseQuery(queryString, roleFieldName);
-        final String[] roles2 = filterQueryString == null ? new String[0] : SuggestUtil.parseQuery(filterQueryString, roleFieldName);
+        final String[] roles2 = filterQueryString == null ? new String[0]
+                : SuggestUtil.parseQuery(filterQueryString, roleFieldName);
         final String[] roles = new String[roles1.length + roles2.length];
 
         if (roles1.length > 0) {
@@ -108,7 +113,8 @@ public class DefaultContentsParser implements ContentsParser {
                     readings[j] = l.toArray(new String[l.size()]);
                 }
 
-                items.add(new SuggestItem(words, readings, new String[] { field }, 0, 1, -1, tags, roles, null, SuggestItem.Kind.QUERY));
+                items.add(new SuggestItem(words, readings, new String[] { field }, 0, 1, -1, tags, roles, null,
+                        SuggestItem.Kind.QUERY));
             }
         } catch (final IOException e) {
             throw new SuggesterException("Failed to create SuggestItem from queryLog.", e);
@@ -118,9 +124,10 @@ public class DefaultContentsParser implements ContentsParser {
     }
 
     @Override
-    public List<SuggestItem> parseDocument(final Map<String, Object> document, final String[] fields, final String[] tagFieldNames,
-            final String roleFieldName, final String langFieldName, final ReadingConverter readingConverter,
-            final ReadingConverter contentsReadingConverter, final Normalizer normalizer, final SuggestAnalyzer analyzer) {
+    public List<SuggestItem> parseDocument(final Map<String, Object> document, final String[] fields,
+            final String[] tagFieldNames, final String roleFieldName, final String langFieldName,
+            final ReadingConverter readingConverter, final ReadingConverter contentsReadingConverter,
+            final Normalizer normalizer, final SuggestAnalyzer analyzer) {
         List<SuggestItem> items = null;
         final List<String> tagList = new ArrayList<>();
         for (final String tagFieldName : tagFieldNames) {

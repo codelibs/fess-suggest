@@ -156,7 +156,7 @@ public final class SuggestUtil {
 
         secondLine.put("text", item.getText());
 
-        //reading
+        // reading
         final String[][] readings = item.getReadings();
         for (int i = 0; i < readings.length; i++) {
             secondLine.put("reading_" + i, readings[i]);
@@ -172,7 +172,8 @@ public final class SuggestUtil {
         secondLine.put("kinds", Arrays.toString(item.getKinds()));
         secondLine.put("@timestamp", item.getTimestamp());
 
-        try (OutputStream out1 = getXContentOutputStream(firstLineMap); OutputStream out2 = getXContentOutputStream(secondLine)) {
+        try (OutputStream out1 = getXContentOutputStream(firstLineMap);
+                OutputStream out2 = getXContentOutputStream(secondLine)) {
             return ((ByteArrayOutputStream) out1).toString(CoreLibConstants.UTF_8) + '\n'
                     + ((ByteArrayOutputStream) out2).toString(CoreLibConstants.UTF_8);
         } catch (final IOException e) {
@@ -194,7 +195,8 @@ public final class SuggestUtil {
         return chain;
     }
 
-    public static ReadingConverter createDefaultContentsReadingConverter(final Client client, final SuggestSettings settings) {
+    public static ReadingConverter createDefaultContentsReadingConverter(final Client client,
+            final SuggestSettings settings) {
         final ReadingConverterChain chain = new ReadingConverterChain();
         chain.addConverter(new KatakanaToAlphabetConverter());
         return chain;
@@ -204,14 +206,14 @@ public final class SuggestUtil {
         final NormalizerChain normalizerChain = new NormalizerChain();
         normalizerChain.add(new AnalyzerNormalizer(client, settings));
         /*
-        normalizerChain.add(new HankakuKanaToZenkakuKana());
-        normalizerChain.add(new FullWidthToHalfWidthAlphabetNormalizer());
-        normalizerChain.add(new ICUNormalizer("Any-Lower"));
-        */
+         * normalizerChain.add(new HankakuKanaToZenkakuKana()); normalizerChain.add(new
+         * FullWidthToHalfWidthAlphabetNormalizer()); normalizerChain.add(new ICUNormalizer("Any-Lower"));
+         */
         return normalizerChain;
     }
 
-    public static AnalyzerSettings.DefaultContentsAnalyzer createDefaultAnalyzer(final Client client, final SuggestSettings settings) {
+    public static AnalyzerSettings.DefaultContentsAnalyzer createDefaultAnalyzer(final Client client,
+            final SuggestSettings settings) {
         final AnalyzerSettings analyzerSettings = settings.analyzer();
         return analyzerSettings.new DefaultContentsAnalyzer();
     }
@@ -236,8 +238,8 @@ public final class SuggestUtil {
     public static boolean deleteByQuery(final Client client, final SuggestSettings settings, final String index,
             final QueryBuilder queryBuilder) {
         try {
-            SearchResponse response = client.prepareSearch(index).setQuery(queryBuilder).setSize(500).setScroll(settings.getScrollTimeout())
-                    .execute().actionGet(settings.getSearchTimeout());
+            SearchResponse response = client.prepareSearch(index).setQuery(queryBuilder).setSize(500)
+                    .setScroll(settings.getScrollTimeout()).execute().actionGet(settings.getSearchTimeout());
             String scrollId = response.getScrollId();
             try {
                 while (scrollId != null) {
@@ -247,7 +249,8 @@ public final class SuggestUtil {
                     }
 
                     final BulkRequestBuilder bulkRequestBuiler = client.prepareBulk();
-                    Stream.of(hits).map(SearchHit::getId).forEach(id -> bulkRequestBuiler.add(new DeleteRequest(index, id)));
+                    Stream.of(hits).map(SearchHit::getId)
+                            .forEach(id -> bulkRequestBuiler.add(new DeleteRequest(index, id)));
 
                     final BulkResponse bulkResponse = bulkRequestBuiler.execute().actionGet(settings.getBulkTimeout());
                     if (bulkResponse.hasFailures()) {
@@ -273,7 +276,9 @@ public final class SuggestUtil {
 
     public static void deleteScrollContext(final Client client, final String scrollId) {
         if (scrollId != null) {
-            client.prepareClearScroll().addScrollId(scrollId).execute(ActionListener.wrap(res -> {}, e -> {}));
+            client.prepareClearScroll().addScrollId(scrollId).execute(ActionListener.wrap(res -> {
+            }, e -> {
+            }));
         }
     }
 

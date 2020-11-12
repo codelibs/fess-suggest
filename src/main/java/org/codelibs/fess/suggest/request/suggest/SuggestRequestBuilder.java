@@ -21,7 +21,8 @@ import org.codelibs.fess.suggest.request.RequestBuilder;
 import org.elasticsearch.client.Client;
 
 public class SuggestRequestBuilder extends RequestBuilder<SuggestRequest, SuggestResponse> {
-    public SuggestRequestBuilder(final Client client, final ReadingConverter readingConverter, final Normalizer normalizer) {
+    public SuggestRequestBuilder(final Client client, final ReadingConverter readingConverter,
+            final Normalizer normalizer) {
         super(client, new SuggestRequest());
         request.setReadingConverter(readingConverter);
         request.setNormalizer(normalizer);

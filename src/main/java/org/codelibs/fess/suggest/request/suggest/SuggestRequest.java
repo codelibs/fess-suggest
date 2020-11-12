@@ -161,7 +161,7 @@ public class SuggestRequest extends Request<SuggestResponse> {
         final QueryBuilder queryBuilder = buildFunctionScoreQuery(query, q);
         builder.addSort("_score", SortOrder.DESC);
 
-        //set filter query.
+        // set filter query.
         final List<QueryBuilder> filterList = new ArrayList<>(10);
         if (!tags.isEmpty()) {
             filterList.add(buildFilterQuery(FieldNames.TAGS, tags));
@@ -193,7 +193,8 @@ public class SuggestRequest extends Request<SuggestResponse> {
             @Override
             public void onResponse(final SearchResponse searchResponse) {
                 if (searchResponse.getFailedShards() > 0) {
-                    deferred.reject(new SuggesterException("Search failure. Failed shards num:" + searchResponse.getFailedShards()));
+                    deferred.reject(new SuggesterException(
+                            "Search failure. Failed shards num:" + searchResponse.getFailedShards()));
                 } else {
                     deferred.resolve(createResponse(searchResponse));
                 }
@@ -272,14 +273,17 @@ public class SuggestRequest extends Request<SuggestResponse> {
         final List<FunctionScoreQueryBuilder.FilterFunctionBuilder> flist = new ArrayList<>();
 
         if (isSingleWordQuery(query) && !isHiraganaQuery(query)) {
-            flist.add(new FunctionScoreQueryBuilder.FilterFunctionBuilder(QueryBuilders.prefixQuery(FieldNames.TEXT, query),
+            flist.add(new FunctionScoreQueryBuilder.FilterFunctionBuilder(
+                    QueryBuilders.prefixQuery(FieldNames.TEXT, query),
                     ScoreFunctionBuilders.weightFactorFunction(prefixMatchWeight)));
         }
 
-        flist.add(new FunctionScoreQueryBuilder.FilterFunctionBuilder(ScoreFunctionBuilders.fieldValueFactorFunction(FieldNames.DOC_FREQ)
-                .missing(0.1f).modifier(FieldValueFactorFunction.Modifier.LOG2P).setWeight(1.0F)));
-        flist.add(new FunctionScoreQueryBuilder.FilterFunctionBuilder(ScoreFunctionBuilders.fieldValueFactorFunction(FieldNames.QUERY_FREQ)
-                .missing(0.1f).modifier(FieldValueFactorFunction.Modifier.LOG2P).setWeight(1.0F)));
+        flist.add(new FunctionScoreQueryBuilder.FilterFunctionBuilder(
+                ScoreFunctionBuilders.fieldValueFactorFunction(FieldNames.DOC_FREQ).missing(0.1f)
+                        .modifier(FieldValueFactorFunction.Modifier.LOG2P).setWeight(1.0F)));
+        flist.add(new FunctionScoreQueryBuilder.FilterFunctionBuilder(
+                ScoreFunctionBuilders.fieldValueFactorFunction(FieldNames.QUERY_FREQ).missing(0.1f)
+                        .modifier(FieldValueFactorFunction.Modifier.LOG2P).setWeight(1.0F)));
         flist.add(new FunctionScoreQueryBuilder.FilterFunctionBuilder(
                 ScoreFunctionBuilders.fieldValueFactorFunction(FieldNames.USER_BOOST).missing(1f).setWeight(1.0F)));
         final FunctionScoreQueryBuilder functionScoreQueryBuilder = QueryBuilders.functionScoreQuery(queryBuilder,
@@ -315,7 +319,8 @@ public class SuggestRequest extends Request<SuggestResponse> {
             final String text = source.get(FieldNames.TEXT).toString();
             if (skipDuplicateWords) {
                 final String duplicateCheckStr = text.replace(" ", "");
-                if (words.stream().map(word -> word.replace(" ", "")).anyMatch(word -> word.equals(duplicateCheckStr))) {
+                if (words.stream().map(word -> word.replace(" ", ""))
+                        .anyMatch(word -> word.equals(duplicateCheckStr))) {
                     // skip duplicate word.
                     continue;
                 }
@@ -340,11 +345,12 @@ public class SuggestRequest extends Request<SuggestResponse> {
         }
         firstWords.addAll(secondWords);
         firstItems.addAll(secondItems);
-        return new SuggestResponse(index, searchResponse.getTook().getMillis(), firstWords, searchResponse.getHits().getTotalHits().value,
-                firstItems);
+        return new SuggestResponse(index, searchResponse.getTook().getMillis(), firstWords,
+                searchResponse.getHits().getTotalHits().value, firstItems);
     }
 
-    protected boolean isFirstWordMatching(final boolean singleWordQuery, final boolean hiraganaQuery, final String text) {
+    protected boolean isFirstWordMatching(final boolean singleWordQuery, final boolean hiraganaQuery,
+            final String text) {
         if (matchWordFirst && !hiraganaQuery && singleWordQuery && text.contains(query)) {
             if (query.length() == 1) {
                 return UnicodeBlock.of(query.charAt(0)) != UnicodeBlock.HIRAGANA;

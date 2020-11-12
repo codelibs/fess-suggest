@@ -37,8 +37,8 @@ public class DefaultContentsParserTest extends TestCase {
     public void test_parseQueryLog() throws Exception {
 
         QueryLog queryLog = new QueryLog("content:検索エンジン", null);
-        List<SuggestItem> items = defaultContentsParser.parseQueryLog(queryLog, supportedFields, tagFieldNames, roleFieldName,
-                createDefaultReadingConverter(), createDefaultNormalizer());
+        List<SuggestItem> items = defaultContentsParser.parseQueryLog(queryLog, supportedFields, tagFieldNames,
+                roleFieldName, createDefaultReadingConverter(), createDefaultNormalizer());
         SuggestItem item = items.get(0);
         assertEquals("検索エンジン", item.getText());
         assertEquals(SuggestItem.Kind.QUERY, item.getKinds()[0]);
@@ -47,15 +47,15 @@ public class DefaultContentsParserTest extends TestCase {
 
     public void test_parseQueryLog2Word() throws Exception {
         QueryLog queryLog = new QueryLog("content:検索エンジン AND content:柿", null);
-        List<SuggestItem> items = defaultContentsParser.parseQueryLog(queryLog, supportedFields, tagFieldNames, roleFieldName,
-                createDefaultReadingConverter(), createDefaultNormalizer());
+        List<SuggestItem> items = defaultContentsParser.parseQueryLog(queryLog, supportedFields, tagFieldNames,
+                roleFieldName, createDefaultReadingConverter(), createDefaultNormalizer());
         assertEquals("検索エンジン 柿", items.get(0).getText());
     }
 
     public void test_parseQueryLogAndRole() throws Exception {
         QueryLog queryLog = new QueryLog("content:検索エンジン AND label:tag1", "role:role1");
-        List<SuggestItem> items = defaultContentsParser.parseQueryLog(queryLog, supportedFields, tagFieldNames, roleFieldName,
-                createDefaultReadingConverter(), createDefaultNormalizer());
+        List<SuggestItem> items = defaultContentsParser.parseQueryLog(queryLog, supportedFields, tagFieldNames,
+                roleFieldName, createDefaultReadingConverter(), createDefaultNormalizer());
         SuggestItem item = items.get(0);
         assertEquals("検索エンジン", item.getText());
         assertEquals("tag1", item.getTags()[0]);
@@ -64,14 +64,14 @@ public class DefaultContentsParserTest extends TestCase {
 
     protected ReadingConverter createDefaultReadingConverter() throws IOException {
         ReadingConverterChain chain = new ReadingConverterChain();
-        //chain.addConverter(new KatakanaConverter());
+        // chain.addConverter(new KatakanaConverter());
         chain.addConverter(new KatakanaToAlphabetConverter());
         chain.init();
         return chain;
     }
 
     protected Normalizer createDefaultNormalizer() {
-        //TODO
+        // TODO
         return new NormalizerChain();
     }
 

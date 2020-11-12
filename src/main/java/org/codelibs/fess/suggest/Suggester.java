@@ -67,8 +67,8 @@ public class Suggester {
     protected final ExecutorService threadPool;
 
     public Suggester(final Client client, final SuggestSettings settings, final ReadingConverter readingConverter,
-            final ReadingConverter contentsReadingConverter, final Normalizer normalizer, final SuggestAnalyzer analyzer,
-            final ExecutorService threadPool) {
+            final ReadingConverter contentsReadingConverter, final Normalizer normalizer,
+            final SuggestAnalyzer analyzer, final ExecutorService threadPool) {
         this.client = client;
         this.suggestSettings = settings;
         this.readingConverter = readingConverter;
@@ -102,8 +102,8 @@ public class Suggester {
     public boolean createIndexIfNothing() {
         try {
             boolean created = false;
-            final IndicesExistsResponse response =
-                    client.admin().indices().prepareExists(getSearchAlias(index)).execute().actionGet(suggestSettings.getIndicesTimeout());
+            final IndicesExistsResponse response = client.admin().indices().prepareExists(getSearchAlias(index))
+                    .execute().actionGet(suggestSettings.getIndicesTimeout());
             if (!response.isExists()) {
                 final String mappingSource = getDefaultMappings();
                 final String settingsSource = getDefaultIndexSettings();
@@ -117,7 +117,8 @@ public class Suggester {
                         .addAlias(new Alias(getSearchAlias(index))).addAlias(new Alias(getUpdateAlias(index))).execute()
                         .actionGet(suggestSettings.getIndicesTimeout());
 
-                client.admin().cluster().prepareHealth().setWaitForYellowStatus().execute().actionGet(suggestSettings.getClusterTimeout());
+                client.admin().cluster().prepareHealth().setWaitForYellowStatus().execute()
+                        .actionGet(suggestSettings.getClusterTimeout());
                 created = true;
             }
             return created;
@@ -130,10 +131,11 @@ public class Suggester {
     public void createNextIndex() {
         try {
             final List<String> prevIndices = new ArrayList<>();
-            final IndicesExistsResponse response =
-                    client.admin().indices().prepareExists(getUpdateAlias(index)).execute().actionGet(suggestSettings.getIndicesTimeout());
+            final IndicesExistsResponse response = client.admin().indices().prepareExists(getUpdateAlias(index))
+                    .execute().actionGet(suggestSettings.getIndicesTimeout());
             if (response.isExists()) {
-                final GetAliasesResponse getAliasesResponse = client.admin().indices().prepareGetAliases(getUpdateAlias(index)).execute()
+                final GetAliasesResponse getAliasesResponse = client.admin().indices()
+                        .prepareGetAliases(getUpdateAlias(index)).execute()
                         .actionGet(suggestSettings.getIndicesTimeout());
                 getAliasesResponse.getAliases().keysIt().forEachRemaining(prevIndices::add);
             }
@@ -145,18 +147,19 @@ public class Suggester {
                 logger.info(() -> String.format("Create next index: %s", indexName));
             }
 
-            final CreateIndexResponse createIndexResponse =
-                    client.admin().indices().prepareCreate(indexName).setSettings(settingsSource, XContentType.JSON)
-                            .addMapping(SuggestConstants.DEFAULT_TYPE, mappingSource, XContentType.JSON).execute()
-                            .actionGet(suggestSettings.getIndicesTimeout());
+            final CreateIndexResponse createIndexResponse = client.admin().indices().prepareCreate(indexName)
+                    .setSettings(settingsSource, XContentType.JSON)
+                    .addMapping(SuggestConstants.DEFAULT_TYPE, mappingSource, XContentType.JSON).execute()
+                    .actionGet(suggestSettings.getIndicesTimeout());
             if (!createIndexResponse.isAcknowledged()) {
                 logger.severe(() -> String.format("Could not create next index: %s", indexName));
                 throw new SuggesterException("Could not create next index: " + indexName);
             }
-            client.admin().cluster().prepareHealth().setWaitForYellowStatus().execute().actionGet(suggestSettings.getClusterTimeout());
+            client.admin().cluster().prepareHealth().setWaitForYellowStatus().execute()
+                    .actionGet(suggestSettings.getClusterTimeout());
 
-            final IndicesAliasesRequestBuilder aliasesRequestBuilder =
-                    client.admin().indices().prepareAliases().addAlias(indexName, getUpdateAlias(index));
+            final IndicesAliasesRequestBuilder aliasesRequestBuilder = client.admin().indices().prepareAliases()
+                    .addAlias(indexName, getUpdateAlias(index));
             for (final String prevIndex : prevIndices) {
                 aliasesRequestBuilder.removeAlias(prevIndex, getUpdateAlias(index));
             }
@@ -171,13 +174,13 @@ public class Suggester {
         try {
             final List<String> updateIndices = new ArrayList<>();
             final String updateAlias = getUpdateAlias(index);
-            final IndicesExistsResponse updateIndicesResponse =
-                    client.admin().indices().prepareExists(updateAlias).execute().actionGet(suggestSettings.getIndicesTimeout());
+            final IndicesExistsResponse updateIndicesResponse = client.admin().indices().prepareExists(updateAlias)
+                    .execute().actionGet(suggestSettings.getIndicesTimeout());
             if (updateIndicesResponse.isExists()) {
-                final GetAliasesResponse getAliasesResponse =
-                        client.admin().indices().prepareGetAliases(updateAlias).execute().actionGet(suggestSettings.getIndicesTimeout());
-                getAliasesResponse.getAliases()
-                        .forEach(x -> x.value.stream().filter(y -> updateAlias.equals(y.alias())).forEach(y -> updateIndices.add(x.key)));
+                final GetAliasesResponse getAliasesResponse = client.admin().indices().prepareGetAliases(updateAlias)
+                        .execute().actionGet(suggestSettings.getIndicesTimeout());
+                getAliasesResponse.getAliases().forEach(x -> x.value.stream().filter(y -> updateAlias.equals(y.alias()))
+                        .forEach(y -> updateIndices.add(x.key)));
             }
             if (updateIndices.size() != 1) {
                 logger.severe(() -> String.format("Unexpected update indices num:%s", updateIndices.size()));
@@ -187,13 +190,13 @@ public class Suggester {
 
             final List<String> searchIndices = new ArrayList<>();
             final String searchAlias = getSearchAlias(index);
-            final IndicesExistsResponse searchIndicesResponse =
-                    client.admin().indices().prepareExists(searchAlias).execute().actionGet(suggestSettings.getIndicesTimeout());
+            final IndicesExistsResponse searchIndicesResponse = client.admin().indices().prepareExists(searchAlias)
+                    .execute().actionGet(suggestSettings.getIndicesTimeout());
             if (searchIndicesResponse.isExists()) {
-                final GetAliasesResponse getAliasesResponse =
-                        client.admin().indices().prepareGetAliases(searchAlias).execute().actionGet(suggestSettings.getIndicesTimeout());
-                getAliasesResponse.getAliases()
-                        .forEach(x -> x.value.stream().filter(y -> searchAlias.equals(y.alias())).forEach(y -> searchIndices.add(x.key)));
+                final GetAliasesResponse getAliasesResponse = client.admin().indices().prepareGetAliases(searchAlias)
+                        .execute().actionGet(suggestSettings.getIndicesTimeout());
+                getAliasesResponse.getAliases().forEach(x -> x.value.stream().filter(y -> searchAlias.equals(y.alias()))
+                        .forEach(y -> searchIndices.add(x.key)));
             }
             if (searchIndices.size() != 1) {
                 logger.severe(() -> String.format("Unexpected update indices num:%s", searchIndices.size()));
@@ -208,8 +211,8 @@ public class Suggester {
             if (logger.isLoggable(Level.INFO)) {
                 logger.info(() -> String.format("Switch suggest.search index. %s => %s", searchIndex, updateIndex));
             }
-            client.admin().indices().prepareAliases().removeAlias(searchIndex, searchAlias).addAlias(updateIndex, searchAlias).execute()
-                    .actionGet(suggestSettings.getIndicesTimeout());
+            client.admin().indices().prepareAliases().removeAlias(searchIndex, searchAlias)
+                    .addAlias(updateIndex, searchAlias).execute().actionGet(suggestSettings.getIndicesTimeout());
         } catch (final Exception e) {
             logger.log(Level.SEVERE, "Failed to switch index.", e);
             throw new SuggesterException("Failed to switch index.", e);
@@ -217,8 +220,8 @@ public class Suggester {
     }
 
     public void removeDisableIndices() {
-        final GetIndexResponse response =
-                client.admin().indices().prepareGetIndex().addIndices("*").execute().actionGet(suggestSettings.getIndicesTimeout());
+        final GetIndexResponse response = client.admin().indices().prepareGetIndex().addIndices("*").execute()
+                .actionGet(suggestSettings.getIndicesTimeout());
         Stream.of(response.getIndices()).filter(s -> {
             if (!isSuggestIndex(s)) {
                 return false;
@@ -244,7 +247,7 @@ public class Suggester {
         return new SuggesterBuilder();
     }
 
-    //getter
+    // getter
     public SuggestSettings settings() {
         return suggestSettings;
     }
@@ -258,8 +261,8 @@ public class Suggester {
     }
 
     protected SuggestIndexer createDefaultIndexer() {
-        return new SuggestIndexer(client, getUpdateAlias(index), readingConverter, contentsReadingConverter, normalizer, analyzer,
-                suggestSettings, threadPool);
+        return new SuggestIndexer(client, getUpdateAlias(index), readingConverter, contentsReadingConverter, normalizer,
+                analyzer, suggestSettings, threadPool);
     }
 
     public String getIndex() {
@@ -279,8 +282,8 @@ public class Suggester {
     }
 
     private long getNum(final QueryBuilder queryBuilder) {
-        final SearchResponse searchResponse = client.prepareSearch().setIndices(getSearchAlias(index)).setSize(0).setQuery(queryBuilder)
-                .setTrackTotalHits(true).execute().actionGet(suggestSettings.getSearchTimeout());
+        final SearchResponse searchResponse = client.prepareSearch().setIndices(getSearchAlias(index)).setSize(0)
+                .setQuery(queryBuilder).setTrackTotalHits(true).execute().actionGet(suggestSettings.getSearchTimeout());
         return searchResponse.getHits().getTotalHits().value;
     }
 
@@ -298,8 +301,8 @@ public class Suggester {
 
     private String getDefaultMappings() throws IOException {
         final StringBuilder mappingSource = new StringBuilder();
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(
-                this.getClass().getClassLoader().getResourceAsStream("suggest_indices/suggest/mappings-default.json")))) {
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(this.getClass().getClassLoader()
+                .getResourceAsStream("suggest_indices/suggest/mappings-default.json")))) {
 
             String line;
             while ((line = br.readLine()) != null) {
@@ -311,8 +314,8 @@ public class Suggester {
 
     private String getDefaultIndexSettings() throws IOException {
         final StringBuilder settingsSource = new StringBuilder();
-        try (BufferedReader br = new BufferedReader(
-                new InputStreamReader(this.getClass().getClassLoader().getResourceAsStream("suggest_indices/suggest.json")))) {
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(
+                this.getClass().getClassLoader().getResourceAsStream("suggest_indices/suggest.json")))) {
             String line;
             while ((line = br.readLine()) != null) {
                 settingsSource.append(line);

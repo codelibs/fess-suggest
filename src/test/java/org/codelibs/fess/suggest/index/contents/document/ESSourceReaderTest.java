@@ -241,7 +241,8 @@ public class ESSourceReaderTest {
             source.put("field1", "test" + i);
             source.put("field2", i);
             IndexRequestBuilder indexRequestBuilder = new IndexRequestBuilder(client, IndexAction.INSTANCE);
-            indexRequestBuilder.setIndex(indexName).setType(typeName).setId(String.valueOf(i)).setCreate(true).setSource(source);
+            indexRequestBuilder.setIndex(indexName).setType(typeName).setId(String.valueOf(i)).setCreate(true)
+                    .setSource(source);
             bulkRequestBuilder.add(indexRequestBuilder);
         }
         bulkRequestBuilder.execute().actionGet();

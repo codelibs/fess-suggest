@@ -73,12 +73,13 @@ public class ElevateWordSettingsTest {
 
     @Test
     public void test_setAndGet() {
-        ElevateWord elevateWord1 =
-                new ElevateWord("a", 1.0f, Collections.singletonList("a"), Collections.singletonList("content"), null, null);
-        ElevateWord elevateWord2 =
-                new ElevateWord("b", 0.0f, Collections.singletonList("b"), Collections.singletonList("content"), null, null);
-        ElevateWord elevateWord3 = new ElevateWord("c", 100.0f, Collections.singletonList("c"), Collections.singletonList("content"),
-                Collections.singletonList("tag1"), Collections.singletonList("role1"));
+        ElevateWord elevateWord1 = new ElevateWord("a", 1.0f, Collections.singletonList("a"),
+                Collections.singletonList("content"), null, null);
+        ElevateWord elevateWord2 = new ElevateWord("b", 0.0f, Collections.singletonList("b"),
+                Collections.singletonList("content"), null, null);
+        ElevateWord elevateWord3 = new ElevateWord("c", 100.0f, Collections.singletonList("c"),
+                Collections.singletonList("content"), Collections.singletonList("tag1"),
+                Collections.singletonList("role1"));
 
         settings.elevateWord().add(elevateWord1);
         settings.elevateWord().add(elevateWord2);
@@ -102,12 +103,12 @@ public class ElevateWordSettingsTest {
 
     @Test
     public void test_delete() {
-        ElevateWord elevateWord1 =
-                new ElevateWord("a", 1.0f, Collections.singletonList("a"), Collections.singletonList("content"), null, null);
-        ElevateWord elevateWord2 =
-                new ElevateWord("b", 0.0f, Collections.singletonList("b"), Collections.singletonList("content"), null, null);
-        ElevateWord elevateWord3 =
-                new ElevateWord("c", 100.0f, Collections.singletonList("c"), Collections.singletonList("content"), null, null);
+        ElevateWord elevateWord1 = new ElevateWord("a", 1.0f, Collections.singletonList("a"),
+                Collections.singletonList("content"), null, null);
+        ElevateWord elevateWord2 = new ElevateWord("b", 0.0f, Collections.singletonList("b"),
+                Collections.singletonList("content"), null, null);
+        ElevateWord elevateWord3 = new ElevateWord("c", 100.0f, Collections.singletonList("c"),
+                Collections.singletonList("content"), null, null);
 
         settings.elevateWord().add(elevateWord1);
         settings.elevateWord().add(elevateWord2);

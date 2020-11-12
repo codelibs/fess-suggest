@@ -50,8 +50,8 @@ public class ElevateWordSettings {
     }
 
     public ElevateWord[] get() {
-        final Map<String, Object>[] sourceArray =
-                arraySettings.getFromArrayIndex(arraySettings.arraySettingsIndexName, arraySettings.settingsId, ELEVATE_WORD_SETTINGD_KEY);
+        final Map<String, Object>[] sourceArray = arraySettings.getFromArrayIndex(arraySettings.arraySettingsIndexName,
+                arraySettings.settingsId, ELEVATE_WORD_SETTINGD_KEY);
 
         final ElevateWord[] elevateWords = new ElevateWord[sourceArray.length];
         for (int i = 0; i < elevateWords.length; i++) {
@@ -66,8 +66,8 @@ public class ElevateWordSettings {
             @SuppressWarnings("unchecked")
             final List<String> roles = (List<String>) sourceArray[i].get(ELEVATE_WORD_ROLES);
             if (elevateWord != null && boost != null && readings != null && fields != null) {
-                elevateWords[i] =
-                        new ElevateWord(elevateWord.toString(), Float.parseFloat(boost.toString()), readings, fields, tags, roles);
+                elevateWords[i] = new ElevateWord(elevateWord.toString(), Float.parseFloat(boost.toString()), readings,
+                        fields, tags, roles);
             }
         }
         return elevateWords;
@@ -75,8 +75,8 @@ public class ElevateWordSettings {
 
     public void add(final ElevateWord elevateWord) {
         if (logger.isLoggable(Level.FINER)) {
-            logger.finer(() -> String.format("Add elevateword. %s  elevateword: %s", arraySettings.arraySettingsIndexName,
-                    elevateWord.getElevateWord()));
+            logger.finer(() -> String.format("Add elevateword. %s  elevateword: %s",
+                    arraySettings.arraySettingsIndexName, elevateWord.getElevateWord()));
         }
 
         final Map<String, Object> source = new HashMap<>();
@@ -95,7 +95,8 @@ public class ElevateWordSettings {
 
     public void delete(final String elevateWord) {
         if (logger.isLoggable(Level.FINER)) {
-            logger.finer(() -> String.format("Delete elevateword. %s elevateword:%s", arraySettings.arraySettingsIndexName, elevateWord));
+            logger.finer(() -> String.format("Delete elevateword. %s elevateword:%s",
+                    arraySettings.arraySettingsIndexName, elevateWord));
         }
         arraySettings.delete(ELEVATE_WORD_SETTINGD_KEY, elevateWord);
     }

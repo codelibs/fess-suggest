@@ -48,29 +48,17 @@ public class KatakanaConverter implements ReadingConverter {
 
     @Override
     public void init() throws IOException {
-        /* TODO
-        if (initialized) {
-            return;
-        }
-        
-        if (tokenizerFactory == null) {
-            final String path = System.getProperty(SuggestConstants.USER_DICT_PATH);
-            final String encoding = System.getProperty(SuggestConstants.USER_DICT_ENCODING);
-            final Map<String, String> args = new HashMap<>();
-            args.put("mode", "normal");
-            args.put("discardPunctuation", "false");
-            if (Strings.isNullOrEmpty(path)) {
-                args.put("userDictionary", path);
-            }
-            if (Strings.isNullOrEmpty(encoding)) {
-                args.put("userDictionaryEncoding", encoding);
-            }
-            final JapaneseTokenizerFactory japaneseTokenizerFactory = new JapaneseTokenizerFactory(args);
-            // TODO japaneseTokenizerFactory.inform(new FilesystemResourceLoader());
-            tokenizerFactory = japaneseTokenizerFactory;
-        }
-        initialized = true;
-        */
+        /*
+         * TODO if (initialized) { return; }
+         * 
+         * if (tokenizerFactory == null) { final String path = System.getProperty(SuggestConstants.USER_DICT_PATH);
+         * final String encoding = System.getProperty(SuggestConstants.USER_DICT_ENCODING); final Map<String, String>
+         * args = new HashMap<>(); args.put("mode", "normal"); args.put("discardPunctuation", "false"); if
+         * (Strings.isNullOrEmpty(path)) { args.put("userDictionary", path); } if (Strings.isNullOrEmpty(encoding)) {
+         * args.put("userDictionaryEncoding", encoding); } final JapaneseTokenizerFactory japaneseTokenizerFactory = new
+         * JapaneseTokenizerFactory(args); // TODO japaneseTokenizerFactory.inform(new FilesystemResourceLoader());
+         * tokenizerFactory = japaneseTokenizerFactory; } initialized = true;
+         */
     }
 
     @Override
@@ -116,31 +104,24 @@ public class KatakanaConverter implements ReadingConverter {
     }
 
     protected boolean isEnableTokenizer(final TokenizerFactory factory) {
-        //TODO return factory instanceof JapaneseTokenizerFactory;
+        // TODO return factory instanceof JapaneseTokenizerFactory;
         return false;
     }
 
     private TokenStream createTokenStream(final Reader rd) {
         return null;
-        /* TODO
-        if (tokenizerFactory instanceof JapaneseTokenizerFactory) {
-            return tokenizerFactory.create();
-        } else {
-            return null;
-        }
-        */
+        /*
+         * TODO if (tokenizerFactory instanceof JapaneseTokenizerFactory) { return tokenizerFactory.create(); } else {
+         * return null; }
+         */
     }
 
     protected String getReadingFromAttribute(final TokenStream stream) {
         return null;
         /*
-        if (tokenizerFactory instanceof JapaneseTokenizerFactory) {
-            final ReadingAttribute rdAttr = stream.getAttribute(ReadingAttribute.class);
-            return rdAttr.getReading();
-        } else {
-            return null;
-        }
-        */
+         * if (tokenizerFactory instanceof JapaneseTokenizerFactory) { final ReadingAttribute rdAttr =
+         * stream.getAttribute(ReadingAttribute.class); return rdAttr.getReading(); } else { return null; }
+         */
     }
 
 }

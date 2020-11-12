@@ -55,7 +55,8 @@ public class Deferred<RESPONSE extends Response> {
         if (executeCallbacks.size() > 0) {
             try {
                 executeCallbacks.stream().forEach(callback -> callback.accept(response));
-            } catch (final Exception ignore) {}
+            } catch (final Exception ignore) {
+            }
         }
         latch.countDown();
     }
@@ -77,7 +78,8 @@ public class Deferred<RESPONSE extends Response> {
         if (executeCallbacks.size() > 0) {
             try {
                 executeCallbacks.stream().forEach(callback -> callback.accept(error));
-            } catch (final Exception ignore) {}
+            } catch (final Exception ignore) {
+            }
         }
         latch.countDown();
     }

@@ -26,7 +26,8 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.index.query.QueryBuilder;
 
 public interface SuggestWriter {
-    SuggestWriterResult write(Client client, SuggestSettings settings, String index, SuggestItem[] items, boolean update);
+    SuggestWriterResult write(Client client, SuggestSettings settings, String index, SuggestItem[] items,
+            boolean update);
 
     SuggestWriterResult delete(Client client, SuggestSettings settings, String index, String id);
 
