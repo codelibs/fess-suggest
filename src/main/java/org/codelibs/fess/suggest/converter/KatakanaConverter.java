@@ -50,7 +50,7 @@ public class KatakanaConverter implements ReadingConverter {
     public void init() throws IOException {
         /*
          * TODO if (initialized) { return; }
-         * 
+         *
          * if (tokenizerFactory == null) { final String path = System.getProperty(SuggestConstants.USER_DICT_PATH);
          * final String encoding = System.getProperty(SuggestConstants.USER_DICT_ENCODING); final Map<String, String>
          * args = new HashMap<>(); args.put("mode", "normal"); args.put("discardPunctuation", "false"); if
