@@ -15,10 +15,10 @@
  */
 package org.codelibs.fess.suggest.normalizer;
 
-import static org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner.newConfigs;
+import static org.codelibs.fesen.runner.FesenRunner.newConfigs;
 import static org.junit.Assert.assertEquals;
 
-import org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner;
+import org.codelibs.fesen.runner.FesenRunner;
 import org.codelibs.fess.suggest.Suggester;
 import org.codelibs.fess.suggest.util.SuggestUtil;
 import org.junit.AfterClass;
@@ -28,18 +28,18 @@ import org.junit.Test;
 public class DefaultNormalizerTest {
     static Suggester suggester;
 
-    static ElasticsearchClusterRunner runner;
+    static FesenRunner runner;
 
     @BeforeClass
     public static void beforeClass() throws Exception {
-        runner = new ElasticsearchClusterRunner();
+        runner = new FesenRunner();
         runner.onBuild((number, settingsBuilder) -> {
             settingsBuilder.put("http.cors.enabled", true);
             settingsBuilder.put("discovery.type", "single-node");
             // settingsBuilder.putList("discovery.seed_hosts", "127.0.0.1:9301");
             // settingsBuilder.putList("cluster.initial_master_nodes", "127.0.0.1:9301");
         }).build(newConfigs().clusterName("DefaultNormalizerTest").numOfNode(1)
-                .pluginTypes("org.codelibs.elasticsearch.extension.ExtensionPlugin"));
+                .pluginTypes("org.codelibs.fesen.extension.ExtensionPlugin"));
         runner.ensureYellow();
 
         suggester = Suggester.builder().build(runner.client(), "SuggesterTest");

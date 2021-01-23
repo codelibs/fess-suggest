@@ -15,10 +15,10 @@
  */
 package org.codelibs.fess.suggest.request.suggest;
 
+import org.codelibs.fesen.client.Client;
 import org.codelibs.fess.suggest.converter.ReadingConverter;
 import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.request.RequestBuilder;
-import org.elasticsearch.client.Client;
 
 public class SuggestRequestBuilder extends RequestBuilder<SuggestRequest, SuggestResponse> {
     public SuggestRequestBuilder(final Client client, final ReadingConverter readingConverter,

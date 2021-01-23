@@ -15,7 +15,7 @@
  */
 package org.codelibs.fess.suggest.index.contents.document;
 
-import static org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner.newConfigs;
+import static org.codelibs.fesen.runner.FesenRunner.newConfigs;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -27,16 +27,16 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner;
+import org.codelibs.fesen.action.bulk.BulkRequestBuilder;
+import org.codelibs.fesen.action.index.IndexAction;
+import org.codelibs.fesen.action.index.IndexRequestBuilder;
+import org.codelibs.fesen.client.Client;
+import org.codelibs.fesen.index.IndexNotFoundException;
+import org.codelibs.fesen.runner.FesenRunner;
+import org.codelibs.fesen.search.sort.SortBuilders;
+import org.codelibs.fesen.search.sort.SortOrder;
 import org.codelibs.fess.suggest.Suggester;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
-import org.elasticsearch.action.bulk.BulkRequestBuilder;
-import org.elasticsearch.action.index.IndexAction;
-import org.elasticsearch.action.index.IndexRequestBuilder;
-import org.elasticsearch.client.Client;
-import org.elasticsearch.index.IndexNotFoundException;
-import org.elasticsearch.search.sort.SortBuilders;
-import org.elasticsearch.search.sort.SortOrder;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -45,18 +45,18 @@ import org.junit.Test;
 public class ESSourceReaderTest {
     static Suggester suggester;
 
-    static ElasticsearchClusterRunner runner;
+    static FesenRunner runner;
 
     @BeforeClass
     public static void beforeClass() throws Exception {
-        runner = new ElasticsearchClusterRunner();
+        runner = new FesenRunner();
         runner.onBuild((number, settingsBuilder) -> {
             settingsBuilder.put("http.cors.enabled", true);
             settingsBuilder.put("discovery.type", "single-node");
             // settingsBuilder.putList("discovery.seed_hosts", "127.0.0.1:9301");
             // settingsBuilder.putList("cluster.initial_master_nodes", "127.0.0.1:9301");
         }).build(newConfigs().clusterName("ESSourceReaderTest").numOfNode(1)
-                .pluginTypes("org.codelibs.elasticsearch.extension.ExtensionPlugin"));
+                .pluginTypes("org.codelibs.fesen.extension.ExtensionPlugin"));
         runner.ensureYellow();
     }
 

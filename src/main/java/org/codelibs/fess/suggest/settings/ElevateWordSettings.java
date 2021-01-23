@@ -23,9 +23,9 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.codelibs.fesen.client.Client;
 import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.entity.ElevateWord;
-import org.elasticsearch.client.Client;
 
 public class ElevateWordSettings {
     private static final Logger logger = Logger.getLogger(ElevateWordSettings.class.getName());

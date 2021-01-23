@@ -19,25 +19,25 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.codelibs.fesen.action.ActionListener;
+import org.codelibs.fesen.action.search.SearchRequestBuilder;
+import org.codelibs.fesen.action.search.SearchResponse;
+import org.codelibs.fesen.client.Client;
+import org.codelibs.fesen.common.Strings;
+import org.codelibs.fesen.common.lucene.search.function.CombineFunction;
+import org.codelibs.fesen.index.query.BoolQueryBuilder;
+import org.codelibs.fesen.index.query.QueryBuilder;
+import org.codelibs.fesen.index.query.QueryBuilders;
+import org.codelibs.fesen.index.query.functionscore.FunctionScoreQueryBuilder;
+import org.codelibs.fesen.index.query.functionscore.ScoreFunctionBuilders;
+import org.codelibs.fesen.search.SearchHit;
+import org.codelibs.fesen.search.rescore.QueryRescorerBuilder;
 import org.codelibs.fess.suggest.concurrent.Deferred;
 import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.codelibs.fess.suggest.request.Request;
-import org.elasticsearch.action.ActionListener;
-import org.elasticsearch.action.search.SearchRequestBuilder;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.Client;
-import org.elasticsearch.common.Strings;
-import org.elasticsearch.common.lucene.search.function.CombineFunction;
-import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.index.query.functionscore.FunctionScoreQueryBuilder;
-import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders;
-import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.rescore.QueryRescorerBuilder;
 
 public class PopularWordsRequest extends Request<PopularWordsResponse> {
     private String index = null;

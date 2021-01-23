@@ -19,8 +19,8 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
+import org.codelibs.fesen.client.Client;
 import org.codelibs.fess.suggest.settings.SuggestSettings.TimeoutSettings;
-import org.elasticsearch.client.Client;
 
 public class SuggestSettingsBuilder {
     protected String settingsIndexName = ".suggest";

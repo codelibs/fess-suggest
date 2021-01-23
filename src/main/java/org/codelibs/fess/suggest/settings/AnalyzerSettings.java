@@ -29,20 +29,20 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import org.codelibs.core.lang.StringUtil;
+import org.codelibs.fesen.action.admin.indices.analyze.AnalyzeAction;
+import org.codelibs.fesen.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken;
+import org.codelibs.fesen.action.admin.indices.exists.indices.IndicesExistsResponse;
+import org.codelibs.fesen.action.admin.indices.settings.get.GetSettingsResponse;
+import org.codelibs.fesen.action.search.SearchResponse;
+import org.codelibs.fesen.client.Client;
+import org.codelibs.fesen.common.settings.Settings;
+import org.codelibs.fesen.common.xcontent.XContentType;
+import org.codelibs.fesen.index.query.QueryBuilders;
+import org.codelibs.fesen.search.SearchHit;
 import org.codelibs.fess.suggest.analysis.SuggestAnalyzer;
 import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.exception.SuggestSettingsException;
 import org.codelibs.fess.suggest.util.SuggestUtil;
-import org.elasticsearch.action.admin.indices.analyze.AnalyzeAction;
-import org.elasticsearch.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken;
-import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
-import org.elasticsearch.action.admin.indices.settings.get.GetSettingsResponse;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.Client;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.xcontent.XContentType;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.SearchHit;
 
 public class AnalyzerSettings {
     public static final String READING_ANALYZER = "reading_analyzer";

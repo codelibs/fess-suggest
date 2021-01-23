@@ -17,7 +17,7 @@ package org.codelibs.fess.suggest.analysis;
 
 import java.util.List;
 
-import org.elasticsearch.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken;
+import org.codelibs.fesen.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken;
 
 public interface SuggestAnalyzer {
     List<AnalyzeToken> analyze(String text, String field, String lang);

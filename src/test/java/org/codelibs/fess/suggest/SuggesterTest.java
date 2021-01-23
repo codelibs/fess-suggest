@@ -15,7 +15,7 @@
  */
 package org.codelibs.fess.suggest;
 
-import static org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner.newConfigs;
+import static org.codelibs.fesen.runner.FesenRunner.newConfigs;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -30,7 +30,13 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner;
+import org.codelibs.fesen.action.admin.indices.get.GetIndexResponse;
+import org.codelibs.fesen.action.bulk.BulkRequestBuilder;
+import org.codelibs.fesen.action.index.IndexAction;
+import org.codelibs.fesen.action.index.IndexRequestBuilder;
+import org.codelibs.fesen.action.support.WriteRequest;
+import org.codelibs.fesen.client.Client;
+import org.codelibs.fesen.runner.FesenRunner;
 import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.entity.ElevateWord;
@@ -43,12 +49,6 @@ import org.codelibs.fess.suggest.request.popularwords.PopularWordsResponse;
 import org.codelibs.fess.suggest.request.suggest.SuggestResponse;
 import org.codelibs.fess.suggest.settings.AnalyzerSettings;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
-import org.elasticsearch.action.admin.indices.get.GetIndexResponse;
-import org.elasticsearch.action.bulk.BulkRequestBuilder;
-import org.elasticsearch.action.index.IndexAction;
-import org.elasticsearch.action.index.IndexRequestBuilder;
-import org.elasticsearch.action.support.WriteRequest;
-import org.elasticsearch.client.Client;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -57,18 +57,18 @@ import org.junit.Test;
 public class SuggesterTest {
     static Suggester suggester;
 
-    static ElasticsearchClusterRunner runner;
+    static FesenRunner runner;
 
     @BeforeClass
     public static void beforeClass() throws Exception {
-        runner = new ElasticsearchClusterRunner();
+        runner = new FesenRunner();
         runner.onBuild((number, settingsBuilder) -> {
             settingsBuilder.put("http.cors.enabled", true);
             settingsBuilder.put("discovery.type", "single-node");
             // settingsBuilder.putList("discovery.seed_hosts", "127.0.0.1:9301");
             // settingsBuilder.putList("cluster.initial_master_nodes", "127.0.0.1:9301");
         }).build(newConfigs().clusterName("ArraySettingsTest").numOfNode(1)
-                .pluginTypes("org.codelibs.elasticsearch.extension.ExtensionPlugin"));
+                .pluginTypes("org.codelibs.fesen.extension.ExtensionPlugin"));
         runner.ensureYellow();
     }
 

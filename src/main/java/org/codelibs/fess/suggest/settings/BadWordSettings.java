@@ -22,9 +22,9 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.codelibs.fesen.client.Client;
+import org.codelibs.fesen.common.Strings;
 import org.codelibs.fess.suggest.exception.SuggestSettingsException;
-import org.elasticsearch.client.Client;
-import org.elasticsearch.common.Strings;
 
 public class BadWordSettings {
     private static final Logger logger = Logger.getLogger(BadWordSettings.class.getName());

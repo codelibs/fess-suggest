@@ -15,8 +15,8 @@
  */
 package org.codelibs.fess.suggest.request;
 
+import org.codelibs.fesen.client.Client;
 import org.codelibs.fess.suggest.concurrent.Deferred;
-import org.elasticsearch.client.Client;
 
 public abstract class RequestBuilder<Req extends Request<Res>, Res extends Response> {
     protected Client client;

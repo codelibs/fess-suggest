@@ -17,11 +17,11 @@ package org.codelibs.fess.suggest.normalizer;
 
 import java.util.List;
 
+import org.codelibs.fesen.action.admin.indices.analyze.AnalyzeAction;
+import org.codelibs.fesen.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken;
+import org.codelibs.fesen.client.Client;
 import org.codelibs.fess.suggest.settings.AnalyzerSettings;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
-import org.elasticsearch.action.admin.indices.analyze.AnalyzeAction;
-import org.elasticsearch.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken;
-import org.elasticsearch.client.Client;
 
 public class AnalyzerNormalizer implements Normalizer {
     protected final Client client;

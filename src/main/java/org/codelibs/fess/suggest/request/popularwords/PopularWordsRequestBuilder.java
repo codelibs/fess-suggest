@@ -15,8 +15,8 @@
  */
 package org.codelibs.fess.suggest.request.popularwords;
 
+import org.codelibs.fesen.client.Client;
 import org.codelibs.fess.suggest.request.RequestBuilder;
-import org.elasticsearch.client.Client;
 
 public class PopularWordsRequestBuilder extends RequestBuilder<PopularWordsRequest, PopularWordsResponse> {
     public PopularWordsRequestBuilder(final Client client) {

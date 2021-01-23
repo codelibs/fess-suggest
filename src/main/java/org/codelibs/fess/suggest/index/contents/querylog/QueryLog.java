@@ -15,7 +15,7 @@
  */
 package org.codelibs.fess.suggest.index.contents.querylog;
 
-import org.elasticsearch.common.Nullable;
+import org.codelibs.fesen.common.Nullable;
 
 public class QueryLog {
     private final String q;

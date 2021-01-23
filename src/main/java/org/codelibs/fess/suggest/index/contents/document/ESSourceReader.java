@@ -26,15 +26,15 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.codelibs.fesen.action.search.SearchRequestBuilder;
+import org.codelibs.fesen.action.search.SearchResponse;
+import org.codelibs.fesen.client.Client;
+import org.codelibs.fesen.index.query.QueryBuilder;
+import org.codelibs.fesen.index.query.QueryBuilders;
+import org.codelibs.fesen.search.SearchHit;
+import org.codelibs.fesen.search.sort.SortBuilder;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.codelibs.fess.suggest.util.SuggestUtil;
-import org.elasticsearch.action.search.SearchRequestBuilder;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.Client;
-import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.sort.SortBuilder;
 
 public class ESSourceReader implements DocumentReader {
     private static final Logger logger = Logger.getLogger(ESSourceReader.class.getName());
