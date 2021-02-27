@@ -28,6 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+import org.codelibs.core.io.ResourceUtil;
 import org.codelibs.core.lang.StringUtil;
 import org.codelibs.fesen.action.admin.indices.analyze.AnalyzeAction;
 import org.codelibs.fesen.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken;
@@ -213,7 +214,7 @@ public class AnalyzerSettings {
         final String dictionaryPath = System.getProperty("fess.dictionary.path", StringUtil.EMPTY);
         final StringBuilder sb = new StringBuilder();
         try (BufferedReader br = new BufferedReader(new InputStreamReader(
-                this.getClass().getClassLoader().getResourceAsStream("suggest_indices/suggest_analyzer.json")));) {
+                this.getClass().getClassLoader().getResourceAsStream(getSuggestAnalyzerPath())))) {
 
             String line;
             while ((line = br.readLine()) != null) {
@@ -221,6 +222,17 @@ public class AnalyzerSettings {
             }
         }
         return sb.toString().replaceAll(Pattern.quote("${fess.dictionary.path}"), dictionaryPath);
+    }
+
+    protected String getSuggestAnalyzerPath() {
+        final Object typeObj = this.settings.get("elasticsearch.type");
+        if (typeObj != null) {
+            final String path = "suggest_indices/_" + typeObj.toString() + "/suggest_analyzer.json";
+            if (ResourceUtil.getResourceNoException(path) != null) {
+                return path;
+            }
+        }
+        return "suggest_indices/suggest_analyzer.json";
     }
 
     protected String loadIndexMapping() throws IOException {
