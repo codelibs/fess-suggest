@@ -36,8 +36,8 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<lucene.version>8.8.0</lucene.version>
-		<fesen.version>0.12.0-SNAPSHOT</fesen.version>
-		<fesen.runner.version>0.12.0-SNAPSHOT</fesen.runner.version>
+		<fesen.version>0.12.0</fesen.version>
+		<fesen.runner.version>0.12.0</fesen.runner.version>
 		<groovy.version>3.0.7</groovy.version>
 		<log4j.version>2.11.1</log4j.version>
 		<jna.version>5.7.0-1</jna.version>
