@@ -131,7 +131,8 @@ public final class SuggestUtil {
                 }
             }
             return queryList;
-        } else if (query instanceof TermQuery) {
+        }
+        if (query instanceof TermQuery) {
             final TermQuery termQuery = (TermQuery) query;
             for (final String field : fields) {
                 if (field.equals(termQuery.getTerm().field())) {
@@ -227,7 +228,8 @@ public final class SuggestUtil {
             final List<String> list = new ArrayList<>();
             list.add(value.toString());
             return list;
-        } else if (value instanceof List) {
+        }
+        if (value instanceof List) {
             @SuppressWarnings("unchecked")
             final List<String> list = (List<String>) value;
             return list;

@@ -223,7 +223,7 @@ public class SuggestRequest extends Request<SuggestResponse> {
                 final String[] langsArray = languages.toArray(new String[languages.size()]);
 
                 final BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
-                final String[] queries = q.replaceAll("　", " ").replaceAll(" +", " ").trim().split(" ");
+                final String[] queries = q.replace("　", " ").replaceAll(" +", " ").trim().split(" ");
                 for (int i = 0; i < queries.length; i++) {
                     final String fieldName = FieldNames.READING_PREFIX + i;
 

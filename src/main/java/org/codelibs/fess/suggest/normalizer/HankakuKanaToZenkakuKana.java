@@ -34,7 +34,8 @@ public class HankakuKanaToZenkakuKana implements Normalizer {
     public String normalize(final String s, final String field, final String... langs) {
         if (s.length() == 0) {
             return s;
-        } else if (s.length() == 1) {
+        }
+        if (s.length() == 1) {
             return hankakuKatakanaToZenkakuKatakana(s.charAt(0)) + "";
         } else {
             final StringBuilder sb = new StringBuilder(s);
@@ -67,9 +68,8 @@ public class HankakuKanaToZenkakuKana implements Normalizer {
     private static char hankakuKatakanaToZenkakuKatakana(final char c) {
         if (c >= HANKAKU_KATAKANA_FIRST_CHAR && c <= HANKAKU_KATAKANA_LAST_CHAR) {
             return ZENKAKU_KATAKANA[c - HANKAKU_KATAKANA_FIRST_CHAR];
-        } else {
-            return c;
         }
+        return c;
     }
 
     public static char mergeChar(final char c1, final char c2) {
@@ -120,22 +120,20 @@ public class HankakuKanaToZenkakuKana implements Normalizer {
                     break;
                 }
             }
-        } else if (c2 == 'ﾟ') {
-            if ("ﾊﾋﾌﾍﾎ".indexOf(c1) >= 0) {
-                switch (c1) {
-                case 'ﾊ':
-                    return 'パ';
-                case 'ﾋ':
-                    return 'ピ';
-                case 'ﾌ':
-                    return 'プ';
-                case 'ﾍ':
-                    return 'ペ';
-                case 'ﾎ':
-                    return 'ポ';
-                default:
-                    break;
-                }
+        } else if ((c2 == 'ﾟ') && ("ﾊﾋﾌﾍﾎ".indexOf(c1) >= 0)) {
+            switch (c1) {
+            case 'ﾊ':
+                return 'パ';
+            case 'ﾋ':
+                return 'ピ';
+            case 'ﾌ':
+                return 'プ';
+            case 'ﾍ':
+                return 'ペ';
+            case 'ﾎ':
+                return 'ポ';
+            default:
+                break;
             }
         }
         return c1;

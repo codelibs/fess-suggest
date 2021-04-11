@@ -105,9 +105,8 @@ public class AnalyzerSettings {
         final String analyzerNameWithlang = isSupportedLanguage(lang) ? analyzerName + '_' + lang : analyzerName;
         if (analyzerNames.contains(analyzerNameWithlang)) {
             return analyzerNameWithlang;
-        } else {
-            return analyzerName;
         }
+        return analyzerName;
     }
 
     public String getReadingTermAnalyzerName(final String field, final String lang) {
@@ -124,9 +123,8 @@ public class AnalyzerSettings {
         final String analyzerNameWithlang = isSupportedLanguage(lang) ? analyzerName + '_' + lang : analyzerName;
         if (analyzerNames.contains(analyzerNameWithlang)) {
             return analyzerNameWithlang;
-        } else {
-            return analyzerName;
         }
+        return analyzerName;
     }
 
     public String getNormalizeAnalyzerName(final String field, final String lang) {
@@ -143,9 +141,8 @@ public class AnalyzerSettings {
         final String analyzerNameWithlang = isSupportedLanguage(lang) ? analyzerName + '_' + lang : analyzerName;
         if (analyzerNames.contains(analyzerNameWithlang)) {
             return analyzerNameWithlang;
-        } else {
-            return analyzerName;
         }
+        return analyzerName;
     }
 
     public String getContentsAnalyzerName(final String field, final String lang) {
@@ -162,9 +159,8 @@ public class AnalyzerSettings {
         final String analyzerNameWithlang = isSupportedLanguage(lang) ? analyzerName + '_' + lang : analyzerName;
         if (analyzerNames.contains(analyzerNameWithlang)) {
             return analyzerNameWithlang;
-        } else {
-            return analyzerName;
         }
+        return analyzerName;
     }
 
     public String getContentsReadingAnalyzerName(final String field, final String lang) {
@@ -181,9 +177,8 @@ public class AnalyzerSettings {
         final String analyzerNameWithlang = isSupportedLanguage(lang) ? analyzerName + '_' + lang : analyzerName;
         if (analyzerNames.contains(analyzerNameWithlang)) {
             return analyzerNameWithlang;
-        } else {
-            return analyzerName;
         }
+        return analyzerName;
     }
 
     public void updateAnalyzer(final Map<String, Object> settings) {
@@ -281,7 +276,7 @@ public class AnalyzerSettings {
     }
 
     public static boolean isSupportedLanguage(final String lang) {
-        return (StringUtil.isNotBlank(lang) && Stream.of(SUPPORTED_LANGUAGES).anyMatch(lang::equals));
+        return StringUtil.isNotBlank(lang) && Stream.of(SUPPORTED_LANGUAGES).anyMatch(lang::equals);
     }
 
     protected Set<String> getAnalyzerNames() {

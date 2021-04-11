@@ -192,7 +192,8 @@ public class DefaultContentsParser implements ContentsParser {
         final Object value = document.get(fieldName);
         if (value instanceof String) {
             return new String[] { value.toString() };
-        } else if (value instanceof String[]) {
+        }
+        if (value instanceof String[]) {
             return (String[]) value;
         } else if (value instanceof List) {
             return ((List<?>) value).stream().map(Object::toString).toArray(n -> new String[n]);
@@ -208,15 +209,14 @@ public class DefaultContentsParser implements ContentsParser {
         if (langs == null || langs.length == 0) {
             final List<AnalyzeToken> tokens = analyzer.analyze(searchWord, "", null);
             return tokens == null || tokens.size() == 0;
-        } else {
-            for (final String lang : langs) {
-                final List<AnalyzeToken> tokens = analyzer.analyze(searchWord, field, lang);
-                if (tokens != null && tokens.size() > 0) {
-                    return false;
-                }
-            }
-            return true;
         }
+        for (final String lang : langs) {
+            final List<AnalyzeToken> tokens = analyzer.analyze(searchWord, field, lang);
+            if (tokens != null && tokens.size() > 0) {
+                return false;
+            }
+        }
+        return true;
 
     }
 }

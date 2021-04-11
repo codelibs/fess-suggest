@@ -146,15 +146,14 @@ public class ESSourceReader implements DocumentReader {
                         builder.addSort(sortBuilder);
                     }
                     response = builder.execute().actionGet(settings.getSearchTimeout());
-                    scrollId = response.getScrollId();
                 } else {
                     response = client.prepareSearchScroll(scrollId).setScroll(settings.getScrollTimeout()).execute()
                             .actionGet(settings.getSearchTimeout());
                     if (!scrollId.equals(response.getScrollId())) {
                         SuggestUtil.deleteScrollContext(client, scrollId);
                     }
-                    scrollId = response.getScrollId();
                 }
+                scrollId = response.getScrollId();
                 final SearchHit[] hits = response.getHits().getHits();
                 if (scrollId == null || hits.length == 0) {
                     SuggestUtil.deleteScrollContext(client, scrollId);

@@ -290,7 +290,7 @@ public class SuggestIndexer {
                     }
                     queryLogs.add(queryLog);
                     queryLog = queryLogReader.read();
-                    if ((queryLog == null && !queryLogs.isEmpty()) || queryLogs.size() >= docPerReq) {
+                    if (queryLog == null && !queryLogs.isEmpty() || queryLogs.size() >= docPerReq) {
                         final SuggestIndexResponse res = indexFromQueryLog(
                                 queryLogs.toArray(new QueryLog[queryLogs.size()]));
                         errors.addAll(res.getErrors());
@@ -450,9 +450,8 @@ public class SuggestIndexer {
         badWords = settings.badword().get(true);
         if (apply) {
             return deleteByQuery(QueryBuilders.wildcardQuery(FieldNames.TEXT, "*" + normalized + "*"));
-        } else {
-            return new SuggestDeleteResponse(null, 0);
         }
+        return new SuggestDeleteResponse(null, 0);
     }
 
     public void deleteBadWord(final String badWord) {
@@ -468,9 +467,8 @@ public class SuggestIndexer {
         settings.elevateWord().add(normalized);
         if (apply) {
             return index(normalized.toSuggestItem());
-        } else {
-            return new SuggestIndexResponse(0, 0, null, 0);
         }
+        return new SuggestIndexResponse(0, 0, null, 0);
     }
 
     public SuggestDeleteResponse deleteElevateWord(final String elevateWord, final boolean apply) {
@@ -478,9 +476,8 @@ public class SuggestIndexer {
         settings.elevateWord().delete(normalized);
         if (apply) {
             return delete(SuggestUtil.createSuggestTextId(normalized));
-        } else {
-            return new SuggestDeleteResponse(null, 0);
         }
+        return new SuggestDeleteResponse(null, 0);
     }
 
     public SuggestIndexResponse restoreElevateWord() {

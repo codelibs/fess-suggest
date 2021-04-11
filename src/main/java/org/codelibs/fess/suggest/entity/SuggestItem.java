@@ -21,6 +21,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -407,7 +408,8 @@ public class SuggestItem {
     protected static Kind[] concatKinds(final Kind[] kinds, final Kind... newKinds) {
         if (kinds == null) {
             return newKinds;
-        } else if (newKinds == null) {
+        }
+        if (newKinds == null) {
             return kinds;
         }
 
@@ -435,9 +437,7 @@ public class SuggestItem {
         for (int i = 0; i < mergedItem.readings.length; i++) {
             final List<String> list = new ArrayList<>();
             if (item1.getReadings().length > i) {
-                for (final String reading : item1.getReadings()[i]) {
-                    list.add(reading);
-                }
+                Collections.addAll(list, item1.getReadings()[i]);
             }
             if (item2.getReadings().length > i) {
                 for (final String reading : item2.getReadings()[i]) {
@@ -450,9 +450,7 @@ public class SuggestItem {
         }
 
         final List<String> fieldList = new ArrayList<>(item1.getFields().length + item2.getFields().length);
-        for (final String field : item1.getFields()) {
-            fieldList.add(field);
-        }
+        Collections.addAll(fieldList, item1.getFields());
         for (final String field : item2.getFields()) {
             if (!fieldList.contains(field)) {
                 fieldList.add(field);
@@ -461,9 +459,7 @@ public class SuggestItem {
         mergedItem.fields = fieldList.toArray(new String[fieldList.size()]);
 
         final List<String> tagList = new ArrayList<>(item1.getTags().length + item2.getTags().length);
-        for (final String tag : item1.getTags()) {
-            tagList.add(tag);
-        }
+        Collections.addAll(tagList, item1.getTags());
         for (final String tag : item2.getTags()) {
             if (!tagList.contains(tag)) {
                 tagList.add(tag);
@@ -472,9 +468,7 @@ public class SuggestItem {
         mergedItem.tags = tagList.toArray(new String[tagList.size()]);
 
         final List<String> langList = new ArrayList<>(item1.getLanguages().length + item2.getLanguages().length);
-        for (final String lang : item1.getLanguages()) {
-            langList.add(lang);
-        }
+        Collections.addAll(langList, item1.getLanguages());
         for (final String lang : item2.getLanguages()) {
             if (!langList.contains(lang)) {
                 langList.add(lang);
@@ -483,9 +477,7 @@ public class SuggestItem {
         mergedItem.languages = langList.toArray(new String[langList.size()]);
 
         final List<String> roleList = new ArrayList<>(item1.getRoles().length + item2.getRoles().length);
-        for (final String role : item1.getRoles()) {
-            roleList.add(role);
-        }
+        Collections.addAll(roleList, item1.getRoles());
         for (final String role : item2.getRoles()) {
             if (!roleList.contains(role)) {
                 roleList.add(role);

@@ -130,7 +130,8 @@ public class ArraySettings {
                         break;
                     }
                     for (final SearchHit hit : hits) {
-                        array[count++] = hit.getSourceAsMap();
+                        array[count] = hit.getSourceAsMap();
+                        count++;
                     }
                     response = client.prepareSearchScroll(scrollId).setScroll(settings.getScrollTimeout()).execute()
                             .actionGet(settings.getSearchTimeout());
@@ -146,7 +147,8 @@ public class ArraySettings {
             Arrays.sort(array, (o1, o2) -> {
                 if (o1 == null && o2 == null) {
                     return 0;
-                } else if (o1 == null) {
+                }
+                if (o1 == null) {
                     return -1;
                 } else if (o2 == null) {
                     return 1;
@@ -156,7 +158,8 @@ public class ArraySettings {
                 final Object timeObj2 = o2.get(FieldNames.TIMESTAMP);
                 if (timeObj1 == null && timeObj2 == null) {
                     return 0;
-                } else if (timeObj1 == null) {
+                }
+                if (timeObj1 == null) {
                     return -1;
                 } else if (timeObj2 == null) {
                     return 1;

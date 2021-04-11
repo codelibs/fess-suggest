@@ -52,11 +52,12 @@ public class KatakanaToAlphabetConverter implements ReadingConverter {
             if (i + 1 < text.length() && convertMap.get(text.substring(i, i + 2)) != null) {
                 alphabets = convertMap.get(text.substring(i, i + 2));
                 i += 2;
-            } else if (convertMap.get(text.substring(i, i + 1)) != null) {
-                alphabets = convertMap.get(text.substring(i, i + 1));
-                i++;
             } else {
-                alphabets = new String[] { text.substring(i, i + 1) };
+                if (convertMap.get(text.substring(i, i + 1)) != null) {
+                    alphabets = convertMap.get(text.substring(i, i + 1));
+                } else {
+                    alphabets = new String[] { text.substring(i, i + 1) };
+                }
                 i++;
             }
 
