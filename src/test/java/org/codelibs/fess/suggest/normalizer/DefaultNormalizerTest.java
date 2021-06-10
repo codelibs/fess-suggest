@@ -38,8 +38,8 @@ public class DefaultNormalizerTest {
             settingsBuilder.put("discovery.type", "single-node");
             // settingsBuilder.putList("discovery.seed_hosts", "127.0.0.1:9301");
             // settingsBuilder.putList("cluster.initial_master_nodes", "127.0.0.1:9301");
-        }).build(newConfigs().clusterName("DefaultNormalizerTest").numOfNode(1)
-                .pluginTypes("org.codelibs.fesen.extension.ExtensionPlugin"));
+        }).build(
+                newConfigs().clusterName("DefaultNormalizerTest").numOfNode(1).pluginTypes("org.codelibs.fesen.extension.ExtensionPlugin"));
         runner.ensureYellow();
 
         suggester = Suggester.builder().build(runner.client(), "SuggesterTest");
@@ -54,7 +54,6 @@ public class DefaultNormalizerTest {
     @Test
     public void test_normalize() throws Exception {
         Normalizer normalizer = SuggestUtil.createDefaultNormalizer(runner.client(), suggester.settings());
-        assertEquals("12345,.*[]「」abcケンサクabcdけんさくガギグゲゴ",
-                normalizer.normalize("１２３４５,.*[]「」ＡBCｹﾝｻｸabcdけんさくｶﾞｷﾞｸﾞｹﾞｺﾞ", null));
+        assertEquals("12345,.*[]「」abcケンサクabcdけんさくガギグゲゴ", normalizer.normalize("１２３４５,.*[]「」ＡBCｹﾝｻｸabcdけんさくｶﾞｷﾞｸﾞｹﾞｺﾞ", null));
     }
 }

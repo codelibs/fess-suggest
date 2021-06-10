@@ -27,8 +27,8 @@ public class SuggestIndexResponse implements Response {
     protected final List<Throwable> errors = new ArrayList<>();
     protected final long took;
 
-    protected SuggestIndexResponse(final int numberOfSuggestDocs, final int numberOfInputDocs,
-            final List<Throwable> errors, final long took) {
+    protected SuggestIndexResponse(final int numberOfSuggestDocs, final int numberOfInputDocs, final List<Throwable> errors,
+            final long took) {
         this.numberOfSuggestDocs = numberOfSuggestDocs;
         this.numberOfInputDocs = numberOfInputDocs;
         this.took = took;

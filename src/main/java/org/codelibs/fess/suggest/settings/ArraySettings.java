@@ -55,8 +55,7 @@ public class ArraySettings {
 
     private static final Base64.Encoder encoder = Base64.getEncoder();
 
-    protected ArraySettings(final SuggestSettings settings, final Client client, final String settingsIndexName,
-            final String settingsId) {
+    protected ArraySettings(final SuggestSettings settings, final Client client, final String settingsIndexName, final String settingsId) {
         this.settings = settings;
         this.client = client;
         this.arraySettingsIndexName = createArraySettingsIndexName(settingsIndexName);
@@ -79,8 +78,7 @@ public class ArraySettings {
 
     public void add(final String key, final Object value) {
         if (logger.isLoggable(Level.FINER)) {
-            logger.finer(() -> String.format("Add analyzer settings. %s key: %s value: %s", arraySettingsIndexName, key,
-                    value));
+            logger.finer(() -> String.format("Add analyzer settings. %s key: %s value: %s", arraySettingsIndexName, key, value));
         }
 
         final Map<String, Object> source = new HashMap<>();
@@ -97,8 +95,7 @@ public class ArraySettings {
 
     public void delete(final String key, final String value) {
         if (logger.isLoggable(Level.FINER)) {
-            logger.finer(() -> String.format("Delete analyzer settings. %s key: %s value: %s", arraySettingsIndexName,
-                    key, value));
+            logger.finer(() -> String.format("Delete analyzer settings. %s key: %s value: %s", arraySettingsIndexName, key, value));
         }
         deleteFromArray(arraySettingsIndexName, settingsId, createId(key, value));
     }
@@ -115,9 +112,9 @@ public class ArraySettings {
     protected Map<String, Object>[] getFromArrayIndex(final String index, final String type, final String key) {
         final String actualIndex = index + "." + type.toLowerCase(Locale.ENGLISH);
         try {
-            SearchResponse response = client.prepareSearch().setIndices(actualIndex)
-                    .setScroll(settings.getScrollTimeout()).setQuery(QueryBuilders.termQuery(FieldNames.ARRAY_KEY, key))
-                    .setSize(500).execute().actionGet(settings.getSearchTimeout());
+            SearchResponse response = client.prepareSearch().setIndices(actualIndex).setScroll(settings.getScrollTimeout())
+                    .setQuery(QueryBuilders.termQuery(FieldNames.ARRAY_KEY, key)).setSize(500).execute()
+                    .actionGet(settings.getSearchTimeout());
             String scrollId = response.getScrollId();
 
             final Map<String, Object>[] array = new Map[(int) response.getHits().getTotalHits().value];
@@ -173,16 +170,14 @@ public class ArraySettings {
         }
     }
 
-    protected void addToArrayIndex(final String index, final String type, final String id,
-            final Map<String, Object> source) {
+    protected void addToArrayIndex(final String index, final String type, final String id, final Map<String, Object> source) {
         final String actualIndex = index + "." + type.toLowerCase(Locale.ENGLISH);
         try {
             final XContentBuilder builder = JsonXContent.contentBuilder().map(source);
             builder.flush();
             client.prepareUpdate().setIndex(actualIndex).setId(id).setDocAsUpsert(true).setDoc(builder).execute()
                     .actionGet(settings.getIndexTimeout());
-            client.admin().indices().prepareRefresh().setIndices(actualIndex).execute()
-                    .actionGet(settings.getIndicesTimeout());
+            client.admin().indices().prepareRefresh().setIndices(actualIndex).execute().actionGet(settings.getIndicesTimeout());
         } catch (final Exception e) {
             throw new SuggestSettingsException("Failed to add to array.", e);
         }
@@ -191,8 +186,7 @@ public class ArraySettings {
     protected void deleteKeyFromArray(final String index, final String type, final String key) {
         final String actualIndex = index + "." + type.toLowerCase(Locale.ENGLISH);
         try {
-            SuggestUtil.deleteByQuery(client, settings, actualIndex,
-                    QueryBuilders.termQuery(FieldNames.ARRAY_KEY, key));
+            SuggestUtil.deleteByQuery(client, settings, actualIndex, QueryBuilders.termQuery(FieldNames.ARRAY_KEY, key));
         } catch (final Exception e) {
             throw new SuggestSettingsException("Failed to delete all from array.", e);
         }
@@ -202,8 +196,7 @@ public class ArraySettings {
         final String actualIndex = index + "." + type.toLowerCase(Locale.ENGLISH);
         try {
             client.prepareDelete().setIndex(actualIndex).setId(id).execute().actionGet(settings.getIndexTimeout());
-            client.admin().indices().prepareRefresh().setIndices(actualIndex).execute()
-                    .actionGet(settings.getIndicesTimeout());
+            client.admin().indices().prepareRefresh().setIndices(actualIndex).execute().actionGet(settings.getIndicesTimeout());
         } catch (final Exception e) {
             throw new SuggestSettingsException("Failed to delete from array.", e);
         }
@@ -214,13 +207,12 @@ public class ArraySettings {
         try {
             boolean empty;
             try {
-                empty = client.admin().indices().prepareGetMappings(actualIndex).execute()
-                        .actionGet(settings.getIndicesTimeout()).getMappings().isEmpty();
+                empty = client.admin().indices().prepareGetMappings(actualIndex).execute().actionGet(settings.getIndicesTimeout())
+                        .getMappings().isEmpty();
             } catch (final IndexNotFoundException e) {
                 empty = true;
                 final CreateIndexResponse response = client.admin().indices().prepareCreate(actualIndex)
-                        .setSettings(loadIndexSettings(), XContentType.JSON).execute()
-                        .actionGet(settings.getIndicesTimeout());
+                        .setSettings(loadIndexSettings(), XContentType.JSON).execute().actionGet(settings.getIndicesTimeout());
                 if (!response.isAcknowledged()) {
                     throw new SuggestSettingsException("Failed to create " + actualIndex + "/" + type + " index.", e);
                 }
@@ -229,9 +221,8 @@ public class ArraySettings {
             }
             if (empty) {
                 client.admin().indices().preparePutMapping(actualIndex).setType("_doc")
-                        .setSource(XContentFactory.jsonBuilder().startObject().startObject("properties")
-                                .startObject(FieldNames.ARRAY_KEY).field("type", "keyword").endObject().endObject()
-                                .endObject())
+                        .setSource(XContentFactory.jsonBuilder().startObject().startObject("properties").startObject(FieldNames.ARRAY_KEY)
+                                .field("type", "keyword").endObject().endObject().endObject())
                         .execute().actionGet(settings.getIndicesTimeout());
             }
         } catch (final IOException e) {
@@ -242,8 +233,8 @@ public class ArraySettings {
     protected String loadIndexSettings() throws IOException {
         final String dictionaryPath = System.getProperty("fess.dictionary.path", StringUtil.EMPTY);
         final StringBuilder sb = new StringBuilder();
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(this.getClass().getClassLoader()
-                .getResourceAsStream("suggest_indices/suggest_settings_array.json")));) {
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(
+                this.getClass().getClassLoader().getResourceAsStream("suggest_indices/suggest_settings_array.json")));) {
 
             String line;
             while ((line = br.readLine()) != null) {

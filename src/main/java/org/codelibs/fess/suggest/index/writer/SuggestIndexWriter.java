@@ -32,8 +32,8 @@ import org.codelibs.fess.suggest.util.SuggestUtil;
 
 public class SuggestIndexWriter implements SuggestWriter {
     @Override
-    public SuggestWriterResult write(final Client client, final SuggestSettings settings, final String index,
-            final SuggestItem[] items, final boolean update) {
+    public SuggestWriterResult write(final Client client, final SuggestSettings settings, final String index, final SuggestItem[] items,
+            final boolean update) {
         final BulkRequestBuilder bulkRequestBuilder = client.prepareBulk();
 
         final SuggestItem[] mergedItems = mergeItems(items);
@@ -42,19 +42,15 @@ public class SuggestIndexWriter implements SuggestWriter {
         }
 
         for (final SuggestItem item : mergedItems) {
-            final GetResponse getResponse = client.prepareGet().setIndex(index).setId(item.getId())
-                    .get(TimeValue.timeValueSeconds(30));
+            final GetResponse getResponse = client.prepareGet().setIndex(index).setId(item.getId()).get(TimeValue.timeValueSeconds(30));
             if (update && getResponse.isExists()) {
-                final IndexRequestBuilder indexRequestBuilder = new IndexRequestBuilder(client, IndexAction.INSTANCE,
-                        index);
+                final IndexRequestBuilder indexRequestBuilder = new IndexRequestBuilder(client, IndexAction.INSTANCE, index);
                 indexRequestBuilder.setId(item.getId()).setOpType(IndexRequest.OpType.INDEX)
                         .setSource(item.getUpdatedSource(getResponse.getSourceAsMap()));
                 bulkRequestBuilder.add(indexRequestBuilder);
             } else {
-                final IndexRequestBuilder indexRequestBuilder = new IndexRequestBuilder(client, IndexAction.INSTANCE,
-                        index);
-                indexRequestBuilder.setId(item.getId()).setOpType(IndexRequest.OpType.INDEX)
-                        .setSource(item.getSource());
+                final IndexRequestBuilder indexRequestBuilder = new IndexRequestBuilder(client, IndexAction.INSTANCE, index);
+                indexRequestBuilder.setId(item.getId()).setOpType(IndexRequest.OpType.INDEX).setSource(item.getSource());
                 bulkRequestBuilder.add(indexRequestBuilder);
             }
         }
@@ -64,8 +60,7 @@ public class SuggestIndexWriter implements SuggestWriter {
         if (response.hasFailures()) {
             for (final BulkItemResponse bulkItemResponses : response.getItems()) {
                 if (bulkItemResponses.isFailed()) {
-                    result.addFailure(
-                            new SuggestIndexException("Bulk failure. " + bulkItemResponses.getFailureMessage()));
+                    result.addFailure(new SuggestIndexException("Bulk failure. " + bulkItemResponses.getFailureMessage()));
                 }
             }
         }
@@ -74,8 +69,7 @@ public class SuggestIndexWriter implements SuggestWriter {
     }
 
     @Override
-    public SuggestWriterResult delete(final Client client, final SuggestSettings settings, final String index,
-            final String id) {
+    public SuggestWriterResult delete(final Client client, final SuggestSettings settings, final String index, final String id) {
         final SuggestWriterResult result = new SuggestWriterResult();
         try {
             client.prepareDelete().setIndex(index).setId(id).execute().actionGet(settings.getIndexTimeout());

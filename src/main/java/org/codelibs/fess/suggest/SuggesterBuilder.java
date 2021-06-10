@@ -121,7 +121,6 @@ public class SuggesterBuilder {
             threadPool = Executors.newFixedThreadPool(threadPoolSize);
         }
 
-        return new Suggester(client, settings, readingConverter, contentsReadingConverter, normalizer, analyzer,
-                threadPool);
+        return new Suggester(client, settings, readingConverter, contentsReadingConverter, normalizer, analyzer, threadPool);
     }
 }

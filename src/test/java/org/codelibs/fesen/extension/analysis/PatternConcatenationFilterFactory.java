@@ -30,8 +30,8 @@ public class PatternConcatenationFilterFactory extends AbstractTokenFilterFactor
 
     private Pattern pattern2;
 
-    public PatternConcatenationFilterFactory(final IndexSettings indexSettings, final Environment environment,
-            final String name, final Settings settings) {
+    public PatternConcatenationFilterFactory(final IndexSettings indexSettings, final Environment environment, final String name,
+            final Settings settings) {
         super(indexSettings, name, settings);
 
         final String pattern1Str = settings.get("pattern1");

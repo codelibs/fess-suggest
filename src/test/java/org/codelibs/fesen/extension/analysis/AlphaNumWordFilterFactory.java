@@ -26,8 +26,8 @@ public class AlphaNumWordFilterFactory extends AbstractTokenFilterFactory {
 
     private final int maxTokenLength;
 
-    public AlphaNumWordFilterFactory(final IndexSettings indexSettings, final Environment environment,
-            final String name, final Settings settings) {
+    public AlphaNumWordFilterFactory(final IndexSettings indexSettings, final Environment environment, final String name,
+            final Settings settings) {
         super(indexSettings, name, settings);
 
         maxTokenLength = settings.getAsInt("max_token_length", AlphaNumWordFilter.DEFAULT_MAX_TOKEN_LENGTH);

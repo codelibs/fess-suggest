@@ -32,8 +32,8 @@ public class StopTokenPrefixFilterFactory extends AbstractTokenFilterFactory {
 
     private final boolean ignoreCase;
 
-    public StopTokenPrefixFilterFactory(final IndexSettings indexSettings, final Environment environment,
-            final String name, final Settings settings) {
+    public StopTokenPrefixFilterFactory(final IndexSettings indexSettings, final Environment environment, final String name,
+            final Settings settings) {
         super(indexSettings, name, settings);
 
         final List<String> wordList = Analysis.getWordList(environment, settings, "stopwords");

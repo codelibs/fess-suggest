@@ -79,9 +79,9 @@ public class SuggestItem {
     private SuggestItem() {
     }
 
-    public SuggestItem(final String[] text, final String[][] readings, final String[] fields, final long docFreq,
-            final long queryFreq, final float userBoost, @Nullable final String[] tags, @Nullable final String[] roles,
-            @Nullable final String[] languages, final Kind kind) {
+    public SuggestItem(final String[] text, final String[][] readings, final String[] fields, final long docFreq, final long queryFreq,
+            final float userBoost, @Nullable final String[] tags, @Nullable final String[] roles, @Nullable final String[] languages,
+            final Kind kind) {
         this.text = String.join(SuggestConstants.TEXT_SEPARATOR, text);
         this.readings = readings;
         this.fields = fields != null ? fields : new String[] {};
@@ -506,10 +506,9 @@ public class SuggestItem {
 
     @Override
     public String toString() {
-        return "SuggestItem [text=" + text + ", timestamp=" + timestamp + ", queryFreq=" + queryFreq + ", docFreq="
-                + docFreq + ", userBoost=" + userBoost + ", readings=" + Arrays.toString(readings) + ", fields="
-                + Arrays.toString(fields) + ", tags=" + Arrays.toString(tags) + ", roles=" + Arrays.toString(roles)
-                + ", languages=" + Arrays.toString(languages) + ", kinds=" + Arrays.toString(kinds) + ", emptySource="
-                + emptySource + ", id=" + id + "]";
+        return "SuggestItem [text=" + text + ", timestamp=" + timestamp + ", queryFreq=" + queryFreq + ", docFreq=" + docFreq
+                + ", userBoost=" + userBoost + ", readings=" + Arrays.toString(readings) + ", fields=" + Arrays.toString(fields) + ", tags="
+                + Arrays.toString(tags) + ", roles=" + Arrays.toString(roles) + ", languages=" + Arrays.toString(languages) + ", kinds="
+                + Arrays.toString(kinds) + ", emptySource=" + emptySource + ", id=" + id + "]";
     }
 }

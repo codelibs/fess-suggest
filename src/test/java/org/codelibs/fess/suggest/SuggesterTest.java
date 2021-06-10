@@ -67,8 +67,7 @@ public class SuggesterTest {
             settingsBuilder.put("discovery.type", "single-node");
             // settingsBuilder.putList("discovery.seed_hosts", "127.0.0.1:9301");
             // settingsBuilder.putList("cluster.initial_master_nodes", "127.0.0.1:9301");
-        }).build(newConfigs().clusterName("ArraySettingsTest").numOfNode(1)
-                .pluginTypes("org.codelibs.fesen.extension.ExtensionPlugin"));
+        }).build(newConfigs().clusterName("ArraySettingsTest").numOfNode(1).pluginTypes("org.codelibs.fesen.extension.ExtensionPlugin"));
         runner.ensureYellow();
     }
 
@@ -92,8 +91,7 @@ public class SuggesterTest {
         suggester.indexer().index(items);
         suggester.refresh();
 
-        SuggestResponse response = suggester.suggest().setQuery("kensaku").setSuggestDetail(true).execute()
-                .getResponse();
+        SuggestResponse response = suggester.suggest().setQuery("kensaku").setSuggestDetail(true).execute().getResponse();
         assertEquals(1, response.getNum());
         assertEquals("検索 エンジン", response.getWords().get(0));
 
@@ -135,15 +133,13 @@ public class SuggesterTest {
         suggester.indexer().index(items);
         suggester.refresh();
 
-        SuggestResponse response = suggester.suggest().setQuery("kensaku").addRole("role1").setSuggestDetail(true)
-                .execute().getResponse();
+        SuggestResponse response = suggester.suggest().setQuery("kensaku").addRole("role1").setSuggestDetail(true).execute().getResponse();
         assertEquals(1, response.getNum());
         assertEquals("検索 エンジン", response.getWords().get(0));
 
         suggester.indexer().delete(items[0].getId());
         suggester.refresh();
-        SuggestResponse response2 = suggester.suggest().setQuery("kensaku").setSuggestDetail(true).execute()
-                .getResponse();
+        SuggestResponse response2 = suggester.suggest().setQuery("kensaku").setSuggestDetail(true).execute().getResponse();
         assertEquals(0, response2.getNum());
     }
 
@@ -159,20 +155,17 @@ public class SuggesterTest {
 
         suggester.refresh();
 
-        SuggestResponse responseKanji = suggester.suggest().setQuery("検索").addRole("role1").setSuggestDetail(true)
-                .execute().getResponse();
+        SuggestResponse responseKanji = suggester.suggest().setQuery("検索").addRole("role1").setSuggestDetail(true).execute().getResponse();
         assertEquals(1, responseKanji.getNum());
         assertEquals(1, responseKanji.getTotal());
         assertEquals("検索", responseKanji.getWords().get(0));
 
-        SuggestResponse responseKana = suggester.suggest().setQuery("けん").setSuggestDetail(true).execute()
-                .getResponse();
+        SuggestResponse responseKana = suggester.suggest().setQuery("けん").setSuggestDetail(true).execute().getResponse();
         assertEquals(1, responseKana.getNum());
         assertEquals(1, responseKana.getTotal());
         assertEquals("検索", responseKana.getWords().get(0));
 
-        SuggestResponse responseAlphabet = suggester.suggest().setQuery("kennsa").setSuggestDetail(true).execute()
-                .getResponse();
+        SuggestResponse responseAlphabet = suggester.suggest().setQuery("kennsa").setSuggestDetail(true).execute().getResponse();
         assertEquals(1, responseAlphabet.getNum());
         assertEquals(1, responseAlphabet.getTotal());
         assertEquals("検索", responseAlphabet.getWords().get(0));
@@ -180,8 +173,7 @@ public class SuggesterTest {
         suggester.indexer().indexFromQueryLog(new QueryLog(field + ":検索 AND " + field + ":ワード", null));
         suggester.refresh();
 
-        SuggestResponse responseMulti = suggester.suggest().setQuery("けんさく わーど").setSuggestDetail(true).execute()
-                .getResponse();
+        SuggestResponse responseMulti = suggester.suggest().setQuery("けんさく わーど").setSuggestDetail(true).execute().getResponse();
 
         assertEquals(1, responseMulti.getNum());
         assertEquals(1, responseMulti.getTotal());
@@ -257,13 +249,11 @@ public class SuggesterTest {
         suggester.indexer().indexFromDocument(new Map[] { document });
         suggester.refresh();
 
-        SuggestResponse response1 = suggester.suggest().setQuery("The").addLang("en").setSuggestDetail(true).execute()
-                .getResponse();
+        SuggestResponse response1 = suggester.suggest().setQuery("The").addLang("en").setSuggestDetail(true).execute().getResponse();
         assertEquals(0, response1.getNum());
         assertEquals(0, response1.getTotal());
 
-        SuggestResponse response2 = suggester.suggest().setQuery("persimmon").setSuggestDetail(true).execute()
-                .getResponse();
+        SuggestResponse response2 = suggester.suggest().setQuery("persimmon").setSuggestDetail(true).execute().getResponse();
         assertEquals(1, response2.getNum());
         assertEquals(1, response2.getTotal());
         assertEquals("persimmon", response2.getWords().get(0));
@@ -272,8 +262,7 @@ public class SuggesterTest {
         assertEquals(0, response3.getNum());
         assertEquals(0, response3.getTotal());
 
-        SuggestResponse response4 = suggester.suggest().setQuery("delicious").setSuggestDetail(true).execute()
-                .getResponse();
+        SuggestResponse response4 = suggester.suggest().setQuery("delicious").setSuggestDetail(true).execute().getResponse();
         assertEquals(1, response4.getNum());
         assertEquals(1, response4.getTotal());
         assertEquals("delicious", response4.getWords().get(0));
@@ -291,14 +280,12 @@ public class SuggesterTest {
         suggester.indexer().indexFromDocument(new Map[] { document });
         suggester.refresh();
 
-        SuggestResponse response1 = suggester.suggest().setQuery("schöner").setSuggestDetail(true).execute()
-                .getResponse();
+        SuggestResponse response1 = suggester.suggest().setQuery("schöner").setSuggestDetail(true).execute().getResponse();
         assertEquals(1, response1.getNum());
         assertEquals(1, response1.getTotal());
         assertEquals("schöner", response1.getWords().get(0));
 
-        SuggestResponse response2 = suggester.suggest().setQuery("schoner").setSuggestDetail(true).execute()
-                .getResponse();
+        SuggestResponse response2 = suggester.suggest().setQuery("schoner").setSuggestDetail(true).execute().getResponse();
         assertEquals(1, response2.getNum());
         assertEquals(1, response2.getTotal());
         assertEquals("schöner", response2.getWords().get(0));
@@ -320,13 +307,11 @@ public class SuggesterTest {
         assertEquals(1, response0.getTotal());
         assertEquals("sing", response0.getWords().get(0));
 
-        SuggestResponse response1 = suggester.suggest().setQuery("super").setSuggestDetail(true).execute()
-                .getResponse();
+        SuggestResponse response1 = suggester.suggest().setQuery("super").setSuggestDetail(true).execute().getResponse();
         assertEquals(0, response1.getNum());
         assertEquals(0, response1.getTotal());
 
-        SuggestResponse response2 = suggester.suggest().setQuery("honor").setSuggestDetail(true).execute()
-                .getResponse();
+        SuggestResponse response2 = suggester.suggest().setQuery("honor").setSuggestDetail(true).execute().getResponse();
         assertEquals(1, response2.getNum());
         assertEquals(1, response2.getTotal());
         assertEquals("honorificabilitudinitatibus", response2.getWords().get(0));
@@ -355,8 +340,7 @@ public class SuggesterTest {
         suggester.indexer().indexFromDocument(new Map[] { document });
         suggester.refresh();
 
-        SuggestResponse response1 = suggester.suggest().setQuery("しょうひん１").setSuggestDetail(true).execute()
-                .getResponse();
+        SuggestResponse response1 = suggester.suggest().setQuery("しょうひん１").setSuggestDetail(true).execute().getResponse();
         assertEquals(1, response1.getNum());
         assertEquals(1, response1.getTotal());
         assertEquals("商品1", response1.getWords().get(0));
@@ -378,8 +362,7 @@ public class SuggesterTest {
         for (int i = 0; i < num; i++) {
             Map<String, Object> source = Collections.singletonMap("content", "test");
             IndexRequestBuilder indexRequestBuilder = new IndexRequestBuilder(client, IndexAction.INSTANCE);
-            indexRequestBuilder.setIndex(indexName).setType(typeName).setId(String.valueOf(i)).setCreate(true)
-                    .setSource(source);
+            indexRequestBuilder.setIndex(indexName).setType(typeName).setId(String.valueOf(i)).setCreate(true).setSource(source);
             bulkRequestBuilder.add(indexRequestBuilder);
         }
         bulkRequestBuilder.execute().actionGet();
@@ -407,13 +390,11 @@ public class SuggesterTest {
 
     @Test
     public void test_indexFromSearchWord() throws Exception {
-        SuggestIndexResponse indexResponse = suggester.indexer().indexFromSearchWord("検索　 エンジン", null, null, null, 1,
-                null);
+        SuggestIndexResponse indexResponse = suggester.indexer().indexFromSearchWord("検索　 エンジン", null, null, null, 1, null);
         indexResponse.getErrors();
         suggester.refresh();
 
-        final SuggestResponse response = suggester.suggest().setQuery("検索").setSuggestDetail(true).execute()
-                .getResponse();
+        final SuggestResponse response = suggester.suggest().setQuery("検索").setSuggestDetail(true).execute().getResponse();
         final List<SuggestItem> items = response.getItems();
         assertEquals(1, response.getNum());
         assertEquals("検索 エンジン", items.get(0).getText());
@@ -426,15 +407,14 @@ public class SuggesterTest {
         assertEquals(0, indexResponse.getNumberOfSuggestDocs());
         suggester.refresh();
 
-        final SuggestResponse response = suggester.suggest().setQuery("。").setSuggestDetail(true).execute()
-                .getResponse();
+        final SuggestResponse response = suggester.suggest().setQuery("。").setSuggestDetail(true).execute().getResponse();
         assertEquals(0, response.getNum());
     }
 
     @Test
     public void test_indexElevateWord() throws Exception {
-        ElevateWord elevateWord = new ElevateWord("Test", 2.0f, Collections.singletonList("Test"),
-                Collections.singletonList("content"), null, null);
+        ElevateWord elevateWord =
+                new ElevateWord("Test", 2.0f, Collections.singletonList("Test"), Collections.singletonList("content"), null, null);
         suggester.indexer().addElevateWord(elevateWord, true);
         suggester.refresh();
         SuggestResponse response1 = suggester.suggest().setQuery("tes").setSuggestDetail(true).execute().getResponse();
@@ -454,12 +434,12 @@ public class SuggesterTest {
 
     @Test
     public void test_restoreElevateWord() throws Exception {
-        ElevateWord elevateWord1 = new ElevateWord("test", 2.0f, Collections.singletonList("test"),
-                Collections.singletonList("content"), null, null);
-        ElevateWord elevateWord2 = new ElevateWord("hoge", 2.0f, Collections.singletonList("hoge"),
-                Collections.singletonList("content"), null, null);
-        ElevateWord elevateWord3 = new ElevateWord("fuga", 2.0f, Collections.singletonList("fuga"),
-                Collections.singletonList("content"), null, null);
+        ElevateWord elevateWord1 =
+                new ElevateWord("test", 2.0f, Collections.singletonList("test"), Collections.singletonList("content"), null, null);
+        ElevateWord elevateWord2 =
+                new ElevateWord("hoge", 2.0f, Collections.singletonList("hoge"), Collections.singletonList("content"), null, null);
+        ElevateWord elevateWord3 =
+                new ElevateWord("fuga", 2.0f, Collections.singletonList("fuga"), Collections.singletonList("content"), null, null);
 
         suggester.settings().elevateWord().add(elevateWord1);
         suggester.settings().elevateWord().add(elevateWord2);
@@ -480,8 +460,8 @@ public class SuggesterTest {
     @SuppressWarnings("unchecked")
     public void test_deleteOldWords() throws Exception {
         String field = suggester.settings().array().get(SuggestSettings.DefaultKeys.SUPPORTED_FIELDS)[0];
-        ElevateWord elevateWord = new ElevateWord("test", 2.0f, Collections.singletonList("test"),
-                Collections.singletonList("content"), null, null);
+        ElevateWord elevateWord =
+                new ElevateWord("test", 2.0f, Collections.singletonList("test"), Collections.singletonList("content"), null, null);
 
         suggester.indexer().indexFromDocument(new Map[] { Collections.singletonMap(field, (Object) "この柿は美味しい。") });
         suggester.indexer().addElevateWord(elevateWord, true);
@@ -519,8 +499,7 @@ public class SuggesterTest {
         suggester.indexer().index(items);
         suggester.refresh();
 
-        SuggestResponse response = suggester.suggest().setQuery("kensaku").setSuggestDetail(true).execute()
-                .getResponse();
+        SuggestResponse response = suggester.suggest().setQuery("kensaku").setSuggestDetail(true).execute().getResponse();
         assertEquals(1, response.getNum());
         assertEquals("検索 エンジン", response.getWords().get(0));
 
@@ -530,14 +509,12 @@ public class SuggesterTest {
 
         suggester.indexer().addBadWord("[", true);
         suggester.refresh();
-        SuggestResponse response2 = suggester.suggest().setQuery("kensaku").setSuggestDetail(true).execute()
-                .getResponse();
+        SuggestResponse response2 = suggester.suggest().setQuery("kensaku").setSuggestDetail(true).execute().getResponse();
         assertEquals(1, response2.getNum());
 
         suggester.indexer().addBadWord("ｴﾝｼﾞﾝ", true);
         suggester.refresh();
-        SuggestResponse response3 = suggester.suggest().setQuery("kensaku").setSuggestDetail(true).execute()
-                .getResponse();
+        SuggestResponse response3 = suggester.suggest().setQuery("kensaku").setSuggestDetail(true).execute().getResponse();
         assertEquals(0, response3.getNum());
         response3 = suggester.suggest().setQuery("zenbun").setSuggestDetail(true).execute().getResponse();
         assertEquals(1, response3.getNum());
@@ -605,8 +582,7 @@ public class SuggesterTest {
         suggester.refresh();
 
         final String excludeWord = "クエリー1";
-        PopularWordsResponse response = suggester.popularWords().setSize(2).addExcludeWord(excludeWord).execute()
-                .getResponse();
+        PopularWordsResponse response = suggester.popularWords().setSize(2).addExcludeWord(excludeWord).execute().getResponse();
 
         assertEquals(4, response.getTotal());
 
@@ -713,8 +689,7 @@ public class SuggesterTest {
         suggester.indexer().index(items);
         suggester.refresh();
 
-        SuggestResponse response = suggester.suggest().setQuery("kensaku").setSuggestDetail(true).execute()
-                .getResponse();
+        SuggestResponse response = suggester.suggest().setQuery("kensaku").setSuggestDetail(true).execute().getResponse();
         assertEquals(1, response.getNum());
         assertEquals("検索 エンジン", response.getWords().get(0));
 
@@ -778,24 +753,24 @@ public class SuggesterTest {
         readings[1] = new String[] { "enjin", "fuga" };
         String[] tags = new String[] { "tag1", "tag2" };
         String[] roles = new String[] { SuggestConstants.DEFAULT_ROLE, "role1", "role2", "role3" };
-        queryItems[0] = new SuggestItem(new String[] { "検索", "エンジン" }, readings, new String[] { "content" }, 1, 0, -1,
-                tags, roles, null, SuggestItem.Kind.DOCUMENT);
+        queryItems[0] = new SuggestItem(new String[] { "検索", "エンジン" }, readings, new String[] { "content" }, 1, 0, -1, tags, roles, null,
+                SuggestItem.Kind.DOCUMENT);
 
         String[][] readings2 = new String[2][];
         readings2[0] = new String[] { "zenbun", "fuga" };
         readings2[1] = new String[] { "kensaku", "fuga" };
         String[] tags2 = new String[] { "tag3" };
         String[] roles2 = new String[] { SuggestConstants.DEFAULT_ROLE, "role4" };
-        queryItems[1] = new SuggestItem(new String[] { "全文", "検索" }, readings2, new String[] { "content" }, 1, 0, -1,
-                tags2, roles2, null, SuggestItem.Kind.DOCUMENT);
+        queryItems[1] = new SuggestItem(new String[] { "全文", "検索" }, readings2, new String[] { "content" }, 1, 0, -1, tags2, roles2, null,
+                SuggestItem.Kind.DOCUMENT);
 
         String[][] readings2Query = new String[2][];
         readings2Query[0] = new String[] { "zenbun", "fuga" };
         readings2Query[1] = new String[] { "kensaku", "fuga" };
         String[] tags2Query = new String[] { "tag4" };
         String[] roles2Query = new String[] { SuggestConstants.DEFAULT_ROLE, "role5" };
-        queryItems[2] = new SuggestItem(new String[] { "全文", "検索" }, readings2Query, new String[] { "content" }, 0, 1,
-                -1, tags2Query, roles2Query, null, SuggestItem.Kind.QUERY);
+        queryItems[2] = new SuggestItem(new String[] { "全文", "検索" }, readings2Query, new String[] { "content" }, 0, 1, -1, tags2Query,
+                roles2Query, null, SuggestItem.Kind.QUERY);
 
         return queryItems;
     }
@@ -808,8 +783,8 @@ public class SuggesterTest {
             readings[0] = new String[] { "fuga" };
             String[] tags = new String[] { "tag1", "tag2" };
             String[] roles = new String[] { SuggestConstants.DEFAULT_ROLE, "role1", "role2", "role3" };
-            items.add(new SuggestItem(new String[] { "ドキュメント" + i }, readings, new String[] { "content" }, 15 + i, 0,
-                    -1, tags, roles, null, SuggestItem.Kind.DOCUMENT));
+            items.add(new SuggestItem(new String[] { "ドキュメント" + i }, readings, new String[] { "content" }, 15 + i, 0, -1, tags, roles, null,
+                    SuggestItem.Kind.DOCUMENT));
         }
 
         for (int i = 0; i < 5; i++) {
@@ -817,8 +792,8 @@ public class SuggesterTest {
             readings[0] = new String[] { "fuga" };
             String[] tags = new String[] { "tag1", "tag2" };
             String[] roles = new String[] { SuggestConstants.DEFAULT_ROLE, "role1", "role2", "role3" };
-            items.add(new SuggestItem(new String[] { "クエリー" + i }, readings, new String[] { "content" }, 0, 15 + i, -1,
-                    tags, roles, null, SuggestItem.Kind.QUERY));
+            items.add(new SuggestItem(new String[] { "クエリー" + i }, readings, new String[] { "content" }, 0, 15 + i, -1, tags, roles, null,
+                    SuggestItem.Kind.QUERY));
         }
 
         for (int i = 0; i < 5; i++) {
@@ -827,8 +802,8 @@ public class SuggesterTest {
             readings[1] = new String[] { "enjin" };
             String[] tags = new String[] { "tag1", "tag2" };
             String[] roles = new String[] { SuggestConstants.DEFAULT_ROLE, "role1", "role2", "role3" };
-            items.add(new SuggestItem(new String[] { "マルチワード" + i, "fuga" }, readings, new String[] { "content" }, 0,
-                    15 + i, -1, tags, roles, null, SuggestItem.Kind.QUERY));
+            items.add(new SuggestItem(new String[] { "マルチワード" + i, "fuga" }, readings, new String[] { "content" }, 0, 15 + i, -1, tags,
+                    roles, null, SuggestItem.Kind.QUERY));
         }
 
         return items.toArray(new SuggestItem[items.size()]);
@@ -842,8 +817,8 @@ public class SuggesterTest {
             readings[0] = new String[] { "-aaa" };
             String[] tags = new String[] { "tag1", "tag2" };
             String[] roles = new String[] { SuggestConstants.DEFAULT_ROLE, "role1", "role2", "role3" };
-            items.add(new SuggestItem(new String[] { "ドキュメント" + 1 }, readings, new String[] { "content" }, 15, 0, -1,
-                    tags, roles, null, SuggestItem.Kind.DOCUMENT));
+            items.add(new SuggestItem(new String[] { "ドキュメント" + 1 }, readings, new String[] { "content" }, 15, 0, -1, tags, roles, null,
+                    SuggestItem.Kind.DOCUMENT));
         }
 
         {
@@ -851,16 +826,16 @@ public class SuggesterTest {
             readings[0] = new String[] { "-aa-a" };
             String[] tags = new String[] { "tag1", "tag2" };
             String[] roles = new String[] { SuggestConstants.DEFAULT_ROLE, "role1", "role2", "role3" };
-            items.add(new SuggestItem(new String[] { "ドキュメント" + 2 }, readings, new String[] { "content" }, 15, 0, -1,
-                    tags, roles, null, SuggestItem.Kind.DOCUMENT));
+            items.add(new SuggestItem(new String[] { "ドキュメント" + 2 }, readings, new String[] { "content" }, 15, 0, -1, tags, roles, null,
+                    SuggestItem.Kind.DOCUMENT));
         }
         {
             String[][] readings = new String[2][];
             readings[0] = new String[] { "aa-a" };
             String[] tags = new String[] { "tag1", "tag2" };
             String[] roles = new String[] { SuggestConstants.DEFAULT_ROLE, "role1", "role2", "role3" };
-            items.add(new SuggestItem(new String[] { "ドキュメント" + 3 }, readings, new String[] { "content" }, 15, 0, -1,
-                    tags, roles, null, SuggestItem.Kind.DOCUMENT));
+            items.add(new SuggestItem(new String[] { "ドキュメント" + 3 }, readings, new String[] { "content" }, 15, 0, -1, tags, roles, null,
+                    SuggestItem.Kind.DOCUMENT));
         }
 
         return items.toArray(new SuggestItem[items.size()]);

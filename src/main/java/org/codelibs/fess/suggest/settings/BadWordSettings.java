@@ -62,8 +62,7 @@ public class BadWordSettings {
 
     public void add(final String badWord) {
         if (logger.isLoggable(Level.FINER)) {
-            logger.finer(
-                    () -> String.format("Add badword. %s badword:%s", arraySettings.arraySettingsIndexName, badWord));
+            logger.finer(() -> String.format("Add badword. %s badword:%s", arraySettings.arraySettingsIndexName, badWord));
         }
 
         final String validationError = getValidationError(badWord);
@@ -75,8 +74,7 @@ public class BadWordSettings {
 
     public void delete(final String badWord) {
         if (logger.isLoggable(Level.FINER)) {
-            logger.finer(() -> String.format("Delete badword. %s badword:%s", arraySettings.arraySettingsIndexName,
-                    badWord));
+            logger.finer(() -> String.format("Delete badword. %s badword:%s", arraySettings.arraySettingsIndexName, badWord));
         }
         arraySettings.delete(BAD_WORD_SETTINGD_KEY, badWord);
     }
@@ -104,8 +102,8 @@ public class BadWordSettings {
         }
 
         final List<String> list = new ArrayList<>();
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(Thread.currentThread().getContextClassLoader()
-                .getResourceAsStream("suggest_settings/default-badwords.txt")))) {
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(
+                Thread.currentThread().getContextClassLoader().getResourceAsStream("suggest_settings/default-badwords.txt")))) {
 
             String line;
             while ((line = br.readLine()) != null) {

@@ -32,8 +32,7 @@ public class KuromojiPartOfSpeechFilterFactory extends AbstractTokenFilterFactor
 
     private final Set<String> stopTags = new HashSet<>();
 
-    public KuromojiPartOfSpeechFilterFactory(IndexSettings indexSettings, Environment env, String name,
-            Settings settings) {
+    public KuromojiPartOfSpeechFilterFactory(IndexSettings indexSettings, Environment env, String name, Settings settings) {
         super(indexSettings, name, settings);
         List<String> wordList = Analysis.getWordList(env, settings, "stoptags");
         if (wordList != null) {

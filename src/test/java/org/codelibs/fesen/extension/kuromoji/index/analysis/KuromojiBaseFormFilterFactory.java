@@ -24,8 +24,7 @@ import org.codelibs.fesen.index.analysis.AbstractTokenFilterFactory;
 
 public class KuromojiBaseFormFilterFactory extends AbstractTokenFilterFactory {
 
-    public KuromojiBaseFormFilterFactory(IndexSettings indexSettings, Environment environment, String name,
-            Settings settings) {
+    public KuromojiBaseFormFilterFactory(IndexSettings indexSettings, Environment environment, String name, Settings settings) {
         super(indexSettings, name, settings);
     }
 

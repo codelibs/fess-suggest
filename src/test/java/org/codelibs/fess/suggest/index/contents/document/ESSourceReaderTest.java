@@ -55,8 +55,7 @@ public class ESSourceReaderTest {
             settingsBuilder.put("discovery.type", "single-node");
             // settingsBuilder.putList("discovery.seed_hosts", "127.0.0.1:9301");
             // settingsBuilder.putList("cluster.initial_master_nodes", "127.0.0.1:9301");
-        }).build(newConfigs().clusterName("ESSourceReaderTest").numOfNode(1)
-                .pluginTypes("org.codelibs.fesen.extension.ExtensionPlugin"));
+        }).build(newConfigs().clusterName("ESSourceReaderTest").numOfNode(1).pluginTypes("org.codelibs.fesen.extension.ExtensionPlugin"));
         runner.ensureYellow();
     }
 
@@ -241,8 +240,7 @@ public class ESSourceReaderTest {
             source.put("field1", "test" + i);
             source.put("field2", i);
             IndexRequestBuilder indexRequestBuilder = new IndexRequestBuilder(client, IndexAction.INSTANCE);
-            indexRequestBuilder.setIndex(indexName).setType(typeName).setId(String.valueOf(i)).setCreate(true)
-                    .setSource(source);
+            indexRequestBuilder.setIndex(indexName).setType(typeName).setId(String.valueOf(i)).setCreate(true).setSource(source);
             bulkRequestBuilder.add(indexRequestBuilder);
         }
         bulkRequestBuilder.execute().actionGet();

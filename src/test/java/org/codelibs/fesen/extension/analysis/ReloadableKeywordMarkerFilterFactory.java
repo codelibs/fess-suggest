@@ -31,8 +31,8 @@ public class ReloadableKeywordMarkerFilterFactory extends AbstractTokenFilterFac
 
     private final long reloadInterval;
 
-    public ReloadableKeywordMarkerFilterFactory(final IndexSettings indexSettings, final Environment environment,
-            final String name, final Settings settings) {
+    public ReloadableKeywordMarkerFilterFactory(final IndexSettings indexSettings, final Environment environment, final String name,
+            final Settings settings) {
         super(indexSettings, name, settings);
 
         final String path = settings.get("keywords_path");

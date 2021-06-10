@@ -90,8 +90,8 @@ public class SuggestSettings {
         boolean doIndexCreate = false;
         boolean doCreate = false;
         try {
-            final GetResponse getResponse = client.prepareGet().setIndex(settingsIndexName).setId(settingsId).execute()
-                    .actionGet(getSearchTimeout());
+            final GetResponse getResponse =
+                    client.prepareGet().setIndex(settingsIndexName).setId(settingsId).execute().actionGet(getSearchTimeout());
 
             if (!getResponse.isExists()) {
                 doCreate = true;
@@ -104,8 +104,7 @@ public class SuggestSettings {
         if (doCreate) {
             if (doIndexCreate) {
                 try {
-                    client.admin().indices().prepareCreate(settingsIndexName)
-                            .setSettings(loadIndexSettings(), XContentType.JSON).execute()
+                    client.admin().indices().prepareCreate(settingsIndexName).setSettings(loadIndexSettings(), XContentType.JSON).execute()
                             .actionGet(getIndicesTimeout());
                 } catch (final IOException e) {
                     throw new SuggesterException(e);
@@ -136,8 +135,8 @@ public class SuggestSettings {
     }
 
     public Object get(final String key) {
-        final GetResponse getResponse = client.prepareGet().setIndex(settingsIndexName).setId(settingsId).execute()
-                .actionGet(getSearchTimeout());
+        final GetResponse getResponse =
+                client.prepareGet().setIndex(settingsIndexName).setId(settingsId).execute().actionGet(getSearchTimeout());
         if (!getResponse.isExists()) {
             return null;
         }
@@ -212,14 +211,12 @@ public class SuggestSettings {
 
     public void set(final String key, final Object value) {
         if (logger.isLoggable(Level.FINER)) {
-            logger.finer(
-                    () -> String.format("Set suggest settings. %s key: %s value: %s", settingsIndexName, key, value));
+            logger.finer(() -> String.format("Set suggest settings. %s key: %s value: %s", settingsIndexName, key, value));
         }
         try {
             client.prepareUpdate().setIndex(settingsIndexName).setId(settingsId).setDocAsUpsert(true).setDoc(key, value)
                     .setRetryOnConflict(5).execute().actionGet(getIndexTimeout());
-            client.admin().indices().prepareRefresh().setIndices(settingsIndexName).execute()
-                    .actionGet(getIndicesTimeout());
+            client.admin().indices().prepareRefresh().setIndices(settingsIndexName).execute().actionGet(getIndicesTimeout());
         } catch (final Exception e) {
             throw new SuggestSettingsException("Failed to update suggestSettings.", e);
         }
@@ -232,10 +229,9 @@ public class SuggestSettings {
         try {
             final XContentBuilder builder = JsonXContent.contentBuilder().map(map);
             builder.flush();
-            client.prepareUpdate().setIndex(settingsIndexName).setId(settingsId).setDocAsUpsert(true).setDoc(builder)
-                    .setRetryOnConflict(5).execute().actionGet(getIndexTimeout());
-            client.admin().indices().prepareRefresh().setIndices(settingsIndexName).execute()
-                    .actionGet(getIndicesTimeout());
+            client.prepareUpdate().setIndex(settingsIndexName).setId(settingsId).setDocAsUpsert(true).setDoc(builder).setRetryOnConflict(5)
+                    .execute().actionGet(getIndexTimeout());
+            client.admin().indices().prepareRefresh().setIndices(settingsIndexName).execute().actionGet(getIndicesTimeout());
         } catch (final Exception e) {
             throw new SuggestSettingsException("Failed to update suggestSettings.", e);
         }
@@ -288,8 +284,8 @@ public class SuggestSettings {
     protected String loadIndexSettings() throws IOException {
         final String dictionaryPath = System.getProperty("fess.dictionary.path", StringUtil.EMPTY);
         final StringBuilder sb = new StringBuilder();
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(
-                this.getClass().getClassLoader().getResourceAsStream("suggest_indices/suggest_settings.json")));) {
+        try (BufferedReader br = new BufferedReader(
+                new InputStreamReader(this.getClass().getClassLoader().getResourceAsStream("suggest_indices/suggest_settings.json")));) {
 
             String line;
             while ((line = br.readLine()) != null) {

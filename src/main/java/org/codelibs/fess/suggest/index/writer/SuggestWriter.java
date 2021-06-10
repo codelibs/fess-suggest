@@ -26,8 +26,7 @@ import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 
 public interface SuggestWriter {
-    SuggestWriterResult write(Client client, SuggestSettings settings, String index, SuggestItem[] items,
-            boolean update);
+    SuggestWriterResult write(Client client, SuggestSettings settings, String index, SuggestItem[] items, boolean update);
 
     SuggestWriterResult delete(Client client, SuggestSettings settings, String index, String id);
 

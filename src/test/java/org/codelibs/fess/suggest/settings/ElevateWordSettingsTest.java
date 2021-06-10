@@ -44,8 +44,7 @@ public class ElevateWordSettingsTest {
             settingsBuilder.put("discovery.type", "single-node");
             // settingsBuilder.putList("discovery.seed_hosts", "127.0.0.1:9301");
             // settingsBuilder.putList("cluster.initial_master_nodes", "127.0.0.1:9301");
-        }).build(newConfigs().clusterName("ArraySettingsTest").numOfNode(1)
-                .pluginTypes("org.codelibs.fesen.extension.ExtensionPlugin"));
+        }).build(newConfigs().clusterName("ArraySettingsTest").numOfNode(1).pluginTypes("org.codelibs.fesen.extension.ExtensionPlugin"));
         runner.ensureYellow();
     }
 
@@ -73,13 +72,12 @@ public class ElevateWordSettingsTest {
 
     @Test
     public void test_setAndGet() {
-        ElevateWord elevateWord1 = new ElevateWord("a", 1.0f, Collections.singletonList("a"),
-                Collections.singletonList("content"), null, null);
-        ElevateWord elevateWord2 = new ElevateWord("b", 0.0f, Collections.singletonList("b"),
-                Collections.singletonList("content"), null, null);
-        ElevateWord elevateWord3 = new ElevateWord("c", 100.0f, Collections.singletonList("c"),
-                Collections.singletonList("content"), Collections.singletonList("tag1"),
-                Collections.singletonList("role1"));
+        ElevateWord elevateWord1 =
+                new ElevateWord("a", 1.0f, Collections.singletonList("a"), Collections.singletonList("content"), null, null);
+        ElevateWord elevateWord2 =
+                new ElevateWord("b", 0.0f, Collections.singletonList("b"), Collections.singletonList("content"), null, null);
+        ElevateWord elevateWord3 = new ElevateWord("c", 100.0f, Collections.singletonList("c"), Collections.singletonList("content"),
+                Collections.singletonList("tag1"), Collections.singletonList("role1"));
 
         settings.elevateWord().add(elevateWord1);
         settings.elevateWord().add(elevateWord2);
@@ -103,12 +101,12 @@ public class ElevateWordSettingsTest {
 
     @Test
     public void test_delete() {
-        ElevateWord elevateWord1 = new ElevateWord("a", 1.0f, Collections.singletonList("a"),
-                Collections.singletonList("content"), null, null);
-        ElevateWord elevateWord2 = new ElevateWord("b", 0.0f, Collections.singletonList("b"),
-                Collections.singletonList("content"), null, null);
-        ElevateWord elevateWord3 = new ElevateWord("c", 100.0f, Collections.singletonList("c"),
-                Collections.singletonList("content"), null, null);
+        ElevateWord elevateWord1 =
+                new ElevateWord("a", 1.0f, Collections.singletonList("a"), Collections.singletonList("content"), null, null);
+        ElevateWord elevateWord2 =
+                new ElevateWord("b", 0.0f, Collections.singletonList("b"), Collections.singletonList("content"), null, null);
+        ElevateWord elevateWord3 =
+                new ElevateWord("c", 100.0f, Collections.singletonList("c"), Collections.singletonList("content"), null, null);
 
         settings.elevateWord().add(elevateWord1);
         settings.elevateWord().add(elevateWord2);

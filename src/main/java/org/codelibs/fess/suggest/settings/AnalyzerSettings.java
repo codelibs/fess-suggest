@@ -62,10 +62,9 @@ public class AnalyzerSettings {
     protected static Map<String, Set<String>> analyzerMap = new ConcurrentHashMap<>();
     protected static Map<String, Map<String, FieldAnalyzerMapping>> fieldAnalyzerMappingMap = new ConcurrentHashMap<>();
 
-    protected static final String[] SUPPORTED_LANGUAGES = new String[] { "ar", "bg", "bn", "ca", "cs", "da", "de", "el",
-            "en", "es", "et", "fa", "fi", "fr", "gu", "he", "hi", "hr", "hu", "id", "it", "ja", "ko", "lt", "lv", "mk",
-            "ml", "nl", "no", "pa", "pl", "pt", "ro", "ru", "si", "sq", "sv", "ta", "te", "th", "tl", "tr", "uk", "ur",
-            "vi", "zh-cn", "zh-tw" };
+    protected static final String[] SUPPORTED_LANGUAGES = new String[] { "ar", "bg", "bn", "ca", "cs", "da", "de", "el", "en", "es", "et",
+            "fa", "fi", "fr", "gu", "he", "hi", "hr", "hu", "id", "it", "ja", "ko", "lt", "lv", "mk", "ml", "nl", "no", "pa", "pl", "pt",
+            "ro", "ru", "si", "sq", "sv", "ta", "te", "th", "tl", "tr", "uk", "ur", "vi", "zh-cn", "zh-tw" };
 
     public AnalyzerSettings(final Client client, final SuggestSettings settings, final String settingsIndexName) {
         this.client = client;
@@ -75,8 +74,8 @@ public class AnalyzerSettings {
 
     public synchronized void init() {
         try {
-            final IndicesExistsResponse response = client.admin().indices().prepareExists(analyzerSettingsIndexName)
-                    .execute().actionGet(settings.getIndicesTimeout());
+            final IndicesExistsResponse response =
+                    client.admin().indices().prepareExists(analyzerSettingsIndexName).execute().actionGet(settings.getIndicesTimeout());
             if (!response.isExists()) {
                 createAnalyzerSettings(loadIndexSettings(), loadIndexMapping());
             }
@@ -92,8 +91,7 @@ public class AnalyzerSettings {
     }
 
     public String getReadingAnalyzerName(final String field, final String lang) {
-        final Map<String, FieldAnalyzerMapping> fieldAnalyzerMapping = fieldAnalyzerMappingMap
-                .get(analyzerSettingsIndexName);
+        final Map<String, FieldAnalyzerMapping> fieldAnalyzerMapping = fieldAnalyzerMappingMap.get(analyzerSettingsIndexName);
         final Set<String> analyzerNames = analyzerMap.get(analyzerSettingsIndexName);
         final String analyzerName;
         if (StringUtil.isNotBlank(field) && fieldAnalyzerMapping.containsKey(field)
@@ -110,8 +108,7 @@ public class AnalyzerSettings {
     }
 
     public String getReadingTermAnalyzerName(final String field, final String lang) {
-        final Map<String, FieldAnalyzerMapping> fieldAnalyzerMapping = fieldAnalyzerMappingMap
-                .get(analyzerSettingsIndexName);
+        final Map<String, FieldAnalyzerMapping> fieldAnalyzerMapping = fieldAnalyzerMappingMap.get(analyzerSettingsIndexName);
         final Set<String> analyzerNames = analyzerMap.get(analyzerSettingsIndexName);
         final String analyzerName;
         if (StringUtil.isNotBlank(field) && fieldAnalyzerMapping.containsKey(field)
@@ -128,8 +125,7 @@ public class AnalyzerSettings {
     }
 
     public String getNormalizeAnalyzerName(final String field, final String lang) {
-        final Map<String, FieldAnalyzerMapping> fieldAnalyzerMapping = fieldAnalyzerMappingMap
-                .get(analyzerSettingsIndexName);
+        final Map<String, FieldAnalyzerMapping> fieldAnalyzerMapping = fieldAnalyzerMappingMap.get(analyzerSettingsIndexName);
         final Set<String> analyzerNames = analyzerMap.get(analyzerSettingsIndexName);
         final String analyzerName;
         if (StringUtil.isNotBlank(field) && fieldAnalyzerMapping.containsKey(field)
@@ -146,8 +142,7 @@ public class AnalyzerSettings {
     }
 
     public String getContentsAnalyzerName(final String field, final String lang) {
-        final Map<String, FieldAnalyzerMapping> fieldAnalyzerMapping = fieldAnalyzerMappingMap
-                .get(analyzerSettingsIndexName);
+        final Map<String, FieldAnalyzerMapping> fieldAnalyzerMapping = fieldAnalyzerMappingMap.get(analyzerSettingsIndexName);
         final Set<String> analyzerNames = analyzerMap.get(analyzerSettingsIndexName);
         final String analyzerName;
         if (StringUtil.isNotBlank(field) && fieldAnalyzerMapping.containsKey(field)
@@ -164,8 +159,7 @@ public class AnalyzerSettings {
     }
 
     public String getContentsReadingAnalyzerName(final String field, final String lang) {
-        final Map<String, FieldAnalyzerMapping> fieldAnalyzerMapping = fieldAnalyzerMappingMap
-                .get(analyzerSettingsIndexName);
+        final Map<String, FieldAnalyzerMapping> fieldAnalyzerMapping = fieldAnalyzerMappingMap.get(analyzerSettingsIndexName);
         final Set<String> analyzerNames = analyzerMap.get(analyzerSettingsIndexName);
         final String analyzerName;
         if (StringUtil.isNotBlank(field) && fieldAnalyzerMapping.containsKey(field)
@@ -187,8 +181,7 @@ public class AnalyzerSettings {
     }
 
     protected void deleteAnalyzerSettings() {
-        client.admin().indices().prepareDelete(analyzerSettingsIndexName).execute()
-                .actionGet(settings.getIndicesTimeout());
+        client.admin().indices().prepareDelete(analyzerSettingsIndexName).execute().actionGet(settings.getIndicesTimeout());
     }
 
     protected void createAnalyzerSettings(final String settings, final String mappings) {
@@ -208,8 +201,8 @@ public class AnalyzerSettings {
     protected String loadIndexSettings() throws IOException {
         final String dictionaryPath = System.getProperty("fess.dictionary.path", StringUtil.EMPTY);
         final StringBuilder sb = new StringBuilder();
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(
-                this.getClass().getClassLoader().getResourceAsStream(getSuggestAnalyzerPath())))) {
+        try (BufferedReader br =
+                new BufferedReader(new InputStreamReader(this.getClass().getClassLoader().getResourceAsStream(getSuggestAnalyzerPath())))) {
 
             String line;
             while ((line = br.readLine()) != null) {
@@ -232,8 +225,8 @@ public class AnalyzerSettings {
 
     protected String loadIndexMapping() throws IOException {
         final StringBuilder sb = new StringBuilder();
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(this.getClass().getClassLoader()
-                .getResourceAsStream("suggest_indices/analyzer/mapping-default.json")));) {
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(
+                this.getClass().getClassLoader().getResourceAsStream("suggest_indices/analyzer/mapping-default.json")));) {
 
             String line;
             while ((line = br.readLine()) != null) {
@@ -252,9 +245,8 @@ public class AnalyzerSettings {
             if (text == null || text.length() > maxContentLenth) {
                 return Collections.emptyList();
             }
-            final AnalyzeAction.Response analyzeResponse = client.admin().indices()
-                    .prepareAnalyze(analyzerSettingsIndexName, text).setAnalyzer(getContentsAnalyzerName(field, lang))
-                    .execute().actionGet(settings.getIndicesTimeout());
+            final AnalyzeAction.Response analyzeResponse = client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text)
+                    .setAnalyzer(getContentsAnalyzerName(field, lang)).execute().actionGet(settings.getIndicesTimeout());
             return analyzeResponse.getTokens();
         }
 
@@ -265,9 +257,8 @@ public class AnalyzerSettings {
                 if (StringUtil.isBlank(contentsReadingAnalyzerName)) {
                     return null;
                 }
-                final AnalyzeAction.Response analyzeResponse = client.admin().indices()
-                        .prepareAnalyze(analyzerSettingsIndexName, text).setAnalyzer(contentsReadingAnalyzerName)
-                        .execute().actionGet(settings.getIndicesTimeout());
+                final AnalyzeAction.Response analyzeResponse = client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text)
+                        .setAnalyzer(contentsReadingAnalyzerName).execute().actionGet(settings.getIndicesTimeout());
                 return analyzeResponse.getTokens();
             } catch (final IllegalArgumentException e) {
                 return analyze(text, field, lang);
@@ -280,8 +271,8 @@ public class AnalyzerSettings {
     }
 
     protected Set<String> getAnalyzerNames() {
-        final GetSettingsResponse response = client.admin().indices().prepareGetSettings()
-                .setIndices(analyzerSettingsIndexName).execute().actionGet();
+        final GetSettingsResponse response =
+                client.admin().indices().prepareGetSettings().setIndices(analyzerSettingsIndexName).execute().actionGet();
         final Settings settings = response.getIndexToSettings().get(analyzerSettingsIndexName);
         final Settings analyzerSettings = settings.getAsSettings("index.analysis.analyzer");
         return analyzerSettings.getAsGroups().keySet();
@@ -301,25 +292,21 @@ public class AnalyzerSettings {
                 }
                 for (final SearchHit hit : hits) {
                     final Map<String, Object> source = hit.getSourceAsMap();
-                    final String fieldReadingAnalyzer = source
-                            .get(FieldNames.ANALYZER_SETTINGS_READING_ANALYZER) == null ? null
-                                    : source.get(FieldNames.ANALYZER_SETTINGS_READING_ANALYZER).toString();
-                    final String fieldReadingTermAnalyzer = source
-                            .get(FieldNames.ANALYZER_SETTINGS_READING_TERM_ANALYZER) == null ? null
-                                    : source.get(FieldNames.ANALYZER_SETTINGS_READING_TERM_ANALYZER).toString();
-                    final String fieldNormalizeAnalyzer = source
-                            .get(FieldNames.ANALYZER_SETTINGS_NORMALIZE_ANALYZER) == null ? null
-                                    : source.get(FieldNames.ANALYZER_SETTINGS_NORMALIZE_ANALYZER).toString();
-                    final String fieldContentsAnalyzer = source
-                            .get(FieldNames.ANALYZER_SETTINGS_CONTENTS_ANALYZER) == null ? null
-                                    : source.get(FieldNames.ANALYZER_SETTINGS_CONTENTS_ANALYZER).toString();
-                    final String fieldContentsReadingAnalyzer = source
-                            .get(FieldNames.ANALYZER_SETTINGS_CONTENTS_READING_ANALYZER) == null ? null
+                    final String fieldReadingAnalyzer = source.get(FieldNames.ANALYZER_SETTINGS_READING_ANALYZER) == null ? null
+                            : source.get(FieldNames.ANALYZER_SETTINGS_READING_ANALYZER).toString();
+                    final String fieldReadingTermAnalyzer = source.get(FieldNames.ANALYZER_SETTINGS_READING_TERM_ANALYZER) == null ? null
+                            : source.get(FieldNames.ANALYZER_SETTINGS_READING_TERM_ANALYZER).toString();
+                    final String fieldNormalizeAnalyzer = source.get(FieldNames.ANALYZER_SETTINGS_NORMALIZE_ANALYZER) == null ? null
+                            : source.get(FieldNames.ANALYZER_SETTINGS_NORMALIZE_ANALYZER).toString();
+                    final String fieldContentsAnalyzer = source.get(FieldNames.ANALYZER_SETTINGS_CONTENTS_ANALYZER) == null ? null
+                            : source.get(FieldNames.ANALYZER_SETTINGS_CONTENTS_ANALYZER).toString();
+                    final String fieldContentsReadingAnalyzer =
+                            source.get(FieldNames.ANALYZER_SETTINGS_CONTENTS_READING_ANALYZER) == null ? null
                                     : source.get(FieldNames.ANALYZER_SETTINGS_CONTENTS_READING_ANALYZER).toString();
 
                     mappingMap.put(source.get(FieldNames.ANALYZER_SETTINGS_FIELD_NAME).toString(),
-                            new FieldAnalyzerMapping(fieldReadingAnalyzer, fieldReadingTermAnalyzer,
-                                    fieldNormalizeAnalyzer, fieldContentsAnalyzer, fieldContentsReadingAnalyzer));
+                            new FieldAnalyzerMapping(fieldReadingAnalyzer, fieldReadingTermAnalyzer, fieldNormalizeAnalyzer,
+                                    fieldContentsAnalyzer, fieldContentsReadingAnalyzer));
                 }
                 response = client.prepareSearchScroll(scrollId).setScroll(settings.getScrollTimeout()).execute()
                         .actionGet(settings.getSearchTimeout());
@@ -340,40 +327,40 @@ public class AnalyzerSettings {
         for (final String lang : SUPPORTED_LANGUAGES) {
             final String readingAnalyzer = getReadingAnalyzerName("", lang);
             try {
-                client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text).setAnalyzer(readingAnalyzer)
-                        .execute().actionGet(settings.getIndicesTimeout());
+                client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text).setAnalyzer(readingAnalyzer).execute()
+                        .actionGet(settings.getIndicesTimeout());
             } catch (final IllegalArgumentException e) {
                 undefinedAnalyzerSet.add(readingAnalyzer);
             }
 
             final String readingTermAnalyzer = getReadingTermAnalyzerName("", lang);
             try {
-                client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text)
-                        .setAnalyzer(readingTermAnalyzer).execute().actionGet(settings.getIndicesTimeout());
+                client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text).setAnalyzer(readingTermAnalyzer).execute()
+                        .actionGet(settings.getIndicesTimeout());
             } catch (final IllegalArgumentException e) {
                 undefinedAnalyzerSet.add(readingTermAnalyzer);
             }
 
             final String normalizeAnalyzer = getNormalizeAnalyzerName("", lang);
             try {
-                client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text).setAnalyzer(normalizeAnalyzer)
-                        .execute().actionGet(settings.getIndicesTimeout());
+                client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text).setAnalyzer(normalizeAnalyzer).execute()
+                        .actionGet(settings.getIndicesTimeout());
             } catch (final IllegalArgumentException e) {
                 undefinedAnalyzerSet.add(normalizeAnalyzer);
             }
 
             final String contentsAnalyzer = getContentsAnalyzerName("", lang);
             try {
-                client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text).setAnalyzer(contentsAnalyzer)
-                        .execute().actionGet(settings.getIndicesTimeout());
+                client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text).setAnalyzer(contentsAnalyzer).execute()
+                        .actionGet(settings.getIndicesTimeout());
             } catch (final IllegalArgumentException e) {
                 undefinedAnalyzerSet.add(contentsAnalyzer);
             }
 
             final String contentsReadingAnalyzer = getContentsReadingAnalyzerName("", lang);
             try {
-                client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text)
-                        .setAnalyzer(contentsReadingAnalyzer).execute().actionGet(settings.getIndicesTimeout());
+                client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text).setAnalyzer(contentsReadingAnalyzer).execute()
+                        .actionGet(settings.getIndicesTimeout());
             } catch (final IllegalArgumentException e) {
                 undefinedAnalyzerSet.add(contentsReadingAnalyzer);
             }
@@ -389,8 +376,8 @@ public class AnalyzerSettings {
         protected final String contentsAnalyzer;
         protected final String contentsReadingAnalyzer;
 
-        public FieldAnalyzerMapping(final String readingAnalyzer, final String readingTermAnalyzer,
-                final String normalizeAnalyzer, final String contentsAnalyzer, final String contentsReadingAnalyzer) {
+        public FieldAnalyzerMapping(final String readingAnalyzer, final String readingTermAnalyzer, final String normalizeAnalyzer,
+                final String contentsAnalyzer, final String contentsReadingAnalyzer) {
             this.readingAnalyzer = readingAnalyzer;
             this.readingTermAnalyzer = readingTermAnalyzer;
             this.normalizeAnalyzer = normalizeAnalyzer;

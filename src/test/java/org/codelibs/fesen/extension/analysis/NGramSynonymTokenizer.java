@@ -112,8 +112,8 @@ public final class NGramSynonymTokenizer extends Tokenizer {
 
     private final PositionIncrementAttribute posIncAttr = addAttribute(PositionIncrementAttribute.class);
 
-    protected NGramSynonymTokenizer(final int n, final String delimiters, final boolean expand,
-            final boolean ignoreCase, final SynonymLoader synonymLoader) {
+    protected NGramSynonymTokenizer(final int n, final String delimiters, final boolean expand, final boolean ignoreCase,
+            final SynonymLoader synonymLoader) {
         this.n = n;
         this.delimiters = delimiters;
         this.expand = expand;
@@ -211,8 +211,7 @@ public final class NGramSynonymTokenizer extends Tokenizer {
         int index = 0;
         while (start + index < src.length) {
             final int codePoint = Character.codePointAt(src, start + index, src.length);
-            if (fst.findTargetArc(ignoreCase ? Character.toLowerCase(codePoint) : codePoint, scratchArc, scratchArc,
-                    fstReader) == null) {
+            if (fst.findTargetArc(ignoreCase ? Character.toLowerCase(codePoint) : codePoint, scratchArc, scratchArc, fstReader) == null) {
                 return matchOutput;
             }
 
@@ -270,8 +269,8 @@ public final class NGramSynonymTokenizer extends Tokenizer {
             }
 
             // enqueue after-synonym
-            afterSynonymProduced = processAfterSynonym(synonym.endOffset,
-                    idx < synonyms.size() - 1 ? synonyms.get(idx + 1).startOffset : block.length());
+            afterSynonymProduced =
+                    processAfterSynonym(synonym.endOffset, idx < synonyms.size() - 1 ? synonyms.get(idx + 1).startOffset : block.length());
 
             nextStart = synonym.endOffset;
         }
@@ -395,8 +394,8 @@ public final class NGramSynonymTokenizer extends Tokenizer {
 
         final BytesRef output;
 
-        public MyToken(final char[] key, final int startOffset, final int endOffset, final int posInc,
-                final BytesRef output, final boolean ignoreCase) {
+        public MyToken(final char[] key, final int startOffset, final int endOffset, final int posInc, final BytesRef output,
+                final boolean ignoreCase) {
             this.word = ignoreCase ? new String(key, startOffset, endOffset - startOffset).toLowerCase()
                     : new String(key, startOffset, endOffset - startOffset);
             this.startOffset = startOffset;

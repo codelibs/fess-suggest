@@ -58,8 +58,7 @@ public class SynonymLoader {
 
     private volatile SynonymMap synonymMap;
 
-    public SynonymLoader(final Environment env, final Settings settings, final boolean expand,
-            final Analyzer analyzer) {
+    public SynonymLoader(final Environment env, final Settings settings, final boolean expand, final Analyzer analyzer) {
         this.env = env;
         this.settings = settings;
         this.expand = expand;
@@ -160,8 +159,7 @@ public class SynonymLoader {
                     if (file.exists()) {
                         reloadableFile = file;
                     }
-                    reader = new BufferedReader(
-                            new InputStreamReader(path.toUri().toURL().openStream(), StandardCharsets.UTF_8));
+                    reader = new BufferedReader(new InputStreamReader(path.toUri().toURL().openStream(), StandardCharsets.UTF_8));
                 } catch (final Exception e) {
                     throw new IllegalArgumentException("Failed to read " + filePath, e);
                 }

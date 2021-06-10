@@ -62,8 +62,7 @@ public class ESSourceReader implements DocumentReader {
     protected final AtomicLong docCount = new AtomicLong(0);
     protected final long totalDocNum;
 
-    public ESSourceReader(final Client client, final SuggestSettings settings, final String indexName,
-            final String typeName) {
+    public ESSourceReader(final Client client, final SuggestSettings settings, final String indexName, final String typeName) {
         this.client = client;
         this.settings = settings;
         this.indexName = indexName;
@@ -140,8 +139,8 @@ public class ESSourceReader implements DocumentReader {
             try {
                 final SearchResponse response;
                 if (scrollId == null) {
-                    final SearchRequestBuilder builder = client.prepareSearch().setIndices(indexName)
-                            .setScroll(settings.getScrollTimeout()).setQuery(queryBuilder).setSize(scrollSize);
+                    final SearchRequestBuilder builder = client.prepareSearch().setIndices(indexName).setScroll(settings.getScrollTimeout())
+                            .setQuery(queryBuilder).setSize(scrollSize);
                     for (final SortBuilder<?> sortBuilder : sortList) {
                         builder.addSort(sortBuilder);
                     }

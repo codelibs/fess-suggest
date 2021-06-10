@@ -36,8 +36,8 @@ public class FlexiblePorterStemFilterFactory extends AbstractTokenFilterFactory 
 
     private final boolean step6;
 
-    public FlexiblePorterStemFilterFactory(final IndexSettings indexSettings, final Environment environment,
-            final String name, final Settings settings) {
+    public FlexiblePorterStemFilterFactory(final IndexSettings indexSettings, final Environment environment, final String name,
+            final Settings settings) {
         super(indexSettings, name, settings);
 
         step1 = settings.getAsBoolean("step1", true);

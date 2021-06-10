@@ -21,8 +21,7 @@ import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.request.RequestBuilder;
 
 public class SuggestRequestBuilder extends RequestBuilder<SuggestRequest, SuggestResponse> {
-    public SuggestRequestBuilder(final Client client, final ReadingConverter readingConverter,
-            final Normalizer normalizer) {
+    public SuggestRequestBuilder(final Client client, final ReadingConverter readingConverter, final Normalizer normalizer) {
         super(client, new SuggestRequest());
         request.setReadingConverter(readingConverter);
         request.setNormalizer(normalizer);

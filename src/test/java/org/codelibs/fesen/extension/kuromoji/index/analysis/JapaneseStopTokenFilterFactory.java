@@ -32,8 +32,7 @@ import org.codelibs.fesen.index.analysis.AbstractTokenFilterFactory;
 import org.codelibs.fesen.index.analysis.Analysis;
 
 public class JapaneseStopTokenFilterFactory extends AbstractTokenFilterFactory {
-    private static final Map<String, Set<?>> NAMED_STOP_WORDS = singletonMap("_japanese_",
-            JapaneseAnalyzer.getDefaultStopSet());
+    private static final Map<String, Set<?>> NAMED_STOP_WORDS = singletonMap("_japanese_", JapaneseAnalyzer.getDefaultStopSet());
 
     private final CharArraySet stopWords;
 
@@ -41,13 +40,12 @@ public class JapaneseStopTokenFilterFactory extends AbstractTokenFilterFactory {
 
     private final boolean removeTrailing;
 
-    public JapaneseStopTokenFilterFactory(IndexSettings indexSettings, Environment env, String name,
-            Settings settings) {
+    public JapaneseStopTokenFilterFactory(IndexSettings indexSettings, Environment env, String name, Settings settings) {
         super(indexSettings, name, settings);
         this.ignoreCase = settings.getAsBoolean("ignore_case", false);
         this.removeTrailing = settings.getAsBoolean("remove_trailing", true);
-        this.stopWords = Analysis.parseWords(env, settings, "stopwords", JapaneseAnalyzer.getDefaultStopSet(),
-                NAMED_STOP_WORDS, ignoreCase);
+        this.stopWords =
+                Analysis.parseWords(env, settings, "stopwords", JapaneseAnalyzer.getDefaultStopSet(), NAMED_STOP_WORDS, ignoreCase);
     }
 
     @Override

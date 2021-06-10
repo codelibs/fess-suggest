@@ -84,8 +84,8 @@ public class ReloadableKuromojiTokenizerFactory extends AbstractTokenizerFactory
 
     private final boolean discartPunctuation;
 
-    public ReloadableKuromojiTokenizerFactory(final IndexSettings indexSettings, final Environment env,
-            final String name, final Settings settings) {
+    public ReloadableKuromojiTokenizerFactory(final IndexSettings indexSettings, final Environment env, final String name,
+            final Settings settings) {
         super(indexSettings, settings, name);
         this.env = env;
         this.settings = settings;
@@ -114,8 +114,7 @@ public class ReloadableKuromojiTokenizerFactory extends AbstractTokenizerFactory
                     reloadInterval = settings.getAsTime("reload_interval", TimeValue.timeValueMinutes(1)).getMillis();
 
                     if (VERBOSE) {
-                        System.out.println(
-                                "Check " + reloadableFile.getAbsolutePath() + " (interval: " + reloadInterval + "ms)");
+                        System.out.println("Check " + reloadableFile.getAbsolutePath() + " (interval: " + reloadInterval + "ms)");
                     }
                 }
             } catch (final Exception e) {
@@ -185,8 +184,7 @@ public class ReloadableKuromojiTokenizerFactory extends AbstractTokenizerFactory
 
             if (dictionaryTimestamp > tokenizerTimestamp) {
                 if (VERBOSE) {
-                    System.out.println(
-                            "Update KuromojiTokenizer (" + tokenizerTimestamp + "," + dictionaryTimestamp + ")");
+                    System.out.println("Update KuromojiTokenizer (" + tokenizerTimestamp + "," + dictionaryTimestamp + ")");
                 }
                 if (userDictionary != null) {
                     try {
@@ -196,8 +194,7 @@ public class ReloadableKuromojiTokenizerFactory extends AbstractTokenizerFactory
                         userFSTField.set(tokenizer, userFst);
                         userFSTReaderField.set(tokenizer, userFst.getBytesReader());
                         @SuppressWarnings("unchecked")
-                        final EnumMap<Type, Dictionary> dictionaryMap = (EnumMap<Type, Dictionary>) dictionaryMapField
-                                .get(tokenizer);
+                        final EnumMap<Type, Dictionary> dictionaryMap = (EnumMap<Type, Dictionary>) dictionaryMapField.get(tokenizer);
                         dictionaryMap.put(Type.USER, userDictionary);
                     } catch (final Exception e) {
                         throw new IllegalStateException("Failed to update the tokenizer.", e);

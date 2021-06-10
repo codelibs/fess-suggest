@@ -24,8 +24,8 @@ import org.codelibs.fesen.index.analysis.AbstractTokenFilterFactory;
 
 public class DisableGraphFilterFactory extends AbstractTokenFilterFactory {
 
-    public DisableGraphFilterFactory(final IndexSettings indexSettings, final Environment environment,
-            final String name, final Settings settings) {
+    public DisableGraphFilterFactory(final IndexSettings indexSettings, final Environment environment, final String name,
+            final Settings settings) {
         super(indexSettings, name, settings);
     }
 
