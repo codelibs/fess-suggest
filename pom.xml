@@ -1,115 +1,44 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>org.codelibs.fess</groupId>
 	<artifactId>fess-suggest</artifactId>
 	<version>7.13.0-SNAPSHOT</version>
 	<packaging>jar</packaging>
 	<name>fess-suggest</name>
-	<url>https://fess.codelibs.org/</url>
-	<inceptionYear>2009</inceptionYear>
-	<licenses>
-		<license>
-			<name>The Apache Software License, Version 2.0</name>
-			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-			<distribution>repo</distribution>
-		</license>
-	</licenses>
-	<organization>
-		<name>CodeLibs</name>
-		<url>https://www.codelibs.org/</url>
-	</organization>
-	<issueManagement>
-		<url>https://github.com/codelibs/fess/issues</url>
-	</issueManagement>
-
 	<scm>
 		<connection>scm:git:git@github.com:codelibs/fess-suggest.git</connection>
 		<developerConnection>scm:git:git@github.com:codelibs/fess-suggest.git</developerConnection>
 		<url>https://github.com/codelibs/fess-suggest</url>
 	</scm>
 	<parent>
-		<groupId>org.sonatype.oss</groupId>
-		<artifactId>oss-parent</artifactId>
-		<version>9</version>
+		<groupId>org.codelibs.fess</groupId>
+		<artifactId>fess-parent</artifactId>
+		<version>13.13.0-SNAPSHOT</version>
+		<relativePath />
 	</parent>
-	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<lucene.version>8.8.0</lucene.version>
-		<fesen.version>0.13.0-SNAPSHOT</fesen.version>
-		<fesen.runner.version>0.13.0-SNAPSHOT</fesen.runner.version>
-		<groovy.version>3.0.7</groovy.version>
-		<log4j.version>2.11.1</log4j.version>
-		<jna.version>5.7.0-1</jna.version>
-	</properties>
 	<build>
 		<plugins>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.8.1</version>
-				<configuration>
-					<release>11</release>
-					<encoding>UTF-8</encoding>
-				</configuration>
 			</plugin>
 			<plugin>
 				<artifactId>maven-source-plugin</artifactId>
-				<version>3.2.1</version>
-				<executions>
-					<execution>
-						<id>source-jar</id>
-						<phase>package</phase>
-						<goals>
-							<goal>jar</goal>
-						</goals>
-					</execution>
-				</executions>
 			</plugin>
 			<plugin>
 				<groupId>net.revelc.code.formatter</groupId>
 				<artifactId>formatter-maven-plugin</artifactId>
-				<version>2.14.0</version>
-				<executions>
-					<execution>
-						<goals>
-							<goal>format</goal>
-						</goals>
-					</execution>
-				</executions>
 			</plugin>
 			<plugin>
 				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>3.2.0</version>
-				<configuration>
-					<encoding>UTF-8</encoding>
-					<docencoding>UTF-8</docencoding>
-					<charset>UTF-8</charset>
-				</configuration>
 			</plugin>
 			<plugin>
-				<groupId>com.mycila.maven-license-plugin</groupId>
-				<artifactId>maven-license-plugin</artifactId>
-				<version>1.9.0</version>
-				<configuration>
-					<header>${basedir}/src/etc/header.txt</header>
-					<includes>
-						<include>src/**/*.java</include>
-					</includes>
-					<encoding>UTF-8</encoding>
-					<properties>
-						<year>2021</year>
-					</properties>
-					<headerDefinitions>
-						<headerDefinition>${basedir}/src/etc/header-definition.xml</headerDefinition>
-					</headerDefinitions>
-				</configuration>
+				<groupId>com.mycila</groupId>
+				<artifactId>license-maven-plugin</artifactId>
 			</plugin>
 			<plugin>
 				<artifactId>maven-surefire-plugin</artifactId>
-				<version>2.22.2</version>
-				<configuration>
-					<useSystemClassLoader>false</useSystemClassLoader>
-				</configuration>
 			</plugin>
 		</plugins>
 	</build>
@@ -124,12 +53,12 @@
 		<dependency>
 			<groupId>com.ibm.icu</groupId>
 			<artifactId>icu4j</artifactId>
-			<version>68.2</version>
+			<version>${icu4j.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.codelibs</groupId>
 			<artifactId>corelib</artifactId>
-			<version>0.5.4</version>
+			<version>${corelib.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.codelibs.fesen</groupId>
@@ -170,7 +99,7 @@
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
-			<version>4.13.2</version>
+			<version>${junit.version}</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -185,6 +114,5 @@
 			<version>${lucene.version}</version>
 			<scope>test</scope>
 		</dependency>
-
 	</dependencies>
 </project>
