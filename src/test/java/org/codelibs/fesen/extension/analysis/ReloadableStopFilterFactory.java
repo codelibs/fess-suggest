@@ -20,7 +20,7 @@ import java.nio.file.Path;
 import org.apache.lucene.analysis.TokenStream;
 import org.codelibs.analysis.en.ReloadableStopFilter;
 import org.codelibs.fesen.common.settings.Settings;
-import org.codelibs.fesen.common.unit.TimeValue;
+import org.codelibs.fesen.core.TimeValue;
 import org.codelibs.fesen.env.Environment;
 import org.codelibs.fesen.index.IndexSettings;
 import org.codelibs.fesen.index.analysis.AbstractTokenFilterFactory;

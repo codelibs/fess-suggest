@@ -33,7 +33,7 @@ import org.apache.lucene.analysis.ja.dict.TokenInfoFST;
 import org.apache.lucene.analysis.ja.dict.UserDictionary;
 import org.apache.lucene.util.AttributeSource;
 import org.codelibs.fesen.common.settings.Settings;
-import org.codelibs.fesen.common.unit.TimeValue;
+import org.codelibs.fesen.core.TimeValue;
 import org.codelibs.fesen.env.Environment;
 import org.codelibs.fesen.extension.kuromoji.index.analysis.KuromojiTokenizerFactory;
 import org.codelibs.fesen.index.IndexSettings;

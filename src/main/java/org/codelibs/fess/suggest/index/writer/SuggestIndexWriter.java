@@ -23,7 +23,7 @@ import org.codelibs.fesen.action.index.IndexAction;
 import org.codelibs.fesen.action.index.IndexRequest;
 import org.codelibs.fesen.action.index.IndexRequestBuilder;
 import org.codelibs.fesen.client.Client;
-import org.codelibs.fesen.common.unit.TimeValue;
+import org.codelibs.fesen.core.TimeValue;
 import org.codelibs.fesen.index.query.QueryBuilder;
 import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.fess.suggest.exception.SuggestIndexException;
