@@ -66,7 +66,7 @@ public class BadWordSettingsTest {
 
     @Test
     public void test_badWordIndexName() {
-        assertEquals(".suggest_badword", settings.badword().arraySettings.arraySettingsIndexName);
+        assertEquals("fess_suggest_badword", settings.badword().arraySettings.arraySettingsIndexName);
     }
 
     @Test

@@ -23,7 +23,7 @@ import org.codelibs.fesen.client.Client;
 import org.codelibs.fess.suggest.settings.SuggestSettings.TimeoutSettings;
 
 public class SuggestSettingsBuilder {
-    protected String settingsIndexName = ".suggest";
+    protected String settingsIndexName = "fess_suggest";
 
     protected TimeoutSettings timeoutSettings = new TimeoutSettings();
 
