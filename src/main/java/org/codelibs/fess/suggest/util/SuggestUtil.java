@@ -101,10 +101,7 @@ public final class SuggestUtil {
         }
         for (final TermQuery tq : termQueryList) {
             final String text = tq.getTerm().text();
-            if (0 == text.length()) {
-                continue;
-            }
-            if (keywords.contains(text)) {
+            if ((0 == text.length()) || keywords.contains(text)) {
                 continue;
             }
             keywords.add(text);
@@ -113,16 +110,14 @@ public final class SuggestUtil {
     }
 
     public static List<TermQuery> getTermQueryList(final Query query, final String[] fields) {
-        if (query instanceof BooleanQuery) {
-            final BooleanQuery booleanQuery = (BooleanQuery) query;
+        if (query instanceof BooleanQuery booleanQuery) {
             final List<BooleanClause> clauses = booleanQuery.clauses();
             final List<TermQuery> queryList = new ArrayList<>();
             for (final BooleanClause clause : clauses) {
                 final Query q = clause.getQuery();
                 if (q instanceof BooleanQuery) {
                     queryList.addAll(getTermQueryList(q, fields));
-                } else if (q instanceof TermQuery) {
-                    final TermQuery termQuery = (TermQuery) q;
+                } else if (q instanceof TermQuery termQuery) {
                     for (final String field : fields) {
                         if (field.equals(termQuery.getTerm().field())) {
                             queryList.add(termQuery);
@@ -132,8 +127,7 @@ public final class SuggestUtil {
             }
             return queryList;
         }
-        if (query instanceof TermQuery) {
-            final TermQuery termQuery = (TermQuery) query;
+        if (query instanceof TermQuery termQuery) {
             for (final String field : fields) {
                 if (field.equals(termQuery.getTerm().field())) {
                     final List<TermQuery> queryList = new ArrayList<>(1);
@@ -227,9 +221,7 @@ public final class SuggestUtil {
             return list;
         }
         if (value instanceof List) {
-            @SuppressWarnings("unchecked")
-            final List<String> list = (List<String>) value;
-            return list;
+            return (List<String>) value;
         }
         throw new IllegalArgumentException("The value should be String or List, but " + value.getClass());
     }

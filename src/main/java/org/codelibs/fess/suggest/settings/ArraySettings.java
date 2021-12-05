@@ -147,7 +147,8 @@ public class ArraySettings {
                 }
                 if (o1 == null) {
                     return -1;
-                } else if (o2 == null) {
+                }
+                if (o2 == null) {
                     return 1;
                 }
 
@@ -158,7 +159,8 @@ public class ArraySettings {
                 }
                 if (timeObj1 == null) {
                     return -1;
-                } else if (timeObj2 == null) {
+                }
+                if (timeObj2 == null) {
                     return 1;
                 }
 

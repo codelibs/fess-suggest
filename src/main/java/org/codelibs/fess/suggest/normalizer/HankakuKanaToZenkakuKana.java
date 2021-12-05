@@ -35,32 +35,31 @@ public class HankakuKanaToZenkakuKana implements Normalizer {
         }
         if (s.length() == 1) {
             return hankakuKatakanaToZenkakuKatakana(s.charAt(0)) + "";
-        } else {
-            final StringBuilder sb = new StringBuilder(s);
-            int i;
-            for (i = 0; i < sb.length() - 1; i++) {
-                final char originalChar1 = sb.charAt(i);
-                final char originalChar2 = sb.charAt(i + 1);
-                final char margedChar = mergeChar(originalChar1, originalChar2);
-                if (margedChar != originalChar1) {
-                    sb.setCharAt(i, margedChar);
-                    sb.deleteCharAt(i + 1);
-                } else {
-                    final char convertedChar = hankakuKatakanaToZenkakuKatakana(originalChar1);
-                    if (convertedChar != originalChar1) {
-                        sb.setCharAt(i, convertedChar);
-                    }
-                }
-            }
-            if (i < sb.length()) {
-                final char originalChar1 = sb.charAt(i);
+        }
+        final StringBuilder sb = new StringBuilder(s);
+        int i;
+        for (i = 0; i < sb.length() - 1; i++) {
+            final char originalChar1 = sb.charAt(i);
+            final char originalChar2 = sb.charAt(i + 1);
+            final char margedChar = mergeChar(originalChar1, originalChar2);
+            if (margedChar != originalChar1) {
+                sb.setCharAt(i, margedChar);
+                sb.deleteCharAt(i + 1);
+            } else {
                 final char convertedChar = hankakuKatakanaToZenkakuKatakana(originalChar1);
                 if (convertedChar != originalChar1) {
                     sb.setCharAt(i, convertedChar);
                 }
             }
-            return sb.toString();
         }
+        if (i < sb.length()) {
+            final char originalChar1 = sb.charAt(i);
+            final char convertedChar = hankakuKatakanaToZenkakuKatakana(originalChar1);
+            if (convertedChar != originalChar1) {
+                sb.setCharAt(i, convertedChar);
+            }
+        }
+        return sb.toString();
     }
 
     private static char hankakuKatakanaToZenkakuKatakana(final char c) {
