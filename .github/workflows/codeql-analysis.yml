@@ -7,10 +7,14 @@ name: "CodeQL"
 
 on:
   push:
-    branches: [master]
+    branches:
+    - master
+    - "*.x"
   pull_request:
     # The branches below must be a subset of the branches above
-    branches: [master]
+    branches:
+    - master
+    - "*.x"
   schedule:
     - cron: '0 0 * * 4'
 
@@ -82,6 +86,7 @@ jobs:
       with:
         repository: codelibs/fess-parent
         path: fess-parent
+        ref: 13.16.x
     - name: Install fess-parent
       run: |
         cd fess-parent
