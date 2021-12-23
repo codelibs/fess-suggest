@@ -24,7 +24,7 @@ import java.util.List;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.util.TokenizerFactory;
-import org.codelibs.fesen.common.Strings;
+import org.opensearch.common.Strings;
 
 import com.ibm.icu.text.Transliterator;
 

@@ -31,19 +31,19 @@ import java.util.regex.Pattern;
 
 import org.codelibs.core.CoreLibConstants;
 import org.codelibs.core.lang.StringUtil;
-import org.codelibs.fesen.action.admin.indices.create.CreateIndexResponse;
-import org.codelibs.fesen.action.search.SearchResponse;
-import org.codelibs.fesen.client.Client;
-import org.codelibs.fesen.common.xcontent.XContentBuilder;
-import org.codelibs.fesen.common.xcontent.XContentFactory;
-import org.codelibs.fesen.common.xcontent.XContentType;
-import org.codelibs.fesen.common.xcontent.json.JsonXContent;
-import org.codelibs.fesen.index.IndexNotFoundException;
-import org.codelibs.fesen.index.query.QueryBuilders;
-import org.codelibs.fesen.search.SearchHit;
 import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.exception.SuggestSettingsException;
 import org.codelibs.fess.suggest.util.SuggestUtil;
+import org.opensearch.action.admin.indices.create.CreateIndexResponse;
+import org.opensearch.action.search.SearchResponse;
+import org.opensearch.client.Client;
+import org.opensearch.common.xcontent.XContentBuilder;
+import org.opensearch.common.xcontent.XContentFactory;
+import org.opensearch.common.xcontent.XContentType;
+import org.opensearch.common.xcontent.json.JsonXContent;
+import org.opensearch.index.IndexNotFoundException;
+import org.opensearch.index.query.QueryBuilders;
+import org.opensearch.search.SearchHit;
 
 public class ArraySettings {
     private static final Logger logger = Logger.getLogger(ArraySettings.class.getName());

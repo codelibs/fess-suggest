@@ -20,10 +20,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.codelibs.fesen.client.Client;
-import org.codelibs.fesen.index.query.QueryBuilder;
 import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
+import org.opensearch.client.Client;
+import org.opensearch.index.query.QueryBuilder;
 
 public interface SuggestWriter {
     SuggestWriterResult write(Client client, SuggestSettings settings, String index, SuggestItem[] items, boolean update);

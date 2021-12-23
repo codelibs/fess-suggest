@@ -15,10 +15,10 @@
  */
 package org.codelibs.fess.suggest.index.writer;
 
-import org.codelibs.fesen.client.Client;
-import org.codelibs.fesen.index.query.QueryBuilder;
 import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
+import org.opensearch.client.Client;
+import org.opensearch.index.query.QueryBuilder;
 
 public class SuggestBulkFileWriter implements SuggestWriter {
     @Override

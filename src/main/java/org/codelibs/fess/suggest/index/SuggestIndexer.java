@@ -30,13 +30,6 @@ import java.util.stream.Stream;
 
 import org.codelibs.core.lang.StringUtil;
 import org.codelibs.core.lang.ThreadUtil;
-import org.codelibs.fesen.FesenStatusException;
-import org.codelibs.fesen.action.search.SearchResponse;
-import org.codelibs.fesen.client.Client;
-import org.codelibs.fesen.index.query.Operator;
-import org.codelibs.fesen.index.query.QueryBuilder;
-import org.codelibs.fesen.index.query.QueryBuilders;
-import org.codelibs.fesen.search.SearchHit;
 import org.codelibs.fess.suggest.analysis.SuggestAnalyzer;
 import org.codelibs.fess.suggest.concurrent.Deferred;
 import org.codelibs.fess.suggest.constants.FieldNames;
@@ -55,6 +48,13 @@ import org.codelibs.fess.suggest.index.writer.SuggestWriterResult;
 import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.codelibs.fess.suggest.util.SuggestUtil;
+import org.opensearch.OpenSearchStatusException;
+import org.opensearch.action.search.SearchResponse;
+import org.opensearch.client.Client;
+import org.opensearch.index.query.Operator;
+import org.opensearch.index.query.QueryBuilder;
+import org.opensearch.index.query.QueryBuilders;
+import org.opensearch.search.SearchHit;
 
 import com.sun.management.OperatingSystemMXBean;
 
@@ -317,7 +317,7 @@ public class SuggestIndexer {
                 try {
                     return contentsParser.parseDocument(document, supportedFields, tagFieldNames, roleFieldName, langFieldName,
                             readingConverter, contentsReadingConverter, normalizer, analyzer).stream();
-                } catch (FesenStatusException | IllegalStateException e) {
+                } catch (OpenSearchStatusException | IllegalStateException e) {
                     final String msg = e.getMessage();
                     if (StringUtil.isNotEmpty(msg) || msg.contains("index.analyze.max_token_count")) {
                         if (logger.isLoggable(Level.WARNING)) {

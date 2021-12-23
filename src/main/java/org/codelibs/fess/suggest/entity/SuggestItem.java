@@ -28,10 +28,10 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 import org.codelibs.core.lang.StringUtil;
-import org.codelibs.fesen.core.Nullable;
 import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.util.SuggestUtil;
+import org.opensearch.common.Nullable;
 
 public class SuggestItem {
 

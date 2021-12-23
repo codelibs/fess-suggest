@@ -15,20 +15,20 @@
  */
 package org.codelibs.fess.suggest.index.writer;
 
-import org.codelibs.fesen.action.bulk.BulkItemResponse;
-import org.codelibs.fesen.action.bulk.BulkRequestBuilder;
-import org.codelibs.fesen.action.bulk.BulkResponse;
-import org.codelibs.fesen.action.get.GetResponse;
-import org.codelibs.fesen.action.index.IndexAction;
-import org.codelibs.fesen.action.index.IndexRequest;
-import org.codelibs.fesen.action.index.IndexRequestBuilder;
-import org.codelibs.fesen.client.Client;
-import org.codelibs.fesen.core.TimeValue;
-import org.codelibs.fesen.index.query.QueryBuilder;
 import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.fess.suggest.exception.SuggestIndexException;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.codelibs.fess.suggest.util.SuggestUtil;
+import org.opensearch.action.bulk.BulkItemResponse;
+import org.opensearch.action.bulk.BulkRequestBuilder;
+import org.opensearch.action.bulk.BulkResponse;
+import org.opensearch.action.get.GetResponse;
+import org.opensearch.action.index.IndexAction;
+import org.opensearch.action.index.IndexRequest;
+import org.opensearch.action.index.IndexRequestBuilder;
+import org.opensearch.client.Client;
+import org.opensearch.common.unit.TimeValue;
+import org.opensearch.index.query.QueryBuilder;
 
 public class SuggestIndexWriter implements SuggestWriter {
     @Override

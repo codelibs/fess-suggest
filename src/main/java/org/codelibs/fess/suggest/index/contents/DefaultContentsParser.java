@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.codelibs.core.lang.StringUtil;
-import org.codelibs.fesen.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken;
 import org.codelibs.fess.suggest.analysis.SuggestAnalyzer;
 import org.codelibs.fess.suggest.converter.ReadingConverter;
 import org.codelibs.fess.suggest.entity.SuggestItem;
@@ -30,6 +29,7 @@ import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.codelibs.fess.suggest.index.contents.querylog.QueryLog;
 import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.util.SuggestUtil;
+import org.opensearch.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken;
 
 public class DefaultContentsParser implements ContentsParser {
     @Override

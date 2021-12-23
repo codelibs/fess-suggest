@@ -15,31 +15,32 @@
  */
 package org.codelibs.fess.suggest;
 
-import static org.codelibs.fesen.runner.FesenRunner.newConfigs;
+import static org.codelibs.opensearch.runner.OpenSearchRunner.newConfigs;
 
 import java.io.IOException;
 import java.util.List;
 
-import org.codelibs.fesen.common.Strings;
-import org.codelibs.fesen.runner.FesenRunner;
 import org.codelibs.fess.suggest.converter.ReadingConverter;
 import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
+import org.codelibs.opensearch.runner.OpenSearchRunner;
+import org.opensearch.common.Strings;
 
 import junit.framework.TestCase;
 
 public class SuggesterBuilderTest extends TestCase {
-    FesenRunner runner;
+    OpenSearchRunner runner;
 
     @Override
     public void setUp() throws Exception {
-        runner = new FesenRunner();
+        runner = new OpenSearchRunner();
         runner.onBuild((number, settingsBuilder) -> {
             settingsBuilder.put("http.cors.enabled", true);
             settingsBuilder.put("discovery.type", "single-node");
             // settingsBuilder.putList("discovery.seed_hosts", "127.0.0.1:9301");
             // settingsBuilder.putList("cluster.initial_master_nodes", "127.0.0.1:9301");
-        }).build(newConfigs().clusterName("ArraySettingsTest").numOfNode(1).pluginTypes("org.codelibs.fesen.extension.ExtensionPlugin"));
+        }).build(newConfigs().clusterName("ArraySettingsTest").numOfNode(1)
+                .pluginTypes("org.codelibs.opensearch.extension.ExtensionPlugin"));
         runner.ensureYellow();
     }
 

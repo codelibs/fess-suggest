@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import org.codelibs.fesen.client.Client;
 import org.codelibs.fess.suggest.analysis.SuggestAnalyzer;
 import org.codelibs.fess.suggest.converter.ReadingConverter;
 import org.codelibs.fess.suggest.exception.SuggesterException;
@@ -27,6 +26,7 @@ import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.codelibs.fess.suggest.settings.SuggestSettingsBuilder;
 import org.codelibs.fess.suggest.util.SuggestUtil;
+import org.opensearch.client.Client;
 
 public class SuggesterBuilder {
 

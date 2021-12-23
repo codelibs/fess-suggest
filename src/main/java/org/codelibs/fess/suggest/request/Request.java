@@ -15,10 +15,10 @@
  */
 package org.codelibs.fess.suggest.request;
 
-import org.codelibs.fesen.client.Client;
-import org.codelibs.fesen.common.Strings;
 import org.codelibs.fess.suggest.concurrent.Deferred;
 import org.codelibs.fess.suggest.exception.SuggesterException;
+import org.opensearch.client.Client;
+import org.opensearch.common.Strings;
 
 public abstract class Request<T extends Response> {
     public Deferred<T>.Promise execute(final Client client) {

@@ -28,15 +28,15 @@ import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 import org.codelibs.core.lang.StringUtil;
-import org.codelibs.fesen.action.get.GetResponse;
-import org.codelibs.fesen.client.Client;
-import org.codelibs.fesen.common.xcontent.XContentBuilder;
-import org.codelibs.fesen.common.xcontent.XContentType;
-import org.codelibs.fesen.common.xcontent.json.JsonXContent;
-import org.codelibs.fesen.core.Tuple;
-import org.codelibs.fesen.index.IndexNotFoundException;
 import org.codelibs.fess.suggest.exception.SuggestSettingsException;
 import org.codelibs.fess.suggest.exception.SuggesterException;
+import org.opensearch.action.get.GetResponse;
+import org.opensearch.client.Client;
+import org.opensearch.common.collect.Tuple;
+import org.opensearch.common.xcontent.XContentBuilder;
+import org.opensearch.common.xcontent.XContentType;
+import org.opensearch.common.xcontent.json.JsonXContent;
+import org.opensearch.index.IndexNotFoundException;
 
 public class SuggestSettings {
     private static final Logger logger = Logger.getLogger(SuggestSettings.class.getName());

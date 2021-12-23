@@ -19,12 +19,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.codelibs.fesen.action.admin.indices.analyze.AnalyzeAction;
-import org.codelibs.fesen.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken;
-import org.codelibs.fesen.client.Client;
-import org.codelibs.fesen.common.Strings;
 import org.codelibs.fess.suggest.settings.AnalyzerSettings;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
+import org.opensearch.action.admin.indices.analyze.AnalyzeAction;
+import org.opensearch.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken;
+import org.opensearch.client.Client;
+import org.opensearch.common.Strings;
 
 import com.ibm.icu.text.Transliterator;
 

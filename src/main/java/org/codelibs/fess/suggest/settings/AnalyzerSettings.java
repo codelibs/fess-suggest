@@ -30,20 +30,20 @@ import java.util.stream.Stream;
 
 import org.codelibs.core.io.ResourceUtil;
 import org.codelibs.core.lang.StringUtil;
-import org.codelibs.fesen.action.admin.indices.analyze.AnalyzeAction;
-import org.codelibs.fesen.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken;
-import org.codelibs.fesen.action.admin.indices.exists.indices.IndicesExistsResponse;
-import org.codelibs.fesen.action.admin.indices.settings.get.GetSettingsResponse;
-import org.codelibs.fesen.action.search.SearchResponse;
-import org.codelibs.fesen.client.Client;
-import org.codelibs.fesen.common.settings.Settings;
-import org.codelibs.fesen.common.xcontent.XContentType;
-import org.codelibs.fesen.index.query.QueryBuilders;
-import org.codelibs.fesen.search.SearchHit;
 import org.codelibs.fess.suggest.analysis.SuggestAnalyzer;
 import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.exception.SuggestSettingsException;
 import org.codelibs.fess.suggest.util.SuggestUtil;
+import org.opensearch.action.admin.indices.analyze.AnalyzeAction;
+import org.opensearch.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken;
+import org.opensearch.action.admin.indices.exists.indices.IndicesExistsResponse;
+import org.opensearch.action.admin.indices.settings.get.GetSettingsResponse;
+import org.opensearch.action.search.SearchResponse;
+import org.opensearch.client.Client;
+import org.opensearch.common.settings.Settings;
+import org.opensearch.common.xcontent.XContentType;
+import org.opensearch.index.query.QueryBuilders;
+import org.opensearch.search.SearchHit;
 
 public class AnalyzerSettings {
     public static final String READING_ANALYZER = "reading_analyzer";

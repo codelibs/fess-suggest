@@ -15,7 +15,7 @@
  */
 package org.codelibs.fess.suggest;
 
-import static org.codelibs.fesen.runner.FesenRunner.newConfigs;
+import static org.codelibs.opensearch.runner.OpenSearchRunner.newConfigs;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -30,13 +30,6 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.codelibs.fesen.action.admin.indices.get.GetIndexResponse;
-import org.codelibs.fesen.action.bulk.BulkRequestBuilder;
-import org.codelibs.fesen.action.index.IndexAction;
-import org.codelibs.fesen.action.index.IndexRequestBuilder;
-import org.codelibs.fesen.action.support.WriteRequest;
-import org.codelibs.fesen.client.Client;
-import org.codelibs.fesen.runner.FesenRunner;
 import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.entity.ElevateWord;
@@ -49,25 +42,33 @@ import org.codelibs.fess.suggest.request.popularwords.PopularWordsResponse;
 import org.codelibs.fess.suggest.request.suggest.SuggestResponse;
 import org.codelibs.fess.suggest.settings.AnalyzerSettings;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
+import org.codelibs.opensearch.runner.OpenSearchRunner;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.opensearch.action.admin.indices.get.GetIndexResponse;
+import org.opensearch.action.bulk.BulkRequestBuilder;
+import org.opensearch.action.index.IndexAction;
+import org.opensearch.action.index.IndexRequestBuilder;
+import org.opensearch.action.support.WriteRequest;
+import org.opensearch.client.Client;
 
 public class SuggesterTest {
     static Suggester suggester;
 
-    static FesenRunner runner;
+    static OpenSearchRunner runner;
 
     @BeforeClass
     public static void beforeClass() throws Exception {
-        runner = new FesenRunner();
+        runner = new OpenSearchRunner();
         runner.onBuild((number, settingsBuilder) -> {
             settingsBuilder.put("http.cors.enabled", true);
             settingsBuilder.put("discovery.type", "single-node");
             // settingsBuilder.putList("discovery.seed_hosts", "127.0.0.1:9301");
             // settingsBuilder.putList("cluster.initial_master_nodes", "127.0.0.1:9301");
-        }).build(newConfigs().clusterName("ArraySettingsTest").numOfNode(1).pluginTypes("org.codelibs.fesen.extension.ExtensionPlugin"));
+        }).build(newConfigs().clusterName("ArraySettingsTest").numOfNode(1)
+                .pluginTypes("org.codelibs.opensearch.extension.ExtensionPlugin"));
         runner.ensureYellow();
     }
 
