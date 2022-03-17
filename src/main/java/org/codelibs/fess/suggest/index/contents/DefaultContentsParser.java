@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import org.codelibs.core.lang.StringUtil;
 import org.codelibs.fess.suggest.analysis.SuggestAnalyzer;
@@ -29,9 +30,19 @@ import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.codelibs.fess.suggest.index.contents.querylog.QueryLog;
 import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.util.SuggestUtil;
+import org.opensearch.OpenSearchStatusException;
 import org.opensearch.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken;
 
 public class DefaultContentsParser implements ContentsParser {
+
+    private final static Logger logger = Logger.getLogger(DefaultContentsParser.class.getName());
+
+    private int maxAnalyzedContentLength;
+
+    public DefaultContentsParser() {
+        maxAnalyzedContentLength = Integer.parseInt(System.getProperty("fess.suggest.max.analyzed.content.length", "1000"));
+    }
+
     @Override
     public SuggestItem parseSearchWords(final String[] words, final String[][] readings, final String[] fields, final String[] tags,
             final String[] roles, final long score, final ReadingConverter readingConverter, final Normalizer normalizer,
@@ -137,7 +148,7 @@ public class DefaultContentsParser implements ContentsParser {
             final String text = textObj.toString();
             final String lang = document.get(langFieldName) == null ? null : document.get(langFieldName).toString();
 
-            final List<AnalyzeToken> tokens = analyzer.analyze(text, field, lang);
+            final List<AnalyzeToken> tokens = analyzeText(analyzer, field, text, lang);
             if (tokens == null) {
                 continue;
             }
@@ -179,6 +190,30 @@ public class DefaultContentsParser implements ContentsParser {
         }
 
         return items == null ? new ArrayList<>() : items;
+    }
+
+    protected List<AnalyzeToken> analyzeText(final SuggestAnalyzer analyzer, final String field, final String text, final String lang) {
+        final List<AnalyzeToken> tokens = new ArrayList<>();
+        StringBuilder buf = new StringBuilder(maxAnalyzedContentLength);
+        for (String t : text.split("\\s")) {
+            buf.append(t).append(' ');
+            if (buf.length() > maxAnalyzedContentLength) {
+                try {
+                    tokens.addAll(analyzer.analyze(buf.toString().trim(), field, lang));
+                } catch (OpenSearchStatusException | IllegalStateException e) {
+                    logger.warning(() -> String.format("Failed to parse document. %s", e.getMessage()));
+                }
+                buf.setLength(0);
+            }
+        }
+        if (buf.length() > 0) {
+            try {
+                tokens.addAll(analyzer.analyze(buf.toString().trim(), field, lang));
+            } catch (OpenSearchStatusException | IllegalStateException e) {
+                logger.warning(() -> String.format("Failed to parse document. %s", e.getMessage()));
+            }
+        }
+        return tokens;
     }
 
     protected String[] getFieldValues(final Map<String, Object> document, final String fieldName) {
