@@ -20,15 +20,15 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.entity.ElevateWord;
 import org.opensearch.client.Client;
 
 public class ElevateWordSettings {
-    private static final Logger logger = Logger.getLogger(ElevateWordSettings.class.getName());
+    private static final Logger logger = LogManager.getLogger(ElevateWordSettings.class);
 
     public static final String ELEVATE_WORD_SETTINGD_KEY = "elevateword";
     public static final String ELEVATE_WORD_BOOST = "boost";
@@ -74,9 +74,8 @@ public class ElevateWordSettings {
     }
 
     public void add(final ElevateWord elevateWord) {
-        if (logger.isLoggable(Level.FINER)) {
-            logger.finer(() -> String.format("Add elevateword. %s  elevateword: %s", arraySettings.arraySettingsIndexName,
-                    elevateWord.getElevateWord()));
+        if (logger.isDebugEnabled()) {
+            logger.debug("Add elevateword. {}  elevateword: {}", arraySettings.arraySettingsIndexName, elevateWord.getElevateWord());
         }
 
         final Map<String, Object> source = new HashMap<>();
@@ -94,15 +93,15 @@ public class ElevateWordSettings {
     }
 
     public void delete(final String elevateWord) {
-        if (logger.isLoggable(Level.FINER)) {
-            logger.finer(() -> String.format("Delete elevateword. %s elevateword:%s", arraySettings.arraySettingsIndexName, elevateWord));
+        if (logger.isDebugEnabled()) {
+            logger.debug("Delete elevateword. {} elevateword: {}", arraySettings.arraySettingsIndexName, elevateWord);
         }
         arraySettings.delete(ELEVATE_WORD_SETTINGD_KEY, elevateWord);
     }
 
     public void deleteAll() {
-        if (logger.isLoggable(Level.FINER)) {
-            logger.finer(() -> String.format("Delete all elevateword. %s", arraySettings.arraySettingsIndexName));
+        if (logger.isDebugEnabled()) {
+            logger.debug("Delete all elevateword. {}", arraySettings.arraySettingsIndexName);
         }
         arraySettings.delete(ELEVATE_WORD_SETTINGD_KEY);
     }

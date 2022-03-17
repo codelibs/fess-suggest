@@ -23,10 +23,10 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.codelibs.core.lang.StringUtil;
 import org.codelibs.fess.suggest.exception.SuggestSettingsException;
 import org.codelibs.fess.suggest.exception.SuggesterException;
@@ -39,7 +39,7 @@ import org.opensearch.common.xcontent.json.JsonXContent;
 import org.opensearch.index.IndexNotFoundException;
 
 public class SuggestSettings {
-    private static final Logger logger = Logger.getLogger(SuggestSettings.class.getName());
+    private static final Logger logger = LogManager.getLogger(SuggestSettings.class);
 
     protected final String settingsId;
 
@@ -210,8 +210,8 @@ public class SuggestSettings {
     }
 
     public void set(final String key, final Object value) {
-        if (logger.isLoggable(Level.FINER)) {
-            logger.finer(() -> String.format("Set suggest settings. %s key: %s value: %s", settingsIndexName, key, value));
+        if (logger.isDebugEnabled()) {
+            logger.debug("Set suggest settings. {} key: {} value: {}", settingsIndexName, key, value);
         }
         try {
             client.prepareUpdate().setIndex(settingsIndexName).setId(settingsId).setDocAsUpsert(true).setDoc(key, value)
@@ -223,8 +223,8 @@ public class SuggestSettings {
     }
 
     public void set(final Map<String, Object> map) {
-        if (logger.isLoggable(Level.FINER)) {
-            logger.finer(() -> String.format("Set suggest settings. %s %s", settingsIndexName, map.toString()));
+        if (logger.isDebugEnabled()) {
+            logger.debug("Set suggest settings. {} {}", settingsIndexName, map.toString());
         }
         try {
             final XContentBuilder builder = JsonXContent.contentBuilder().map(map);

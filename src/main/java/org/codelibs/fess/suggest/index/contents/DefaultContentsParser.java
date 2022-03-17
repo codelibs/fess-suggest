@@ -20,8 +20,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.codelibs.core.lang.StringUtil;
 import org.codelibs.fess.suggest.analysis.SuggestAnalyzer;
 import org.codelibs.fess.suggest.converter.ReadingConverter;
@@ -35,7 +36,7 @@ import org.opensearch.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken;
 
 public class DefaultContentsParser implements ContentsParser {
 
-    private final static Logger logger = Logger.getLogger(DefaultContentsParser.class.getName());
+    private final static Logger logger = LogManager.getLogger(DefaultContentsParser.class);
 
     private int maxAnalyzedContentLength;
 
@@ -201,7 +202,7 @@ public class DefaultContentsParser implements ContentsParser {
                 try {
                     tokens.addAll(analyzer.analyze(buf.toString().trim(), field, lang));
                 } catch (OpenSearchStatusException | IllegalStateException e) {
-                    logger.warning(() -> String.format("Failed to parse document. %s", e.getMessage()));
+                    logger.warn("Failed to parse document.", e);
                 }
                 buf.setLength(0);
             }
@@ -210,7 +211,7 @@ public class DefaultContentsParser implements ContentsParser {
             try {
                 tokens.addAll(analyzer.analyze(buf.toString().trim(), field, lang));
             } catch (OpenSearchStatusException | IllegalStateException e) {
-                logger.warning(() -> String.format("Failed to parse document. %s", e.getMessage()));
+                logger.warn("Failed to parse document.", e);
             }
         }
         return tokens;

@@ -25,10 +25,10 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.codelibs.core.CoreLibConstants;
 import org.codelibs.core.lang.StringUtil;
 import org.codelibs.fess.suggest.constants.FieldNames;
@@ -46,7 +46,7 @@ import org.opensearch.index.query.QueryBuilders;
 import org.opensearch.search.SearchHit;
 
 public class ArraySettings {
-    private static final Logger logger = Logger.getLogger(ArraySettings.class.getName());
+    private static final Logger logger = LogManager.getLogger(ArraySettings.class);
 
     protected final Client client;
     protected final String arraySettingsIndexName;
@@ -77,8 +77,8 @@ public class ArraySettings {
     }
 
     public void add(final String key, final Object value) {
-        if (logger.isLoggable(Level.FINER)) {
-            logger.finer(() -> String.format("Add analyzer settings. %s key: %s value: %s", arraySettingsIndexName, key, value));
+        if (logger.isDebugEnabled()) {
+            logger.debug("Add analyzer settings. {} key: {} value: {}", arraySettingsIndexName, key, value);
         }
 
         final Map<String, Object> source = new HashMap<>();
@@ -94,8 +94,8 @@ public class ArraySettings {
     }
 
     public void delete(final String key, final String value) {
-        if (logger.isLoggable(Level.FINER)) {
-            logger.finer(() -> String.format("Delete analyzer settings. %s key: %s value: %s", arraySettingsIndexName, key, value));
+        if (logger.isDebugEnabled()) {
+            logger.debug("Delete analyzer settings. {} key: {} value: {}", arraySettingsIndexName, key, value);
         }
         deleteFromArray(arraySettingsIndexName, settingsId, createId(key, value));
     }

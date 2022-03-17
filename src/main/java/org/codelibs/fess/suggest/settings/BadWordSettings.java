@@ -19,15 +19,15 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.codelibs.fess.suggest.exception.SuggestSettingsException;
 import org.opensearch.client.Client;
 import org.opensearch.common.Strings;
 
 public class BadWordSettings {
-    private static final Logger logger = Logger.getLogger(BadWordSettings.class.getName());
+    private static final Logger logger = LogManager.getLogger(BadWordSettings.class);
 
     public static final String BAD_WORD_SETTINGD_KEY = "badword";
 
@@ -61,8 +61,8 @@ public class BadWordSettings {
     }
 
     public void add(final String badWord) {
-        if (logger.isLoggable(Level.FINER)) {
-            logger.finer(() -> String.format("Add badword. %s badword:%s", arraySettings.arraySettingsIndexName, badWord));
+        if (logger.isDebugEnabled()) {
+            logger.debug("Add badword. {} badword: {}", arraySettings.arraySettingsIndexName, badWord);
         }
 
         final String validationError = getValidationError(badWord);
@@ -73,15 +73,15 @@ public class BadWordSettings {
     }
 
     public void delete(final String badWord) {
-        if (logger.isLoggable(Level.FINER)) {
-            logger.finer(() -> String.format("Delete badword. %s badword:%s", arraySettings.arraySettingsIndexName, badWord));
+        if (logger.isDebugEnabled()) {
+            logger.debug("Delete badword. {} badword: {}", arraySettings.arraySettingsIndexName, badWord);
         }
         arraySettings.delete(BAD_WORD_SETTINGD_KEY, badWord);
     }
 
     public void deleteAll() {
-        if (logger.isLoggable(Level.FINER)) {
-            logger.finer(() -> String.format("Add all badword. %s", arraySettings.arraySettingsIndexName));
+        if (logger.isDebugEnabled()) {
+            logger.debug("Add all badword. {}", arraySettings.arraySettingsIndexName);
         }
         arraySettings.delete(BAD_WORD_SETTINGD_KEY);
     }

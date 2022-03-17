@@ -23,11 +23,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Supplier;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.codelibs.core.lang.StringUtil;
 import org.codelibs.core.lang.ThreadUtil;
 import org.codelibs.fess.suggest.analysis.SuggestAnalyzer;
@@ -59,7 +59,7 @@ import org.opensearch.search.SearchHit;
 import com.sun.management.OperatingSystemMXBean;
 
 public class SuggestIndexer {
-    private final static Logger logger = Logger.getLogger(SuggestIndexer.class.getName());
+    private final static Logger logger = LogManager.getLogger(SuggestIndexer.class);
 
     protected final Client client;
     protected String index;
@@ -246,8 +246,8 @@ public class SuggestIndexer {
     }
 
     public SuggestIndexResponse indexFromQueryLog(final QueryLog[] queryLogs) {
-        if (logger.isLoggable(Level.INFO)) {
-            logger.info(() -> String.format("Index from querylog. num:%s", queryLogs.length));
+        if (logger.isInfoEnabled()) {
+            logger.info("Index from querylog. num: {}", queryLogs.length);
         }
         try {
             final long start = System.currentTimeMillis();
@@ -320,9 +320,7 @@ public class SuggestIndexer {
                 } catch (OpenSearchStatusException | IllegalStateException e) {
                     final String msg = e.getMessage();
                     if (StringUtil.isNotEmpty(msg) || msg.contains("index.analyze.max_token_count")) {
-                        if (logger.isLoggable(Level.WARNING)) {
-                            logger.warning(() -> String.format("Failed to parse document. %s", msg));
-                        }
+                        logger.warn("Failed to parse document. ", e);
                         return Stream.empty();
                     }
                     throw e;
@@ -332,7 +330,7 @@ public class SuggestIndexer {
             final SuggestIndexResponse response = index(array);
             final long indexTime = System.currentTimeMillis();
 
-            if (logger.isLoggable(Level.INFO)) {
+            if (logger.isInfoEnabled()) {
                 final OperatingSystemMXBean operatingSystemMXBean =
                         (com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
                 final double cpuLoad = operatingSystemMXBean.getProcessCpuLoad();
@@ -344,7 +342,9 @@ public class SuggestIndexer {
             }
             return new SuggestIndexResponse(array.length, documents.length, response.getErrors(), indexTime - start);
         } catch (final Exception e) {
-            logger.log(Level.SEVERE, "Failed to index from document", e);
+            if (logger.isDebugEnabled()) {
+                logger.debug("Failed to index from document", e);
+            }
             throw new SuggestIndexException("Failed to index from document", e);
         }
     }
@@ -357,8 +357,8 @@ public class SuggestIndexer {
 
     public Deferred<SuggestIndexResponse>.Promise indexFromDocument(final Supplier<DocumentReader> reader, final int docPerReq,
             final Runnable waitController) {
-        if (logger.isLoggable(Level.INFO)) {
-            logger.info(() -> String.format("Start index by DocumentReader. docPerReq:%s", docPerReq));
+        if (logger.isInfoEnabled()) {
+            logger.info("Start index by DocumentReader. docPerReq: {}", docPerReq);
         }
         final Deferred<SuggestIndexResponse> deferred = new Deferred<>();
         threadPool.execute(() -> {
@@ -399,8 +399,8 @@ public class SuggestIndexer {
 
     public SuggestIndexResponse indexFromSearchWord(final String searchWord, final String[] fields, final String[] tags,
             final String[] roles, final int num, final String[] langs) {
-        if (logger.isLoggable(Level.FINE)) {
-            logger.fine(() -> String.format("Index from searchWord. word:%s", searchWord));
+        if (logger.isDebugEnabled()) {
+            logger.debug("Index from searchWord. word: {}", searchWord);
         }
 
         final long start = System.currentTimeMillis();
@@ -430,8 +430,8 @@ public class SuggestIndexer {
                     + ", roles=" + Arrays.toString(roles)//
                     + ", langs=" + Arrays.toString(langs)//
                     + ", num=" + num;
-            if (logger.isLoggable(Level.WARNING)) {
-                logger.warning(msg);
+            if (logger.isDebugEnabled()) {
+                logger.debug(msg, e);
             }
             throw new SuggestIndexException(msg, e);
         }

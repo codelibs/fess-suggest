@@ -23,9 +23,9 @@ import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.codelibs.fess.suggest.util.SuggestUtil;
 import org.opensearch.action.search.SearchRequestBuilder;
@@ -37,7 +37,7 @@ import org.opensearch.search.SearchHit;
 import org.opensearch.search.sort.SortBuilder;
 
 public class ESSourceReader implements DocumentReader {
-    private static final Logger logger = Logger.getLogger(ESSourceReader.class.getName());
+    private static final Logger logger = LogManager.getLogger(ESSourceReader.class);
 
     protected final Queue<Map<String, Object>> queue = new ConcurrentLinkedQueue<>();
     protected final AtomicBoolean isFinished = new AtomicBoolean(false);
@@ -91,8 +91,8 @@ public class ESSourceReader implements DocumentReader {
     }
 
     public void setLimitOfDocumentSize(final long limitOfDocumentSize) {
-        if (logger.isLoggable(Level.INFO)) {
-            logger.info(() -> String.format("Set document limit:%s", limitOfDocumentSize));
+        if (logger.isInfoEnabled()) {
+            logger.info("Set document limit: {}", limitOfDocumentSize);
         }
         this.limitOfDocumentSize = limitOfDocumentSize;
     }
@@ -106,8 +106,8 @@ public class ESSourceReader implements DocumentReader {
     }
 
     public void setLimitDocNumPercentage(final String limitPercentage) {
-        if (logger.isLoggable(Level.INFO)) {
-            logger.info(() -> String.format("Set document limitPercentage:%s", limitPercentage));
+        if (logger.isInfoEnabled()) {
+            logger.info("Set document limitPercentage: {}", limitPercentage);
         }
 
         if (limitPercentage.endsWith("%")) {
