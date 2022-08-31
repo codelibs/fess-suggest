@@ -472,7 +472,7 @@ public final class NGramSynonymTokenizer extends Tokenizer {
      * static class SynInfo { final String src; final int offset, length; final String[] synonyms; Mode mode; int count;
      * SynInfo(String src, int offset, int length, String[] synonyms){ this.src = src; this.offset = offset; this.length
      * = length; this.synonyms = synonyms; }
-     * 
+     *
      * static enum Mode { PREV, SYN, AFTER; } }
      */
 
