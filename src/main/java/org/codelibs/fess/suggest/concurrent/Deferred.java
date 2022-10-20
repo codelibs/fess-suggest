@@ -22,6 +22,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
+import org.codelibs.core.exception.InterruptedRuntimeException;
 import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.codelibs.fess.suggest.request.Response;
 
@@ -146,7 +147,7 @@ public class Deferred<RESPONSE extends Response> {
                 }
                 return response;
             } catch (final InterruptedException e) {
-                throw new SuggesterException(e);
+                throw new InterruptedRuntimeException(e);
             }
         }
     }
