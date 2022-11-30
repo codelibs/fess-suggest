@@ -153,8 +153,8 @@ public class DefaultContentsParser implements ContentsParser {
             if (tokens == null) {
                 continue;
             }
-            List<AnalyzeToken> readingTokens = analyzer.analyzeAndReading(text, field, lang);
-            if (readingTokens != null && readingTokens.size() != tokens.size()) {
+            List<AnalyzeToken> readingTokens = analyzeTextByReading(analyzer, field, text, lang);
+            if (readingTokens.size() != tokens.size()) {
                 readingTokens = null;
             }
 
@@ -202,7 +202,11 @@ public class DefaultContentsParser implements ContentsParser {
                 try {
                     tokens.addAll(analyzer.analyze(buf.toString().trim(), field, lang));
                 } catch (OpenSearchStatusException | IllegalStateException e) {
-                    logger.warn("Failed to parse document.", e);
+                    if (logger.isDebugEnabled()) {
+                        logger.warn("[{}][{}] Failed to analyze a text(size:{}).", field, lang, buf.length(), e);
+                    } else {
+                        logger.warn("[{}][{}] Failed to analyze a text(size:{}). {}", field, lang, buf.length(), e.getMessage());
+                    }
                 }
                 buf.setLength(0);
             }
@@ -211,7 +215,50 @@ public class DefaultContentsParser implements ContentsParser {
             try {
                 tokens.addAll(analyzer.analyze(buf.toString().trim(), field, lang));
             } catch (OpenSearchStatusException | IllegalStateException e) {
-                logger.warn("Failed to parse document.", e);
+                if (logger.isDebugEnabled()) {
+                    logger.warn("[{}][{}] Failed to analyze a last text(size:{}).", field, lang, buf.length(), e);
+                } else {
+                    logger.warn("[{}][{}] Failed to analyze a last text(size:{}). {}", field, lang, buf.length(), e.getMessage());
+                }
+            }
+        }
+        return tokens;
+    }
+
+    protected List<AnalyzeToken> analyzeTextByReading(final SuggestAnalyzer analyzer, final String field, final String text,
+            final String lang) {
+        final List<AnalyzeToken> tokens = new ArrayList<>();
+        StringBuilder buf = new StringBuilder(maxAnalyzedContentLength);
+        for (String t : text.split("\\s")) {
+            buf.append(t).append(' ');
+            if (buf.length() > maxAnalyzedContentLength) {
+                try {
+                    final List<AnalyzeToken> readings = analyzer.analyzeAndReading(buf.toString().trim(), field, lang);
+                    if (readings != null) {
+                        tokens.addAll(readings);
+                    }
+                } catch (OpenSearchStatusException | IllegalStateException e) {
+                    if (logger.isDebugEnabled()) {
+                        logger.warn("[{}][{}] Failed to analyze a reading text(size:{}).", field, lang, buf.length(), e);
+                    } else {
+                        logger.warn("[{}][{}] Failed to analyze a reading text(size:{}). {}", field, lang, buf.length(), e.getMessage());
+                    }
+                }
+                buf.setLength(0);
+            }
+        }
+        if (buf.length() > 0) {
+            try {
+                final List<AnalyzeToken> readings = analyzer.analyzeAndReading(buf.toString().trim(), field, lang);
+                if (readings != null) {
+                    tokens.addAll(readings);
+                }
+            } catch (OpenSearchStatusException | IllegalStateException e) {
+                if (logger.isDebugEnabled()) {
+                    logger.warn("[{}][{}] Failed to analyze a last reading text(size:{}).", field, lang, buf.length(), e);
+                } else {
+                    logger.warn("[{}][{}] Failed to analyze a last reading text(size:{}). {}", field, lang, buf.length(), e.getMessage());
+                }
             }
         }
         return tokens;
