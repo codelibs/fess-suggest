@@ -56,29 +56,27 @@ public class KuromojiTokenizerFactory extends AbstractTokenizerFactory {
         nBestExamples = settings.get(NBEST_EXAMPLES);
     }
 
+    private static String parse(String rule, Set<String> dup) {
+        String[] values = CSVUtil.parse(rule);
+        if (dup.add(values[0]) == false) {
+            throw new IllegalArgumentException("Found duplicate term [" + values[0] + "] in user dictionary.");
+        }
+        return rule;
+    }
+
     public static UserDictionary getUserDictionary(Environment env, Settings settings) {
         if (settings.get(USER_DICT_PATH_OPTION) != null && settings.get(USER_DICT_RULES_OPTION) != null) {
             throw new IllegalArgumentException(
                     "It is not allowed to use [" + USER_DICT_PATH_OPTION + "] in conjunction" + " with [" + USER_DICT_RULES_OPTION + "]");
         }
         try {
-            List<String> ruleList = Analysis.getWordList(env, settings, USER_DICT_PATH_OPTION, USER_DICT_RULES_OPTION, false);
+            Set<String> dup = new HashSet<>();
+            List<String> ruleList =
+                    Analysis.parseWordList(env, settings, USER_DICT_PATH_OPTION, USER_DICT_RULES_OPTION, s -> parse(s, dup));
             if (ruleList == null || ruleList.isEmpty()) {
                 return null;
             }
-            Set<String> dup = new HashSet<>();
-            int lineNum = 0;
-            for (String line : ruleList) {
-                // ignore comments
-                if (line.startsWith("#") == false) {
-                    String[] values = CSVUtil.parse(line);
-                    if (dup.add(values[0]) == false) {
-                        throw new IllegalArgumentException(
-                                "Found duplicate term [" + values[0] + "] in user dictionary " + "at line [" + lineNum + "]");
-                    }
-                }
-                ++lineNum;
-            }
+
             StringBuilder sb = new StringBuilder();
             for (String line : ruleList) {
                 sb.append(line).append(System.lineSeparator());
