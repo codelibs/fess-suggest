@@ -81,14 +81,13 @@ public class ESSourceReaderTest {
     @Test
     public void test_Read() throws Exception {
         String indexName = "test-index";
-        String typeName = "test-type";
         Client client = runner.client();
         SuggestSettings settings = suggester.settings();
         int num = 10000;
 
-        addDocument(indexName, typeName, client, num);
+        addDocument(indexName, client, num);
 
-        ESSourceReader reader = new ESSourceReader(client, settings, indexName, typeName);
+        ESSourceReader reader = new ESSourceReader(client, settings, indexName);
         reader.setScrollSize(1000);
         int count = 0;
         Set<String> valueSet = Collections.synchronizedSet(new HashSet<>());
@@ -105,14 +104,13 @@ public class ESSourceReaderTest {
     @Test
     public void test_ReadWithLimit() throws Exception {
         String indexName = "test-index";
-        String typeName = "test-type";
         Client client = runner.client();
         SuggestSettings settings = suggester.settings();
         int num = 10000;
 
-        addDocument(indexName, typeName, client, num);
+        addDocument(indexName, client, num);
 
-        ESSourceReader reader = new ESSourceReader(client, settings, indexName, typeName);
+        ESSourceReader reader = new ESSourceReader(client, settings, indexName);
         reader.setScrollSize(1);
         reader.setLimitDocNumPercentage("1%");
         int count = 0;
@@ -132,17 +130,16 @@ public class ESSourceReaderTest {
         System.out.println("Thread num:" + threadNum);
 
         String indexName = "test-index";
-        String typeName = "test-type";
         Client client = runner.client();
         SuggestSettings settings = suggester.settings();
         int num = 9999;
 
-        addDocument(indexName, typeName, client, num);
+        addDocument(indexName, client, num);
 
         AtomicInteger count = new AtomicInteger(0);
         Set<String> valueSet = Collections.synchronizedSet(new HashSet<>());
         Thread[] threads = new Thread[threadNum];
-        ESSourceReader reader = new ESSourceReader(client, settings, indexName, typeName);
+        ESSourceReader reader = new ESSourceReader(client, settings, indexName);
         reader.setScrollSize(100);
         for (int i = 0; i < threadNum; i++) {
             threads[i] = new Thread(() -> {
@@ -166,7 +163,7 @@ public class ESSourceReaderTest {
 
         Set<String> valueSet2 = Collections.synchronizedSet(new HashSet<>());
         threads = new Thread[threadNum];
-        ESSourceReader reader2 = new ESSourceReader(client, settings, indexName, typeName);
+        ESSourceReader reader2 = new ESSourceReader(client, settings, indexName);
         reader2.setScrollSize(100);
         for (int i = 0; i < threadNum; i++) {
             threads[i] = new Thread(() -> {
@@ -199,14 +196,13 @@ public class ESSourceReaderTest {
     @Test
     public void test_sort() throws Exception {
         String indexName = "test-index";
-        String typeName = "test-type";
         Client client = runner.client();
         SuggestSettings settings = suggester.settings();
         int num = 10000;
 
-        addDocument(indexName, typeName, client, num);
+        addDocument(indexName, client, num);
 
-        ESSourceReader reader = new ESSourceReader(client, settings, indexName, typeName);
+        ESSourceReader reader = new ESSourceReader(client, settings, indexName);
         reader.setScrollSize(1000);
         reader.addSort(SortBuilders.fieldSort("field2"));
         int count = 0;
@@ -220,7 +216,7 @@ public class ESSourceReaderTest {
         }
         assertEquals(num, count);
 
-        reader = new ESSourceReader(client, settings, indexName, typeName);
+        reader = new ESSourceReader(client, settings, indexName);
         reader.setScrollSize(1000);
         reader.addSort(SortBuilders.fieldSort("field2").order(SortOrder.DESC));
         count = 0;
@@ -234,14 +230,14 @@ public class ESSourceReaderTest {
         assertEquals(num, count);
     }
 
-    private void addDocument(String indexName, String typeName, Client client, int num) {
+    private void addDocument(String indexName, Client client, int num) {
         BulkRequestBuilder bulkRequestBuilder = client.prepareBulk();
         for (int i = 0; i < num; i++) {
             final Map<String, Object> source = new HashMap<>();
             source.put("field1", "test" + i);
             source.put("field2", i);
             IndexRequestBuilder indexRequestBuilder = new IndexRequestBuilder(client, IndexAction.INSTANCE);
-            indexRequestBuilder.setIndex(indexName).setType(typeName).setId(String.valueOf(i)).setCreate(true).setSource(source);
+            indexRequestBuilder.setIndex(indexName).setId(String.valueOf(i)).setCreate(true).setSource(source);
             bulkRequestBuilder.add(indexRequestBuilder);
         }
         bulkRequestBuilder.execute().actionGet();

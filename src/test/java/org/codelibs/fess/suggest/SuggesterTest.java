@@ -328,8 +328,7 @@ public class SuggesterTest {
         analyzerMapping.put(FieldNames.ANALYZER_SETTINGS_FIELD_NAME, field);
         analyzerMapping.put(FieldNames.ANALYZER_SETTINGS_CONTENTS_ANALYZER, "title_contents_analyzer");
         analyzerMapping.put(FieldNames.ANALYZER_SETTINGS_CONTENTS_READING_ANALYZER, "");
-        runner.client().prepareIndex().setIndex(suggester.settings().analyzer().getAnalyzerSettingsIndexName())
-                .setType(suggester.settings().analyzer().DOC_TYPE_NAME).setSource(analyzerMapping)
+        runner.client().prepareIndex().setIndex(suggester.settings().analyzer().getAnalyzerSettingsIndexName()).setSource(analyzerMapping)
                 .setRefreshPolicy(WriteRequest.RefreshPolicy.WAIT_UNTIL).execute().actionGet();
         suggester.settings().analyzer().init();
 
@@ -357,13 +356,12 @@ public class SuggesterTest {
         Client client = runner.client();
         int num = 10000;
         String indexName = "test";
-        String typeName = "test";
 
         BulkRequestBuilder bulkRequestBuilder = client.prepareBulk();
         for (int i = 0; i < num; i++) {
             Map<String, Object> source = Collections.singletonMap("content", "test");
             IndexRequestBuilder indexRequestBuilder = new IndexRequestBuilder(client, IndexAction.INSTANCE);
-            indexRequestBuilder.setIndex(indexName).setType(typeName).setId(String.valueOf(i)).setCreate(true).setSource(source);
+            indexRequestBuilder.setIndex(indexName).setId(String.valueOf(i)).setCreate(true).setSource(source);
             bulkRequestBuilder.add(indexRequestBuilder);
         }
         bulkRequestBuilder.execute().actionGet();
@@ -371,7 +369,7 @@ public class SuggesterTest {
 
         CountDownLatch latch = new CountDownLatch(1);
         AtomicInteger numObInputDoc = new AtomicInteger(0);
-        ESSourceReader reader = new ESSourceReader(client, suggester.settings(), indexName, typeName);
+        ESSourceReader reader = new ESSourceReader(client, suggester.settings(), indexName);
         reader.setScrollSize(1000);
 
         suggester.indexer().indexFromDocument(() -> reader, 1000, 100).then(response -> {

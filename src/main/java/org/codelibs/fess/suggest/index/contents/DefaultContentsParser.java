@@ -38,10 +38,10 @@ public class DefaultContentsParser implements ContentsParser {
 
     private final static Logger logger = LogManager.getLogger(DefaultContentsParser.class);
 
-    private int maxAnalyzedContentLength;
+    private final int maxAnalyzedContentLength;
 
     public DefaultContentsParser() {
-        maxAnalyzedContentLength = Integer.parseInt(System.getProperty("fess.suggest.max.analyzed.content.length", "1000"));
+        maxAnalyzedContentLength = Integer.getInteger("fess.suggest.max.analyzed.content.length", 1000);
     }
 
     @Override
@@ -195,8 +195,8 @@ public class DefaultContentsParser implements ContentsParser {
 
     protected List<AnalyzeToken> analyzeText(final SuggestAnalyzer analyzer, final String field, final String text, final String lang) {
         final List<AnalyzeToken> tokens = new ArrayList<>();
-        StringBuilder buf = new StringBuilder(maxAnalyzedContentLength);
-        for (String t : text.split("\\s")) {
+        final StringBuilder buf = new StringBuilder(maxAnalyzedContentLength);
+        for (final String t : text.split("\\s")) {
             buf.append(t).append(' ');
             if (buf.length() > maxAnalyzedContentLength) {
                 try {
@@ -228,8 +228,8 @@ public class DefaultContentsParser implements ContentsParser {
     protected List<AnalyzeToken> analyzeTextByReading(final SuggestAnalyzer analyzer, final String field, final String text,
             final String lang) {
         final List<AnalyzeToken> tokens = new ArrayList<>();
-        StringBuilder buf = new StringBuilder(maxAnalyzedContentLength);
-        for (String t : text.split("\\s")) {
+        final StringBuilder buf = new StringBuilder(maxAnalyzedContentLength);
+        for (final String t : text.split("\\s")) {
             buf.append(t).append(' ');
             if (buf.length() > maxAnalyzedContentLength) {
                 try {
@@ -274,7 +274,8 @@ public class DefaultContentsParser implements ContentsParser {
         }
         if (value instanceof List) {
             return ((List<?>) value).stream().map(Object::toString).toArray(n -> new String[n]);
-        } else if (value != null) {
+        }
+        if (value != null) {
             return new String[] { value.toString() };
         }
 

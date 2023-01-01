@@ -30,7 +30,6 @@ import org.apache.logging.log4j.Logger;
 import org.codelibs.core.lang.StringUtil;
 import org.codelibs.fess.suggest.analysis.SuggestAnalyzer;
 import org.codelibs.fess.suggest.constants.FieldNames;
-import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.converter.ReadingConverter;
 import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.codelibs.fess.suggest.index.SuggestIndexer;
@@ -112,8 +111,7 @@ public class Suggester {
                     logger.info("Create suggest index: {}", indexName);
                 }
 
-                client.admin().indices().prepareCreate(indexName).setSettings(settingsSource, XContentType.JSON)
-                        .addMapping(SuggestConstants.DEFAULT_TYPE, mappingSource, XContentType.JSON)
+                client.admin().indices().prepareCreate(indexName).setSettings(settingsSource, XContentType.JSON).setMapping(mappingSource)
                         .addAlias(new Alias(getSearchAlias(index))).addAlias(new Alias(getUpdateAlias(index))).execute()
                         .actionGet(suggestSettings.getIndicesTimeout());
 
@@ -149,8 +147,7 @@ public class Suggester {
 
             final CreateIndexResponse createIndexResponse =
                     client.admin().indices().prepareCreate(indexName).setSettings(settingsSource, XContentType.JSON)
-                            .addMapping(SuggestConstants.DEFAULT_TYPE, mappingSource, XContentType.JSON).execute()
-                            .actionGet(suggestSettings.getIndicesTimeout());
+                            .setMapping(mappingSource).execute().actionGet(suggestSettings.getIndicesTimeout());
             if (!createIndexResponse.isAcknowledged()) {
                 if (logger.isDebugEnabled()) {
                     logger.debug("Could not create next index: {}", indexName);

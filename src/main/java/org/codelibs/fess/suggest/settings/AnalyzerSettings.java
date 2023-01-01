@@ -185,8 +185,8 @@ public class AnalyzerSettings {
     }
 
     protected void createAnalyzerSettings(final String settings, final String mappings) {
-        client.admin().indices().prepareCreate(analyzerSettingsIndexName).setSettings(settings, XContentType.JSON)
-                .addMapping("_doc", mappings, XContentType.JSON).execute().actionGet(this.settings.getIndicesTimeout());
+        client.admin().indices().prepareCreate(analyzerSettingsIndexName).setSettings(settings, XContentType.JSON).setMapping(mappings)
+                .execute().actionGet(this.settings.getIndicesTimeout());
     }
 
     protected void createAnalyzerSettings(final Map<String, Object> settings, final Map<String, Object> mappings) {

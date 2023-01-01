@@ -29,7 +29,6 @@ import org.opensearch.action.ActionListener;
 import org.opensearch.action.search.SearchRequestBuilder;
 import org.opensearch.action.search.SearchResponse;
 import org.opensearch.client.Client;
-import org.opensearch.common.Strings;
 import org.opensearch.common.lucene.search.function.CombineFunction;
 import org.opensearch.index.query.BoolQueryBuilder;
 import org.opensearch.index.query.QueryBuilder;
@@ -41,8 +40,6 @@ import org.opensearch.search.rescore.QueryRescorerBuilder;
 
 public class PopularWordsRequest extends Request<PopularWordsResponse> {
     private String index = null;
-
-    private String type = null;
 
     private int size = 10;
 
@@ -66,10 +63,6 @@ public class PopularWordsRequest extends Request<PopularWordsResponse> {
 
     public void setIndex(final String index) {
         this.index = index;
-    }
-
-    public void setType(final String type) {
-        this.type = type;
     }
 
     public void setSize(final int size) {
@@ -115,9 +108,6 @@ public class PopularWordsRequest extends Request<PopularWordsResponse> {
     @Override
     protected void processRequest(final Client client, final Deferred<PopularWordsResponse> deferred) {
         final SearchRequestBuilder builder = client.prepareSearch(index);
-        if (!Strings.isNullOrEmpty(type)) {
-            builder.setTypes(type);
-        }
         builder.setSize(size);
         builder.setQuery(buildQuery());
         builder.setRescorer(buildRescore(), windowSize);

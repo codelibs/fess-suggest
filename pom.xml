@@ -112,7 +112,7 @@
 		</dependency>
 		<dependency>
 			<groupId>org.apache.lucene</groupId>
-			<artifactId>lucene-analyzers-kuromoji</artifactId>
+			<artifactId>lucene-analysis-kuromoji</artifactId>
 			<version>${lucene.version}</version>
 			<scope>test</scope>
 		</dependency>

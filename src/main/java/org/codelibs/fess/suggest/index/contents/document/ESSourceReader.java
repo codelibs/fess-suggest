@@ -46,7 +46,6 @@ public class ESSourceReader implements DocumentReader {
     protected final Client client;
     protected final SuggestSettings settings;
     protected final String indexName;
-    protected final String typeName;
     protected final String[] supportedFields;
 
     protected int scrollSize = 1;
@@ -62,11 +61,10 @@ public class ESSourceReader implements DocumentReader {
     protected final AtomicLong docCount = new AtomicLong(0);
     protected final long totalDocNum;
 
-    public ESSourceReader(final Client client, final SuggestSettings settings, final String indexName, final String typeName) {
+    public ESSourceReader(final Client client, final SuggestSettings settings, final String indexName) {
         this.client = client;
         this.settings = settings;
         this.indexName = indexName;
-        this.typeName = typeName;
         this.supportedFields = settings.array().get(SuggestSettings.DefaultKeys.SUPPORTED_FIELDS);
         this.totalDocNum = getTotal();
     }

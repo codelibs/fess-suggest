@@ -222,7 +222,7 @@ public class ArraySettings {
                         .actionGet(settings.getClusterTimeout());
             }
             if (empty) {
-                client.admin().indices().preparePutMapping(actualIndex).setType("_doc")
+                client.admin().indices().preparePutMapping(actualIndex)
                         .setSource(XContentFactory.jsonBuilder().startObject().startObject("properties").startObject(FieldNames.ARRAY_KEY)
                                 .field("type", "keyword").endObject().endObject().endObject())
                         .execute().actionGet(settings.getIndicesTimeout());

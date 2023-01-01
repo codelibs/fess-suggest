@@ -110,14 +110,14 @@ public final class SuggestUtil {
     }
 
     public static List<TermQuery> getTermQueryList(final Query query, final String[] fields) {
-        if (query instanceof BooleanQuery booleanQuery) {
+        if (query instanceof final BooleanQuery booleanQuery) {
             final List<BooleanClause> clauses = booleanQuery.clauses();
             final List<TermQuery> queryList = new ArrayList<>();
             for (final BooleanClause clause : clauses) {
                 final Query q = clause.getQuery();
                 if (q instanceof BooleanQuery) {
                     queryList.addAll(getTermQueryList(q, fields));
-                } else if (q instanceof TermQuery termQuery) {
+                } else if (q instanceof final TermQuery termQuery) {
                     for (final String field : fields) {
                         if (field.equals(termQuery.getTerm().field())) {
                             queryList.add(termQuery);
@@ -127,7 +127,7 @@ public final class SuggestUtil {
             }
             return queryList;
         }
-        if (query instanceof TermQuery termQuery) {
+        if (query instanceof final TermQuery termQuery) {
             for (final String field : fields) {
                 if (field.equals(termQuery.getTerm().field())) {
                     final List<TermQuery> queryList = new ArrayList<>(1);

@@ -48,8 +48,6 @@ import org.opensearch.search.sort.SortOrder;
 public class SuggestRequest extends Request<SuggestResponse> {
     private String index = null;
 
-    private String type = null;
-
     private String query = "";
 
     private int size = 10;
@@ -78,10 +76,6 @@ public class SuggestRequest extends Request<SuggestResponse> {
 
     public void setIndex(final String index) {
         this.index = index;
-    }
-
-    public void setType(final String type) {
-        this.type = type;
     }
 
     public void setSize(final int size) {
@@ -144,9 +138,6 @@ public class SuggestRequest extends Request<SuggestResponse> {
     @Override
     protected void processRequest(final Client client, final Deferred<SuggestResponse> deferred) {
         final SearchRequestBuilder builder = client.prepareSearch(index);
-        if (!Strings.isNullOrEmpty(type)) {
-            builder.setTypes(type);
-        }
 
         if (skipDuplicateWords) {
             builder.setSize(size * 2);

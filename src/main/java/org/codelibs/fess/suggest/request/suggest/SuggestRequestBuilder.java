@@ -32,11 +32,6 @@ public class SuggestRequestBuilder extends RequestBuilder<SuggestRequest, Sugges
         return this;
     }
 
-    public SuggestRequestBuilder setType(final String type) {
-        request.setType(type);
-        return this;
-    }
-
     public SuggestRequestBuilder setSize(final int size) {
         request.setSize(size);
         return this;

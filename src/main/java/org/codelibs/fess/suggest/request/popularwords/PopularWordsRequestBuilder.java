@@ -28,11 +28,6 @@ public class PopularWordsRequestBuilder extends RequestBuilder<PopularWordsReque
         return this;
     }
 
-    public PopularWordsRequestBuilder setType(final String type) {
-        request.setType(type);
-        return this;
-    }
-
     public PopularWordsRequestBuilder setSize(final int size) {
         request.setSize(size);
         return this;
