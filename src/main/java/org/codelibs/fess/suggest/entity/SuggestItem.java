@@ -239,7 +239,8 @@ public class SuggestItem {
         map.put(FieldNames.TEXT, text);
 
         for (int i = 0; i < readings.length; i++) {
-            map.put(FieldNames.READING_PREFIX + i, readings[i]);
+            final String[] values = readings[i] == null ? null : Arrays.stream(readings[i]).distinct().toArray(n -> new String[n]);
+            map.put(FieldNames.READING_PREFIX + i, values);
         }
 
         map.put(FieldNames.FIELDS, fields);
@@ -315,9 +316,10 @@ public class SuggestItem {
                 @SuppressWarnings("unchecked")
                 final List<String> existingValues = (List<String>) readingObj;
                 concatValues(existingValues, readings[i]);
-                map.put(FieldNames.READING_PREFIX + i, existingValues);
+                map.put(FieldNames.READING_PREFIX + i, existingValues.stream().distinct().toList());
             } else {
-                map.put(FieldNames.READING_PREFIX + i, readings[i]);
+                final String[] values = readings[i] == null ? null : Arrays.stream(readings[i]).distinct().toArray(n -> new String[n]);
+                map.put(FieldNames.READING_PREFIX + i, values);
             }
         }
 
