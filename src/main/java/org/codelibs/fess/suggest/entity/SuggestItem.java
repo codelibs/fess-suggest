@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.codelibs.core.lang.StringUtil;
@@ -512,5 +513,39 @@ public class SuggestItem {
                 + ", userBoost=" + userBoost + ", readings=" + Arrays.toString(readings) + ", fields=" + Arrays.toString(fields) + ", tags="
                 + Arrays.toString(tags) + ", roles=" + Arrays.toString(roles) + ", languages=" + Arrays.toString(languages) + ", kinds="
                 + Arrays.toString(kinds) + ", emptySource=" + emptySource + ", id=" + id + "]";
+    }
+
+    private String convertJsonString(final String value) {
+        return "\"" + value.replace("\"", "\\\"") + "\"";
+    }
+
+    private String convertJsonStrings(final String[] values) {
+        if (values == null) {
+            return "[]";
+        }
+        return "[" + Arrays.stream(values).map(s -> convertJsonString(s)).collect(Collectors.joining(",")) + "]";
+    }
+
+    public String toJsonString() {
+        final StringBuilder buf = new StringBuilder();
+        buf.append('{').append('"').append(FieldNames.TEXT).append("\":").append(convertJsonString(text));
+
+        for (int i = 0; i < readings.length; i++) {
+            final String[] values = readings[i] == null ? null : Arrays.stream(readings[i]).distinct().toArray(n -> new String[n]);
+            buf.append(',').append('"').append(FieldNames.READING_PREFIX + i).append("\":").append(convertJsonStrings(values));
+        }
+
+        buf.append(',').append('"').append(FieldNames.FIELDS).append("\":").append(convertJsonStrings(fields));
+        buf.append(',').append('"').append(FieldNames.TAGS).append("\":").append(convertJsonStrings(tags));
+        buf.append(',').append('"').append(FieldNames.ROLES).append("\":").append(convertJsonStrings(roles));
+        buf.append(',').append('"').append(FieldNames.LANGUAGES).append("\":").append(convertJsonStrings(languages));
+        buf.append(',').append('"').append(FieldNames.KINDS).append("\":")
+                .append(convertJsonStrings(Stream.of(kinds).map(Kind::toString).toArray(n -> new String[n])));
+        buf.append(',').append('"').append(FieldNames.QUERY_FREQ).append("\":").append(queryFreq);
+        buf.append(',').append('"').append(FieldNames.DOC_FREQ).append("\":").append(docFreq);
+        buf.append(',').append('"').append(FieldNames.USER_BOOST).append("\":").append(userBoost);
+        buf.append(',').append('"').append(FieldNames.SCORE).append("\":").append((queryFreq + docFreq) * userBoost);
+        buf.append(',').append('"').append(FieldNames.TIMESTAMP).append("\":").append(timestamp.toInstant().toEpochMilli());
+        return buf.append('}').toString();
     }
 }

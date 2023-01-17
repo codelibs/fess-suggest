@@ -56,8 +56,6 @@ import org.opensearch.index.query.QueryBuilder;
 import org.opensearch.index.query.QueryBuilders;
 import org.opensearch.search.SearchHit;
 
-import com.sun.management.OperatingSystemMXBean;
-
 public class SuggestIndexer {
     private final static Logger logger = LogManager.getLogger(SuggestIndexer.class);
 
@@ -246,9 +244,6 @@ public class SuggestIndexer {
     }
 
     public SuggestIndexResponse indexFromQueryLog(final QueryLog[] queryLogs) {
-        if (logger.isInfoEnabled()) {
-            logger.info("Index from querylog. num: {}", queryLogs.length);
-        }
         try {
             final long start = System.currentTimeMillis();
             final Stream<QueryLog> stream = Stream.of(queryLogs);
@@ -259,7 +254,13 @@ public class SuggestIndexer {
                     .flatMap(queryLog -> contentsParser
                             .parseQueryLog(queryLog, supportedFields, tagFieldNames, roleFieldName, readingConverter, normalizer).stream())
                     .toArray(n -> new SuggestItem[n]);
+            final long parseTime = System.currentTimeMillis();
             final SuggestIndexResponse response = index(array);
+            final long indexTime = System.currentTimeMillis();
+
+            if (logger.isInfoEnabled()) {
+                printProcessingInfo("queries", queryLogs.length, array, parseTime - start, indexTime - parseTime);
+            }
             return new SuggestIndexResponse(array.length, queryLogs.length, response.getErrors(), System.currentTimeMillis() - start);
         } catch (final Exception e) {
             throw new SuggestIndexException("Failed to index from query_string.", e);
@@ -313,7 +314,7 @@ public class SuggestIndexer {
             if (parallel) {
                 stream.parallel();
             }
-            final SuggestItem[] array = stream.flatMap(document -> {
+            final SuggestItem[] items = stream.flatMap(document -> {
                 try {
                     return contentsParser.parseDocument(document, supportedFields, tagFieldNames, roleFieldName, langFieldName,
                             readingConverter, contentsReadingConverter, normalizer, analyzer).stream();
@@ -327,25 +328,38 @@ public class SuggestIndexer {
                 }
             }).toArray(n -> new SuggestItem[n]);
             final long parseTime = System.currentTimeMillis();
-            final SuggestIndexResponse response = index(array);
+            final SuggestIndexResponse response = index(items);
             final long indexTime = System.currentTimeMillis();
 
             if (logger.isInfoEnabled()) {
-                final OperatingSystemMXBean operatingSystemMXBean =
-                        (com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
-                final double cpuLoad = operatingSystemMXBean.getProcessCpuLoad();
-                final long maxMemory = Runtime.getRuntime().maxMemory();
-                logger.info(String.format(
-                        "Index %d words from %d documents. (parse:{%dmsec}, index:{%dmsec}, Cpu:{%f}, Mem:{heap:%dMB, used:%dMB)",
-                        array.length, documents.length, parseTime - start, indexTime - start, cpuLoad, maxMemory / (1024 * 1024),
-                        (maxMemory - Runtime.getRuntime().freeMemory()) / (1024 * 1024)));
+                printProcessingInfo("documents", documents.length, items, parseTime - start, indexTime - parseTime);
             }
-            return new SuggestIndexResponse(array.length, documents.length, response.getErrors(), indexTime - start);
+            return new SuggestIndexResponse(items.length, documents.length, response.getErrors(), indexTime - start);
         } catch (final Exception e) {
             if (logger.isDebugEnabled()) {
                 logger.debug("Failed to index from document", e);
             }
             throw new SuggestIndexException("Failed to index from document", e);
+        }
+    }
+
+    private void printProcessingInfo(final String type, final int size, final SuggestItem[] items, final long parseTime,
+            final long indexTime) {
+        final double cpuLoad;
+        if (ManagementFactory.getOperatingSystemMXBean() instanceof com.sun.management.OperatingSystemMXBean operatingSystemMXBean) {
+            cpuLoad = operatingSystemMXBean.getProcessCpuLoad();
+        } else {
+            cpuLoad = -1;
+        }
+        final long maxMemory = Runtime.getRuntime().maxMemory();
+        final long freeMemory = Runtime.getRuntime().freeMemory();
+        logger.info("%d words from %d %s: {\"parse\":%d,\"index\":%d,\"cpu\":%f,\"mem\":{\"heap\":\"%dmb\",\"used\":\"%dmb\"}}",
+                items.length, size, type, parseTime, indexTime, cpuLoad, maxMemory / (1024 * 1024),
+                (maxMemory - freeMemory) / (1024 * 1024));
+        if (logger.isDebugEnabled()) {
+            for (SuggestItem item : items) {
+                logger.debug("[%s] %s", type, item.toJsonString());
+            }
         }
     }
 
