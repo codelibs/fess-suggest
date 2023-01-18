@@ -353,9 +353,10 @@ public class SuggestIndexer {
         }
         final long maxMemory = Runtime.getRuntime().maxMemory();
         final long freeMemory = Runtime.getRuntime().freeMemory();
-        logger.info("%d words from %d %s: {\"parse\":%d,\"index\":%d,\"cpu\":%f,\"mem\":{\"heap\":\"%dmb\",\"used\":\"%dmb\"}}",
-                items.length, size, type, parseTime, indexTime, cpuLoad, maxMemory / (1024 * 1024),
-                (maxMemory - freeMemory) / (1024 * 1024));
+        final String msg = String.format(
+                "%d words from %d %s: {\"parse\":%d,\"index\":%d,\"cpu\":%f,\"mem\":{\"heap\":\"%dmb\",\"used\":\"%dmb\"}}", items.length,
+                size, type, parseTime, indexTime, cpuLoad, maxMemory / (1024 * 1024), (maxMemory - freeMemory) / (1024 * 1024));
+        logger.info(msg);
         if (logger.isDebugEnabled()) {
             for (SuggestItem item : items) {
                 logger.debug("[%s] %s", type, item.toJsonString());
