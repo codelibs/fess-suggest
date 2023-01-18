@@ -244,6 +244,9 @@ public class SuggestIndexer {
     }
 
     public SuggestIndexResponse indexFromQueryLog(final QueryLog[] queryLogs) {
+        if (logger.isInfoEnabled()) {
+            logger.info("Index from querylog. num: {}", queryLogs.length);
+        }
         try {
             final long start = System.currentTimeMillis();
             final Stream<QueryLog> stream = Stream.of(queryLogs);
@@ -437,7 +440,12 @@ public class SuggestIndexer {
             if (item == null) {
                 return new SuggestIndexResponse(0, 1, null, System.currentTimeMillis() - start);
             }
+            final long parseTime = System.currentTimeMillis();
             final SuggestIndexResponse response = index(item);
+            final long indexTime = System.currentTimeMillis();
+            if (logger.isInfoEnabled()) {
+                printProcessingInfo("queries", 1, new SuggestItem[] { item }, parseTime - start, indexTime - parseTime);
+            }
             return new SuggestIndexResponse(1, 1, response.getErrors(), System.currentTimeMillis() - start);
         } catch (final Exception e) {
             final String msg = "Failed to index from document: searchWord=" + searchWord//
