@@ -1,5 +1,6 @@
 
 fess-suggest
+[![Java CI with Maven](https://github.com/codelibs/fess-suggest/actions/workflows/maven.yml/badge.svg)](https://github.com/codelibs/fess-suggest/actions/workflows/maven.yml)
 ============
 
 Library for suggest.
