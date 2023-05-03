@@ -523,7 +523,7 @@ public class SuggestItem {
         if (values == null) {
             return "[]";
         }
-        return "[" + Arrays.stream(values).map(s -> convertJsonString(s)).collect(Collectors.joining(",")) + "]";
+        return "[" + Arrays.stream(values).map(this::convertJsonString).collect(Collectors.joining(",")) + "]";
     }
 
     public String toJsonString() {

@@ -349,7 +349,7 @@ public class SuggestIndexer {
     private void printProcessingInfo(final String type, final int size, final SuggestItem[] items, final long parseTime,
             final long indexTime) {
         final double cpuLoad;
-        if (ManagementFactory.getOperatingSystemMXBean() instanceof com.sun.management.OperatingSystemMXBean operatingSystemMXBean) {
+        if (ManagementFactory.getOperatingSystemMXBean() instanceof final com.sun.management.OperatingSystemMXBean operatingSystemMXBean) {
             cpuLoad = operatingSystemMXBean.getProcessCpuLoad();
         } else {
             cpuLoad = -1;
@@ -362,7 +362,7 @@ public class SuggestIndexer {
                 (maxMemory - freeMemory) / (1024 * 1024));
         logger.info(msg);
         if (logger.isDebugEnabled()) {
-            for (SuggestItem item : items) {
+            for (final SuggestItem item : items) {
                 logger.debug("[{}] {}", type, item.toJsonString());
             }
         }
