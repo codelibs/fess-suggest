@@ -24,7 +24,7 @@ import org.codelibs.fess.suggest.converter.ReadingConverter;
 import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.codelibs.opensearch.runner.OpenSearchRunner;
-import org.opensearch.common.Strings;
+import org.opensearch.core.common.Strings;
 
 import junit.framework.TestCase;
 

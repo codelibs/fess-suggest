@@ -24,7 +24,7 @@ import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.opensearch.action.admin.indices.analyze.AnalyzeAction;
 import org.opensearch.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken;
 import org.opensearch.client.Client;
-import org.opensearch.common.Strings;
+import org.opensearch.core.common.Strings;
 
 import com.ibm.icu.text.Transliterator;
 

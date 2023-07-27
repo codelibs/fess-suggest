@@ -135,7 +135,7 @@ public class Suggester {
             if (response.isExists()) {
                 final GetAliasesResponse getAliasesResponse = client.admin().indices().prepareGetAliases(getUpdateAlias(index)).execute()
                         .actionGet(suggestSettings.getIndicesTimeout());
-                getAliasesResponse.getAliases().keysIt().forEachRemaining(prevIndices::add);
+                getAliasesResponse.getAliases().keySet().forEach(prevIndices::add);
             }
 
             final String mappingSource = getDefaultMappings();
@@ -179,8 +179,8 @@ public class Suggester {
             if (updateIndicesResponse.isExists()) {
                 final GetAliasesResponse getAliasesResponse =
                         client.admin().indices().prepareGetAliases(updateAlias).execute().actionGet(suggestSettings.getIndicesTimeout());
-                getAliasesResponse.getAliases()
-                        .forEach(x -> x.value.stream().filter(y -> updateAlias.equals(y.alias())).forEach(y -> updateIndices.add(x.key)));
+                getAliasesResponse.getAliases().entrySet().forEach(
+                        x -> x.getValue().stream().filter(y -> updateAlias.equals(y.alias())).forEach(y -> updateIndices.add(x.getKey())));
             }
             if (updateIndices.size() != 1) {
                 if (logger.isDebugEnabled()) {
@@ -197,8 +197,8 @@ public class Suggester {
             if (searchIndicesResponse.isExists()) {
                 final GetAliasesResponse getAliasesResponse =
                         client.admin().indices().prepareGetAliases(searchAlias).execute().actionGet(suggestSettings.getIndicesTimeout());
-                getAliasesResponse.getAliases()
-                        .forEach(x -> x.value.stream().filter(y -> searchAlias.equals(y.alias())).forEach(y -> searchIndices.add(x.key)));
+                getAliasesResponse.getAliases().entrySet().forEach(
+                        x -> x.getValue().stream().filter(y -> searchAlias.equals(y.alias())).forEach(y -> searchIndices.add(x.getKey())));
             }
             if (searchIndices.size() != 1) {
                 if (logger.isDebugEnabled()) {

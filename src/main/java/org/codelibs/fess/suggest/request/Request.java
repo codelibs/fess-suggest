@@ -18,7 +18,7 @@ package org.codelibs.fess.suggest.request;
 import org.codelibs.fess.suggest.concurrent.Deferred;
 import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.opensearch.client.Client;
-import org.opensearch.common.Strings;
+import org.opensearch.core.common.Strings;
 
 public abstract class Request<T extends Response> {
     public Deferred<T>.Promise execute(final Client client) {
