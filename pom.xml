@@ -52,9 +52,14 @@
 	</build>
 	<repositories>
 		<repository>
-			<id>codelibs.org</id>
-			<name>CodeLibs Repository</name>
-			<url>https://maven.codelibs.org/</url>
+			<id>snapshots.oss.sonatype.org</id>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
 		</repository>
 	</repositories>
 	<dependencies>
