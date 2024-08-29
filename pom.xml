@@ -29,6 +29,14 @@
 				<artifactId>formatter-maven-plugin</artifactId>
 			</plugin>
 			<plugin>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<systemPropertyVariables>
+						<log4j2.disable.jmx>true</log4j2.disable.jmx>
+					</systemPropertyVariables>
+				</configuration>
+			</plugin>
+			<plugin>
 				<artifactId>maven-javadoc-plugin</artifactId>
 			</plugin>
 			<plugin>
