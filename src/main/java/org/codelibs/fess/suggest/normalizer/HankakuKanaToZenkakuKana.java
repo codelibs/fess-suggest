@@ -117,7 +117,7 @@ public class HankakuKanaToZenkakuKana implements Normalizer {
                     break;
                 }
             }
-        } else if ((c2 == 'ﾟ') && ("ﾊﾋﾌﾍﾎ".indexOf(c1) >= 0)) {
+        } else if (c2 == 'ﾟ' && "ﾊﾋﾌﾍﾎ".indexOf(c1) >= 0) {
             switch (c1) {
             case 'ﾊ':
                 return 'パ';

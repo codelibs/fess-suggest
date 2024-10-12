@@ -31,7 +31,7 @@ public class AnalyzerNormalizer implements Normalizer {
     public AnalyzerNormalizer(final Client client, final SuggestSettings settings) {
         this.client = client;
         this.settings = settings;
-        this.analyzerSettings = settings.analyzer();
+        analyzerSettings = settings.analyzer();
     }
 
     @Override

@@ -65,8 +65,8 @@ public class ESSourceReader implements DocumentReader {
         this.client = client;
         this.settings = settings;
         this.indexName = indexName;
-        this.supportedFields = settings.array().get(SuggestSettings.DefaultKeys.SUPPORTED_FIELDS);
-        this.totalDocNum = getTotal();
+        supportedFields = settings.array().get(SuggestSettings.DefaultKeys.SUPPORTED_FIELDS);
+        totalDocNum = getTotal();
     }
 
     @Override
@@ -100,7 +100,7 @@ public class ESSourceReader implements DocumentReader {
     }
 
     public void addSort(final SortBuilder<?> sortBuilder) {
-        this.sortList.add(sortBuilder);
+        sortList.add(sortBuilder);
     }
 
     public void setLimitDocNumPercentage(final String limitPercentage) {

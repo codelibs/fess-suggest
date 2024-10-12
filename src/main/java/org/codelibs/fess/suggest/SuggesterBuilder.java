@@ -42,13 +42,13 @@ public class SuggesterBuilder {
 
     public SuggesterBuilder settings(final SuggestSettings settings) {
         this.settings = settings;
-        this.settingsBuilder = null;
+        settingsBuilder = null;
         return this;
     }
 
     public SuggesterBuilder settings(final SuggestSettingsBuilder settingsBuilder) {
         this.settingsBuilder = settingsBuilder;
-        this.settings = null;
+        settings = null;
         return this;
     }
 
@@ -57,8 +57,8 @@ public class SuggesterBuilder {
         return this;
     }
 
-    public SuggesterBuilder contentsReadigConverter(final ReadingConverter contentsReadigConverter) {
-        this.contentsReadingConverter = contentsReadigConverter;
+    public SuggesterBuilder contentsReadigConverter(final ReadingConverter contentsReadingConverter) {
+        this.contentsReadingConverter = contentsReadingConverter;
         return this;
     }
 

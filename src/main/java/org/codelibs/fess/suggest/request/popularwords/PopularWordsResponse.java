@@ -38,7 +38,7 @@ public class PopularWordsResponse implements Response {
         this.index = index;
         this.tookMs = tookMs;
         this.words = words;
-        this.num = words.size();
+        num = words.size();
         this.total = total;
         this.items = items;
     }

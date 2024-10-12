@@ -86,20 +86,20 @@ public class SuggestIndexer {
         this.client = client;
         this.index = index;
 
-        this.supportedFields = settings.array().get(SuggestSettings.DefaultKeys.SUPPORTED_FIELDS);
-        this.badWords = settings.badword().get(true);
-        this.tagFieldNames = settings.getAsString(SuggestSettings.DefaultKeys.TAG_FIELD_NAME, StringUtil.EMPTY).split(",");
-        this.roleFieldName = settings.getAsString(SuggestSettings.DefaultKeys.ROLE_FIELD_NAME, StringUtil.EMPTY);
-        this.langFieldName = settings.getAsString(SuggestSettings.DefaultKeys.LANG_FIELD_NAME, StringUtil.EMPTY);
-        this.parallel = settings.getAsBoolean(SuggestSettings.DefaultKeys.PARALLEL_PROCESSING, false);
+        supportedFields = settings.array().get(SuggestSettings.DefaultKeys.SUPPORTED_FIELDS);
+        badWords = settings.badword().get(true);
+        tagFieldNames = settings.getAsString(SuggestSettings.DefaultKeys.TAG_FIELD_NAME, StringUtil.EMPTY).split(",");
+        roleFieldName = settings.getAsString(SuggestSettings.DefaultKeys.ROLE_FIELD_NAME, StringUtil.EMPTY);
+        langFieldName = settings.getAsString(SuggestSettings.DefaultKeys.LANG_FIELD_NAME, StringUtil.EMPTY);
+        parallel = settings.getAsBoolean(SuggestSettings.DefaultKeys.PARALLEL_PROCESSING, false);
         this.readingConverter = readingConverter;
         this.contentsReadingConverter = contentsReadingConverter;
         this.normalizer = normalizer;
         this.analyzer = analyzer;
         this.settings = settings;
 
-        this.contentsParser = new DefaultContentsParser();
-        this.suggestWriter = new SuggestIndexWriter();
+        contentsParser = new DefaultContentsParser();
+        suggestWriter = new SuggestIndexWriter();
 
         this.threadPool = threadPool;
     }

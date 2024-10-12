@@ -69,16 +69,16 @@ public class Suggester {
             final ReadingConverter contentsReadingConverter, final Normalizer normalizer, final SuggestAnalyzer analyzer,
             final ExecutorService threadPool) {
         this.client = client;
-        this.suggestSettings = settings;
+        suggestSettings = settings;
         this.readingConverter = readingConverter;
         this.contentsReadingConverter = contentsReadingConverter;
         this.normalizer = normalizer;
         this.analyzer = analyzer;
-        this.index = settings.getAsString(SuggestSettings.DefaultKeys.INDEX, StringUtil.EMPTY);
+        index = settings.getAsString(SuggestSettings.DefaultKeys.INDEX, StringUtil.EMPTY);
         this.threadPool = threadPool;
 
         if (logger.isDebugEnabled()) {
-            logger.debug("Create suggester instance for {}", this.index);
+            logger.debug("Create suggester instance for {}", index);
         }
     }
 

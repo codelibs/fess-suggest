@@ -101,7 +101,7 @@ public final class SuggestUtil {
         }
         for (final TermQuery tq : termQueryList) {
             final String text = tq.getTerm().text();
-            if ((0 == text.length()) || keywords.contains(text)) {
+            if (0 == text.length() || keywords.contains(text)) {
                 continue;
             }
             keywords.add(text);

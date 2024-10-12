@@ -87,19 +87,19 @@ public class SuggestRequest extends Request<SuggestResponse> {
     }
 
     public void addTag(final String tag) {
-        this.tags.add(tag);
+        tags.add(tag);
     }
 
     public void addRole(final String role) {
-        this.roles.add(role);
+        roles.add(role);
     }
 
     public void addField(final String field) {
-        this.fields.add(field);
+        fields.add(field);
     }
 
     public void addKind(final String kind) {
-        this.kinds.add(kind);
+        kinds.add(kind);
     }
 
     public void setSuggestDetail(final boolean suggestDetail) {
@@ -127,7 +127,7 @@ public class SuggestRequest extends Request<SuggestResponse> {
     }
 
     public void addLang(final String lang) {
-        this.languages.add(lang);
+        languages.add(lang);
     }
 
     @Override
