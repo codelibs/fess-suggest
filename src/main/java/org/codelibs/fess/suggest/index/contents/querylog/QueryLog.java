@@ -22,8 +22,8 @@ public class QueryLog {
     private final String fq;
 
     public QueryLog(final String queryString, @Nullable final String filterQueryString) {
-        this.q = queryString;
-        this.fq = filterQueryString;
+        q = queryString;
+        fq = filterQueryString;
     }
 
     public String getQueryString() {

@@ -97,7 +97,7 @@ public class SuggestItem {
 
         this.languages = languages != null ? languages : new String[] {};
 
-        this.kinds = new Kind[] { kind };
+        kinds = new Kind[] { kind };
         if (userBoost > 1) {
             this.userBoost = userBoost;
         } else {
@@ -105,9 +105,9 @@ public class SuggestItem {
         }
         this.docFreq = docFreq;
         this.queryFreq = queryFreq;
-        this.timestamp = ZonedDateTime.now();
-        this.emptySource = createEmptyMap();
-        this.id = SuggestUtil.createSuggestTextId(this.text);
+        timestamp = ZonedDateTime.now();
+        emptySource = createEmptyMap();
+        id = SuggestUtil.createSuggestTextId(this.text);
     }
 
     public String getText() {

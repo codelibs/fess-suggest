@@ -38,7 +38,7 @@ public class AnalyzerConverter implements ReadingConverter {
     public AnalyzerConverter(final Client client, final SuggestSettings settings) {
         this.client = client;
         this.settings = settings;
-        this.analyzerSettings = settings.analyzer();
+        analyzerSettings = settings.analyzer();
     }
 
     @Override

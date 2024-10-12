@@ -73,8 +73,8 @@ public class SuggestSettings {
         this.initialSettings = initialSettings;
         this.timeoutSettings = timeoutSettings;
 
-        this.badWordIndexName = settingsIndexName + "-badword";
-        this.elevateWordIndexName = settingsIndexName + "-elevateword";
+        badWordIndexName = settingsIndexName + "-badword";
+        elevateWordIndexName = settingsIndexName + "-elevateword";
     }
 
     public void init() {

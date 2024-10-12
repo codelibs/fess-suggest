@@ -58,7 +58,7 @@ public class ArraySettings {
     protected ArraySettings(final SuggestSettings settings, final Client client, final String settingsIndexName, final String settingsId) {
         this.settings = settings;
         this.client = client;
-        this.arraySettingsIndexName = createArraySettingsIndexName(settingsIndexName);
+        arraySettingsIndexName = createArraySettingsIndexName(settingsIndexName);
         this.settingsId = settingsId;
         createMappingIfEmpty(arraySettingsIndexName, settingsId, client);
     }

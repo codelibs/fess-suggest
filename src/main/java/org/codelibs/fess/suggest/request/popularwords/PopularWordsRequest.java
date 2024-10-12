@@ -78,19 +78,19 @@ public class PopularWordsRequest extends Request<PopularWordsResponse> {
     }
 
     public void addTag(final String tag) {
-        this.tags.add(tag);
+        tags.add(tag);
     }
 
     public void addRole(final String role) {
-        this.roles.add(role);
+        roles.add(role);
     }
 
     public void addField(final String field) {
-        this.fields.add(field);
+        fields.add(field);
     }
 
     public void addLanguage(final String lang) {
-        this.languages.add(lang);
+        languages.add(lang);
     }
 
     public void setDetail(final boolean detail) {
@@ -98,7 +98,7 @@ public class PopularWordsRequest extends Request<PopularWordsResponse> {
     }
 
     public void addExcludeWord(final String excludeWord) {
-        this.excludeWords.add(excludeWord);
+        excludeWords.add(excludeWord);
     }
 
     public void setQueryFreqThreshold(final int queryFreqThreshold) {

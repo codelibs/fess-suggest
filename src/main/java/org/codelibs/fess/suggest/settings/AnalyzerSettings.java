@@ -213,7 +213,7 @@ public class AnalyzerSettings {
     }
 
     protected String getSuggestAnalyzerPath() {
-        final Object typeObj = this.settings.get("search_engine.type");
+        final Object typeObj = settings.get("search_engine.type");
         if (typeObj != null) {
             final String path = "suggest_indices/_" + typeObj.toString() + "/suggest_analyzer.json";
             if (ResourceUtil.getResourceNoException(path) != null) {
