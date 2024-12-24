@@ -20,19 +20,50 @@ import java.util.List;
 import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.fess.suggest.request.Response;
 
+/**
+ * Represents the response for popular words request.
+ */
 public class PopularWordsResponse implements Response {
+
+    /**
+     * The index associated with the response.
+     */
     protected final String index;
 
+    /**
+     * The time taken to generate the response in milliseconds.
+     */
     protected final long tookMs;
 
+    /**
+     * The list of popular words.
+     */
     protected final List<String> words;
 
+    /**
+     * The number of popular words.
+     */
     protected final int num;
 
+    /**
+     * The total number of words.
+     */
     protected final long total;
 
+    /**
+     * The list of suggested items.
+     */
     protected final List<SuggestItem> items;
 
+    /**
+     * Constructs a new PopularWordsResponse.
+     *
+     * @param index the index associated with the response
+     * @param tookMs the time taken to generate the response in milliseconds
+     * @param words the list of popular words
+     * @param total the total number of words
+     * @param items the list of suggested items
+     */
     public PopularWordsResponse(final String index, final long tookMs, final List<String> words, final long total,
             final List<SuggestItem> items) {
         this.index = index;
@@ -43,26 +74,56 @@ public class PopularWordsResponse implements Response {
         this.items = items;
     }
 
+    /**
+     * Returns the index associated with the response.
+     *
+     * @return the index
+     */
     public String getIndex() {
         return index;
     }
 
+    /**
+     * Returns the time taken to generate the response in milliseconds.
+     *
+     * @return the time taken in milliseconds
+     */
     public long getTookMs() {
         return tookMs;
     }
 
+    /**
+     * Returns the list of popular words.
+     *
+     * @return the list of popular words
+     */
     public List<String> getWords() {
         return words;
     }
 
+    /**
+     * Returns the number of popular words.
+     *
+     * @return the number of popular words
+     */
     public int getNum() {
         return num;
     }
 
+    /**
+     * Returns the total number of words.
+     *
+     * @return the total number of words
+     */
     public long getTotal() {
         return total;
     }
 
+    /**
+     * Returns the list of suggested items.
+     *
+     * @return the list of suggested items
+     */
     public List<SuggestItem> getItems() {
         return items;
     }

@@ -18,6 +18,29 @@ package org.codelibs.fess.suggest.normalizer;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * The NormalizerChain class implements the Normalizer interface and allows chaining multiple normalizers together.
+ * It applies each normalizer in the order they were added to the chain.
+ *
+ * <p>Usage example:</p>
+ * <pre>
+ * NormalizerChain chain = new NormalizerChain();
+ * chain.add(new SomeNormalizer());
+ * chain.add(new AnotherNormalizer());
+ * String normalizedText = chain.normalize("input text", "field", "en");
+ * </pre>
+ *
+ * <p>Methods:</p>
+ * <ul>
+ *   <li>{@link #normalize(String, String, String...)} - Applies all added normalizers to the input text.</li>
+ *   <li>{@link #add(Normalizer)} - Adds a new normalizer to the chain.</li>
+ * </ul>
+ *
+ * <p>Fields:</p>
+ * <ul>
+ *   <li>{@code normalizers} - A list of normalizers to be applied in sequence.</li>
+ * </ul>
+ */
 public class NormalizerChain implements Normalizer {
     List<Normalizer> normalizers = new ArrayList<>();
 

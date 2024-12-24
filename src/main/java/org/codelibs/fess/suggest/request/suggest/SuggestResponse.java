@@ -20,6 +20,10 @@ import java.util.List;
 import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.fess.suggest.request.Response;
 
+/**
+ * Represents a response for a suggest request.
+ * This class holds the details of the response including the index, time taken, words, total count, and suggested items.
+ */
 public class SuggestResponse implements Response {
     protected final String index;
 

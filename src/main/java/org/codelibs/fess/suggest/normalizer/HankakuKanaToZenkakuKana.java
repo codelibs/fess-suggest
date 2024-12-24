@@ -15,6 +15,32 @@
  */
 package org.codelibs.fess.suggest.normalizer;
 
+/**
+ * The HankakuKanaToZenkakuKana class implements the Normalizer interface to convert
+ * half-width Katakana characters (Hankaku Kana) to full-width Katakana characters (Zenkaku Kana).
+ * It also handles the conversion of voiced and semi-voiced sound marks.
+ *
+ * <p>This class provides the following functionalities:</p>
+ * <ul>
+ *   <li>Normalization of a string containing Hankaku Kana to Zenkaku Kana.</li>
+ *   <li>Conversion of individual Hankaku Kana characters to Zenkaku Kana characters.</li>
+ *   <li>Handling of voiced (ﾞ) and semi-voiced (ﾟ) sound marks to produce the correct Zenkaku Kana characters.</li>
+ * </ul>
+ *
+ * <p>Example usage:</p>
+ * <pre>
+ * {@code
+ * HankakuKanaToZenkakuKana normalizer = new HankakuKanaToZenkakuKana();
+ * String normalized = normalizer.normalize("ｶﾞｷﾞｸﾞｹﾞｺﾞ", "field");
+ * System.out.println(normalized); // Outputs: ガギグゲゴ
+ * }
+ * </pre>
+ *
+ * <p>Note: This class assumes that the input string contains valid Hankaku Kana characters
+ * and does not perform any validation on the input.</p>
+ *
+ * @see Normalizer
+ */
 public class HankakuKanaToZenkakuKana implements Normalizer {
     private static final char[] HANKAKU_KATAKANA = { '｡', '｢', '｣', '､', '･', 'ｦ', 'ｧ', 'ｨ', 'ｩ', 'ｪ', 'ｫ', 'ｬ', 'ｭ', 'ｮ', 'ｯ', 'ｰ', 'ｱ',
             'ｲ', 'ｳ', 'ｴ', 'ｵ', 'ｶ', 'ｷ', 'ｸ', 'ｹ', 'ｺ', 'ｻ', 'ｼ', 'ｽ', 'ｾ', 'ｿ', 'ﾀ', 'ﾁ', 'ﾂ', 'ﾃ', 'ﾄ', 'ﾅ', 'ﾆ', 'ﾇ', 'ﾈ', 'ﾉ', 'ﾊ',

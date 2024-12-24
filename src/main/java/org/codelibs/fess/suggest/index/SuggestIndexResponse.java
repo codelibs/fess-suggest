@@ -20,6 +20,12 @@ import java.util.List;
 
 import org.codelibs.fess.suggest.request.Response;
 
+/**
+ * Represents the response of a suggest index operation.
+ * This class contains information about the number of suggest documents,
+ * the number of input documents, any errors that occurred during the operation,
+ * and the time taken to complete the operation.
+ */
 public class SuggestIndexResponse implements Response {
     protected final int numberOfSuggestDocs;
     protected final int numberOfInputDocs;

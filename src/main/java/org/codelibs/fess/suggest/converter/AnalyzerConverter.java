@@ -28,6 +28,41 @@ import org.opensearch.core.common.Strings;
 
 import com.ibm.icu.text.Transliterator;
 
+/**
+ * AnalyzerConverter is a class that implements the ReadingConverter interface.
+ * It is responsible for converting text using specified language analyzers.
+ * The class uses a Transliterator to convert between Hiragana and Katakana.
+ *
+ * <p>Constructor:
+ * <ul>
+ *   <li>{@link #AnalyzerConverter(Client, SuggestSettings)}: Initializes the converter with the given client and settings.</li>
+ * </ul>
+ *
+ * <p>Methods:
+ * <ul>
+ *   <li>{@link #init()}: Initializes the converter. Currently does nothing.</li>
+ *   <li>{@link #convert(String, String, String...)}: Converts the given text using the specified field and languages.</li>
+ * </ul>
+ *
+ * <p>Inner Class:
+ * <ul>
+ *   <li>{@link LangAnayzerConverter}: A protected inner class that implements the ReadingConverter interface.
+ *       It is responsible for converting text using a specific language analyzer.
+ *       <ul>
+ *         <li>{@link LangAnayzerConverter#init()}: Initializes the converter. Currently does nothing.</li>
+ *         <li>{@link LangAnayzerConverter#convert(String, String, String...)}: Converts the given text using the specified field and language.</li>
+ *       </ul>
+ *   </li>
+ * </ul>
+ *
+ * <p>Fields:
+ * <ul>
+ *   <li>{@link #client}: The client used to perform analysis.</li>
+ *   <li>{@link #settings}: The settings for suggestions.</li>
+ *   <li>{@link #analyzerSettings}: The settings for the analyzer.</li>
+ *   <li>{@link #transliterator}: The transliterator used to convert between Hiragana and Katakana.</li>
+ * </ul>
+ */
 public class AnalyzerConverter implements ReadingConverter {
     protected final Client client;
     private final SuggestSettings settings;

@@ -23,11 +23,32 @@ import org.opensearch.action.admin.indices.analyze.AnalyzeAction;
 import org.opensearch.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken;
 import org.opensearch.client.Client;
 
+/**
+ * AnalyzerNormalizer is a class that implements the Normalizer interface.
+ * It uses an Elasticsearch client and settings to normalize text based on specified languages.
+ */
 public class AnalyzerNormalizer implements Normalizer {
+    /**
+     * The Elasticsearch client used for analyzing text.
+     */
     protected final Client client;
+
+    /**
+     * The settings for the analyzer.
+     */
     protected final AnalyzerSettings analyzerSettings;
+
+    /**
+     * The settings for suggestions.
+     */
     private final SuggestSettings settings;
 
+    /**
+     * Constructs an AnalyzerNormalizer with the specified client and settings.
+     *
+     * @param client   the Elasticsearch client
+     * @param settings the settings for suggestions
+     */
     public AnalyzerNormalizer(final Client client, final SuggestSettings settings) {
         this.client = client;
         this.settings = settings;
@@ -50,12 +71,28 @@ public class AnalyzerNormalizer implements Normalizer {
     }
 
     protected class LangAnalyzerNormalizer implements Normalizer {
+        /**
+         * The language used for normalization.
+         */
         protected final String lang;
 
+        /**
+         * Constructs a LangAnalyzerNormalizer with the specified language.
+         *
+         * @param lang the language to use for normalization
+         */
         protected LangAnalyzerNormalizer(final String lang) {
             this.lang = lang;
         }
 
+        /**
+         * Normalizes the given text based on the specified field.
+         *
+         * @param text  the text to normalize
+         * @param field the field to use for normalization
+         * @param dummy additional parameters (not used)
+         * @return the normalized text
+         */
         @Override
         public String normalize(final String text, final String field, final String... dummy) {
             final AnalyzeAction.Response termResponse = client.admin().indices()

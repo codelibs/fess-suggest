@@ -51,6 +51,53 @@ import org.opensearch.common.xcontent.XContentType;
 import org.opensearch.index.query.QueryBuilder;
 import org.opensearch.index.query.QueryBuilders;
 
+/**
+ * The Suggester class provides functionality for managing and querying suggestion indices.
+ * It includes methods for creating, refreshing, and switching indices, as well as for
+ * retrieving popular words and indexing suggestions.
+ *
+ * <p>Constructor:
+ * <ul>
+ *   <li>{@link #Suggester(Client, SuggestSettings, ReadingConverter, ReadingConverter, Normalizer, SuggestAnalyzer, ExecutorService)}: Initializes a new instance of the Suggester class.</li>
+ * </ul>
+ *
+ * <p>Public Methods:
+ * <ul>
+ *   <li>{@link #suggest()}: Creates a new SuggestRequestBuilder for querying suggestions.</li>
+ *   <li>{@link #popularWords()}: Creates a new PopularWordsRequestBuilder for querying popular words.</li>
+ *   <li>{@link #refresh()}: Refreshes the suggestion indices.</li>
+ *   <li>{@link #shutdown()}: Shuts down the thread pool.</li>
+ *   <li>{@link #createIndexIfNothing()}: Creates a new index if no index exists.</li>
+ *   <li>{@link #createNextIndex()}: Creates a new index and replaces the current update alias with the new index.</li>
+ *   <li>{@link #switchIndex()}: Switches the search alias to the current update index.</li>
+ *   <li>{@link #removeDisableIndices()}: Removes disabled indices.</li>
+ *   <li>{@link #indexer()}: Creates a new SuggestIndexer for indexing suggestions.</li>
+ *   <li>{@link #builder()}: Creates a new SuggesterBuilder for building Suggester instances.</li>
+ *   <li>{@link #settings()}: Returns the SuggestSettings instance.</li>
+ *   <li>{@link #getReadingConverter()}: Returns the ReadingConverter instance.</li>
+ *   <li>{@link #getNormalizer()}: Returns the Normalizer instance.</li>
+ *   <li>{@link #getIndex()}: Returns the index name.</li>
+ *   <li>{@link #getAllWordsNum()}: Returns the total number of words in the suggestion index.</li>
+ *   <li>{@link #getDocumentWordsNum()}: Returns the number of document words in the suggestion index.</li>
+ *   <li>{@link #getQueryWordsNum()}: Returns the number of query words in the suggestion index.</li>
+ * </ul>
+ *
+ * <p>Protected Methods:
+ * <ul>
+ *   <li>{@link #createDefaultIndexer()}: Creates a default SuggestIndexer instance.</li>
+ * </ul>
+ *
+ * <p>Private Methods:
+ * <ul>
+ *   <li>{@link #getNum(QueryBuilder)}: Returns the number of words matching the given query.</li>
+ *   <li>{@link #getSearchAlias(String)}: Returns the search alias for the given index.</li>
+ *   <li>{@link #getUpdateAlias(String)}: Returns the update alias for the given index.</li>
+ *   <li>{@link #createIndexName(String)}: Creates a new index name based on the current date and time.</li>
+ *   <li>{@link #getDefaultMappings()}: Returns the default mappings for the suggestion index.</li>
+ *   <li>{@link #getDefaultIndexSettings()}: Returns the default settings for the suggestion index.</li>
+ *   <li>{@link #isSuggestIndex(String)}: Checks if the given index name is a suggestion index.</li>
+ * </ul>
+ */
 public class Suggester {
     private static final Logger logger = LogManager.getLogger(Suggester.class);
 

@@ -19,6 +19,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * The SuggestWriterResult class is used to store and manage the results of a suggest writer operation.
+ * It keeps track of any failures that occur during the operation.
+ */
 public class SuggestWriterResult {
     protected List<Throwable> failures = Collections.synchronizedList(new ArrayList<>());
 

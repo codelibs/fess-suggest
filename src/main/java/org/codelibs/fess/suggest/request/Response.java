@@ -15,5 +15,13 @@
  */
 package org.codelibs.fess.suggest.request;
 
+/**
+ * The Response interface serves as a marker interface for all response types
+ * in the suggestion system. Implementations of this interface are used to
+ * encapsulate the results of various operations and queries within the system.
+ *
+ * <p>Classes implementing this interface should provide specific details and
+ * data relevant to the type of response they represent.</p>
+ */
 public interface Response {
 }

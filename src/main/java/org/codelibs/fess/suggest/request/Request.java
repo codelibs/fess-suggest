@@ -20,6 +20,11 @@ import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.opensearch.client.Client;
 import org.opensearch.core.common.Strings;
 
+/**
+ * Abstract class representing a request that can be executed to produce a response.
+ *
+ * @param <T> the type of response produced by this request
+ */
 public abstract class Request<T extends Response> {
     public Deferred<T>.Promise execute(final Client client) {
         final String error = getValidationError();

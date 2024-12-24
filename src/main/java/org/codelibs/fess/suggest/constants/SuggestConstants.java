@@ -15,6 +15,10 @@
  */
 package org.codelibs.fess.suggest.constants;
 
+/**
+ * This class contains constants used in the Fess Suggest module.
+ * It is a utility class and should not be instantiated.
+ */
 public final class SuggestConstants {
     private SuggestConstants() {
     }

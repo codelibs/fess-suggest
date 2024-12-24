@@ -18,6 +18,14 @@ package org.codelibs.fess.suggest.index.contents.document;
 import java.io.Closeable;
 import java.util.Map;
 
+/**
+ * Interface for reading documents and extracting their contents into a map.
+ * Implementations of this interface should provide the logic for reading
+ * documents and converting them into a key-value structure.
+ *
+ * <p>This interface extends {@link java.io.Closeable}, so implementations
+ * should also handle resource cleanup when the {@link #close()} method is called.</p>
+ */
 public interface DocumentReader extends Closeable {
     Map<String, Object> read();
 

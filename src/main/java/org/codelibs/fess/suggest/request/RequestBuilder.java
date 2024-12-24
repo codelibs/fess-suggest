@@ -18,6 +18,12 @@ package org.codelibs.fess.suggest.request;
 import org.codelibs.fess.suggest.concurrent.Deferred;
 import org.opensearch.client.Client;
 
+/**
+ * An abstract class that serves as a builder for creating and executing requests.
+ *
+ * @param <Req> the type of the request
+ * @param <Res> the type of the response
+ */
 public abstract class RequestBuilder<Req extends Request<Res>, Res extends Response> {
     protected Client client;
     protected Req request;

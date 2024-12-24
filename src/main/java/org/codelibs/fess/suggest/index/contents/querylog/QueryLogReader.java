@@ -17,6 +17,10 @@ package org.codelibs.fess.suggest.index.contents.querylog;
 
 import java.io.Closeable;
 
+/**
+ * The {@code QueryLogReader} interface provides methods to read query logs and close the reader.
+ * It extends the {@code Closeable} interface, ensuring that resources can be released when no longer needed.
+ */
 public interface QueryLogReader extends Closeable {
     QueryLog read();
 

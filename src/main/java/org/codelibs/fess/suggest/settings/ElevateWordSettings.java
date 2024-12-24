@@ -27,6 +27,46 @@ import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.entity.ElevateWord;
 import org.opensearch.client.Client;
 
+/**
+ * The ElevateWordSettings class manages the settings for elevate words in the suggestion system.
+ * It provides methods to retrieve, add, and delete elevate words from the settings.
+ *
+ * <p>Constants:</p>
+ * <ul>
+ *   <li>{@code ELEVATE_WORD_SETTINGD_KEY} - The key for elevate word settings.</li>
+ *   <li>{@code ELEVATE_WORD_BOOST} - The key for elevate word boost value.</li>
+ *   <li>{@code ELEVATE_WORD_READING} - The key for elevate word readings.</li>
+ *   <li>{@code ELEVATE_WORD_FIELDS} - The key for elevate word fields.</li>
+ *   <li>{@code ELEVATE_WORD_TAGS} - The key for elevate word tags.</li>
+ *   <li>{@code ELEVATE_WORD_ROLES} - The key for elevate word roles.</li>
+ * </ul>
+ *
+ * <p>Methods:</p>
+ * <ul>
+ *   <li>{@code get()} - Retrieves an array of elevate words from the settings.</li>
+ *   <li>{@code add(ElevateWord elevateWord)} - Adds a new elevate word to the settings.</li>
+ *   <li>{@code delete(String elevateWord)} - Deletes an elevate word from the settings.</li>
+ *   <li>{@code deleteAll()} - Deletes all elevate words from the settings.</li>
+ * </ul>
+ *
+ * <p>Protected Constructor:</p>
+ * <ul>
+ *   <li>{@code ElevateWordSettings(SuggestSettings settings, Client client, String settingsIndexName, String settingsId)} -
+ *       Initializes the ElevateWordSettings with the provided settings, client, index name, and settings ID.</li>
+ * </ul>
+ *
+ * <p>Dependencies:</p>
+ * <ul>
+ *   <li>{@code ArraySettings} - Used to manage the array settings for elevate words.</li>
+ *   <li>{@code SuggestSettings} - The suggestion settings.</li>
+ *   <li>{@code Client} - The client used for accessing the settings.</li>
+ * </ul>
+ *
+ * <p>Logging:</p>
+ * <ul>
+ *   <li>Uses {@code Logger} to log debug information when adding, deleting, or deleting all elevate words.</li>
+ * </ul>
+ */
 public class ElevateWordSettings {
     private static final Logger logger = LogManager.getLogger(ElevateWordSettings.class);
 

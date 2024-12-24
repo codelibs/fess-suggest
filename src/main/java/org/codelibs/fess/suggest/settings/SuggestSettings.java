@@ -38,6 +38,76 @@ import org.opensearch.common.xcontent.json.JsonXContent;
 import org.opensearch.core.xcontent.XContentBuilder;
 import org.opensearch.index.IndexNotFoundException;
 
+/**
+ * The SuggestSettings class is responsible for managing the settings related to suggestions.
+ * It interacts with an Elasticsearch client to store and retrieve settings.
+ *
+ * <p>This class provides methods to initialize settings, get and set individual settings,
+ * and manage various types of settings such as array settings, analyzer settings, bad word settings,
+ * and elevate word settings.</p>
+ *
+ * <p>It also includes a nested TimeoutSettings class to manage various timeout configurations.</p>
+ *
+ * <p>Usage example:</p>
+ * <pre>
+ * {@code
+ * Client client = ...;
+ * Map<String, Object> initialSettings = ...;
+ * SuggestSettings.TimeoutSettings timeoutSettings = new SuggestSettings.TimeoutSettings();
+ * SuggestSettings suggestSettings = new SuggestSettings(client, "settingsId", initialSettings, "settingsIndexName", timeoutSettings);
+ * suggestSettings.init();
+ * }
+ * </pre>
+ *
+ * <p>Key methods:</p>
+ * <ul>
+ *   <li>{@link #init()} - Initializes the settings.</li>
+ *   <li>{@link #get(String)} - Retrieves a setting value by key.</li>
+ *   <li>{@link #set(String, Object)} - Sets a setting value by key.</li>
+ *   <li>{@link #array()} - Returns an instance of ArraySettings.</li>
+ *   <li>{@link #analyzer()} - Returns an instance of AnalyzerSettings.</li>
+ *   <li>{@link #badword()} - Returns an instance of BadWordSettings.</li>
+ *   <li>{@link #elevateWord()} - Returns an instance of ElevateWordSettings.</li>
+ * </ul>
+ *
+ * <p>Timeout settings can be accessed via:</p>
+ * <ul>
+ *   <li>{@link #getScrollTimeout()}</li>
+ *   <li>{@link #getSearchTimeout()}</li>
+ *   <li>{@link #getIndexTimeout()}</li>
+ *   <li>{@link #getIndicesTimeout()}</li>
+ *   <li>{@link #getBulkTimeout()}</li>
+ *   <li>{@link #getClusterTimeout()}</li>
+ * </ul>
+ *
+ * <p>Default settings and array settings can be customized using:</p>
+ * <ul>
+ *   <li>{@link #defaultSettings()}</li>
+ *   <li>{@link #defaultArraySettings()}</li>
+ * </ul>
+ *
+ * <p>Index settings can be loaded from a JSON file using:</p>
+ * <ul>
+ *   <li>{@link #loadIndexSettings()}</li>
+ * </ul>
+ *
+ * <p>A builder for SuggestSettings can be obtained using:</p>
+ * <ul>
+ *   <li>{@link #builder()}</li>
+ * </ul>
+ *
+ * <p>Logging is performed using the SLF4J Logger.</p>
+ *
+ * @see Client
+ * @see GetResponse
+ * @see IndexNotFoundException
+ * @see SuggesterException
+ * @see SuggestSettingsException
+ * @see ArraySettings
+ * @see AnalyzerSettings
+ * @see BadWordSettings
+ * @see ElevateWordSettings
+ */
 public class SuggestSettings {
     private static final Logger logger = LogManager.getLogger(SuggestSettings.class);
 

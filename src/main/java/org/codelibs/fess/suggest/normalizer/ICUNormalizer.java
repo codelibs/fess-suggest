@@ -17,6 +17,22 @@ package org.codelibs.fess.suggest.normalizer;
 
 import com.ibm.icu.text.Transliterator;
 
+/**
+ * ICUNormalizer is a class that implements the Normalizer interface and provides
+ * functionality to normalize text using ICU4J's Transliterator.
+ *
+ * <p>This class uses a specified Transliterator to perform text normalization.
+ * The Transliterator is initialized with a given ID during the construction of
+ * the ICUNormalizer instance.</p>
+ *
+ * <p>Example usage:</p>
+ * <pre>
+ * ICUNormalizer normalizer = new ICUNormalizer("Any-Latin; NFD; [:Nonspacing Mark:] Remove; NFC");
+ * String normalizedText = normalizer.normalize("text to normalize", "field");
+ * </pre>
+ *
+ * @see com.ibm.icu.text.Transliterator
+ */
 public class ICUNormalizer implements Normalizer {
     protected Transliterator transliterator;
 

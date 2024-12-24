@@ -67,6 +67,14 @@ public final class SuggestUtil {
     private SuggestUtil() {
     }
 
+    /**
+     * Creates a unique identifier for the given text by encoding it to a Base64 string.
+     * If the encoded string exceeds the maximum allowed length, it truncates the string
+     * to the specified maximum length.
+     *
+     * @param text the input text to be encoded
+     * @return the encoded string, truncated if necessary
+     */
     public static String createSuggestTextId(final String text) {
         final String id = encoder.encodeToString(text.getBytes(CoreLibConstants.CHARSET_UTF_8));
         if (id.length() > 445) {
@@ -75,6 +83,13 @@ public final class SuggestUtil {
         return id;
     }
 
+    /**
+     * Parses the given query string and returns an array of keywords.
+     *
+     * @param q the query string to be parsed
+     * @param field the field to be used for keyword extraction
+     * @return an array of keywords extracted from the query string, or an empty array if the number of keywords exceeds the maximum allowed or if any keyword exceeds the maximum length
+     */
     public static String[] parseQuery(final String q, final String field) {
         final List<String> keywords = getKeywords(q, new String[] { field });
         if (MAX_QUERY_TERM_NUM < keywords.size()) {
@@ -88,6 +103,13 @@ public final class SuggestUtil {
         return keywords.toArray(new String[keywords.size()]);
     }
 
+    /**
+     * Extracts keywords from the given query string based on the specified fields.
+     *
+     * @param q the query string to parse and extract keywords from
+     * @param fields the fields to consider when extracting keywords
+     * @return a list of unique keywords extracted from the query string
+     */
     public static List<String> getKeywords(final String q, final String[] fields) {
         final List<String> keywords = new ArrayList<>();
         final List<TermQuery> termQueryList;
@@ -109,6 +131,13 @@ public final class SuggestUtil {
         return keywords;
     }
 
+    /**
+     * Extracts a list of TermQuery objects from the given Query object that match the specified fields.
+     *
+     * @param query the Query object to extract TermQuery objects from
+     * @param fields an array of field names to match against the TermQuery objects
+     * @return a list of TermQuery objects that match the specified fields, or an empty list if no matches are found
+     */
     public static List<TermQuery> getTermQueryList(final Query query, final String[] fields) {
         if (query instanceof final BooleanQuery booleanQuery) {
             final List<BooleanClause> clauses = booleanQuery.clauses();
@@ -139,6 +168,15 @@ public final class SuggestUtil {
         return Collections.emptyList();
     }
 
+    /**
+     * Creates a bulk line for Elasticsearch indexing from the given parameters.
+     *
+     * @param index the name of the Elasticsearch index
+     * @param type the type of the document (deprecated in newer versions of Elasticsearch)
+     * @param item the SuggestItem containing the data to be indexed
+     * @return a string representing the bulk line for Elasticsearch indexing
+     * @throws SuggesterException if an I/O error occurs during the creation of the bulk line
+     */
     public static String createBulkLine(final String index, final String type, final SuggestItem item) {
         final Map<String, Object> firstLineMap = new HashMap<>();
         final Map<String, Object> firstLineInnerMap = new HashMap<>();
@@ -182,6 +220,14 @@ public final class SuggestUtil {
         }
     }
 
+    /**
+     * Creates a default ReadingConverter with a chain of converters.
+     * The chain includes an AnalyzerConverter and a KatakanaToAlphabetConverter.
+     *
+     * @param client   the client to be used by the AnalyzerConverter
+     * @param settings the settings to be used by the AnalyzerConverter
+     * @return a ReadingConverterChain with the default converters added
+     */
     public static ReadingConverter createDefaultReadingConverter(final Client client, final SuggestSettings settings) {
         final ReadingConverterChain chain = new ReadingConverterChain();
         chain.addConverter(new AnalyzerConverter(client, settings));
@@ -189,12 +235,27 @@ public final class SuggestUtil {
         return chain;
     }
 
+    /**
+     * Creates a default ReadingConverterChain with a KatakanaToAlphabetConverter.
+     *
+     * @param client   the client instance used for the converter
+     * @param settings the suggest settings used for the converter
+     * @return a ReadingConverterChain with a KatakanaToAlphabetConverter added
+     */
     public static ReadingConverter createDefaultContentsReadingConverter(final Client client, final SuggestSettings settings) {
         final ReadingConverterChain chain = new ReadingConverterChain();
         chain.addConverter(new KatakanaToAlphabetConverter());
         return chain;
     }
 
+    /**
+     * Creates a default normalizer using the provided client and suggest settings.
+     * The normalizer chain includes an AnalyzerNormalizer.
+     *
+     * @param client the client to be used for creating the normalizer
+     * @param settings the suggest settings to be used for creating the normalizer
+     * @return a NormalizerChain with the default normalizers
+     */
     public static Normalizer createDefaultNormalizer(final Client client, final SuggestSettings settings) {
         final NormalizerChain normalizerChain = new NormalizerChain();
         normalizerChain.add(new AnalyzerNormalizer(client, settings));
@@ -205,11 +266,30 @@ public final class SuggestUtil {
         return normalizerChain;
     }
 
+    /**
+     * Creates a new instance of DefaultContentsAnalyzer using the provided client and suggest settings.
+     *
+     * @param client   the Elasticsearch client to be used for the analyzer
+     * @param settings the suggest settings containing the analyzer configuration
+     * @return a new instance of AnalyzerSettings.DefaultContentsAnalyzer
+     */
     public static AnalyzerSettings.DefaultContentsAnalyzer createDefaultAnalyzer(final Client client, final SuggestSettings settings) {
         final AnalyzerSettings analyzerSettings = settings.analyzer();
         return analyzerSettings.new DefaultContentsAnalyzer();
     }
 
+    /**
+     * Converts the given object to a list of strings.
+     * <p>
+     * If the object is null, an empty list is returned.
+     * If the object is a string, a list containing that string is returned.
+     * If the object is a list, it is cast to a list of strings and returned.
+     * </p>
+     *
+     * @param value the object to be converted to a list of strings
+     * @return a list of strings representing the given object
+     * @throws IllegalArgumentException if the object is not a string or a list
+     */
     public static List<String> getAsList(final Object value) {
         if (value == null) {
             return new ArrayList<>();
@@ -226,6 +306,16 @@ public final class SuggestUtil {
         throw new IllegalArgumentException("The value should be String or List, but " + value.getClass());
     }
 
+    /**
+     * Deletes documents from the specified index based on the given query.
+     *
+     * @param client the Elasticsearch client to use for executing the query and delete operations
+     * @param settings the settings for the suggest feature, including timeouts and scroll settings
+     * @param index the name of the index from which documents should be deleted
+     * @param queryBuilder the query used to identify documents to delete
+     * @return true if the operation completes successfully
+     * @throws SuggesterException if any error occurs during the delete operation
+     */
     public static boolean deleteByQuery(final Client client, final SuggestSettings settings, final String index,
             final QueryBuilder queryBuilder) {
         try {
@@ -264,12 +354,28 @@ public final class SuggestUtil {
         return true;
     }
 
+    /**
+     * Deletes the scroll context associated with the given scroll ID.
+     *
+     * @param client the Elasticsearch client used to clear the scroll context
+     * @param scrollId the ID of the scroll context to be deleted; if null, no action is taken
+     */
     public static void deleteScrollContext(final Client client, final String scrollId) {
         if (scrollId != null) {
             client.prepareClearScroll().addScrollId(scrollId).execute(ActionListener.wrap(res -> {}, e -> {}));
         }
     }
 
+    /**
+     * Escapes wildcard characters in the given query string.
+     *
+     * This method replaces all occurrences of '*' with '\*' and
+     * all occurrences of '?' with '\?' to ensure that these characters
+     * are treated as literals rather than wildcard characters in queries.
+     *
+     * @param query the query string to escape
+     * @return the escaped query string
+     */
     public static String escapeWildcardQuery(final String query) {
         return query.replace("*", "\\*").replace("?", "\\?");
     }

@@ -26,6 +26,11 @@ import org.codelibs.fess.suggest.exception.SuggestSettingsException;
 import org.opensearch.client.Client;
 import org.opensearch.core.common.Strings;
 
+/**
+ * The BadWordSettings class manages the settings related to bad words.
+ * It allows adding, deleting, and retrieving bad words from the settings.
+ * It also supports loading default bad words from a file.
+ */
 public class BadWordSettings {
     private static final Logger logger = LogManager.getLogger(BadWordSettings.class);
 

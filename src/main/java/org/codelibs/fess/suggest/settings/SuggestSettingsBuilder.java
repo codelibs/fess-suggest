@@ -22,6 +22,9 @@ import java.util.Map;
 import org.codelibs.fess.suggest.settings.SuggestSettings.TimeoutSettings;
 import org.opensearch.client.Client;
 
+/**
+ * Builder class for constructing SuggestSettings instances.
+ */
 public class SuggestSettingsBuilder {
     protected String settingsIndexName = "fess_suggest";
 

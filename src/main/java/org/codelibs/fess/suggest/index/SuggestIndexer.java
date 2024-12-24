@@ -56,6 +56,69 @@ import org.opensearch.index.query.QueryBuilder;
 import org.opensearch.index.query.QueryBuilders;
 import org.opensearch.search.SearchHit;
 
+/**
+ * The SuggestIndexer class is responsible for indexing and managing suggest items in an OpenSearch index.
+ * It provides methods to index, delete, and manage suggest items, including handling bad words and elevate words.
+ *
+ * <p>Constructor:
+ * <ul>
+ * <li>{@link #SuggestIndexer(Client, String, ReadingConverter, ReadingConverter, Normalizer, SuggestAnalyzer, SuggestSettings, ExecutorService)}
+ * </ul>
+ *
+ * <p>Methods:
+ * <ul>
+ * <li>{@link #index(SuggestItem)} - Index a single suggest item.
+ * <li>{@link #index(SuggestItem[])} - Index multiple suggest items.
+ * <li>{@link #delete(String)} - Delete a suggest item by ID.
+ * <li>{@link #deleteByQuery(String)} - Delete suggest items by query string.
+ * <li>{@link #deleteByQuery(QueryBuilder)} - Delete suggest items by query builder.
+ * <li>{@link #deleteAll()} - Delete all suggest items.
+ * <li>{@link #deleteDocumentWords()} - Delete document words.
+ * <li>{@link #deleteQueryWords()} - Delete query words.
+ * <li>{@link #indexFromQueryLog(QueryLog)} - Index from a single query log.
+ * <li>{@link #indexFromQueryLog(QueryLog[])} - Index from multiple query logs.
+ * <li>{@link #indexFromQueryLog(QueryLogReader, int, long)} - Index from query log reader with specified document per request and request interval.
+ * <li>{@link #indexFromDocument(Map[])} - Index from an array of documents.
+ * <li>{@link #indexFromDocument(Supplier, int, long)} - Index from document reader with specified document per request and request interval.
+ * <li>{@link #indexFromSearchWord(String, String[], String[], String[], int, String[])} - Index from search word.
+ * <li>{@link #addBadWord(String, boolean)} - Add a bad word and optionally apply it.
+ * <li>{@link #deleteBadWord(String)} - Delete a bad word.
+ * <li>{@link #addElevateWord(ElevateWord, boolean)} - Add an elevate word and optionally apply it.
+ * <li>{@link #deleteElevateWord(String, boolean)} - Delete an elevate word and optionally apply it.
+ * <li>{@link #restoreElevateWord()} - Restore elevate words.
+ * <li>{@link #deleteOldWords(ZonedDateTime)} - Delete old words based on a threshold date.
+ * <li>{@link #setIndexName(String)} - Set the index name.
+ * <li>{@link #setSupportedFields(String[])} - Set the supported fields.
+ * <li>{@link #setTagFieldNames(String[])} - Set the tag field names.
+ * <li>{@link #setRoleFieldName(String)} - Set the role field name.
+ * <li>{@link #setReadingConverter(ReadingConverter)} - Set the reading converter.
+ * <li>{@link #setNormalizer(Normalizer)} - Set the normalizer.
+ * <li>{@link #setAnalyzer(SuggestAnalyzer)} - Set the analyzer.
+ * <li>{@link #setContentsParser(ContentsParser)} - Set the contents parser.
+ * <li>{@link #setSuggestWriter(SuggestWriter)} - Set the suggest writer.
+ * </ul>
+ *
+ * <p>Fields:
+ * <ul>
+ * <li>{@link #logger} - Logger instance.
+ * <li>{@link #client} - OpenSearch client.
+ * <li>{@link #index} - Index name.
+ * <li>{@link #settings} - Suggest settings.
+ * <li>{@link #supportedFields} - Supported fields for suggestions.
+ * <li>{@link #tagFieldNames} - Tag field names.
+ * <li>{@link #roleFieldName} - Role field name.
+ * <li>{@link #langFieldName} - Language field name.
+ * <li>{@link #badWords} - List of bad words.
+ * <li>{@link #parallel} - Flag for parallel processing.
+ * <li>{@link #readingConverter} - Reading converter.
+ * <li>{@link #contentsReadingConverter} - Contents reading converter.
+ * <li>{@link #normalizer} - Normalizer.
+ * <li>{@link #analyzer} - Suggest analyzer.
+ * <li>{@link #contentsParser} - Contents parser.
+ * <li>{@link #suggestWriter} - Suggest writer.
+ * <li>{@link #threadPool} - Executor service for thread pool.
+ * </ul>
+ */
 public class SuggestIndexer {
     private final static Logger logger = LogManager.getLogger(SuggestIndexer.class);
 

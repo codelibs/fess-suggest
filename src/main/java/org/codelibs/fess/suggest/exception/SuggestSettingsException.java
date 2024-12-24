@@ -15,6 +15,19 @@
  */
 package org.codelibs.fess.suggest.exception;
 
+/**
+ * Exception thrown when there is an issue with the suggest settings.
+ * This exception extends {@link RuntimeException}, so it is an unchecked exception.
+ *
+ * <p>There are three constructors available for this exception:</p>
+ * <ul>
+ *   <li>{@link #SuggestSettingsException(String)}: Constructs a new exception with the specified detail message.</li>
+ *   <li>{@link #SuggestSettingsException(Throwable)}: Constructs a new exception with the specified cause.</li>
+ *   <li>{@link #SuggestSettingsException(String, Throwable)}: Constructs a new exception with the specified detail message and cause.</li>
+ * </ul>
+ *
+ * @see RuntimeException
+ */
 public class SuggestSettingsException extends RuntimeException {
 
     private static final long serialVersionUID = 1L;

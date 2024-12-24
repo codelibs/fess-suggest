@@ -34,6 +34,11 @@ import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.util.SuggestUtil;
 import org.opensearch.common.Nullable;
 
+/**
+ * The SuggestItem class represents an item used for suggestions in the Fess search engine.
+ * It contains various attributes such as text, readings, fields, tags, roles, languages, kinds, and frequencies.
+ * The class provides methods to manipulate and retrieve these attributes, as well as to convert the item to and from different formats.
+ */
 public class SuggestItem {
 
     public enum Kind {

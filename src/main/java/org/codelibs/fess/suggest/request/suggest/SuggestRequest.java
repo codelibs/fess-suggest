@@ -45,6 +45,48 @@ import org.opensearch.index.query.functionscore.ScoreFunctionBuilders;
 import org.opensearch.search.SearchHit;
 import org.opensearch.search.sort.SortOrder;
 
+/**
+ * SuggestRequest is a class that handles the request for suggestions.
+ * It extends the Request class with a SuggestResponse type.
+ *
+ * <p>This class provides various methods to set parameters for the suggestion request,
+ * such as index, query, size, tags, roles, fields, kinds, languages, and other configurations.
+ * It also includes methods to build and process the request using Elasticsearch's client.</p>
+ *
+ * <p>Key functionalities include:</p>
+ * <ul>
+ *   <li>Setting the index, query, and size of the request.</li>
+ *   <li>Adding tags, roles, fields, kinds, and languages to the request.</li>
+ *   <li>Configuring suggestion details, reading converter, normalizer, prefix match weight, match word first, and skip duplicate words options.</li>
+ *   <li>Building the query and filter query for the suggestion request.</li>
+ *   <li>Processing the request and handling the response or failure.</li>
+ *   <li>Creating the response from the search results.</li>
+ * </ul>
+ *
+ * <p>Example usage:</p>
+ * <pre>
+ * SuggestRequest suggestRequest = new SuggestRequest();
+ * suggestRequest.setIndex("my_index");
+ * suggestRequest.setQuery("example query");
+ * suggestRequest.setSize(5);
+ * suggestRequest.addTag("tag1");
+ * suggestRequest.addRole("role1");
+ * suggestRequest.addField("field1");
+ * suggestRequest.addKind("kind1");
+ * suggestRequest.addLang("en");
+ * suggestRequest.setSuggestDetail(true);
+ * suggestRequest.setReadingConverter(new MyReadingConverter());
+ * suggestRequest.setNormalizer(new MyNormalizer());
+ * suggestRequest.setPrefixMatchWeight(1.5f);
+ * suggestRequest.setMatchWordFirst(false);
+ * suggestRequest.setSkipDuplicateWords(false);
+ * </pre>
+ *
+ * <p>Note: This class is designed to work with Elasticsearch and requires appropriate dependencies and configurations.</p>
+ *
+ * @see Request
+ * @see SuggestResponse
+ */
 public class SuggestRequest extends Request<SuggestResponse> {
     private String index = null;
 

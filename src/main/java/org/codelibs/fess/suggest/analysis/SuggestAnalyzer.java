@@ -19,8 +19,28 @@ import java.util.List;
 
 import org.opensearch.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken;
 
+/**
+ * Interface for analyzing and processing suggestion tokens.
+ */
 public interface SuggestAnalyzer {
+
+    /**
+     * Analyzes the given text and returns a list of tokens.
+     *
+     * @param text the text to analyze
+     * @param field the field associated with the text
+     * @param lang the language of the text
+     * @return a list of analyzed tokens
+     */
     List<AnalyzeToken> analyze(String text, String field, String lang);
 
+    /**
+     * Analyzes the given text and returns a list of tokens along with their readings.
+     *
+     * @param text the text to analyze
+     * @param field the field associated with the text
+     * @param lang the language of the text
+     * @return a list of analyzed tokens with their readings
+     */
     List<AnalyzeToken> analyzeAndReading(String text, String field, String lang);
 }

@@ -34,6 +34,32 @@ import org.codelibs.fess.suggest.util.SuggestUtil;
 import org.opensearch.OpenSearchStatusException;
 import org.opensearch.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken;
 
+/**
+ * DefaultContentsParser is an implementation of the ContentsParser interface.
+ * It provides methods to parse search words, query logs, and documents into SuggestItem objects.
+ *
+ * <p>This class uses various utilities such as ReadingConverter, Normalizer, and SuggestAnalyzer
+ * to process and analyze the input data.</p>
+ *
+ * <p>It also handles the exclusion of search words based on certain criteria and manages the
+ * maximum length of analyzed content.</p>
+ *
+ * <p>Methods in this class may throw SuggesterException in case of failures during the parsing process.</p>
+ *
+ * <p>Usage example:</p>
+ * <pre>
+ * {@code
+ * DefaultContentsParser parser = new DefaultContentsParser();
+ * SuggestItem item = parser.parseSearchWords(words, readings, fields, tags, roles, score, readingConverter, normalizer, analyzer, langs);
+ * }
+ * </pre>
+ *
+ * @see ContentsParser
+ * @see SuggestItem
+ * @see ReadingConverter
+ * @see Normalizer
+ * @see SuggestAnalyzer
+ */
 public class DefaultContentsParser implements ContentsParser {
 
     private final static Logger logger = LogManager.getLogger(DefaultContentsParser.class);

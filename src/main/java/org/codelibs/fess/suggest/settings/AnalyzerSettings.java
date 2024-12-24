@@ -45,6 +45,37 @@ import org.opensearch.common.xcontent.XContentType;
 import org.opensearch.index.query.QueryBuilders;
 import org.opensearch.search.SearchHit;
 
+/**
+ * The AnalyzerSettings class is responsible for managing and configuring analyzers for different fields and languages.
+ * It interacts with the Elasticsearch client to create, update, and delete analyzer settings, as well as to retrieve
+ * analyzer names and mappings.
+ *
+ * <p>Key functionalities include:</p>
+ * <ul>
+ *   <li>Initializing analyzer settings and mappings.</li>
+ *   <li>Retrieving analyzer names for different fields and languages.</li>
+ *   <li>Updating and deleting analyzer settings.</li>
+ *   <li>Loading index settings and mappings from resources.</li>
+ *   <li>Checking the availability of analyzers for supported languages.</li>
+ * </ul>
+ *
+ * <p>Supported languages are defined in the SUPPORTED_LANGUAGES array.</p>
+ *
+ * <p>Inner class:</p>
+ * <ul>
+ *   <li>DefaultContentsAnalyzer: Implements the SuggestAnalyzer interface to analyze text and retrieve tokens using
+ *       the configured analyzers.</li>
+ * </ul>
+ *
+ * <p>Protected static class:</p>
+ * <ul>
+ *   <li>FieldAnalyzerMapping: Holds the analyzer names for different types of analysis (reading, reading term,
+ *       normalization, contents, and contents reading) for a specific field.</li>
+ * </ul>
+ *
+ * @see SuggestAnalyzer
+ * @see FieldAnalyzerMapping
+ */
 public class AnalyzerSettings {
     public static final String READING_ANALYZER = "reading_analyzer";
     public static final String READING_TERM_ANALYZER = "reading_term_analyzer";

@@ -20,6 +20,10 @@ import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.request.RequestBuilder;
 import org.opensearch.client.Client;
 
+/**
+ * Builder class for constructing {@link SuggestRequest} instances.
+ * This builder provides methods to set various parameters for the suggest request.
+ */
 public class SuggestRequestBuilder extends RequestBuilder<SuggestRequest, SuggestResponse> {
     public SuggestRequestBuilder(final Client client, final ReadingConverter readingConverter, final Normalizer normalizer) {
         super(client, new SuggestRequest());

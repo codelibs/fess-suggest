@@ -15,6 +15,21 @@
  */
 package org.codelibs.fess.suggest.exception;
 
+/**
+ * Exception thrown when there is an issue with the suggestion index.
+ * This exception extends {@link SuggesterException}.
+ *
+ * <p>This exception can be thrown with a message, a cause, or both.</p>
+ *
+ * <pre>
+ * Example usage:
+ * throw new SuggestIndexException("Indexing error occurred");
+ * throw new SuggestIndexException(new IOException("IO error"));
+ * throw new SuggestIndexException("Indexing error", new IOException("IO error"));
+ * </pre>
+ *
+ * @see SuggesterException
+ */
 public class SuggestIndexException extends SuggesterException {
 
     private static final long serialVersionUID = -3792626439756997194L;

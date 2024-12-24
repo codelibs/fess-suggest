@@ -18,6 +18,10 @@ package org.codelibs.fess.suggest.request.popularwords;
 import org.codelibs.fess.suggest.request.RequestBuilder;
 import org.opensearch.client.Client;
 
+/**
+ * Builder for creating a {@link PopularWordsRequest} to fetch popular words.
+ * This builder provides methods to set various parameters for the request.
+ */
 public class PopularWordsRequestBuilder extends RequestBuilder<PopularWordsRequest, PopularWordsResponse> {
     public PopularWordsRequestBuilder(final Client client) {
         super(client, new PopularWordsRequest());

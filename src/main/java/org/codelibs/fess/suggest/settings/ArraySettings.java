@@ -45,6 +45,45 @@ import org.opensearch.index.IndexNotFoundException;
 import org.opensearch.index.query.QueryBuilders;
 import org.opensearch.search.SearchHit;
 
+/**
+ * The ArraySettings class provides methods to manage settings stored in an array format within an Elasticsearch index.
+ * It allows adding, retrieving, and deleting settings based on keys and values.
+ *
+ * <p>Constructor:
+ * <ul>
+ * <li>{@link #ArraySettings(SuggestSettings, Client, String, String)}: Initializes the ArraySettings with the provided settings, client, index name, and settings ID.</li>
+ * </ul>
+ *
+ * <p>Public Methods:
+ * <ul>
+ * <li>{@link #get(String)}: Retrieves an array of values associated with the specified key.</li>
+ * <li>{@link #add(String, Object)}: Adds a key-value pair to the settings array.</li>
+ * <li>{@link #delete(String)}: Deletes all entries associated with the specified key.</li>
+ * <li>{@link #delete(String, String)}: Deletes a specific key-value pair from the settings array.</li>
+ * </ul>
+ *
+ * <p>Protected Methods:
+ * <ul>
+ * <li>{@link #createArraySettingsIndexName(String)}: Creates the name for the array settings index.</li>
+ * <li>{@link #createId(String, Object)}: Creates a unique ID for a key-value pair using Base64 encoding.</li>
+ * <li>{@link #getFromArrayIndex(String, String, String)}: Retrieves an array of maps from the index based on the key.</li>
+ * <li>{@link #addToArrayIndex(String, String, String, Map)}: Adds a map to the array index.</li>
+ * <li>{@link #deleteKeyFromArray(String, String, String)}: Deletes all entries associated with the specified key from the array index.</li>
+ * <li>{@link #deleteFromArray(String, String, String)}: Deletes a specific entry from the array index based on the ID.</li>
+ * <li>{@link #createMappingIfEmpty(String, String, Client)}: Creates the index mapping if it does not exist.</li>
+ * <li>{@link #loadIndexSettings()}: Loads the index settings from a JSON file.</li>
+ * </ul>
+ *
+ * <p>Fields:
+ * <ul>
+ * <li>{@link #logger}: Logger instance for logging debug information.</li>
+ * <li>{@link #client}: Elasticsearch client instance.</li>
+ * <li>{@link #arraySettingsIndexName}: Name of the array settings index.</li>
+ * <li>{@link #settingsId}: ID of the settings.</li>
+ * <li>{@link #settings}: SuggestSettings instance containing configuration settings.</li>
+ * <li>{@link #encoder}: Base64 encoder instance for encoding IDs.</li>
+ * </ul>
+ */
 public class ArraySettings {
     private static final Logger logger = LogManager.getLogger(ArraySettings.class);
 

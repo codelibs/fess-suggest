@@ -30,6 +30,10 @@ import org.opensearch.client.Client;
 import org.opensearch.common.unit.TimeValue;
 import org.opensearch.index.query.QueryBuilder;
 
+/**
+ * SuggestIndexWriter is an implementation of the SuggestWriter interface that provides methods to write, delete,
+ * and delete by query suggest items in an Elasticsearch index.
+ */
 public class SuggestIndexWriter implements SuggestWriter {
     @Override
     public SuggestWriterResult write(final Client client, final SuggestSettings settings, final String index, final SuggestItem[] items,

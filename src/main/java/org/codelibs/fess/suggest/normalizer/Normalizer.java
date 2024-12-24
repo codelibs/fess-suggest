@@ -15,6 +15,11 @@
  */
 package org.codelibs.fess.suggest.normalizer;
 
+/**
+ * An interface for normalizing text.
+ * Implementations of this interface should provide a method to normalize
+ * a given text based on the specified field and optional language parameters.
+ */
 public interface Normalizer {
     String normalize(String text, String field, String... langs);
 }

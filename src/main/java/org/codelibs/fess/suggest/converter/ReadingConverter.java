@@ -18,12 +18,35 @@ package org.codelibs.fess.suggest.converter;
 import java.io.IOException;
 import java.util.List;
 
+/**
+ * Interface for converting text into its reading form.
+ */
 public interface ReadingConverter {
+
+    /**
+     * Returns the maximum number of readings.
+     *
+     * @return the maximum number of readings, default is 10.
+     */
     default int getMaxReadingNum() {
         return 10;
     }
 
+    /**
+     * Initializes the converter.
+     *
+     * @throws IOException if an I/O error occurs during initialization.
+     */
     void init() throws IOException;
 
+    /**
+     * Converts the given text into a list of readings based on the specified field and languages.
+     *
+     * @param text the text to be converted.
+     * @param field the field to be used for conversion.
+     * @param langs the languages to be used for conversion.
+     * @return a list of readings for the given text.
+     * @throws IOException if an I/O error occurs during conversion.
+     */
     List<String> convert(String text, final String field, String... langs) throws IOException;
 }

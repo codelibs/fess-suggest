@@ -20,6 +20,15 @@ import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.opensearch.client.Client;
 import org.opensearch.index.query.QueryBuilder;
 
+/**
+ * SuggestBulkFileWriter is an implementation of the SuggestWriter interface.
+ * This class is responsible for writing and deleting suggest items in bulk.
+ *
+ * <p>Currently, the methods in this class throw UnsupportedOperationException
+ * as they are not yet implemented.</p>
+ *
+ * @see SuggestWriter
+ */
 public class SuggestBulkFileWriter implements SuggestWriter {
     @Override
     public SuggestWriterResult write(final Client client, final SuggestSettings settings, final String index, final SuggestItem[] items,

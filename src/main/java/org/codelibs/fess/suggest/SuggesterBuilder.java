@@ -28,6 +28,10 @@ import org.codelibs.fess.suggest.settings.SuggestSettingsBuilder;
 import org.codelibs.fess.suggest.util.SuggestUtil;
 import org.opensearch.client.Client;
 
+/**
+ * Builder class for creating instances of {@link Suggester}.
+ * This class allows for the configuration of various components used by the {@link Suggester}.
+ */
 public class SuggesterBuilder {
 
     protected SuggestSettings settings;

@@ -18,6 +18,11 @@ package org.codelibs.fess.suggest.index;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Represents the response of a suggest delete operation.
+ * This class contains information about any errors that occurred during the operation
+ * and the time taken to complete the operation.
+ */
 public class SuggestDeleteResponse {
     protected final List<Throwable> errors = new ArrayList<>();
     protected final long took;
