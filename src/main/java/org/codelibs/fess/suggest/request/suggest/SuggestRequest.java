@@ -51,7 +51,7 @@ import org.opensearch.search.sort.SortOrder;
  *
  * <p>This class provides various methods to set parameters for the suggestion request,
  * such as index, query, size, tags, roles, fields, kinds, languages, and other configurations.
- * It also includes methods to build and process the request using Elasticsearch's client.</p>
+ * It also includes methods to build and process the request using OpenSearch's client.</p>
  *
  * <p>Key functionalities include:</p>
  * <ul>
@@ -82,7 +82,7 @@ import org.opensearch.search.sort.SortOrder;
  * suggestRequest.setSkipDuplicateWords(false);
  * </pre>
  *
- * <p>Note: This class is designed to work with Elasticsearch and requires appropriate dependencies and configurations.</p>
+ * <p>Note: This class is designed to work with OpenSearch and requires appropriate dependencies and configurations.</p>
  *
  * @see Request
  * @see SuggestResponse

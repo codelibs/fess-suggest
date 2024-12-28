@@ -47,7 +47,7 @@ import org.opensearch.search.SearchHit;
 
 /**
  * The AnalyzerSettings class is responsible for managing and configuring analyzers for different fields and languages.
- * It interacts with the Elasticsearch client to create, update, and delete analyzer settings, as well as to retrieve
+ * It interacts with the OpenSearch client to create, update, and delete analyzer settings, as well as to retrieve
  * analyzer names and mappings.
  *
  * <p>Key functionalities include:</p>

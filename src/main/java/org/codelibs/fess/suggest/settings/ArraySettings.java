@@ -46,7 +46,7 @@ import org.opensearch.index.query.QueryBuilders;
 import org.opensearch.search.SearchHit;
 
 /**
- * The ArraySettings class provides methods to manage settings stored in an array format within an Elasticsearch index.
+ * The ArraySettings class provides methods to manage settings stored in an array format within an OpenSearch index.
  * It allows adding, retrieving, and deleting settings based on keys and values.
  *
  * <p>Constructor:
@@ -77,7 +77,7 @@ import org.opensearch.search.SearchHit;
  * <p>Fields:
  * <ul>
  * <li>{@link #logger}: Logger instance for logging debug information.</li>
- * <li>{@link #client}: Elasticsearch client instance.</li>
+ * <li>{@link #client}: OpenSearch client instance.</li>
  * <li>{@link #arraySettingsIndexName}: Name of the array settings index.</li>
  * <li>{@link #settingsId}: ID of the settings.</li>
  * <li>{@link #settings}: SuggestSettings instance containing configuration settings.</li>

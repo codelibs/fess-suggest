@@ -32,7 +32,7 @@ import org.opensearch.index.query.QueryBuilder;
 
 /**
  * SuggestIndexWriter is an implementation of the SuggestWriter interface that provides methods to write, delete,
- * and delete by query suggest items in an Elasticsearch index.
+ * and delete by query suggest items in an OpenSearch index.
  */
 public class SuggestIndexWriter implements SuggestWriter {
     @Override

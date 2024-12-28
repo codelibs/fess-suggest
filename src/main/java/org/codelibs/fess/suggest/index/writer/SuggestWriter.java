@@ -52,7 +52,7 @@ public interface SuggestWriter {
     /**
      * Deletes documents from the specified index based on the given query.
      *
-     * @param client the Elasticsearch client to use for the operation
+     * @param client the OpenSearch client to use for the operation
      * @param settings the suggest settings to apply
      * @param index the name of the index from which documents will be deleted
      * @param queryBuilder the query that defines which documents to delete

@@ -40,7 +40,7 @@ import org.opensearch.index.IndexNotFoundException;
 
 /**
  * The SuggestSettings class is responsible for managing the settings related to suggestions.
- * It interacts with an Elasticsearch client to store and retrieve settings.
+ * It interacts with an OpenSearch client to store and retrieve settings.
  *
  * <p>This class provides methods to initialize settings, get and set individual settings,
  * and manage various types of settings such as array settings, analyzer settings, bad word settings,
@@ -95,8 +95,6 @@ import org.opensearch.index.IndexNotFoundException;
  * <ul>
  *   <li>{@link #builder()}</li>
  * </ul>
- *
- * <p>Logging is performed using the SLF4J Logger.</p>
  *
  * @see Client
  * @see GetResponse

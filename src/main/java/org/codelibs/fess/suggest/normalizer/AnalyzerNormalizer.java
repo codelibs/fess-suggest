@@ -25,11 +25,11 @@ import org.opensearch.client.Client;
 
 /**
  * AnalyzerNormalizer is a class that implements the Normalizer interface.
- * It uses an Elasticsearch client and settings to normalize text based on specified languages.
+ * It uses an OpenSearch client and settings to normalize text based on specified languages.
  */
 public class AnalyzerNormalizer implements Normalizer {
     /**
-     * The Elasticsearch client used for analyzing text.
+     * The OpenSearch client used for analyzing text.
      */
     protected final Client client;
 
@@ -46,7 +46,7 @@ public class AnalyzerNormalizer implements Normalizer {
     /**
      * Constructs an AnalyzerNormalizer with the specified client and settings.
      *
-     * @param client   the Elasticsearch client
+     * @param client   the OpenSearch client
      * @param settings the settings for suggestions
      */
     public AnalyzerNormalizer(final Client client, final SuggestSettings settings) {

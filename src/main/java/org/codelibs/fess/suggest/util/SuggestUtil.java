@@ -169,12 +169,12 @@ public final class SuggestUtil {
     }
 
     /**
-     * Creates a bulk line for Elasticsearch indexing from the given parameters.
+     * Creates a bulk line for OpenSearch indexing from the given parameters.
      *
-     * @param index the name of the Elasticsearch index
-     * @param type the type of the document (deprecated in newer versions of Elasticsearch)
+     * @param index the name of the OpenSearch index
+     * @param type the type of the document (deprecated in newer versions of OpenSearch)
      * @param item the SuggestItem containing the data to be indexed
-     * @return a string representing the bulk line for Elasticsearch indexing
+     * @return a string representing the bulk line for OpenSearch indexing
      * @throws SuggesterException if an I/O error occurs during the creation of the bulk line
      */
     public static String createBulkLine(final String index, final String type, final SuggestItem item) {
@@ -269,7 +269,7 @@ public final class SuggestUtil {
     /**
      * Creates a new instance of DefaultContentsAnalyzer using the provided client and suggest settings.
      *
-     * @param client   the Elasticsearch client to be used for the analyzer
+     * @param client   the OpenSearch client to be used for the analyzer
      * @param settings the suggest settings containing the analyzer configuration
      * @return a new instance of AnalyzerSettings.DefaultContentsAnalyzer
      */
@@ -309,7 +309,7 @@ public final class SuggestUtil {
     /**
      * Deletes documents from the specified index based on the given query.
      *
-     * @param client the Elasticsearch client to use for executing the query and delete operations
+     * @param client the OpenSearch client to use for executing the query and delete operations
      * @param settings the settings for the suggest feature, including timeouts and scroll settings
      * @param index the name of the index from which documents should be deleted
      * @param queryBuilder the query used to identify documents to delete
@@ -357,7 +357,7 @@ public final class SuggestUtil {
     /**
      * Deletes the scroll context associated with the given scroll ID.
      *
-     * @param client the Elasticsearch client used to clear the scroll context
+     * @param client the OpenSearch client used to clear the scroll context
      * @param scrollId the ID of the scroll context to be deleted; if null, no action is taken
      */
     public static void deleteScrollContext(final Client client, final String scrollId) {
