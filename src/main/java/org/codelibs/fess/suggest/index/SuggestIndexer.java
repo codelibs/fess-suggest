@@ -79,7 +79,6 @@ import org.opensearch.search.SearchHit;
  * <li>{@link #indexFromQueryLog(QueryLog[])} - Index from multiple query logs.
  * <li>{@link #indexFromQueryLog(QueryLogReader, int, long)} - Index from query log reader with specified document per request and request interval.
  * <li>{@link #indexFromDocument(Map[])} - Index from an array of documents.
- * <li>{@link #indexFromDocument(Supplier, int, long)} - Index from document reader with specified document per request and request interval.
  * <li>{@link #indexFromSearchWord(String, String[], String[], String[], int, String[])} - Index from search word.
  * <li>{@link #addBadWord(String, boolean)} - Add a bad word and optionally apply it.
  * <li>{@link #deleteBadWord(String)} - Delete a bad word.
