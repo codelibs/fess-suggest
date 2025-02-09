@@ -431,12 +431,6 @@ public class SuggestIndexer {
         }
     }
 
-    @Deprecated
-    public Deferred<SuggestIndexResponse>.Promise indexFromDocument(final Supplier<DocumentReader> reader, final int docPerReq,
-            final long requestInterval) {
-        return indexFromDocument(reader, docPerReq, () -> ThreadUtil.sleep(requestInterval));
-    }
-
     public Deferred<SuggestIndexResponse>.Promise indexFromDocument(final Supplier<DocumentReader> reader, final int docPerReq,
             final Runnable waitController) {
         if (logger.isInfoEnabled()) {

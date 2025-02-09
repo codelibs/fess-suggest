@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.codelibs.core.lang.ThreadUtil;
 import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.entity.ElevateWord;
@@ -372,7 +373,7 @@ public class SuggesterTest {
         ESSourceReader reader = new ESSourceReader(client, suggester.settings(), indexName);
         reader.setScrollSize(1000);
 
-        suggester.indexer().indexFromDocument(() -> reader, 1000, 100).then(response -> {
+        suggester.indexer().indexFromDocument(() -> reader, 1000, () -> ThreadUtil.sleep(100)).then(response -> {
             numObInputDoc.set(response.getNumberOfInputDocs());
             latch.countDown();
         }).error(t -> {
