@@ -21,6 +21,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
+/**
+ * A chain of {@link ReadingConverter} implementations that applies each converter in sequence to generate possible reading variations of a given text.
+ * It maintains a list of ReadingConverter instances and iterates through them, applying each converter to the input text and accumulating the results.
+ * The chain stops processing when the maximum number of readings is reached.
+ */
 public class ReadingConverterChain implements ReadingConverter {
     private final List<ReadingConverter> converters = new ArrayList<>();
 

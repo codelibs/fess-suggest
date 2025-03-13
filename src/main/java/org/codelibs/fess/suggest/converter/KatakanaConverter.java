@@ -28,6 +28,18 @@ import org.opensearch.core.common.Strings;
 
 import com.ibm.icu.text.Transliterator;
 
+/**
+ * {@link KatakanaConverter} converts input strings to katakana representation.
+ * It utilizes a transliterator to convert hiragana to katakana and can optionally
+ * use a tokenizer to process the input.
+ *
+ * <p>
+ * The class provides methods to initialize the converter, convert strings, and
+ * check if a tokenizer is enabled. It also includes methods to create a token
+ * stream and extract reading information from the stream's attributes, although
+ * the tokenizer-related functionality is currently commented out.
+ * </p>
+ */
 public class KatakanaConverter implements ReadingConverter {
 
     protected final Transliterator transliterator = Transliterator.getInstance("Hiragana-Katakana");

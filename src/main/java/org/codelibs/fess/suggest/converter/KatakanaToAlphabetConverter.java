@@ -23,6 +23,34 @@ import java.util.Map;
 
 import com.ibm.icu.text.Transliterator;
 
+/**
+ * Converts Katakana characters to their corresponding Alphabet representations.
+ *
+ * <p>
+ * This class implements the {@link ReadingConverter} interface and provides a method to convert a given
+ * Katakana string into a list of possible Alphabet readings. It uses a predefined mapping of Katakana
+ * characters to their Alphabet equivalents, handling both single and double Katakana character combinations.
+ * </p>
+ *
+ * <p>
+ * The conversion process involves iterating through the input string, identifying Katakana characters,
+ * and replacing them with their corresponding Alphabet representations based on the internal mapping.
+ * When a Katakana character has multiple Alphabet representations, the converter generates multiple
+ * possible readings.
+ * </p>
+ *
+ * <p>
+ * The class also utilizes ICU4J's {@link com.ibm.icu.text.Transliterator} to convert full-width characters
+ * to half-width and to convert any characters to lowercase, ensuring consistency in the output.
+ * </p>
+ *
+ * <p>
+ * Example:
+ * For the input "キャ", the converter might return a list containing "kya".
+ * For the input "ジュ", the converter might return a list containing "zyu", "ju", and "jyu".
+ * </p>
+ *
+ */
 public class KatakanaToAlphabetConverter implements ReadingConverter {
     private final Map<String, String[]> convertMap;
 

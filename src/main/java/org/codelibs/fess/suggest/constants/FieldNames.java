@@ -73,6 +73,7 @@ public final class FieldNames {
     public static final String ANALYZER_SETTINGS_CONTENTS_ANALYZER = "contentsAnalyzer";
     public static final String ANALYZER_SETTINGS_CONTENTS_READING_ANALYZER = "contentsReadingAnalyzer";
 
+    // Private constructor to prevent instantiation
     private FieldNames() {
     }
 }

@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.codelibs.fess.suggest.util.SuggestUtil;
 import org.opensearch.action.search.SearchRequestBuilder;
@@ -36,6 +37,48 @@ import org.opensearch.index.query.QueryBuilders;
 import org.opensearch.search.SearchHit;
 import org.opensearch.search.sort.SortBuilder;
 
+/**
+ * <p>
+ * {@link ESSourceReader} reads documents from Elasticsearch using the scroll API.
+ * It implements the {@link DocumentReader} interface to provide a way to iterate over documents
+ * in a large index without loading all of them into memory at once.
+ * </p>
+ *
+ * <p>
+ * The reader supports limiting the number of documents read based on a percentage of the total documents
+ * or a fixed number. It also allows filtering documents based on their size, using the {@code limitOfDocumentSize}
+ * parameter.
+ * </p>
+ *
+ * <p>
+ * The reader uses a queue to buffer documents read from Elasticsearch, and it retries failed requests
+ * up to a maximum number of times.
+ * </p>
+ *
+ * <p>
+ * <b>Usage:</b>
+ * <pre>
+ * {@code
+ * Client client = // Obtain Elasticsearch client
+ * SuggestSettings settings = // Obtain SuggestSettings
+ * String indexName = "your_index_name";
+ *
+ * ESSourceReader reader = new ESSourceReader(client, settings, indexName);
+ * reader.setScrollSize(1000); // Set the scroll size
+ * reader.setLimitOfDocumentSize(1024 * 1024); // Limit document size to 1MB
+ * reader.setQuery(QueryBuilders.termQuery("field", "value")); // Set a query
+ *
+ * Map<String, Object> document;
+ * while ((document = reader.read()) != null) {
+ *     // Process the document
+ *     System.out.println(document);
+ * }
+ *
+ * reader.close(); // Close the reader to release resources
+ * }
+ * </pre>
+ * </p>
+ */
 public class ESSourceReader implements DocumentReader {
     private static final Logger logger = LogManager.getLogger(ESSourceReader.class);
 
@@ -178,7 +221,7 @@ public class ESSourceReader implements DocumentReader {
                 exception = null;
                 break;
             } catch (final Exception e) {
-                exception = new RuntimeException(e);
+                exception = new SuggesterException(e);
                 scrollId = null;
             }
         }

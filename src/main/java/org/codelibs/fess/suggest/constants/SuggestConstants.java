@@ -20,6 +20,7 @@ package org.codelibs.fess.suggest.constants;
  * It is a utility class and should not be instantiated.
  */
 public final class SuggestConstants {
+    // Private constructor to prevent instantiation
     private SuggestConstants() {
     }
 

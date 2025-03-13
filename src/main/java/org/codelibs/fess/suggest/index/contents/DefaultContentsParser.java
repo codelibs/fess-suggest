@@ -62,7 +62,7 @@ import org.opensearch.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken;
  */
 public class DefaultContentsParser implements ContentsParser {
 
-    private final static Logger logger = LogManager.getLogger(DefaultContentsParser.class);
+    private static final Logger logger = LogManager.getLogger(DefaultContentsParser.class);
 
     private final int maxAnalyzedContentLength;
 
@@ -102,7 +102,7 @@ public class DefaultContentsParser implements ContentsParser {
             return new SuggestItem(wordsList.toArray(new String[wordsList.size()]), readingList.toArray(new String[readingList.size()][]),
                     fields, 0, score, -1, tags, roles, langs, SuggestItem.Kind.QUERY);
         } catch (final IOException e) {
-            throw new SuggesterException("Failed to SuggestItem from search words.", e);
+            throw new SuggesterException("Failed to create SuggestItem from search words.", e);
         }
     }
 
@@ -149,7 +149,7 @@ public class DefaultContentsParser implements ContentsParser {
                 items.add(new SuggestItem(words, readings, new String[] { field }, 0, 1, -1, tags, roles, null, SuggestItem.Kind.QUERY));
             }
         } catch (final IOException e) {
-            throw new SuggesterException("Failed to create SuggestItem from queryLog.", e);
+            throw new SuggesterException("Failed to create SuggestItem from query log.", e);
         }
 
         return items;
@@ -212,7 +212,7 @@ public class DefaultContentsParser implements ContentsParser {
                             SuggestItem.Kind.DOCUMENT));
                 }
             } catch (final IOException e) {
-                throw new SuggesterException("Failed to create SuggestItem from document.", e);
+                throw new SuggesterException("Failed to create SuggestItem from the document.", e);
             }
         }
 

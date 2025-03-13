@@ -532,7 +532,7 @@ public class SuggestItem {
     }
 
     public String toJsonString() {
-        final StringBuilder buf = new StringBuilder();
+        final StringBuilder buf = new StringBuilder(100);
         buf.append('{').append('"').append(FieldNames.TEXT).append("\":").append(convertJsonString(text));
 
         for (int i = 0; i < readings.length; i++) {

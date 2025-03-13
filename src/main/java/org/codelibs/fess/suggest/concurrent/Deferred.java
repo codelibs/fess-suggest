@@ -26,6 +26,29 @@ import org.codelibs.core.exception.InterruptedRuntimeException;
 import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.codelibs.fess.suggest.request.Response;
 
+/**
+ * <p>
+ *   Deferred is a class that represents a deferred computation.
+ *   It is similar to a Promise in JavaScript.
+ *   It allows you to register callbacks that will be executed when the computation is complete,
+ *   either successfully (resolve) or with an error (reject).
+ * </p>
+ *
+ * <p>
+ *   The Deferred class has a Promise inner class that allows you to register callbacks
+ *   to be executed when the computation is complete.
+ *   The Promise class has then and error methods that allow you to register callbacks
+ *   for successful and unsuccessful computations, respectively.
+ * </p>
+ *
+ * <p>
+ *   The Deferred class uses a CountDownLatch to allow you to wait for the computation to complete.
+ *   The resolve and reject methods decrement the CountDownLatch, allowing the getResponse method
+ *   to return the result of the computation.
+ * </p>
+ *
+ * @param <RESPONSE> The type of the response.
+ */
 public class Deferred<RESPONSE extends Response> {
     private RESPONSE response = null;
 
@@ -143,7 +166,7 @@ public class Deferred<RESPONSE extends Response> {
                     throw new SuggesterException("Request timeout. time:" + time + " unit:" + unit.name());
                 }
                 if (error != null) {
-                    throw new SuggesterException(error);
+                    throw new SuggesterException("An error occurred during the deferred computation.", error);
                 }
                 return response;
             } catch (final InterruptedException e) {

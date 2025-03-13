@@ -43,7 +43,7 @@ public interface ContentsParser {
      * @param langs the array of languages associated with the search words
      * @return a SuggestItem created from the given search words and associated data
      */
-    SuggestItem parseSearchWords(String[] words, String[][] readings, String[] fields, String[] tags, String roles[], long score,
+    SuggestItem parseSearchWords(String[] words, String[][] readings, String[] fields, String[] tags, String[] roles, long score,
             ReadingConverter readingConverter, Normalizer normalizer, SuggestAnalyzer analyzer, String[] langs);
 
     /**

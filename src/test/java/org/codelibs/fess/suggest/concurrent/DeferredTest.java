@@ -138,7 +138,7 @@ public class DeferredTest {
             deferred.promise().getResponse(10, TimeUnit.SECONDS);
             fail();
         } catch (SuggesterException e) {
-            assertEquals("org.codelibs.fess.suggest.exception.SuggesterException: test", e.getMessage());
+            assertEquals("An error occurred during the deferred computation.", e.getMessage());
         }
     }
 

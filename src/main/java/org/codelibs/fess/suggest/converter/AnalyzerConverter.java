@@ -85,21 +85,21 @@ public class AnalyzerConverter implements ReadingConverter {
     public List<String> convert(final String text, final String field, final String... langs) throws IOException {
         final ReadingConverter converter;
         if (langs == null || langs.length == 0) {
-            converter = new LangAnayzerConverter(null);
+            converter = new LangAnalyzerConverter(null);
         } else {
             final ReadingConverterChain chain = new ReadingConverterChain();
             for (final String lang : langs) {
-                chain.addConverter(new LangAnayzerConverter(lang));
+                chain.addConverter(new LangAnalyzerConverter(lang));
             }
             converter = chain;
         }
         return converter.convert(text, field);
     }
 
-    protected class LangAnayzerConverter implements ReadingConverter {
+    protected class LangAnalyzerConverter implements ReadingConverter {
         protected final String lang;
 
-        protected LangAnayzerConverter(final String lang) {
+        protected LangAnalyzerConverter(final String lang) {
             this.lang = lang;
         }
 
