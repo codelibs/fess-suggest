@@ -31,7 +31,6 @@ import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.request.Request;
 import org.opensearch.action.search.SearchRequestBuilder;
 import org.opensearch.action.search.SearchResponse;
-import org.opensearch.client.Client;
 import org.opensearch.common.lucene.search.function.CombineFunction;
 import org.opensearch.common.lucene.search.function.FieldValueFactorFunction;
 import org.opensearch.common.lucene.search.function.FunctionScoreQuery;
@@ -44,6 +43,7 @@ import org.opensearch.index.query.functionscore.FunctionScoreQueryBuilder;
 import org.opensearch.index.query.functionscore.ScoreFunctionBuilders;
 import org.opensearch.search.SearchHit;
 import org.opensearch.search.sort.SortOrder;
+import org.opensearch.transport.client.Client;
 
 /**
  * SuggestRequest is a class that handles the request for suggestions.
@@ -373,7 +373,7 @@ public class SuggestRequest extends Request<SuggestResponse> {
         }
         firstWords.addAll(secondWords);
         firstItems.addAll(secondItems);
-        return new SuggestResponse(index, searchResponse.getTook().getMillis(), firstWords, searchResponse.getHits().getTotalHits().value,
+        return new SuggestResponse(index, searchResponse.getTook().getMillis(), firstWords, searchResponse.getHits().getTotalHits().value(),
                 firstItems);
     }
 

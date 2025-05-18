@@ -16,7 +16,7 @@
 package org.codelibs.fess.suggest.request;
 
 import org.codelibs.fess.suggest.concurrent.Deferred;
-import org.opensearch.client.Client;
+import org.opensearch.transport.client.Client;
 
 /**
  * An abstract class that serves as a builder for creating and executing requests.

@@ -31,11 +31,11 @@ import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.codelibs.fess.suggest.util.SuggestUtil;
 import org.opensearch.action.search.SearchRequestBuilder;
 import org.opensearch.action.search.SearchResponse;
-import org.opensearch.client.Client;
 import org.opensearch.index.query.QueryBuilder;
 import org.opensearch.index.query.QueryBuilders;
 import org.opensearch.search.SearchHit;
 import org.opensearch.search.sort.SortBuilder;
+import org.opensearch.transport.client.Client;
 
 /**
  * <p>
@@ -244,7 +244,7 @@ public class ESSourceReader implements DocumentReader {
     protected long getTotal() {
         final SearchResponse response = client.prepareSearch().setIndices(indexName).setQuery(queryBuilder).setSize(0)
                 .setTrackTotalHits(true).execute().actionGet(settings.getSearchTimeout());
-        return response.getHits().getTotalHits().value;
+        return response.getHits().getTotalHits().value();
     }
 
 }

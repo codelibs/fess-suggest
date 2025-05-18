@@ -31,12 +31,12 @@ import org.codelibs.core.lang.StringUtil;
 import org.codelibs.fess.suggest.exception.SuggestSettingsException;
 import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.opensearch.action.get.GetResponse;
-import org.opensearch.client.Client;
 import org.opensearch.common.collect.Tuple;
 import org.opensearch.common.xcontent.XContentType;
 import org.opensearch.common.xcontent.json.JsonXContent;
 import org.opensearch.core.xcontent.XContentBuilder;
 import org.opensearch.index.IndexNotFoundException;
+import org.opensearch.transport.client.Client;
 
 /**
  * The SuggestSettings class is responsible for managing the settings related to suggestions.

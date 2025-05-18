@@ -39,11 +39,11 @@ import org.opensearch.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken;
 import org.opensearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.opensearch.action.admin.indices.settings.get.GetSettingsResponse;
 import org.opensearch.action.search.SearchResponse;
-import org.opensearch.client.Client;
 import org.opensearch.common.settings.Settings;
 import org.opensearch.common.xcontent.XContentType;
 import org.opensearch.index.query.QueryBuilders;
 import org.opensearch.search.SearchHit;
+import org.opensearch.transport.client.Client;
 
 /**
  * The AnalyzerSettings class is responsible for managing and configuring analyzers for different fields and languages.

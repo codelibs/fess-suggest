@@ -29,7 +29,6 @@ import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.codelibs.core.lang.StringUtil;
-import org.codelibs.core.lang.ThreadUtil;
 import org.codelibs.fess.suggest.analysis.SuggestAnalyzer;
 import org.codelibs.fess.suggest.concurrent.Deferred;
 import org.codelibs.fess.suggest.constants.FieldNames;
@@ -50,11 +49,11 @@ import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.codelibs.fess.suggest.util.SuggestUtil;
 import org.opensearch.OpenSearchStatusException;
 import org.opensearch.action.search.SearchResponse;
-import org.opensearch.client.Client;
 import org.opensearch.index.query.Operator;
 import org.opensearch.index.query.QueryBuilder;
 import org.opensearch.index.query.QueryBuilders;
 import org.opensearch.search.SearchHit;
+import org.opensearch.transport.client.Client;
 
 /**
  * The SuggestIndexer class is responsible for indexing and managing suggest items in an OpenSearch index.

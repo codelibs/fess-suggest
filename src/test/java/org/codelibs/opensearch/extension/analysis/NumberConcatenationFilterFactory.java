@@ -42,7 +42,7 @@ public class NumberConcatenationFilterFactory extends AbstractTokenFilterFactory
         final String suffixWordsPath = settings.get("suffix_words_path");
 
         if (suffixWordsPath != null) {
-            final File suffixWordsFile = environment.configFile().resolve(suffixWordsPath).toFile();
+            final File suffixWordsFile = environment.configDir().resolve(suffixWordsPath).toFile();
             try (Reader reader = IOUtils.getDecodingReader(new FileInputStream(suffixWordsFile), StandardCharsets.UTF_8)) {
                 suffixWords = WordlistLoader.getWordSet(reader);
             } catch (final IOException e) {
