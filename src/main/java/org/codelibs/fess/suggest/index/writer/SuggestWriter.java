@@ -22,8 +22,8 @@ import java.util.Set;
 
 import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
-import org.opensearch.client.Client;
 import org.opensearch.index.query.QueryBuilder;
+import org.opensearch.transport.client.Client;
 
 public interface SuggestWriter {
     /**

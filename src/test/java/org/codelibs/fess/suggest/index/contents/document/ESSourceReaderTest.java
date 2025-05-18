@@ -37,10 +37,10 @@ import org.junit.Test;
 import org.opensearch.action.bulk.BulkRequestBuilder;
 import org.opensearch.action.index.IndexAction;
 import org.opensearch.action.index.IndexRequestBuilder;
-import org.opensearch.client.Client;
 import org.opensearch.index.IndexNotFoundException;
 import org.opensearch.search.sort.SortBuilders;
 import org.opensearch.search.sort.SortOrder;
+import org.opensearch.transport.client.Client;
 
 public class ESSourceReaderTest {
     static Suggester suggester;

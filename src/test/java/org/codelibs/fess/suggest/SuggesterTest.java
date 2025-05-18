@@ -53,7 +53,7 @@ import org.opensearch.action.bulk.BulkRequestBuilder;
 import org.opensearch.action.index.IndexAction;
 import org.opensearch.action.index.IndexRequestBuilder;
 import org.opensearch.action.support.WriteRequest;
-import org.opensearch.client.Client;
+import org.opensearch.transport.client.Client;
 
 public class SuggesterTest {
     static Suggester suggester;

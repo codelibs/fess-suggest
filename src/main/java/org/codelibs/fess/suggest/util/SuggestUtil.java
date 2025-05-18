@@ -49,12 +49,12 @@ import org.opensearch.action.bulk.BulkRequestBuilder;
 import org.opensearch.action.bulk.BulkResponse;
 import org.opensearch.action.delete.DeleteRequest;
 import org.opensearch.action.search.SearchResponse;
-import org.opensearch.client.Client;
 import org.opensearch.common.xcontent.json.JsonXContent;
 import org.opensearch.core.action.ActionListener;
 import org.opensearch.core.xcontent.XContentBuilder;
 import org.opensearch.index.query.QueryBuilder;
 import org.opensearch.search.SearchHit;
+import org.opensearch.transport.client.Client;
 
 public final class SuggestUtil {
     private static final int MAX_QUERY_TERM_NUM = 5;
@@ -143,7 +143,7 @@ public final class SuggestUtil {
             final List<BooleanClause> clauses = booleanQuery.clauses();
             final List<TermQuery> queryList = new ArrayList<>();
             for (final BooleanClause clause : clauses) {
-                final Query q = clause.getQuery();
+                final Query q = clause.query();
                 if (q instanceof BooleanQuery) {
                     queryList.addAll(getTermQueryList(q, fields));
                 } else if (q instanceof final TermQuery termQuery) {

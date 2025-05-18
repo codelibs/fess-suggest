@@ -36,7 +36,6 @@ import org.codelibs.fess.suggest.exception.SuggestSettingsException;
 import org.codelibs.fess.suggest.util.SuggestUtil;
 import org.opensearch.action.admin.indices.create.CreateIndexResponse;
 import org.opensearch.action.search.SearchResponse;
-import org.opensearch.client.Client;
 import org.opensearch.common.xcontent.XContentFactory;
 import org.opensearch.common.xcontent.XContentType;
 import org.opensearch.common.xcontent.json.JsonXContent;
@@ -44,6 +43,7 @@ import org.opensearch.core.xcontent.XContentBuilder;
 import org.opensearch.index.IndexNotFoundException;
 import org.opensearch.index.query.QueryBuilders;
 import org.opensearch.search.SearchHit;
+import org.opensearch.transport.client.Client;
 
 /**
  * The ArraySettings class provides methods to manage settings stored in an array format within an OpenSearch index.
@@ -156,7 +156,7 @@ public class ArraySettings {
                     .actionGet(settings.getSearchTimeout());
             String scrollId = response.getScrollId();
 
-            final Map<String, Object>[] array = new Map[(int) response.getHits().getTotalHits().value];
+            final Map<String, Object>[] array = new Map[(int) response.getHits().getTotalHits().value()];
 
             int count = 0;
             try {

@@ -45,11 +45,11 @@ import org.opensearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.opensearch.action.admin.indices.get.GetIndexResponse;
 import org.opensearch.action.admin.indices.refresh.RefreshResponse;
 import org.opensearch.action.search.SearchResponse;
-import org.opensearch.client.Client;
 import org.opensearch.cluster.metadata.AliasMetadata;
 import org.opensearch.common.xcontent.XContentType;
 import org.opensearch.index.query.QueryBuilder;
 import org.opensearch.index.query.QueryBuilders;
+import org.opensearch.transport.client.Client;
 
 /**
  * The Suggester class provides functionality for managing and querying suggestion indices.
@@ -337,7 +337,7 @@ public class Suggester {
     private long getNum(final QueryBuilder queryBuilder) {
         final SearchResponse searchResponse = client.prepareSearch().setIndices(getSearchAlias(index)).setSize(0).setQuery(queryBuilder)
                 .setTrackTotalHits(true).execute().actionGet(suggestSettings.getSearchTimeout());
-        return searchResponse.getHits().getTotalHits().value;
+        return searchResponse.getHits().getTotalHits().value();
     }
 
     private String getSearchAlias(final String index) {

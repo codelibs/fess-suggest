@@ -16,7 +16,7 @@
 package org.codelibs.fess.suggest.request.popularwords;
 
 import org.codelibs.fess.suggest.request.RequestBuilder;
-import org.opensearch.client.Client;
+import org.opensearch.transport.client.Client;
 
 /**
  * Builder for creating a {@link PopularWordsRequest} to fetch popular words.

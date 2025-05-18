@@ -39,7 +39,7 @@ public class ReloadableStopFilterFactory extends AbstractTokenFilterFactory {
 
         final String path = settings.get("stopwords_path");
         if (path != null) {
-            stopwordPath = environment.configFile().resolve(path);
+            stopwordPath = environment.configDir().resolve(path);
         } else {
             stopwordPath = null;
         }

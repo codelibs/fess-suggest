@@ -20,7 +20,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import org.codelibs.fess.suggest.settings.SuggestSettings.TimeoutSettings;
-import org.opensearch.client.Client;
+import org.opensearch.transport.client.Client;
 
 /**
  * Builder class for constructing SuggestSettings instances.

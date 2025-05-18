@@ -152,7 +152,7 @@ public class SynonymLoader {
                     throw new IllegalArgumentException("synonyms_path is not found.");
                 }
 
-                final Path path = env.configFile().resolve(filePath);
+                final Path path = env.configDir().resolve(filePath);
 
                 try {
                     final File file = path.toFile();

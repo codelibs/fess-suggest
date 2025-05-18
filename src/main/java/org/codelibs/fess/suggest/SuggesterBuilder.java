@@ -26,7 +26,7 @@ import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.codelibs.fess.suggest.settings.SuggestSettingsBuilder;
 import org.codelibs.fess.suggest.util.SuggestUtil;
-import org.opensearch.client.Client;
+import org.opensearch.transport.client.Client;
 
 /**
  * Builder class for creating instances of {@link Suggester}.

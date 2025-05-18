@@ -103,7 +103,7 @@ public class ReloadableKuromojiTokenizerFactory extends AbstractTokenizerFactory
 
         final String monitoringFilePath = settings.get("user_dictionary");
         if (monitoringFilePath != null) {
-            final Path path = env.configFile().resolve(monitoringFilePath);
+            final Path path = env.configDir().resolve(monitoringFilePath);
 
             try {
                 final File file = path.toFile();

@@ -27,7 +27,6 @@ import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.codelibs.fess.suggest.request.Request;
 import org.opensearch.action.search.SearchRequestBuilder;
 import org.opensearch.action.search.SearchResponse;
-import org.opensearch.client.Client;
 import org.opensearch.common.lucene.search.function.CombineFunction;
 import org.opensearch.core.action.ActionListener;
 import org.opensearch.index.query.BoolQueryBuilder;
@@ -37,6 +36,7 @@ import org.opensearch.index.query.functionscore.FunctionScoreQueryBuilder;
 import org.opensearch.index.query.functionscore.ScoreFunctionBuilders;
 import org.opensearch.search.SearchHit;
 import org.opensearch.search.rescore.QueryRescorerBuilder;
+import org.opensearch.transport.client.Client;
 
 public class PopularWordsRequest extends Request<PopularWordsResponse> {
     private String index = null;
@@ -190,7 +190,7 @@ public class PopularWordsRequest extends Request<PopularWordsResponse> {
             }
         }
 
-        return new PopularWordsResponse(index, searchResponse.getTook().getMillis(), words, searchResponse.getHits().getTotalHits().value,
+        return new PopularWordsResponse(index, searchResponse.getTook().getMillis(), words, searchResponse.getHits().getTotalHits().value(),
                 items);
     }
 }

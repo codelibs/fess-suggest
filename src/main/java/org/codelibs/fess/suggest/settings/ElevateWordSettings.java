@@ -25,7 +25,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.entity.ElevateWord;
-import org.opensearch.client.Client;
+import org.opensearch.transport.client.Client;
 
 /**
  * The ElevateWordSettings class manages the settings for elevate words in the suggestion system.

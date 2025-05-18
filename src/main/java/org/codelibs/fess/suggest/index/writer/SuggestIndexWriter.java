@@ -26,9 +26,9 @@ import org.opensearch.action.get.GetResponse;
 import org.opensearch.action.index.IndexAction;
 import org.opensearch.action.index.IndexRequest;
 import org.opensearch.action.index.IndexRequestBuilder;
-import org.opensearch.client.Client;
 import org.opensearch.common.unit.TimeValue;
 import org.opensearch.index.query.QueryBuilder;
+import org.opensearch.transport.client.Client;
 
 /**
  * SuggestIndexWriter is an implementation of the SuggestWriter interface that provides methods to write, delete,
