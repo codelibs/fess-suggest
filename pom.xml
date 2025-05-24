@@ -5,6 +5,28 @@
 	<version>15.0.0-SNAPSHOT</version>
 	<packaging>jar</packaging>
 	<name>fess-suggest</name>
+	<url>https://fess.codelibs.org/</url>
+	<inceptionYear>2009</inceptionYear>
+	<licenses>
+		<license>
+			<name>The Apache Software License, Version 2.0</name>
+			<url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+	<organization>
+		<name>CodeLibs</name>
+		<url>https://fess.codelibs.org/</url>
+	</organization>
+	<developers>
+		<developer>
+			<id>shinsuke</id>
+			<name>Shinsuke Sugaya</name>
+			<email>shinsuke.sugaya@codelibs.co</email>
+			<organization>CodeLibs Inc.</organization>
+			<organizationUrl>https://codelibs.co</organizationUrl>
+		</developer>
+	</developers>
 	<scm>
 		<connection>scm:git:git@github.com:codelibs/fess-suggest.git</connection>
 		<developerConnection>scm:git:git@github.com:codelibs/fess-suggest.git</developerConnection>
