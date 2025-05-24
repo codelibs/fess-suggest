@@ -46,11 +46,11 @@ import com.ibm.icu.text.Transliterator;
  *
  * <p>Inner Class:
  * <ul>
- *   <li>{@link LangAnayzerConverter}: A protected inner class that implements the ReadingConverter interface.
+ *   <li>LangAnayzerConverter: A protected inner class that implements the ReadingConverter interface.
  *       It is responsible for converting text using a specific language analyzer.
  *       <ul>
- *         <li>{@link LangAnayzerConverter#init()}: Initializes the converter. Currently does nothing.</li>
- *         <li>{@link LangAnayzerConverter#convert(String, String, String...)}: Converts the given text using the specified field and language.</li>
+ *         <li>LangAnayzerConverter#init(): Initializes the converter. Currently does nothing.</li>
+ *         <li>LangAnayzerConverter#convert(String, String, String...): Converts the given text using the specified field and language.</li>
  *       </ul>
  *   </li>
  * </ul>
