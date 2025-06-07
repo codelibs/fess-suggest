@@ -57,6 +57,7 @@ import org.opensearch.transport.client.Client;
  *
  * <p>
  * <b>Usage:</b>
+ * </p>
  * <pre>
  * {@code
  * Client client = // Obtain Elasticsearch client
@@ -77,7 +78,6 @@ import org.opensearch.transport.client.Client;
  * reader.close(); // Close the reader to release resources
  * }
  * </pre>
- * </p>
  */
 public class ESSourceReader implements DocumentReader {
     private static final Logger logger = LogManager.getLogger(ESSourceReader.class);
