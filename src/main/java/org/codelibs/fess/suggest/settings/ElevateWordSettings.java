@@ -70,15 +70,29 @@ import org.opensearch.transport.client.Client;
 public class ElevateWordSettings {
     private static final Logger logger = LogManager.getLogger(ElevateWordSettings.class);
 
+    /** Key for elevate word settings. */
     public static final String ELEVATE_WORD_SETTINGD_KEY = "elevateword";
+    /** Key for elevate word boost. */
     public static final String ELEVATE_WORD_BOOST = "boost";
+    /** Key for elevate word reading. */
     public static final String ELEVATE_WORD_READING = "reading";
+    /** Key for elevate word fields. */
     public static final String ELEVATE_WORD_FIELDS = "fields";
+    /** Key for elevate word tags. */
     public static final String ELEVATE_WORD_TAGS = "tags";
+    /** Key for elevate word roles. */
     public static final String ELEVATE_WORD_ROLES = "roles";
 
+    /** Array settings for elevate words. */
     protected ArraySettings arraySettings;
 
+    /**
+     * Constructor.
+     * @param settings Suggest settings
+     * @param client OpenSearch client
+     * @param settingsIndexName Settings index name
+     * @param settingsId Settings ID
+     */
     protected ElevateWordSettings(final SuggestSettings settings, final Client client, final String settingsIndexName,
             final String settingsId) {
         arraySettings = new ArraySettings(settings, client, settingsIndexName, settingsId) {
@@ -89,6 +103,10 @@ public class ElevateWordSettings {
         };
     }
 
+    /**
+     * Get elevate words.
+     * @return Elevate words
+     */
     public ElevateWord[] get() {
         final Map<String, Object>[] sourceArray =
                 arraySettings.getFromArrayIndex(arraySettings.arraySettingsIndexName, arraySettings.settingsId, ELEVATE_WORD_SETTINGD_KEY);
@@ -113,6 +131,10 @@ public class ElevateWordSettings {
         return elevateWords;
     }
 
+    /**
+     * Add an elevate word.
+     * @param elevateWord Elevate word
+     */
     public void add(final ElevateWord elevateWord) {
         if (logger.isDebugEnabled()) {
             logger.debug("Add elevateword. {}  elevateword: {}", arraySettings.arraySettingsIndexName, elevateWord.getElevateWord());
@@ -132,6 +154,10 @@ public class ElevateWordSettings {
                 arraySettings.createId(ELEVATE_WORD_SETTINGD_KEY, elevateWord.getElevateWord()), source);
     }
 
+    /**
+     * Delete an elevate word.
+     * @param elevateWord Elevate word
+     */
     public void delete(final String elevateWord) {
         if (logger.isDebugEnabled()) {
             logger.debug("Delete elevateword. {} elevateword: {}", arraySettings.arraySettingsIndexName, elevateWord);
@@ -139,6 +165,9 @@ public class ElevateWordSettings {
         arraySettings.delete(ELEVATE_WORD_SETTINGD_KEY, elevateWord);
     }
 
+    /**
+     * Delete all elevate words.
+     */
     public void deleteAll() {
         if (logger.isDebugEnabled()) {
             logger.debug("Delete all elevateword. {}", arraySettings.arraySettingsIndexName);

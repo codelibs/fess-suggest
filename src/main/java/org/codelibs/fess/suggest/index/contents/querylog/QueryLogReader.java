@@ -22,6 +22,10 @@ import java.io.Closeable;
  * It extends the {@code Closeable} interface, ensuring that resources can be released when no longer needed.
  */
 public interface QueryLogReader extends Closeable {
+    /**
+     * Reads a query log.
+     * @return The query log.
+     */
     QueryLog read();
 
     @Override

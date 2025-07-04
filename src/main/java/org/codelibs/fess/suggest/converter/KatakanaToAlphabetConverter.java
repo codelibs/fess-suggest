@@ -54,10 +54,15 @@ import com.ibm.icu.text.Transliterator;
 public class KatakanaToAlphabetConverter implements ReadingConverter {
     private final Map<String, String[]> convertMap;
 
+    /** Transliterator for full-width to half-width conversion. */
     protected Transliterator fullWidthHalfWidth;
 
+    /** Transliterator for any-lower. */
     protected Transliterator anyLower;
 
+    /**
+     * Constructor for KatakanaToAlphabetConverter.
+     */
     public KatakanaToAlphabetConverter() {
         convertMap = generateConvertMapping();
         fullWidthHalfWidth = Transliterator.getInstance("Fullwidth-Halfwidth");

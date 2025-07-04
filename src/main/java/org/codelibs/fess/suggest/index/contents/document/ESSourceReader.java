@@ -82,28 +82,51 @@ import org.opensearch.transport.client.Client;
 public class ESSourceReader implements DocumentReader {
     private static final Logger logger = LogManager.getLogger(ESSourceReader.class);
 
+    /** Queue of documents. */
     protected final Queue<Map<String, Object>> queue = new ConcurrentLinkedQueue<>();
+    /** Flag indicating if reading is finished. */
     protected final AtomicBoolean isFinished = new AtomicBoolean(false);
+    /** Random number generator. */
     protected final Random random = new Random();
 
+    /** OpenSearch client. */
     protected final Client client;
+    /** Suggest settings. */
     protected final SuggestSettings settings;
+    /** Index name. */
     protected final String indexName;
+    /** Supported fields. */
     protected final String[] supportedFields;
 
+    /** Scroll size. */
     protected int scrollSize = 1;
+    /** Maximum retry count. */
     protected int maxRetryCount = 5;
+    /** Limit of document size. */
     protected long limitOfDocumentSize = 50000;
+    /** Query builder. */
     protected QueryBuilder queryBuilder = QueryBuilders.matchAllQuery();
+    /** Limit percentage. */
     protected int limitPercentage = 100;
+    /** Limit number. */
     protected long limitNumber = -1;
+    /** Sort list. */
     protected List<SortBuilder<?>> sortList = new ArrayList<>();
 
+    /** Scroll ID. */
     protected String scrollId = null;
 
+    /** Document count. */
     protected final AtomicLong docCount = new AtomicLong(0);
+    /** Total document number. */
     protected final long totalDocNum;
 
+    /**
+     * Constructor for ESSourceReader.
+     * @param client The OpenSearch client.
+     * @param settings The SuggestSettings instance.
+     * @param indexName The name of the index to read from.
+     */
     public ESSourceReader(final Client client, final SuggestSettings settings, final String indexName) {
         this.client = client;
         this.settings = settings;
@@ -127,10 +150,18 @@ public class ESSourceReader implements DocumentReader {
         queue.clear();
     }
 
+    /**
+     * Sets the scroll size.
+     * @param scrollSize The scroll size.
+     */
     public void setScrollSize(final int scrollSize) {
         this.scrollSize = scrollSize;
     }
 
+    /**
+     * Sets the limit of document size.
+     * @param limitOfDocumentSize The limit of document size.
+     */
     public void setLimitOfDocumentSize(final long limitOfDocumentSize) {
         if (logger.isInfoEnabled()) {
             logger.info("Set document limit: {}", limitOfDocumentSize);
@@ -138,14 +169,26 @@ public class ESSourceReader implements DocumentReader {
         this.limitOfDocumentSize = limitOfDocumentSize;
     }
 
+    /**
+     * Sets the query builder.
+     * @param queryBuilder The query builder.
+     */
     public void setQuery(final QueryBuilder queryBuilder) {
         this.queryBuilder = queryBuilder;
     }
 
+    /**
+     * Adds a sort builder.
+     * @param sortBuilder The sort builder.
+     */
     public void addSort(final SortBuilder<?> sortBuilder) {
         sortList.add(sortBuilder);
     }
 
+    /**
+     * Sets the limit document number percentage.
+     * @param limitPercentage The limit percentage as a string (e.g., "50%").
+     */
     public void setLimitDocNumPercentage(final String limitPercentage) {
         if (logger.isInfoEnabled()) {
             logger.info("Set document limitPercentage: {}", limitPercentage);
@@ -164,10 +207,17 @@ public class ESSourceReader implements DocumentReader {
         }
     }
 
+    /**
+     * Sets the limit number.
+     * @param limitNumber The limit number.
+     */
     public void setLimitNumber(final long limitNumber) {
         this.limitNumber = limitNumber;
     }
 
+    /**
+     * Adds documents to the queue by fetching them from OpenSearch.
+     */
     protected void addDocumentToQueue() {
         if (docCount.get() > getLimitDocNum(totalDocNum, limitPercentage, limitNumber)) {
             isFinished.set(true);
@@ -233,6 +283,13 @@ public class ESSourceReader implements DocumentReader {
         }
     }
 
+    /**
+     * Calculates the limit document number based on total, percentage, and number.
+     * @param total The total number of documents.
+     * @param limitPercentage The limit percentage.
+     * @param limitNumber The limit number.
+     * @return The calculated limit document number.
+     */
     protected static long getLimitDocNum(final long total, final long limitPercentage, final long limitNumber) {
         final long percentNum = (long) (total * (limitPercentage / 100f));
         if (limitNumber < 0) {
@@ -241,6 +298,10 @@ public class ESSourceReader implements DocumentReader {
         return percentNum < limitNumber ? percentNum : limitNumber;
     }
 
+    /**
+     * Gets the total number of documents.
+     * @return The total number of documents.
+     */
     protected long getTotal() {
         final SearchResponse response = client.prepareSearch().setIndices(indexName).setQuery(queryBuilder).setSize(0)
                 .setTrackTotalHits(true).execute().actionGet(settings.getSearchTimeout());

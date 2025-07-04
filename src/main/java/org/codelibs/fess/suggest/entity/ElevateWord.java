@@ -81,6 +81,11 @@ public class ElevateWord {
         }
     }
 
+    /**
+     * Returns the elevate word.
+     *
+     * @return the elevate word
+     */
     public String getElevateWord() {
         return elevateWord;
     }

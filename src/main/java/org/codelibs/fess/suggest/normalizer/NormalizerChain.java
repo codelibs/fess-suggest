@@ -42,6 +42,13 @@ import java.util.List;
  * </ul>
  */
 public class NormalizerChain implements Normalizer {
+    /**
+     * Constructs a new {@link NormalizerChain}.
+     */
+    public NormalizerChain() {
+        // nothing
+    }
+
     List<Normalizer> normalizers = new ArrayList<>();
 
     @Override
@@ -53,6 +60,10 @@ public class NormalizerChain implements Normalizer {
         return tmp;
     }
 
+    /**
+     * Adds a normalizer to the chain.
+     * @param normalizer The normalizer to add.
+     */
     public void add(final Normalizer normalizer) {
         normalizers.add(normalizer);
     }

@@ -25,14 +25,25 @@ import org.opensearch.transport.client.Client;
  * @param <Res> the type of the response
  */
 public abstract class RequestBuilder<Req extends Request<Res>, Res extends Response> {
+    /** The OpenSearch client. */
     protected Client client;
+    /** The request being built. */
     protected Req request;
 
+    /**
+     * Constructor for RequestBuilder.
+     * @param client The OpenSearch client.
+     * @param request The request instance.
+     */
     public RequestBuilder(final Client client, final Req request) {
         this.client = client;
         this.request = request;
     }
 
+    /**
+     * Executes the request.
+     * @return A Promise that will be resolved with the response or rejected with an error.
+     */
     public Deferred<Res>.Promise execute() {
         return request.execute(client);
     }

@@ -50,6 +50,13 @@ import org.codelibs.fess.suggest.request.Response;
  * @param <RESPONSE> The type of the response.
  */
 public class Deferred<RESPONSE extends Response> {
+    /**
+     * Constructs a new Deferred object.
+     */
+    public Deferred() {
+        // nothing
+    }
+
     private RESPONSE response = null;
 
     private Throwable error = null;
@@ -62,6 +69,10 @@ public class Deferred<RESPONSE extends Response> {
 
     private final CountDownLatch latch = new CountDownLatch(1);
 
+    /**
+     * Resolves the deferred computation with the given response.
+     * @param r The response.
+     */
     public void resolve(final RESPONSE r) {
         final ArrayList<Consumer<RESPONSE>> executeCallbacks;
         synchronized (Deferred.this) {
@@ -84,6 +95,10 @@ public class Deferred<RESPONSE extends Response> {
         latch.countDown();
     }
 
+    /**
+     * Rejects the deferred computation with the given throwable.
+     * @param t The throwable.
+     */
     public void reject(final Throwable t) {
         final ArrayList<Consumer<Throwable>> executeCallbacks;
         synchronized (Deferred.this) {
@@ -106,19 +121,48 @@ public class Deferred<RESPONSE extends Response> {
         latch.countDown();
     }
 
+    /**
+     * Registers a callback to be executed when the computation is complete.
+     * @param consumer The callback.
+     * @return The promise.
+     */
     public Promise then(final Consumer<RESPONSE> consumer) {
         return promise.then(consumer);
     }
 
+    /**
+     * Registers a callback to be executed when the computation fails.
+     * @param consumer The callback.
+     * @return The promise.
+     */
     public Promise error(final Consumer<Throwable> consumer) {
         return promise.error(consumer);
     }
 
+    /**
+     * Returns the promise.
+     * @return The promise.
+     */
     public Promise promise() {
         return promise;
     }
 
+    /**
+     * The promise.
+     */
     public class Promise {
+        /**
+         * Constructs a new Promise object.
+         */
+        public Promise() {
+            // nothing
+        }
+
+        /**
+         * Registers a callback to be executed when the computation is complete.
+         * @param consumer The callback.
+         * @return The promise.
+         */
         public Promise then(final Consumer<RESPONSE> consumer) {
             final ArrayList<Consumer<RESPONSE>> executeCallbacks;
             synchronized (Deferred.this) {
@@ -137,6 +181,11 @@ public class Deferred<RESPONSE extends Response> {
             return this;
         }
 
+        /**
+         * Registers a callback to be executed when the computation fails.
+         * @param consumer The callback.
+         * @return The promise.
+         */
         public Promise error(final Consumer<Throwable> consumer) {
             final ArrayList<Consumer<Throwable>> executeCallbacks;
             synchronized (Deferred.this) {
@@ -155,10 +204,20 @@ public class Deferred<RESPONSE extends Response> {
             return this;
         }
 
+        /**
+         * Returns the response.
+         * @return The response.
+         */
         public RESPONSE getResponse() {
             return getResponse(1, TimeUnit.MINUTES);
         }
 
+        /**
+         * Returns the response.
+         * @param time The time to wait.
+         * @param unit The time unit.
+         * @return The response.
+         */
         public RESPONSE getResponse(final long time, final TimeUnit unit) {
             try {
                 final boolean isTimeout = !latch.await(time, unit);

@@ -120,27 +120,50 @@ import org.opensearch.transport.client.Client;
 public class SuggestIndexer {
     private final static Logger logger = LogManager.getLogger(SuggestIndexer.class);
 
-    protected final Client client;
-    protected String index;
-    protected SuggestSettings settings;
-
-    protected String[] supportedFields;
-    protected String[] tagFieldNames;
-    protected String roleFieldName;
-    protected String langFieldName;
-    protected String[] badWords;
-    protected boolean parallel;
-
-    protected ReadingConverter readingConverter;
-    protected ReadingConverter contentsReadingConverter;
-    protected Normalizer normalizer;
+    /** The suggest analyzer. */
     protected SuggestAnalyzer analyzer;
-
+    /** Bad words. */
+    protected String[] badWords;
+    /** The OpenSearch client. */
+    protected final Client client;
+    /** The contents parser. */
     protected ContentsParser contentsParser;
+    /** The contents reading converter. */
+    protected ReadingConverter contentsReadingConverter;
+    /** The index name. */
+    protected String index;
+    /** The language field name. */
+    protected String langFieldName;
+    /** The normalizer. */
+    protected Normalizer normalizer;
+    /** Flag for parallel processing. */
+    protected boolean parallel;
+    /** The reading converter. */
+    protected ReadingConverter readingConverter;
+    /** The role field name. */
+    protected String roleFieldName;
+    /** The suggest settings. */
+    protected SuggestSettings settings;
+    /** The suggest writer. */
     protected SuggestWriter suggestWriter;
-
+    /** Supported fields for suggestions. */
+    protected String[] supportedFields;
+    /** Tag field names. */
+    protected String[] tagFieldNames;
+    /** The thread pool. */
     protected ExecutorService threadPool;
 
+    /**
+     * Constructor for SuggestIndexer.
+     * @param client The OpenSearch client.
+     * @param index The index name.
+     * @param readingConverter The reading converter.
+     * @param contentsReadingConverter The contents reading converter.
+     * @param normalizer The normalizer.
+     * @param analyzer The suggest analyzer.
+     * @param settings The suggest settings.
+     * @param threadPool The thread pool.
+     */
     public SuggestIndexer(final Client client, final String index, final ReadingConverter readingConverter,
             final ReadingConverter contentsReadingConverter, final Normalizer normalizer, final SuggestAnalyzer analyzer,
             final SuggestSettings settings, final ExecutorService threadPool) {
@@ -165,12 +188,20 @@ public class SuggestIndexer {
         this.threadPool = threadPool;
     }
 
-    // TODO return result
+    /**
+     * Indexes a single suggest item.
+     * @param item The suggest item to index.
+     * @return The SuggestIndexResponse.
+     */
     public SuggestIndexResponse index(final SuggestItem item) {
         return index(new SuggestItem[] { item });
     }
 
-    // TODO return result
+    /**
+     * Indexes multiple suggest items.
+     * @param items The suggest items to index.
+     * @return The SuggestIndexResponse.
+     */
     public SuggestIndexResponse index(final SuggestItem[] items) {
         // TODO parallel?
         final SuggestItem[] array = Stream.of(items).filter(item -> !item.isBadWord(badWords)).toArray(n -> new SuggestItem[n]);
@@ -184,28 +215,51 @@ public class SuggestIndexer {
         }
     }
 
+    /**
+     * Deletes a suggest item by ID.
+     * @param id The ID of the item to delete.
+     * @return The SuggestDeleteResponse.
+     */
     public SuggestDeleteResponse delete(final String id) {
         final long start = System.currentTimeMillis();
         final SuggestWriterResult result = suggestWriter.delete(client, settings, index, id);
         return new SuggestDeleteResponse(result.getFailures(), System.currentTimeMillis() - start);
     }
 
+    /**
+     * Deletes suggest items by a query string.
+     * @param queryString The query string.
+     * @return The SuggestDeleteResponse.
+     */
     public SuggestDeleteResponse deleteByQuery(final String queryString) {
         return deleteByQuery(QueryBuilders.queryStringQuery(queryString).defaultOperator(Operator.AND));
     }
 
+    /**
+     * Deletes suggest items by a query builder.
+     * @param queryBuilder The query builder.
+     * @return The SuggestDeleteResponse.
+     */
     public SuggestDeleteResponse deleteByQuery(final QueryBuilder queryBuilder) {
         final long start = System.currentTimeMillis();
         final SuggestWriterResult result = suggestWriter.deleteByQuery(client, settings, index, queryBuilder);
         return new SuggestDeleteResponse(result.getFailures(), System.currentTimeMillis() - start);
     }
 
+    /**
+     * Deletes all suggest items.
+     * @return The SuggestDeleteResponse.
+     */
     public SuggestDeleteResponse deleteAll() {
         final SuggestDeleteResponse response = deleteByQuery(QueryBuilders.matchAllQuery());
         restoreElevateWord();
         return response;
     }
 
+    /**
+     * Deletes document words.
+     * @return The SuggestDeleteResponse.
+     */
     public SuggestDeleteResponse deleteDocumentWords() {
         final long start = System.currentTimeMillis();
 
@@ -253,6 +307,10 @@ public class SuggestIndexer {
         return new SuggestDeleteResponse(null, System.currentTimeMillis() - start);
     }
 
+    /**
+     * Deletes query words.
+     * @return The SuggestDeleteResponse.
+     */
     public SuggestDeleteResponse deleteQueryWords() {
         final long start = System.currentTimeMillis();
 
@@ -300,10 +358,20 @@ public class SuggestIndexer {
         return new SuggestDeleteResponse(null, System.currentTimeMillis() - start);
     }
 
+    /**
+     * Indexes a single query log.
+     * @param queryLog The query log to index.
+     * @return The SuggestIndexResponse.
+     */
     public SuggestIndexResponse indexFromQueryLog(final QueryLog queryLog) {
         return indexFromQueryLog(new QueryLog[] { queryLog });
     }
 
+    /**
+     * Indexes multiple query logs.
+     * @param queryLogs The query logs to index.
+     * @return The SuggestIndexResponse.
+     */
     public SuggestIndexResponse indexFromQueryLog(final QueryLog[] queryLogs) {
         if (logger.isInfoEnabled()) {
             logger.info("Index from querylog. num: {}", queryLogs.length);
@@ -331,7 +399,13 @@ public class SuggestIndexer {
         }
     }
 
-    // TODO replace queryLogReader with lambda reader
+    /**
+     * Indexes documents from a query log reader asynchronously.
+     * @param queryLogReader The query log reader.
+     * @param docPerReq The number of documents to process per request.
+     * @param requestInterval The interval between requests.
+     * @return A Promise that will be resolved with the SuggestIndexResponse or rejected with an error.
+     */
     public Deferred<SuggestIndexResponse>.Promise indexFromQueryLog(final QueryLogReader queryLogReader, final int docPerReq,
             final long requestInterval) {
         final Deferred<SuggestIndexResponse> deferred = new Deferred<>();
@@ -371,6 +445,11 @@ public class SuggestIndexer {
         return deferred.promise();
     }
 
+    /**
+     * Indexes documents from an array of maps.
+     * @param documents The documents to index.
+     * @return The SuggestIndexResponse.
+     */
     public SuggestIndexResponse indexFromDocument(final Map<String, Object>[] documents) {
         final long start = System.currentTimeMillis();
         try {
@@ -429,6 +508,13 @@ public class SuggestIndexer {
         }
     }
 
+    /**
+     * Indexes documents from a DocumentReader asynchronously.
+     * @param reader The supplier for DocumentReader.
+     * @param docPerReq The number of documents to process per request.
+     * @param waitController The runnable to control waiting between requests.
+     * @return A Promise that will be resolved with the SuggestIndexResponse or rejected with an error.
+     */
     public Deferred<SuggestIndexResponse>.Promise indexFromDocument(final Supplier<DocumentReader> reader, final int docPerReq,
             final Runnable waitController) {
         if (logger.isInfoEnabled()) {
@@ -471,6 +557,16 @@ public class SuggestIndexer {
         return deferred.promise();
     }
 
+    /**
+     * Indexes a search word.
+     * @param searchWord The search word.
+     * @param fields The fields.
+     * @param tags The tags.
+     * @param roles The roles.
+     * @param num The number.
+     * @param langs The languages.
+     * @return The SuggestIndexResponse.
+     */
     public SuggestIndexResponse indexFromSearchWord(final String searchWord, final String[] fields, final String[] tags,
             final String[] roles, final int num, final String[] langs) {
         if (logger.isDebugEnabled()) {
@@ -516,6 +612,12 @@ public class SuggestIndexer {
         }
     }
 
+    /**
+     * Adds a bad word.
+     * @param badWord The bad word to add.
+     * @param apply Whether to apply the change immediately.
+     * @return The SuggestDeleteResponse.
+     */
     public SuggestDeleteResponse addBadWord(final String badWord, final boolean apply) {
         final String normalized = normalizer.normalize(badWord, "");
         settings.badword().add(normalized);
@@ -526,10 +628,20 @@ public class SuggestIndexer {
         return new SuggestDeleteResponse(null, 0);
     }
 
+    /**
+     * Deletes a bad word.
+     * @param badWord The bad word to delete.
+     */
     public void deleteBadWord(final String badWord) {
         settings.badword().delete(normalizer.normalize(badWord, ""));
     }
 
+    /**
+     * Adds an elevate word.
+     * @param elevateWord The elevate word to add.
+     * @param apply Whether to apply the change immediately.
+     * @return The SuggestIndexResponse.
+     */
     public SuggestIndexResponse addElevateWord(final ElevateWord elevateWord, final boolean apply) {
         final String normalizedWord = normalizer.normalize(elevateWord.getElevateWord(), "");
         final List<String> normalizedReadings =
@@ -543,6 +655,12 @@ public class SuggestIndexer {
         return new SuggestIndexResponse(0, 0, null, 0);
     }
 
+    /**
+     * Deletes an elevate word.
+     * @param elevateWord The elevate word to delete.
+     * @param apply Whether to apply the change immediately.
+     * @return The SuggestDeleteResponse.
+     */
     public SuggestDeleteResponse deleteElevateWord(final String elevateWord, final boolean apply) {
         final String normalized = normalizer.normalize(elevateWord, "");
         settings.elevateWord().delete(normalized);
@@ -552,6 +670,10 @@ public class SuggestIndexer {
         return new SuggestDeleteResponse(null, 0);
     }
 
+    /**
+     * Restores elevate words.
+     * @return The SuggestIndexResponse.
+     */
     public SuggestIndexResponse restoreElevateWord() {
         final long start = System.currentTimeMillis();
         int numberOfSuggestDocs = 0;
@@ -568,6 +690,11 @@ public class SuggestIndexer {
         return new SuggestIndexResponse(numberOfSuggestDocs, numberOfInputDocs, errors, System.currentTimeMillis() - start);
     }
 
+    /**
+     * Deletes old words based on a threshold date.
+     * @param threshold The threshold date.
+     * @return The SuggestDeleteResponse.
+     */
     public SuggestDeleteResponse deleteOldWords(final ZonedDateTime threshold) {
         final long start = System.currentTimeMillis();
         final String query = FieldNames.TIMESTAMP + ":[* TO " + threshold.toInstant().toEpochMilli() + "] NOT " + FieldNames.KINDS + ':'
@@ -576,46 +703,91 @@ public class SuggestIndexer {
         return new SuggestDeleteResponse(null, System.currentTimeMillis() - start);
     }
 
+    /**
+     * Sets the index name.
+     * @param index The index name.
+     * @return This SuggestIndexer instance.
+     */
     public SuggestIndexer setIndexName(final String index) {
         this.index = index;
         return this;
     }
 
+    /**
+     * Sets the supported fields.
+     * @param supportedFields The supported fields.
+     * @return This SuggestIndexer instance.
+     */
     public SuggestIndexer setSupportedFields(final String[] supportedFields) {
         this.supportedFields = supportedFields;
         return this;
     }
 
+    /**
+     * Sets the tag field names.
+     * @param tagFieldNames The tag field names.
+     * @return This SuggestIndexer instance.
+     */
     public SuggestIndexer setTagFieldNames(final String[] tagFieldNames) {
         this.tagFieldNames = tagFieldNames;
         return this;
     }
 
+    /**
+     * Sets the role field name.
+     * @param roleFieldName The role field name.
+     * @return This SuggestIndexer instance.
+     */
     public SuggestIndexer setRoleFieldName(final String roleFieldName) {
         this.roleFieldName = roleFieldName;
         return this;
     }
 
+    /**
+     * Sets the reading converter.
+     * @param readingConverter The reading converter.
+     * @return This SuggestIndexer instance.
+     */
     public SuggestIndexer setReadingConverter(final ReadingConverter readingConverter) {
         this.readingConverter = readingConverter;
         return this;
     }
 
+    /**
+     * Sets the normalizer.
+     * @param normalizer The normalizer.
+     * @return This SuggestIndexer instance.
+     */
     public SuggestIndexer setNormalizer(final Normalizer normalizer) {
         this.normalizer = normalizer;
         return this;
     }
 
+    /**
+     * Sets the analyzer.
+     * @param analyzer The analyzer.
+     * @return This SuggestIndexer instance.
+     */
     public SuggestIndexer setAnalyzer(final SuggestAnalyzer analyzer) {
         this.analyzer = analyzer;
         return this;
     }
 
+    /**
+     * Sets the contents parser.
+     * @param contentsParser The contents parser.
+     * @return This SuggestIndexer instance.
+     */
     public SuggestIndexer setContentsParser(final ContentsParser contentsParser) {
         this.contentsParser = contentsParser;
         return this;
     }
 
+    /**
+     * Sets the suggest writer.
+     * @param suggestWriter The suggest writer.
+     * @return This SuggestIndexer instance.
+     */
     public SuggestIndexer setSuggestWriter(final SuggestWriter suggestWriter) {
         this.suggestWriter = suggestWriter;
         return this;

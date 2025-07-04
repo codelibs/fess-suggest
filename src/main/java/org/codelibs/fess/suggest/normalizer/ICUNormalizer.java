@@ -34,8 +34,13 @@ import com.ibm.icu.text.Transliterator;
  * @see com.ibm.icu.text.Transliterator
  */
 public class ICUNormalizer implements Normalizer {
+    /** The transliterator used for normalization. */
     protected Transliterator transliterator;
 
+    /**
+     * Constructor for ICUNormalizer.
+     * @param transliteratorId The ID of the transliterator to use.
+     */
     public ICUNormalizer(final String transliteratorId) {
         transliterator = Transliterator.getInstance(transliteratorId);
     }

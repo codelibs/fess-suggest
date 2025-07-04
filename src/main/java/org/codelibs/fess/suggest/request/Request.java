@@ -26,6 +26,18 @@ import org.opensearch.transport.client.Client;
  * @param <T> the type of response produced by this request
  */
 public abstract class Request<T extends Response> {
+    /**
+     * Constructs a new request.
+     */
+    public Request() {
+        // nothing
+    }
+
+    /**
+     * Executes the request.
+     * @param client The OpenSearch client.
+     * @return A Promise that will be resolved with the response or rejected with an error.
+     */
     public Deferred<T>.Promise execute(final Client client) {
         final String error = getValidationError();
         if (!Strings.isNullOrEmpty(error)) {
@@ -41,7 +53,16 @@ public abstract class Request<T extends Response> {
         return deferred.promise();
     }
 
+    /**
+     * Processes the request.
+     * @param client The OpenSearch client.
+     * @param deferred The Deferred object to resolve or reject the response.
+     */
     protected abstract void processRequest(Client client, Deferred<T> deferred);
 
+    /**
+     * Returns a validation error message, or null if there are no errors.
+     * @return A validation error message, or null.
+     */
     protected abstract String getValidationError();
 }

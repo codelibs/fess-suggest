@@ -48,29 +48,51 @@ package org.codelibs.fess.suggest.constants;
  * This class cannot be instantiated.
  */
 public final class FieldNames {
+    /** The unique identifier field. */
     public static final String ID = "_id";
+    /** The text content field. */
     public static final String TEXT = "text";
+    /** The prefix for reading fields. */
     public static final String READING_PREFIX = "reading_";
+    /** The score field. */
     public static final String SCORE = "score";
+    /** The query frequency field. */
     public static final String QUERY_FREQ = "queryFreq";
+    /** The document frequency field. */
     public static final String DOC_FREQ = "docFreq";
+    /** The user boost field. */
     public static final String USER_BOOST = "userBoost";
+    /** The kinds field. */
     public static final String KINDS = "kinds";
+    /** The timestamp field. */
     public static final String TIMESTAMP = "@timestamp";
+    /** The tags field. */
     public static final String TAGS = "tags";
+    /** The roles field. */
     public static final String ROLES = "roles";
+    /** The fields field. */
     public static final String FIELDS = "fields";
+    /** The languages field. */
     public static final String LANGUAGES = "languages";
 
+    /** The key for array elements. */
     public static final String ARRAY_KEY = "key";
+    /** The value for array elements. */
     public static final String ARRAY_VALUE = "value";
 
+    /** The analyzer settings type field. */
     public static final String ANALYZER_SETTINGS_TYPE = "settingsType";
+    /** The analyzer settings field name. */
     public static final String ANALYZER_SETTINGS_FIELD_NAME = "fieldName";
+    /** The reading analyzer settings field. */
     public static final String ANALYZER_SETTINGS_READING_ANALYZER = "readingAnalyzer";
+    /** The reading term analyzer settings field. */
     public static final String ANALYZER_SETTINGS_READING_TERM_ANALYZER = "readingTermAnalyzer";
+    /** The normalize analyzer settings field. */
     public static final String ANALYZER_SETTINGS_NORMALIZE_ANALYZER = "normalizeAnalyzer";
+    /** The contents analyzer settings field. */
     public static final String ANALYZER_SETTINGS_CONTENTS_ANALYZER = "contentsAnalyzer";
+    /** The contents reading analyzer settings field. */
     public static final String ANALYZER_SETTINGS_CONTENTS_READING_ANALYZER = "contentsReadingAnalyzer";
 
     // Private constructor to prevent instantiation

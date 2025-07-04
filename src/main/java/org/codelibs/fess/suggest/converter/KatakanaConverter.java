@@ -42,16 +42,26 @@ import com.ibm.icu.text.Transliterator;
  */
 public class KatakanaConverter implements ReadingConverter {
 
+    /** The transliterator for Hiragana-Katakana conversion. */
     protected final Transliterator transliterator = Transliterator.getInstance("Hiragana-Katakana");
 
+    /** Flag indicating if the converter is initialized. */
     protected volatile boolean initialized = false;
 
+    /** Tokenizer factory. */
     protected TokenizerFactory tokenizerFactory = null;
 
+    /**
+     * Default constructor.
+     */
     public KatakanaConverter() {
         // nothing
     }
 
+    /**
+     * Constructor with a tokenizer factory.
+     * @param tokenizerFactory The tokenizer factory to use.
+     */
     public KatakanaConverter(final TokenizerFactory tokenizerFactory) {
         if (isEnableTokenizer(tokenizerFactory)) {
             this.tokenizerFactory = tokenizerFactory;
@@ -80,6 +90,12 @@ public class KatakanaConverter implements ReadingConverter {
         return readingList;
     }
 
+    /**
+     * Converts the input string to Katakana.
+     * @param inputStr The input string.
+     * @return The Katakana representation of the input string.
+     * @throws IOException If an I/O error occurs.
+     */
     protected String toKatakana(final String inputStr) throws IOException {
         final StringBuilder kanaBuf = new StringBuilder();
 
@@ -115,6 +131,11 @@ public class KatakanaConverter implements ReadingConverter {
         return kanaBuf.toString();
     }
 
+    /**
+     * Checks if the tokenizer is enabled.
+     * @param factory The tokenizer factory.
+     * @return True if the tokenizer is enabled, false otherwise.
+     */
     protected boolean isEnableTokenizer(final TokenizerFactory factory) {
         // TODO return factory instanceof JapaneseTokenizerFactory;
         return false;
@@ -128,6 +149,11 @@ public class KatakanaConverter implements ReadingConverter {
          */
     }
 
+    /**
+     * Gets the reading from the attribute.
+     * @param stream The token stream.
+     * @return The reading from the attribute.
+     */
     protected String getReadingFromAttribute(final TokenStream stream) {
         return null;
         /*

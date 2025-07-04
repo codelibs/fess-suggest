@@ -27,6 +27,11 @@ import java.util.Map;
  * should also handle resource cleanup when the {@link #close()} method is called.</p>
  */
 public interface DocumentReader extends Closeable {
+    /**
+     * Reads a document and returns its contents as a map.
+     *
+     * @return a map containing the document's data, or null if there are no more documents to read.
+     */
     Map<String, Object> read();
 
     @Override

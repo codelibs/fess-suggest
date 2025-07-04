@@ -27,12 +27,24 @@ import org.codelibs.fess.suggest.request.Response;
  * and the time taken to complete the operation.
  */
 public class SuggestIndexResponse implements Response {
+    /** The number of suggest documents. */
     protected final int numberOfSuggestDocs;
+    /** The number of input documents. */
     protected final int numberOfInputDocs;
+    /** Flag indicating if there are errors. */
     protected final boolean hasError;
+    /** List of errors. */
     protected final List<Throwable> errors = new ArrayList<>();
+    /** Time taken for the operation in milliseconds. */
     protected final long took;
 
+    /**
+     * Constructor for SuggestIndexResponse.
+     * @param numberOfSuggestDocs The number of suggest documents.
+     * @param numberOfInputDocs The number of input documents.
+     * @param errors A list of Throwables representing errors.
+     * @param took The time taken for the operation in milliseconds.
+     */
     protected SuggestIndexResponse(final int numberOfSuggestDocs, final int numberOfInputDocs, final List<Throwable> errors,
             final long took) {
         this.numberOfSuggestDocs = numberOfSuggestDocs;
@@ -46,22 +58,42 @@ public class SuggestIndexResponse implements Response {
         }
     }
 
+    /**
+     * Returns the number of suggest documents.
+     * @return The number of suggest documents.
+     */
     public int getNumberOfSuggestDocs() {
         return numberOfSuggestDocs;
     }
 
+    /**
+     * Returns the number of input documents.
+     * @return The number of input documents.
+     */
     public int getNumberOfInputDocs() {
         return numberOfInputDocs;
     }
 
+    /**
+     * Checks if there are any errors.
+     * @return True if there are errors, false otherwise.
+     */
     public boolean hasError() {
         return hasError;
     }
 
+    /**
+     * Returns the list of errors.
+     * @return The list of errors.
+     */
     public List<Throwable> getErrors() {
         return errors;
     }
 
+    /**
+     * Returns the time taken for the operation.
+     * @return The time taken in milliseconds.
+     */
     public long getTook() {
         return took;
     }

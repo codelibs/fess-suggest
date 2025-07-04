@@ -42,6 +42,13 @@ package org.codelibs.fess.suggest.normalizer;
  * @see Normalizer
  */
 public class HankakuKanaToZenkakuKana implements Normalizer {
+    /**
+     * Constructs a new {@link HankakuKanaToZenkakuKana}.
+     */
+    public HankakuKanaToZenkakuKana() {
+        // nothing
+    }
+
     private static final char[] HANKAKU_KATAKANA = { '｡', '｢', '｣', '､', '･', 'ｦ', 'ｧ', 'ｨ', 'ｩ', 'ｪ', 'ｫ', 'ｬ', 'ｭ', 'ｮ', 'ｯ', 'ｰ', 'ｱ',
             'ｲ', 'ｳ', 'ｴ', 'ｵ', 'ｶ', 'ｷ', 'ｸ', 'ｹ', 'ｺ', 'ｻ', 'ｼ', 'ｽ', 'ｾ', 'ｿ', 'ﾀ', 'ﾁ', 'ﾂ', 'ﾃ', 'ﾄ', 'ﾅ', 'ﾆ', 'ﾇ', 'ﾈ', 'ﾉ', 'ﾊ',
             'ﾋ', 'ﾌ', 'ﾍ', 'ﾎ', 'ﾏ', 'ﾐ', 'ﾑ', 'ﾒ', 'ﾓ', 'ﾔ', 'ﾕ', 'ﾖ', 'ﾗ', 'ﾘ', 'ﾙ', 'ﾚ', 'ﾛ', 'ﾜ', 'ﾝ', 'ﾞ', 'ﾟ' };
@@ -95,6 +102,12 @@ public class HankakuKanaToZenkakuKana implements Normalizer {
         return c;
     }
 
+    /**
+     * Merges two characters, handling voiced and semi-voiced sound marks.
+     * @param c1 The first character.
+     * @param c2 The second character.
+     * @return The merged character.
+     */
     public static char mergeChar(final char c1, final char c2) {
         if (c2 == 'ﾞ') {
             if ("ｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾊﾋﾌﾍﾎ".indexOf(c1) >= 0) {

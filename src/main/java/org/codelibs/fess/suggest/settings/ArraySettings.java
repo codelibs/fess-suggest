@@ -87,13 +87,24 @@ import org.opensearch.transport.client.Client;
 public class ArraySettings {
     private static final Logger logger = LogManager.getLogger(ArraySettings.class);
 
+    /** OpenSearch client. */
     protected final Client client;
+    /** Array settings index name. */
     protected final String arraySettingsIndexName;
+    /** Settings ID. */
     protected final String settingsId;
+    /** Suggest settings. */
     protected final SuggestSettings settings;
 
     private static final Base64.Encoder encoder = Base64.getEncoder();
 
+    /**
+     * Constructor.
+     * @param settings Suggest settings
+     * @param client OpenSearch client
+     * @param settingsIndexName Settings index name
+     * @param settingsId Settings ID
+     */
     protected ArraySettings(final SuggestSettings settings, final Client client, final String settingsIndexName, final String settingsId) {
         this.settings = settings;
         this.client = client;
@@ -102,6 +113,11 @@ public class ArraySettings {
         createMappingIfEmpty(arraySettingsIndexName, settingsId, client);
     }
 
+    /**
+     * Get values.
+     * @param key Key
+     * @return Values
+     */
     public String[] get(final String key) {
         final Map<String, Object> sourceArray[] = getFromArrayIndex(arraySettingsIndexName, settingsId, key);
 
@@ -115,6 +131,11 @@ public class ArraySettings {
         return valueArray;
     }
 
+    /**
+     * Add a value.
+     * @param key Key
+     * @param value Value
+     */
     public void add(final String key, final Object value) {
         if (logger.isDebugEnabled()) {
             logger.debug("Add analyzer settings. {} key: {} value: {}", arraySettingsIndexName, key, value);
@@ -128,10 +149,19 @@ public class ArraySettings {
         addToArrayIndex(arraySettingsIndexName, settingsId, createId(key, value), source);
     }
 
+    /**
+     * Delete values.
+     * @param key Key
+     */
     public void delete(final String key) {
         deleteKeyFromArray(arraySettingsIndexName, settingsId, key);
     }
 
+    /**
+     * Delete a value.
+     * @param key Key
+     * @param value Value
+     */
     public void delete(final String key, final String value) {
         if (logger.isDebugEnabled()) {
             logger.debug("Delete analyzer settings. {} key: {} value: {}", arraySettingsIndexName, key, value);
@@ -139,14 +169,32 @@ public class ArraySettings {
         deleteFromArray(arraySettingsIndexName, settingsId, createId(key, value));
     }
 
+    /**
+     * Create array settings index name.
+     * @param settingsIndexName Settings index name
+     * @return Array settings index name
+     */
     protected String createArraySettingsIndexName(final String settingsIndexName) {
         return settingsIndexName + "_array";
     }
 
+    /**
+     * Create ID.
+     * @param key Key
+     * @param value Value
+     * @return ID
+     */
     protected String createId(final String key, final Object value) {
         return encoder.encodeToString(("key:" + key + "value:" + value).getBytes(CoreLibConstants.CHARSET_UTF_8));
     }
 
+    /**
+     * Get values from array index.
+     * @param index Index
+     * @param type Type
+     * @param key Key
+     * @return Values
+     */
     @SuppressWarnings("unchecked")
     protected Map<String, Object>[] getFromArrayIndex(final String index, final String type, final String key) {
         final String actualIndex = index + "." + type.toLowerCase(Locale.ENGLISH);
@@ -211,6 +259,13 @@ public class ArraySettings {
         }
     }
 
+    /**
+     * Add a value to array index.
+     * @param index Index
+     * @param type Type
+     * @param id ID
+     * @param source Source
+     */
     protected void addToArrayIndex(final String index, final String type, final String id, final Map<String, Object> source) {
         final String actualIndex = index + "." + type.toLowerCase(Locale.ENGLISH);
         try {
@@ -224,6 +279,12 @@ public class ArraySettings {
         }
     }
 
+    /**
+     * Delete values from array index.
+     * @param index Index
+     * @param type Type
+     * @param key Key
+     */
     protected void deleteKeyFromArray(final String index, final String type, final String key) {
         final String actualIndex = index + "." + type.toLowerCase(Locale.ENGLISH);
         try {
@@ -233,6 +294,12 @@ public class ArraySettings {
         }
     }
 
+    /**
+     * Delete a value from array index.
+     * @param index Index
+     * @param type Type
+     * @param id ID
+     */
     protected void deleteFromArray(final String index, final String type, final String id) {
         final String actualIndex = index + "." + type.toLowerCase(Locale.ENGLISH);
         try {
@@ -243,6 +310,12 @@ public class ArraySettings {
         }
     }
 
+    /**
+     * Create mapping if empty.
+     * @param index Index
+     * @param type Type
+     * @param client OpenSearch client
+     */
     protected void createMappingIfEmpty(final String index, final String type, final Client client) {
         final String actualIndex = index + "." + type.toLowerCase(Locale.ENGLISH);
         try {
@@ -271,11 +344,16 @@ public class ArraySettings {
         }
     }
 
+    /**
+     * Load index settings.
+     * @return Index settings
+     * @throws IOException I/O exception
+     */
     protected String loadIndexSettings() throws IOException {
         final String dictionaryPath = System.getProperty("fess.dictionary.path", StringUtil.EMPTY);
         final StringBuilder sb = new StringBuilder();
         try (BufferedReader br = new BufferedReader(new InputStreamReader(
-                this.getClass().getClassLoader().getResourceAsStream("suggest_indices/suggest_settings_array.json")));) {
+                this.getClass().getClassLoader().getResourceAsStream("suggest_indices/suggest_settings_array.json")))) {
 
             String line;
             while ((line = br.readLine()) != null) {

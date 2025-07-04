@@ -33,14 +33,27 @@ public class SuggesterException extends RuntimeException {
 
     private static final long serialVersionUID = 1L;
 
+    /**
+     * Constructs a new SuggesterException with the specified detail message.
+     * @param msg The detail message.
+     */
     public SuggesterException(final String msg) {
         super(msg);
     }
 
+    /**
+     * Constructs a new SuggesterException with the specified cause.
+     * @param cause The cause.
+     */
     public SuggesterException(final Throwable cause) {
         super(cause);
     }
 
+    /**
+     * Constructs a new SuggesterException with the specified detail message and cause.
+     * @param msg The detail message.
+     * @param cause The cause.
+     */
     public SuggesterException(final String msg, final Throwable cause) {
         super(msg, cause);
     }

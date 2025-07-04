@@ -15,7 +15,17 @@
  */
 package org.codelibs.fess.suggest.normalizer;
 
+/**
+ * Normalizes full-width alphanumeric characters to half-width alphanumeric characters.
+ */
 public class FullWidthToHalfWidthAlphabetNormalizer implements Normalizer {
+    /**
+     * Constructs a new {@link FullWidthToHalfWidthAlphabetNormalizer}.
+     */
+    public FullWidthToHalfWidthAlphabetNormalizer() {
+        // nothing
+    }
+
     @Override
     public String normalize(final String text, final String field, final String... langs) {
         final char[] chars = new char[text.length()];

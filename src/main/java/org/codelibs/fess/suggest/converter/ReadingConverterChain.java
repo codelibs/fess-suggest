@@ -27,6 +27,13 @@ import java.util.Queue;
  * The chain stops processing when the maximum number of readings is reached.
  */
 public class ReadingConverterChain implements ReadingConverter {
+    /**
+     * Constructs a new {@link ReadingConverterChain}.
+     */
+    public ReadingConverterChain() {
+        // nothing
+    }
+
     private final List<ReadingConverter> converters = new ArrayList<>();
 
     @Override
@@ -55,6 +62,10 @@ public class ReadingConverterChain implements ReadingConverter {
         return convertedTexts;
     }
 
+    /**
+     * Adds a converter to the chain.
+     * @param converter The converter to add.
+     */
     public void addConverter(final ReadingConverter converter) {
         converters.add(converter);
     }

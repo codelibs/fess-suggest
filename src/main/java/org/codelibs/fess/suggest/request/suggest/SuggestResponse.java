@@ -25,18 +25,32 @@ import org.codelibs.fess.suggest.request.Response;
  * This class holds the details of the response including the index, time taken, words, total count, and suggested items.
  */
 public class SuggestResponse implements Response {
+    /** The index name. */
     protected final String index;
 
+    /** The time taken in milliseconds. */
     protected final long tookMs;
 
+    /** The list of suggested words. */
     protected final List<String> words;
 
+    /** The number of suggested words. */
     protected final int num;
 
+    /** The total number of hits. */
     protected final long total;
 
+    /** The list of suggested items. */
     protected final List<SuggestItem> items;
 
+    /**
+     * Constructor for SuggestResponse.
+     * @param index The index name.
+     * @param tookMs The time taken in milliseconds.
+     * @param words The list of suggested words.
+     * @param total The total number of hits.
+     * @param items The list of suggested items.
+     */
     public SuggestResponse(final String index, final long tookMs, final List<String> words, final long total,
             final List<SuggestItem> items) {
         this.index = index;
@@ -47,26 +61,50 @@ public class SuggestResponse implements Response {
         this.items = items;
     }
 
+    /**
+     * Returns the index name.
+     * @return The index name.
+     */
     public String getIndex() {
         return index;
     }
 
+    /**
+     * Returns the time taken in milliseconds.
+     * @return The time taken.
+     */
     public long getTookMs() {
         return tookMs;
     }
 
+    /**
+     * Returns the list of suggested words.
+     * @return The list of words.
+     */
     public List<String> getWords() {
         return words;
     }
 
+    /**
+     * Returns the number of suggested words.
+     * @return The number of words.
+     */
     public int getNum() {
         return num;
     }
 
+    /**
+     * Returns the total number of hits.
+     * @return The total number of hits.
+     */
     public long getTotal() {
         return total;
     }
 
+    /**
+     * Returns the list of suggested items.
+     * @return The list of items.
+     */
     public List<SuggestItem> getItems() {
         return items;
     }
