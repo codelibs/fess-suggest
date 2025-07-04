@@ -66,6 +66,9 @@ public class DefaultContentsParser implements ContentsParser {
 
     private final int maxAnalyzedContentLength;
 
+    /**
+     * Constructor.
+     */
     public DefaultContentsParser() {
         maxAnalyzedContentLength = Integer.getInteger("fess.suggest.max.analyzed.content.length", 1000);
     }
@@ -219,6 +222,14 @@ public class DefaultContentsParser implements ContentsParser {
         return items == null ? new ArrayList<>() : items;
     }
 
+    /**
+     * Analyze text.
+     * @param analyzer Analyzer
+     * @param field Field
+     * @param text Text
+     * @param lang Language
+     * @return List of tokens
+     */
     protected List<AnalyzeToken> analyzeText(final SuggestAnalyzer analyzer, final String field, final String text, final String lang) {
         final List<AnalyzeToken> tokens = new ArrayList<>();
         final StringBuilder buf = new StringBuilder(maxAnalyzedContentLength);
@@ -251,6 +262,14 @@ public class DefaultContentsParser implements ContentsParser {
         return tokens;
     }
 
+    /**
+     * Analyze text by reading.
+     * @param analyzer Analyzer
+     * @param field Field
+     * @param text Text
+     * @param lang Language
+     * @return List of tokens
+     */
     protected List<AnalyzeToken> analyzeTextByReading(final SuggestAnalyzer analyzer, final String field, final String text,
             final String lang) {
         final List<AnalyzeToken> tokens = new ArrayList<>();
@@ -290,6 +309,12 @@ public class DefaultContentsParser implements ContentsParser {
         return tokens;
     }
 
+    /**
+     * Get field values.
+     * @param document Document
+     * @param fieldName Field name
+     * @return Field values
+     */
     protected String[] getFieldValues(final Map<String, Object> document, final String fieldName) {
         final Object value = document.get(fieldName);
         if (value instanceof String) {
@@ -308,6 +333,14 @@ public class DefaultContentsParser implements ContentsParser {
         return new String[0];
     }
 
+    /**
+     * Check if the search word is excluded.
+     * @param searchWord Search word
+     * @param field Field
+     * @param langs Languages
+     * @param analyzer Analyzer
+     * @return True if the search word is excluded
+     */
     protected boolean isExcludeSearchword(final String searchWord, final String field, final String[] langs,
             final SuggestAnalyzer analyzer) {
         if (langs == null || langs.length == 0) {

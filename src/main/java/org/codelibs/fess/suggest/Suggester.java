@@ -101,17 +101,35 @@ import org.opensearch.transport.client.Client;
 public class Suggester {
     private static final Logger logger = LogManager.getLogger(Suggester.class);
 
+    /** The OpenSearch client. */
     protected final Client client;
+    /** The suggest settings. */
     protected final SuggestSettings suggestSettings;
+    /** The reading converter. */
     protected final ReadingConverter readingConverter;
+    /** The contents reading converter. */
     protected final ReadingConverter contentsReadingConverter;
+    /** The normalizer. */
     protected final Normalizer normalizer;
+    /** The analyzer. */
     protected final SuggestAnalyzer analyzer;
 
+    /** The index name. */
     protected final String index;
 
+    /** The thread pool. */
     protected final ExecutorService threadPool;
 
+    /**
+     * Constructor for Suggester.
+     * @param client The OpenSearch client.
+     * @param settings The SuggestSettings instance.
+     * @param readingConverter The ReadingConverter instance.
+     * @param contentsReadingConverter The contents ReadingConverter instance.
+     * @param normalizer The Normalizer instance.
+     * @param analyzer The SuggestAnalyzer instance.
+     * @param threadPool The ExecutorService for thread pooling.
+     */
     public Suggester(final Client client, final SuggestSettings settings, final ReadingConverter readingConverter,
             final ReadingConverter contentsReadingConverter, final Normalizer normalizer, final SuggestAnalyzer analyzer,
             final ExecutorService threadPool) {
@@ -129,22 +147,41 @@ public class Suggester {
         }
     }
 
+    /**
+     * Creates a new SuggestRequestBuilder for querying suggestions.
+     * @return A SuggestRequestBuilder instance.
+     */
     public SuggestRequestBuilder suggest() {
         return new SuggestRequestBuilder(client, readingConverter, normalizer).setIndex(getSearchAlias(index));
     }
 
+    /**
+     * Creates a new PopularWordsRequestBuilder for querying popular words.
+     * @return A PopularWordsRequestBuilder instance.
+     */
     public PopularWordsRequestBuilder popularWords() {
         return new PopularWordsRequestBuilder(client).setIndex(getSearchAlias(index));
     }
 
+    /**
+     * Refreshes the suggestion indices.
+     * @return The RefreshResponse.
+     */
     public RefreshResponse refresh() {
         return client.admin().indices().prepareRefresh().execute().actionGet(suggestSettings.getIndexTimeout());
     }
 
+    /**
+     * Shuts down the thread pool.
+     */
     public void shutdown() {
         threadPool.shutdownNow();
     }
 
+    /**
+     * Creates a new index if no index exists.
+     * @return True if an index was created, false otherwise.
+     */
     public boolean createIndexIfNothing() {
         try {
             boolean created = false;
@@ -174,6 +211,9 @@ public class Suggester {
         }
     }
 
+    /**
+     * Creates a new index and replaces the current update alias with the new index.
+     */
     public void createNextIndex() {
         try {
             final List<String> prevIndices = new ArrayList<>();
@@ -217,6 +257,9 @@ public class Suggester {
         }
     }
 
+    /**
+     * Switches the search alias to the current update index.
+     */
     public void switchIndex() {
         try {
             final List<String> updateIndices = new ArrayList<>();
@@ -272,6 +315,9 @@ public class Suggester {
         }
     }
 
+    /**
+     * Removes disabled indices.
+     */
     public void removeDisableIndices() {
         final GetIndexResponse response =
                 client.admin().indices().prepareGetIndex().addIndices("*").execute().actionGet(suggestSettings.getIndicesTimeout());
@@ -292,44 +338,84 @@ public class Suggester {
         });
     }
 
+    /**
+     * Creates a new SuggestIndexer for indexing suggestions.
+     * @return A SuggestIndexer instance.
+     */
     public SuggestIndexer indexer() {
         return createDefaultIndexer();
     }
 
+    /**
+     * Creates a new SuggesterBuilder for building Suggester instances.
+     * @return A SuggesterBuilder instance.
+     */
     public static SuggesterBuilder builder() {
         return new SuggesterBuilder();
     }
 
     // getter
+    /**
+     * Returns the SuggestSettings instance.
+     * @return The SuggestSettings instance.
+     */
     public SuggestSettings settings() {
         return suggestSettings;
     }
 
+    /**
+     * Returns the ReadingConverter instance.
+     * @return The ReadingConverter instance.
+     */
     public ReadingConverter getReadingConverter() {
         return readingConverter;
     }
 
+    /**
+     * Returns the Normalizer instance.
+     * @return The Normalizer instance.
+     */
     public Normalizer getNormalizer() {
         return normalizer;
     }
 
+    /**
+     * Creates a default SuggestIndexer instance.
+     * @return A SuggestIndexer instance.
+     */
     protected SuggestIndexer createDefaultIndexer() {
         return new SuggestIndexer(client, getUpdateAlias(index), readingConverter, contentsReadingConverter, normalizer, analyzer,
                 suggestSettings, threadPool);
     }
 
+    /**
+     * Returns the index name.
+     * @return The index name.
+     */
     public String getIndex() {
         return index;
     }
 
+    /**
+     * Returns the total number of words in the suggestion index.
+     * @return The total number of words.
+     */
     public long getAllWordsNum() {
         return getNum(QueryBuilders.matchAllQuery());
     }
 
+    /**
+     * Returns the number of document words in the suggestion index.
+     * @return The number of document words.
+     */
     public long getDocumentWordsNum() {
         return getNum(QueryBuilders.rangeQuery(FieldNames.DOC_FREQ).gte(1));
     }
 
+    /**
+     * Returns the number of query words in the suggestion index.
+     * @return The number of query words.
+     */
     public long getQueryWordsNum() {
         return getNum(QueryBuilders.rangeQuery(FieldNames.QUERY_FREQ).gte(1));
     }

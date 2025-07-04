@@ -35,6 +35,13 @@ import org.opensearch.transport.client.Client;
  * and delete by query suggest items in an OpenSearch index.
  */
 public class SuggestIndexWriter implements SuggestWriter {
+    /**
+     * Constructs a new {@link SuggestIndexWriter}.
+     */
+    public SuggestIndexWriter() {
+        // nothing
+    }
+
     @Override
     public SuggestWriterResult write(final Client client, final SuggestSettings settings, final String index, final SuggestItem[] items,
             final boolean update) {

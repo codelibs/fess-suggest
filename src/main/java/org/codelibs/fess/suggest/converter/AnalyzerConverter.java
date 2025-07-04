@@ -64,12 +64,20 @@ import com.ibm.icu.text.Transliterator;
  * </ul>
  */
 public class AnalyzerConverter implements ReadingConverter {
+    /** OpenSearch client. */
     protected final Client client;
     private final SuggestSettings settings;
+    /** Analyzer settings. */
     protected final AnalyzerSettings analyzerSettings;
 
+    /** Transliterator for Hiragana to Katakana. */
     protected final Transliterator transliterator = Transliterator.getInstance("Hiragana-Katakana");
 
+    /**
+     * Constructor.
+     * @param client OpenSearch client
+     * @param settings Suggest settings
+     */
     public AnalyzerConverter(final Client client, final SuggestSettings settings) {
         this.client = client;
         this.settings = settings;
@@ -96,9 +104,17 @@ public class AnalyzerConverter implements ReadingConverter {
         return converter.convert(text, field);
     }
 
+    /**
+     * Language-specific analyzer converter.
+     */
     protected class LangAnalyzerConverter implements ReadingConverter {
+        /** Language. */
         protected final String lang;
 
+        /**
+         * Constructor.
+         * @param lang Language
+         */
         protected LangAnalyzerConverter(final String lang) {
             this.lang = lang;
         }

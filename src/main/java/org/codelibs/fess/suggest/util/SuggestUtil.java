@@ -56,6 +56,9 @@ import org.opensearch.index.query.QueryBuilder;
 import org.opensearch.search.SearchHit;
 import org.opensearch.transport.client.Client;
 
+/**
+ * Utility class for suggest feature.
+ */
 public final class SuggestUtil {
     private static final int MAX_QUERY_TERM_NUM = 5;
     private static final int MAX_QUERY_TERM_LENGTH = 48;
@@ -64,6 +67,9 @@ public final class SuggestUtil {
 
     private static final int ID_MAX_LENGTH = 445;
 
+    /**
+     * Private constructor to prevent instantiation.
+     */
     private SuggestUtil() {
     }
 

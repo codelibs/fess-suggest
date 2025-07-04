@@ -34,12 +34,22 @@ import org.opensearch.transport.client.Client;
 public class BadWordSettings {
     private static final Logger logger = LogManager.getLogger(BadWordSettings.class);
 
+    /** Key for bad word settings. */
     public static final String BAD_WORD_SETTINGD_KEY = "badword";
 
+    /** Array settings for bad words. */
     protected ArraySettings arraySettings;
 
+    /** Default bad words. */
     protected static String[] defaultWords = null;
 
+    /**
+     * Constructor.
+     * @param settings Suggest settings
+     * @param client OpenSearch client
+     * @param settingsIndexName Settings index name
+     * @param settingsId Settings ID
+     */
     protected BadWordSettings(final SuggestSettings settings, final Client client, final String settingsIndexName,
             final String settingsId) {
         arraySettings = new ArraySettings(settings, client, settingsIndexName, settingsId) {
@@ -50,6 +60,11 @@ public class BadWordSettings {
         };
     }
 
+    /**
+     * Get bad words.
+     * @param includeDefault True to include default bad words
+     * @return Bad words
+     */
     public String[] get(final boolean includeDefault) {
         final String[] badWords = arraySettings.get(BAD_WORD_SETTINGD_KEY);
         if (!includeDefault) {
@@ -65,6 +80,10 @@ public class BadWordSettings {
         return concat;
     }
 
+    /**
+     * Add a bad word.
+     * @param badWord Bad word
+     */
     public void add(final String badWord) {
         if (logger.isDebugEnabled()) {
             logger.debug("Add badword. {} badword: {}", arraySettings.arraySettingsIndexName, badWord);
@@ -77,6 +96,10 @@ public class BadWordSettings {
         arraySettings.add(BAD_WORD_SETTINGD_KEY, badWord);
     }
 
+    /**
+     * Delete a bad word.
+     * @param badWord Bad word
+     */
     public void delete(final String badWord) {
         if (logger.isDebugEnabled()) {
             logger.debug("Delete badword. {} badword: {}", arraySettings.arraySettingsIndexName, badWord);
@@ -84,6 +107,9 @@ public class BadWordSettings {
         arraySettings.delete(BAD_WORD_SETTINGD_KEY, badWord);
     }
 
+    /**
+     * Delete all bad words.
+     */
     public void deleteAll() {
         if (logger.isDebugEnabled()) {
             logger.debug("Add all badword. {}", arraySettings.arraySettingsIndexName);
@@ -91,6 +117,11 @@ public class BadWordSettings {
         arraySettings.delete(BAD_WORD_SETTINGD_KEY);
     }
 
+    /**
+     * Get validation error.
+     * @param badWord Bad word
+     * @return Validation error
+     */
     protected String getValidationError(final String badWord) {
         if (Strings.isNullOrEmpty(badWord)) {
             return "badWord was empty.";
@@ -101,6 +132,9 @@ public class BadWordSettings {
         return null;
     }
 
+    /**
+     * Update default bad words.
+     */
     protected static void updateDefaultBadwords() {
         if (defaultWords != null) {
             return;

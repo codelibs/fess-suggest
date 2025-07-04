@@ -24,16 +24,41 @@ import java.util.List;
  * It keeps track of any failures that occur during the operation.
  */
 public class SuggestWriterResult {
+    /**
+     * Constructs a new {@link SuggestWriterResult}.
+     */
+    public SuggestWriterResult() {
+        // nothing
+    }
+
+    /**
+     * A list of Throwables representing failures that occurred during the operation.
+     */
     protected List<Throwable> failures = Collections.synchronizedList(new ArrayList<>());
 
+    /**
+     * Adds a Throwable to the list of failures.
+     *
+     * @param t the Throwable to add
+     */
     public void addFailure(final Throwable t) {
         failures.add(t);
     }
 
+    /**
+     * Checks if there are any failures recorded.
+     *
+     * @return true if there is at least one failure, false otherwise
+     */
     public boolean hasFailure() {
         return !failures.isEmpty();
     }
 
+    /**
+     * Returns the list of failures.
+     *
+     * @return a List of Throwable objects representing the failures
+     */
     public List<Throwable> getFailures() {
         return failures;
     }

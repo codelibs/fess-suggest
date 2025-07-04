@@ -30,6 +30,13 @@ import org.opensearch.transport.client.Client;
  * @see SuggestWriter
  */
 public class SuggestBulkFileWriter implements SuggestWriter {
+    /**
+     * Constructs a new {@link SuggestBulkFileWriter}.
+     */
+    public SuggestBulkFileWriter() {
+        // nothing
+    }
+
     @Override
     public SuggestWriterResult write(final Client client, final SuggestSettings settings, final String index, final SuggestItem[] items,
             final boolean update) {

@@ -24,15 +24,21 @@ public final class SuggestConstants {
     private SuggestConstants() {
     }
 
+    /** An empty string constant. */
     public static final String EMPTY_STRING = "";
 
+    /** The system property name for user dictionary encoding. */
     public static final String USER_DICT_ENCODING = "fess.user.dict.encoding";
 
+    /** The system property name for user dictionary path. */
     public static final String USER_DICT_PATH = "fess.user.dict.path";
 
+    /** The text separator. */
     public static final String TEXT_SEPARATOR = " ";
 
+    /** The default role for guest users. */
     public static final String DEFAULT_ROLE = "_guest_";
 
+    /** The default document type. */
     public static final String DEFAULT_TYPE = "_doc";
 }

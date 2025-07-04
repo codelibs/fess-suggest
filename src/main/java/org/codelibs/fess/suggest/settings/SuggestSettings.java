@@ -109,30 +109,62 @@ import org.opensearch.transport.client.Client;
 public class SuggestSettings {
     private static final Logger logger = LogManager.getLogger(SuggestSettings.class);
 
+    /** The settings ID. */
     protected final String settingsId;
 
+    /** The OpenSearch client. */
     protected final Client client;
 
+    /** The settings index name. */
     protected final String settingsIndexName;
 
+    /** The initial settings. */
     protected final Map<String, Object> initialSettings;
 
+    /** Flag indicating if the settings are initialized. */
     protected boolean initialized = false;
 
+    /** The bad word index name. */
     protected final String badWordIndexName;
+    /** The elevate word index name. */
     protected final String elevateWordIndexName;
 
+    /** The timeout settings. */
     protected TimeoutSettings timeoutSettings;
 
+    /**
+     * Timeout settings for various operations.
+     */
     public static class TimeoutSettings {
+        /**
+         * Constructs a new {@link TimeoutSettings}.
+         */
+        public TimeoutSettings() {
+            // nothing
+        }
+
+        /** Search timeout. */
         protected String searchTimeout = "15s";
+        /** Index timeout. */
         protected String indexTimeout = "1m";
+        /** Bulk timeout. */
         protected String bulkTimeout = "1m";
+        /** Indices timeout. */
         protected String indicesTimeout = "1m";
+        /** Cluster timeout. */
         protected String clusterTimeout = "1m";
+        /** Scroll timeout. */
         protected String scrollTimeout = "1m";
     }
 
+    /**
+     * Constructor for SuggestSettings.
+     * @param client The OpenSearch client.
+     * @param settingsId The settings ID.
+     * @param initialSettings The initial settings.
+     * @param settingsIndexName The settings index name.
+     * @param timeoutSettings The timeout settings.
+     */
     public SuggestSettings(final Client client, final String settingsId, final Map<String, Object> initialSettings,
             final String settingsIndexName, final TimeoutSettings timeoutSettings) {
         this.client = client;
@@ -145,6 +177,9 @@ public class SuggestSettings {
         elevateWordIndexName = settingsIndexName + "-elevateword";
     }
 
+    /**
+     * Initializes the settings.
+     */
     public void init() {
         if (initialized) {
             return;
@@ -202,6 +237,11 @@ public class SuggestSettings {
         }
     }
 
+    /**
+     * Retrieves a setting value by key.
+     * @param key The key of the setting.
+     * @return The setting value, or null if not found.
+     */
     public Object get(final String key) {
         final GetResponse getResponse =
                 client.prepareGet().setIndex(settingsIndexName).setId(settingsId).execute().actionGet(getSearchTimeout());
@@ -212,6 +252,12 @@ public class SuggestSettings {
         return map.get(key);
     }
 
+    /**
+     * Retrieves a setting value as a String.
+     * @param key The key of the setting.
+     * @param defaultValue The default value if the setting is not found.
+     * @return The setting value as a String.
+     */
     public String getAsString(final String key, final String defaultValue) {
         final Object obj = get(key);
 
@@ -225,6 +271,12 @@ public class SuggestSettings {
         return value;
     }
 
+    /**
+     * Retrieves a setting value as an int.
+     * @param key The key of the setting.
+     * @param defaultValue The default value if the setting is not found.
+     * @return The setting value as an int.
+     */
     public int getAsInt(final String key, final int defaultValue) {
         final Object obj = get(key);
 
@@ -238,6 +290,12 @@ public class SuggestSettings {
         return value;
     }
 
+    /**
+     * Retrieves a setting value as a long.
+     * @param key The key of the setting.
+     * @param defaultValue The default value if the setting is not found.
+     * @return The setting value as a long.
+     */
     public long getAsLong(final String key, final long defaultValue) {
         final Object obj = get(key);
 
@@ -251,6 +309,12 @@ public class SuggestSettings {
         return value;
     }
 
+    /**
+     * Retrieves a setting value as a float.
+     * @param key The key of the setting.
+     * @param defaultValue The default value if the setting is not found.
+     * @return The setting value as a float.
+     */
     public float getAsFloat(final String key, final float defaultValue) {
         final Object obj = get(key);
 
@@ -264,6 +328,12 @@ public class SuggestSettings {
         return value;
     }
 
+    /**
+     * Retrieves a setting value as a boolean.
+     * @param key The key of the setting.
+     * @param defaultValue The default value if the setting is not found.
+     * @return The setting value as a boolean.
+     */
     public boolean getAsBoolean(final String key, final boolean defaultValue) {
         final Object obj = get(key);
 
@@ -277,6 +347,11 @@ public class SuggestSettings {
         return value;
     }
 
+    /**
+     * Sets a setting value.
+     * @param key The key of the setting.
+     * @param value The value to set.
+     */
     public void set(final String key, final Object value) {
         if (logger.isDebugEnabled()) {
             logger.debug("Set suggest settings. {} key: {} value: {}", settingsIndexName, key, value);
@@ -290,6 +365,10 @@ public class SuggestSettings {
         }
     }
 
+    /**
+     * Sets multiple settings from a map.
+     * @param map The map of settings to set.
+     */
     public void set(final Map<String, Object> map) {
         if (logger.isDebugEnabled()) {
             logger.debug("Set suggest settings. {} {}", settingsIndexName, map.toString());
@@ -305,32 +384,116 @@ public class SuggestSettings {
         }
     }
 
+    /**
+     * Returns an ArraySettings instance.
+     * @return An ArraySettings instance.
+     */
     public ArraySettings array() {
         return new ArraySettings(this, client, settingsIndexName, settingsId);
     }
 
+    /**
+     * Returns an AnalyzerSettings instance.
+     * @return An AnalyzerSettings instance.
+     */
     public AnalyzerSettings analyzer() {
         return new AnalyzerSettings(client, this, settingsIndexName);
     }
 
+    /**
+     * Returns a BadWordSettings instance.
+     * @return A BadWordSettings instance.
+     */
     public BadWordSettings badword() {
         return new BadWordSettings(this, client, settingsIndexName, settingsId);
     }
 
+    /**
+     * Returns an ElevateWordSettings instance.
+     * @return An ElevateWordSettings instance.
+     */
     public ElevateWordSettings elevateWord() {
         return new ElevateWordSettings(this, client, settingsIndexName, settingsId);
     }
 
+    /**
+     * Returns a SuggestSettingsBuilder instance.
+     * @return A SuggestSettingsBuilder instance.
+     */
+    public static SuggestSettingsBuilder builder() {
+        return new SuggestSettingsBuilder();
+    }
+
+    /**
+     * Returns the scroll timeout.
+     * @return The scroll timeout.
+     */
+    public String getScrollTimeout() {
+        return timeoutSettings.scrollTimeout;
+    }
+
+    /**
+     * Returns the search timeout.
+     * @return The search timeout.
+     */
+    public String getSearchTimeout() {
+        return timeoutSettings.searchTimeout;
+    }
+
+    /**
+     * Returns the index timeout.
+     * @return The index timeout.
+     */
+    public String getIndexTimeout() {
+        return timeoutSettings.indexTimeout;
+    }
+
+    /**
+     * Returns the indices timeout.
+     * @return The indices timeout.
+     */
+    public String getIndicesTimeout() {
+        return timeoutSettings.indicesTimeout;
+    }
+
+    /**
+     * Returns the bulk timeout.
+     * @return The bulk timeout.
+     */
+    public String getBulkTimeout() {
+        return timeoutSettings.bulkTimeout;
+    }
+
+    /**
+     * Returns the cluster timeout.
+     * @return The cluster timeout.
+     */
+    public String getClusterTimeout() {
+        return timeoutSettings.clusterTimeout;
+    }
+
+    /**
+     * Returns the settings ID.
+     * @return The settings ID.
+     */
+    public String getSettingsId() {
+        return settingsId;
+    }
+
+    /**
+     * Returns the settings index name.
+     * @return The settings index name.
+     */
     public String getSettingsIndexName() {
         return settingsIndexName;
     }
 
+    /**
+     * Checks if the settings are initialized.
+     * @return True if initialized, false otherwise.
+     */
     public boolean isInitialized() {
         return initialized;
-    }
-
-    public String getSettingsId() {
-        return settingsId;
     }
 
     private Map<String, Object> defaultSettings() {
@@ -349,6 +512,11 @@ public class SuggestSettings {
         return tuples;
     }
 
+    /**
+     * Loads the index settings from a resource file.
+     * @return The index settings as a string.
+     * @throws IOException If an I/O error occurs.
+     */
     protected String loadIndexSettings() throws IOException {
         final String dictionaryPath = System.getProperty("fess.dictionary.path", StringUtil.EMPTY);
         final StringBuilder sb = new StringBuilder();
@@ -363,44 +531,26 @@ public class SuggestSettings {
         return sb.toString().replaceAll(Pattern.quote("${fess.dictionary.path}"), dictionaryPath);
     }
 
-    public static SuggestSettingsBuilder builder() {
-        return new SuggestSettingsBuilder();
-    }
-
+    /**
+     * Default keys for suggest settings.
+     */
     public static class DefaultKeys {
+        /** Index key. */
         public static final String INDEX = "index";
+        /** Supported fields key. */
         public static final String SUPPORTED_FIELDS = "supportedFields";
+        /** Tag field name key. */
         public static final String TAG_FIELD_NAME = "tagFieldName";
+        /** Role field name key. */
         public static final String ROLE_FIELD_NAME = "roleFieldName";
+        /** Language field name key. */
         public static final String LANG_FIELD_NAME = "langFieldName";
+        /** Parallel processing key. */
         public static final String PARALLEL_PROCESSING = "parallel";
+        /** Max content length key. */
         public static final String MAX_CONTENT_LENGTH = "maxContextLength";
 
         private DefaultKeys() {
         }
-    }
-
-    public String getScrollTimeout() {
-        return timeoutSettings.scrollTimeout;
-    }
-
-    public String getSearchTimeout() {
-        return timeoutSettings.searchTimeout;
-    }
-
-    public String getIndexTimeout() {
-        return timeoutSettings.indexTimeout;
-    }
-
-    public String getIndicesTimeout() {
-        return timeoutSettings.indicesTimeout;
-    }
-
-    public String getBulkTimeout() {
-        return timeoutSettings.bulkTimeout;
-    }
-
-    public String getClusterTimeout() {
-        return timeoutSettings.clusterTimeout;
     }
 }

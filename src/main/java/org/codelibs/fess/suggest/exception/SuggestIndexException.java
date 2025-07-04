@@ -34,14 +34,27 @@ public class SuggestIndexException extends SuggesterException {
 
     private static final long serialVersionUID = -3792626439756997194L;
 
+    /**
+     * Constructs a new SuggestIndexException with the specified detail message.
+     * @param msg The detail message.
+     */
     public SuggestIndexException(final String msg) {
         super(msg);
     }
 
+    /**
+     * Constructs a new SuggestIndexException with the specified cause.
+     * @param cause The cause.
+     */
     public SuggestIndexException(final Throwable cause) {
         super(cause);
     }
 
+    /**
+     * Constructs a new SuggestIndexException with the specified detail message and cause.
+     * @param msg The detail message.
+     * @param cause The cause.
+     */
     public SuggestIndexException(final String msg, final Throwable cause) {
         super(msg, cause);
     }

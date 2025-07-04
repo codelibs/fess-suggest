@@ -70,6 +70,9 @@ public class AnalyzerNormalizer implements Normalizer {
         return normalizer.normalize(text, field);
     }
 
+    /**
+     * Language-specific analyzer normalizer.
+     */
     protected class LangAnalyzerNormalizer implements Normalizer {
         /**
          * The language used for normalization.

@@ -77,32 +77,55 @@ import org.opensearch.transport.client.Client;
  * @see FieldAnalyzerMapping
  */
 public class AnalyzerSettings {
+    /** Analyzer name for reading. */
     public static final String READING_ANALYZER = "reading_analyzer";
+    /** Analyzer name for reading term. */
     public static final String READING_TERM_ANALYZER = "reading_term_analyzer";
+    /** Analyzer name for normalization. */
     public static final String NORMALIZE_ANALYZER = "normalize_analyzer";
+    /** Analyzer name for contents. */
     public static final String CONTENTS_ANALYZER = "contents_analyzer";
+    /** Analyzer name for contents reading. */
     public static final String CONTENTS_READING_ANALYZER = "contents_reading_analyzer";
+    /** Field name for field analyzer mapping. */
     public static final String FIELD_ANALYZER_MAPPING = "fieldAnalyzerMapping";
 
+    /** Document type name. */
     public static final String DOC_TYPE_NAME = "_doc";
 
+    /** OpenSearch client. */
     protected final Client client;
+    /** Analyzer settings index name. */
     protected final String analyzerSettingsIndexName;
     private final SuggestSettings settings;
 
+    /** Analyzer map. */
     protected static Map<String, Set<String>> analyzerMap = new ConcurrentHashMap<>();
+    /** Field analyzer mapping map. */
     protected static Map<String, Map<String, FieldAnalyzerMapping>> fieldAnalyzerMappingMap = new ConcurrentHashMap<>();
 
+    /** Supported languages. */
     protected static final String[] SUPPORTED_LANGUAGES = { "ar", "bg", "bn", "ca", "cs", "da", "de", "el", "en", "es", "et", "fa", "fi",
             "fr", "gu", "he", "hi", "hr", "hu", "id", "it", "ja", "ko", "lt", "lv", "mk", "ml", "nl", "no", "pa", "pl", "pt", "ro", "ru",
             "si", "sq", "sv", "ta", "te", "th", "tl", "tr", "uk", "ur", "vi", "zh-cn", "zh-tw" };
 
+    /**
+     * Constructor for AnalyzerSettings.
+     * @param client The OpenSearch client.
+     * @param settings The SuggestSettings instance.
+     * @param settingsIndexName The name of the settings index.
+     */
     public AnalyzerSettings(final Client client, final SuggestSettings settings, final String settingsIndexName) {
         this.client = client;
         this.settings = settings;
         analyzerSettingsIndexName = createAnalyzerSettingsIndexName(settingsIndexName);
     }
 
+    /**
+     * Initializes the analyzer settings.
+     * If the analyzer settings index does not exist, it creates it with default settings and mappings.
+     * It also loads analyzer names and field analyzer mappings.
+     */
     public synchronized void init() {
         try {
             final IndicesExistsResponse response =
@@ -117,10 +140,20 @@ public class AnalyzerSettings {
         }
     }
 
+    /**
+     * Returns the name of the analyzer settings index.
+     * @return The analyzer settings index name.
+     */
     public String getAnalyzerSettingsIndexName() {
         return analyzerSettingsIndexName;
     }
 
+    /**
+     * Returns the name of the reading analyzer for a given field and language.
+     * @param field The field name.
+     * @param lang The language.
+     * @return The reading analyzer name.
+     */
     public String getReadingAnalyzerName(final String field, final String lang) {
         final Map<String, FieldAnalyzerMapping> fieldAnalyzerMapping = fieldAnalyzerMappingMap.get(analyzerSettingsIndexName);
         final Set<String> analyzerNames = analyzerMap.get(analyzerSettingsIndexName);
@@ -138,6 +171,12 @@ public class AnalyzerSettings {
         return analyzerName;
     }
 
+    /**
+     * Returns the name of the reading term analyzer for a given field and language.
+     * @param field The field name.
+     * @param lang The language.
+     * @return The reading term analyzer name.
+     */
     public String getReadingTermAnalyzerName(final String field, final String lang) {
         final Map<String, FieldAnalyzerMapping> fieldAnalyzerMapping = fieldAnalyzerMappingMap.get(analyzerSettingsIndexName);
         final Set<String> analyzerNames = analyzerMap.get(analyzerSettingsIndexName);
@@ -155,6 +194,12 @@ public class AnalyzerSettings {
         return analyzerName;
     }
 
+    /**
+     * Returns the name of the normalize analyzer for a given field and language.
+     * @param field The field name.
+     * @param lang The language.
+     * @return The normalize analyzer name.
+     */
     public String getNormalizeAnalyzerName(final String field, final String lang) {
         final Map<String, FieldAnalyzerMapping> fieldAnalyzerMapping = fieldAnalyzerMappingMap.get(analyzerSettingsIndexName);
         final Set<String> analyzerNames = analyzerMap.get(analyzerSettingsIndexName);
@@ -172,6 +217,12 @@ public class AnalyzerSettings {
         return analyzerName;
     }
 
+    /**
+     * Returns the name of the contents analyzer for a given field and language.
+     * @param field The field name.
+     * @param lang The language.
+     * @return The contents analyzer name.
+     */
     public String getContentsAnalyzerName(final String field, final String lang) {
         final Map<String, FieldAnalyzerMapping> fieldAnalyzerMapping = fieldAnalyzerMappingMap.get(analyzerSettingsIndexName);
         final Set<String> analyzerNames = analyzerMap.get(analyzerSettingsIndexName);
@@ -189,6 +240,12 @@ public class AnalyzerSettings {
         return analyzerName;
     }
 
+    /**
+     * Returns the name of the contents reading analyzer for a given field and language.
+     * @param field The field name.
+     * @param lang The language.
+     * @return The contents reading analyzer name.
+     */
     public String getContentsReadingAnalyzerName(final String field, final String lang) {
         final Map<String, FieldAnalyzerMapping> fieldAnalyzerMapping = fieldAnalyzerMappingMap.get(analyzerSettingsIndexName);
         final Set<String> analyzerNames = analyzerMap.get(analyzerSettingsIndexName);
@@ -206,29 +263,56 @@ public class AnalyzerSettings {
         return analyzerName;
     }
 
+    /**
+     * Updates the analyzer settings.
+     * @param settings The settings to update.
+     */
     public void updateAnalyzer(final Map<String, Object> settings) {
         client.admin().indices().prepareCreate(analyzerSettingsIndexName).setSettings(settings).execute()
                 .actionGet(this.settings.getIndicesTimeout());
     }
 
+    /**
+     * Deletes the analyzer settings.
+     */
     protected void deleteAnalyzerSettings() {
         client.admin().indices().prepareDelete(analyzerSettingsIndexName).execute().actionGet(settings.getIndicesTimeout());
     }
 
+    /**
+     * Creates analyzer settings with string settings and mappings.
+     * @param settings The settings in string format.
+     * @param mappings The mappings in string format.
+     */
     protected void createAnalyzerSettings(final String settings, final String mappings) {
         client.admin().indices().prepareCreate(analyzerSettingsIndexName).setSettings(settings, XContentType.JSON).setMapping(mappings)
                 .execute().actionGet(this.settings.getIndicesTimeout());
     }
 
+    /**
+     * Creates analyzer settings with map settings and mappings.
+     * @param settings The settings in map format.
+     * @param mappings The mappings in map format.
+     */
     protected void createAnalyzerSettings(final Map<String, Object> settings, final Map<String, Object> mappings) {
         client.admin().indices().prepareCreate(analyzerSettingsIndexName).setSettings(settings).execute()
                 .actionGet(this.settings.getIndicesTimeout());
     }
 
+    /**
+     * Creates the analyzer settings index name.
+     * @param settingsIndexName The base settings index name.
+     * @return The created analyzer settings index name.
+     */
     protected String createAnalyzerSettingsIndexName(final String settingsIndexName) {
         return settingsIndexName + "_analyzer";
     }
 
+    /**
+     * Loads the index settings from a resource file.
+     * @return The index settings as a string.
+     * @throws IOException If an I/O error occurs.
+     */
     protected String loadIndexSettings() throws IOException {
         final String dictionaryPath = System.getProperty("fess.dictionary.path", StringUtil.EMPTY);
         final StringBuilder sb = new StringBuilder();
@@ -243,6 +327,10 @@ public class AnalyzerSettings {
         return sb.toString().replaceAll(Pattern.quote("${fess.dictionary.path}"), dictionaryPath);
     }
 
+    /**
+     * Returns the path to the suggest analyzer configuration file.
+     * @return The path to the suggest analyzer configuration file.
+     */
     protected String getSuggestAnalyzerPath() {
         final Object typeObj = settings.get("search_engine.type");
         if (typeObj != null) {
@@ -254,6 +342,11 @@ public class AnalyzerSettings {
         return "suggest_indices/suggest_analyzer.json";
     }
 
+    /**
+     * Loads the index mapping from a resource file.
+     * @return The index mapping as a string.
+     * @throws IOException If an I/O error occurs.
+     */
     protected String loadIndexMapping() throws IOException {
         final StringBuilder sb = new StringBuilder();
         try (BufferedReader br = new BufferedReader(new InputStreamReader(
@@ -267,10 +360,27 @@ public class AnalyzerSettings {
         return sb.toString();
     }
 
+    /**
+     * Default contents analyzer.
+     */
     public class DefaultContentsAnalyzer implements SuggestAnalyzer {
+
+        /**
+         * Constructs a new DefaultContentsAnalyzer.
+         */
+        public DefaultContentsAnalyzer() {
+            // nothing
+        }
 
         private final int maxContentLenth = settings.getAsInt(SuggestSettings.DefaultKeys.MAX_CONTENT_LENGTH, 50000);
 
+        /**
+         * Analyzes the given text.
+         * @param text The text to analyze.
+         * @param field The field name.
+         * @param lang The language.
+         * @return A list of analyzed tokens.
+         */
         @Override
         public List<AnalyzeToken> analyze(final String text, final String field, final String lang) {
             if (text == null || text.length() > maxContentLenth) {
@@ -281,6 +391,13 @@ public class AnalyzerSettings {
             return analyzeResponse.getTokens();
         }
 
+        /**
+         * Analyzes the given text and its reading.
+         * @param text The text to analyze.
+         * @param field The field name.
+         * @param lang The language.
+         * @return A list of analyzed tokens, or null if the contents reading analyzer name is blank.
+         */
         @Override
         public List<AnalyzeToken> analyzeAndReading(final String text, final String field, final String lang) {
             try {
@@ -297,10 +414,19 @@ public class AnalyzerSettings {
         }
     }
 
+    /**
+     * Check if the language is supported.
+     * @param lang Language
+     * @return True if the language is supported
+     */
     public static boolean isSupportedLanguage(final String lang) {
         return StringUtil.isNotBlank(lang) && Stream.of(SUPPORTED_LANGUAGES).anyMatch(lang::equals);
     }
 
+    /**
+     * Get analyzer names.
+     * @return Analyzer names
+     */
     protected Set<String> getAnalyzerNames() {
         final GetSettingsResponse response =
                 client.admin().indices().prepareGetSettings().setIndices(analyzerSettingsIndexName).execute().actionGet();
@@ -309,6 +435,10 @@ public class AnalyzerSettings {
         return analyzerSettings.getAsGroups().keySet();
     }
 
+    /**
+     * Get field analyzer mapping.
+     * @return Field analyzer mapping
+     */
     protected Map<String, FieldAnalyzerMapping> getFieldAnalyzerMapping() {
         final Map<String, FieldAnalyzerMapping> mappingMap = new HashMap<>();
         SearchResponse response = client.prepareSearch(analyzerSettingsIndexName)
@@ -352,6 +482,10 @@ public class AnalyzerSettings {
         return mappingMap;
     }
 
+    /**
+     * Check analyzers.
+     * @return Undefined analyzer set
+     */
     public Set<String> checkAnalyzer() {
         final String text = "text";
         final Set<String> undefinedAnalyzerSet = new HashSet<>();
@@ -400,13 +534,29 @@ public class AnalyzerSettings {
         return undefinedAnalyzerSet;
     }
 
+    /**
+     * Field analyzer mapping.
+     */
     protected static class FieldAnalyzerMapping {
+        /** Reading analyzer name. */
         protected final String readingAnalyzer;
+        /** Reading term analyzer name. */
         protected final String readingTermAnalyzer;
+        /** Normalize analyzer name. */
         protected final String normalizeAnalyzer;
+        /** Contents analyzer name. */
         protected final String contentsAnalyzer;
+        /** Contents reading analyzer name. */
         protected final String contentsReadingAnalyzer;
 
+        /**
+         * Constructor.
+         * @param readingAnalyzer Reading analyzer name
+         * @param readingTermAnalyzer Reading term analyzer name
+         * @param normalizeAnalyzer Normalize analyzer name
+         * @param contentsAnalyzer Contents analyzer name
+         * @param contentsReadingAnalyzer Contents reading analyzer name
+         */
         public FieldAnalyzerMapping(final String readingAnalyzer, final String readingTermAnalyzer, final String normalizeAnalyzer,
                 final String contentsAnalyzer, final String contentsReadingAnalyzer) {
             this.readingAnalyzer = readingAnalyzer;

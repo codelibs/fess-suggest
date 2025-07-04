@@ -32,14 +32,27 @@ public class SuggestSettingsException extends RuntimeException {
 
     private static final long serialVersionUID = 1L;
 
+    /**
+     * Constructs a new SuggestSettingsException with the specified detail message.
+     * @param msg The detail message.
+     */
     public SuggestSettingsException(final String msg) {
         super(msg);
     }
 
+    /**
+     * Constructs a new SuggestSettingsException with the specified cause.
+     * @param cause The cause.
+     */
     public SuggestSettingsException(final Throwable cause) {
         super(cause);
     }
 
+    /**
+     * Constructs a new SuggestSettingsException with the specified detail message and cause.
+     * @param msg The detail message.
+     * @param cause The cause.
+     */
     public SuggestSettingsException(final String msg, final Throwable cause) {
         super(msg, cause);
     }

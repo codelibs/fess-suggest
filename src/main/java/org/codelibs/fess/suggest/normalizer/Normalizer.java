@@ -21,5 +21,12 @@ package org.codelibs.fess.suggest.normalizer;
  * a given text based on the specified field and optional language parameters.
  */
 public interface Normalizer {
+    /**
+     * Normalizes the given text.
+     * @param text The text to normalize
+     * @param field The field name
+     * @param langs The language
+     * @return The normalized text
+     */
     String normalize(String text, String field, String... langs);
 }

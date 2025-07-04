@@ -88,6 +88,13 @@ import org.opensearch.transport.client.Client;
  * @see SuggestResponse
  */
 public class SuggestRequest extends Request<SuggestResponse> {
+    /**
+     * Constructs a new suggest request.
+     */
+    public SuggestRequest() {
+        // nothing
+    }
+
     private String index = null;
 
     private String query = "";
@@ -116,58 +123,114 @@ public class SuggestRequest extends Request<SuggestResponse> {
 
     private boolean skipDuplicateWords = true;
 
+    /**
+     * Sets the index name.
+     * @param index The index name.
+     */
     public void setIndex(final String index) {
         this.index = index;
     }
 
+    /**
+     * Sets the size of results.
+     * @param size The size.
+     */
     public void setSize(final int size) {
         this.size = size;
     }
 
+    /**
+     * Sets the query string.
+     * @param query The query string.
+     */
     public void setQuery(final String query) {
         this.query = query;
     }
 
+    /**
+     * Adds a tag to filter by.
+     * @param tag The tag.
+     */
     public void addTag(final String tag) {
         tags.add(tag);
     }
 
+    /**
+     * Adds a role to filter by.
+     * @param role The role.
+     */
     public void addRole(final String role) {
         roles.add(role);
     }
 
+    /**
+     * Adds a field to filter by.
+     * @param field The field name.
+     */
     public void addField(final String field) {
         fields.add(field);
     }
 
+    /**
+     * Adds a kind to filter by.
+     * @param kind The kind.
+     */
     public void addKind(final String kind) {
         kinds.add(kind);
     }
 
+    /**
+     * Sets whether to return detailed suggestion information.
+     * @param suggestDetail True to return detailed information, false otherwise.
+     */
     public void setSuggestDetail(final boolean suggestDetail) {
         this.suggestDetail = suggestDetail;
     }
 
+    /**
+     * Sets the reading converter.
+     * @param readingConverter The reading converter.
+     */
     public void setReadingConverter(final ReadingConverter readingConverter) {
         this.readingConverter = readingConverter;
     }
 
+    /**
+     * Sets the normalizer.
+     * @param normalizer The normalizer.
+     */
     public void setNormalizer(final Normalizer normalizer) {
         this.normalizer = normalizer;
     }
 
+    /**
+     * Sets the prefix match weight.
+     * @param prefixMatchWeight The prefix match weight.
+     */
     public void setPrefixMatchWeight(final float prefixMatchWeight) {
         this.prefixMatchWeight = prefixMatchWeight;
     }
 
+    /**
+     * Sets whether to match the first word.
+     * @param matchWordFirst True to match the first word, false otherwise.
+     */
     public void setMatchWordFirst(final boolean matchWordFirst) {
         this.matchWordFirst = matchWordFirst;
     }
 
+    /**
+     * Sets whether to skip duplicate words.
+     * @param skipDuplicateWords True to skip duplicate words, false otherwise.
+     */
     public void setSkipDuplicateWords(final boolean skipDuplicateWords) {
         this.skipDuplicateWords = skipDuplicateWords;
     }
 
+    /**
+     * Adds a language to filter by.
+     * @param lang The language.
+     */
     public void addLang(final String lang) {
         languages.add(lang);
     }
@@ -243,6 +306,12 @@ public class SuggestRequest extends Request<SuggestResponse> {
         return !Strings.isNullOrEmpty(query) && !query.contains(" ") && !query.contains("　");
     }
 
+    /**
+     * Builds the query for suggestions.
+     * @param q The query string.
+     * @param fields The fields to search in.
+     * @return The QueryBuilder instance.
+     */
     protected QueryBuilder buildQuery(final String q, final List<String> fields) {
         try {
             final QueryBuilder queryBuilder;
@@ -294,12 +363,24 @@ public class SuggestRequest extends Request<SuggestResponse> {
         }
     }
 
+    /**
+     * Builds a filter query.
+     * @param fieldName The field name.
+     * @param words The words to filter by.
+     * @return The QueryBuilder instance.
+     */
     protected QueryBuilder buildFilterQuery(final String fieldName, final List<String> words) {
         final BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery().minimumShouldMatch(1);
         words.stream().forEach(word -> boolQueryBuilder.should(QueryBuilders.termQuery(fieldName, word)));
         return boolQueryBuilder;
     }
 
+    /**
+     * Builds a function score query.
+     * @param query The query string.
+     * @param queryBuilder The query builder.
+     * @return The QueryBuilder instance.
+     */
     protected QueryBuilder buildFunctionScoreQuery(final String query, final QueryBuilder queryBuilder) {
 
         final List<FunctionScoreQueryBuilder.FilterFunctionBuilder> flist = new ArrayList<>();
@@ -324,6 +405,11 @@ public class SuggestRequest extends Request<SuggestResponse> {
         return functionScoreQueryBuilder;
     }
 
+    /**
+     * Creates a SuggestResponse from the OpenSearch SearchResponse.
+     * @param searchResponse The OpenSearch SearchResponse.
+     * @return A SuggestResponse instance.
+     */
     protected SuggestResponse createResponse(final SearchResponse searchResponse) {
         final SearchHit[] hits = searchResponse.getHits().getHits();
         final List<String> words = new ArrayList<>();
@@ -377,6 +463,13 @@ public class SuggestRequest extends Request<SuggestResponse> {
                 firstItems);
     }
 
+    /**
+     * Checks if the first word matches.
+     * @param singleWordQuery True if it is a single word query.
+     * @param hiraganaQuery True if it is a hiragana query.
+     * @param text The text to check.
+     * @return True if the first word matches, false otherwise.
+     */
     protected boolean isFirstWordMatching(final boolean singleWordQuery, final boolean hiraganaQuery, final String text) {
         if (matchWordFirst && !hiraganaQuery && singleWordQuery && text.contains(query)) {
             if (query.length() == 1) {
@@ -387,6 +480,11 @@ public class SuggestRequest extends Request<SuggestResponse> {
         return false;
     }
 
+    /**
+     * Checks if the query is a hiragana query.
+     * @param query The query string.
+     * @return True if it is a hiragana query, false otherwise.
+     */
     protected boolean isHiraganaQuery(final String query) {
         return query.matches("^[\\u3040-\\u309F]+$");
     }

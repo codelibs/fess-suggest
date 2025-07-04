@@ -24,15 +24,28 @@ public class QueryLog {
     private final String q;
     private final String fq;
 
+    /**
+     * Constructor for QueryLog.
+     * @param queryString The query string.
+     * @param filterQueryString The filter query string (can be null).
+     */
     public QueryLog(final String queryString, @Nullable final String filterQueryString) {
         q = queryString;
         fq = filterQueryString;
     }
 
+    /**
+     * Returns the query string.
+     * @return The query string.
+     */
     public String getQueryString() {
         return q;
     }
 
+    /**
+     * Returns the filter query string.
+     * @return The filter query string.
+     */
     public String getFilterQueryString() {
         return fq;
     }

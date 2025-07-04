@@ -25,6 +25,9 @@ import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.opensearch.index.query.QueryBuilder;
 import org.opensearch.transport.client.Client;
 
+/**
+ * Interface for writing suggest items.
+ */
 public interface SuggestWriter {
     /**
      * Writes the given suggest items to the specified index.

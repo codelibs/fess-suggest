@@ -24,9 +24,16 @@ import java.util.List;
  * and the time taken to complete the operation.
  */
 public class SuggestDeleteResponse {
+    /** List of errors that occurred during the operation. */
     protected final List<Throwable> errors = new ArrayList<>();
+    /** Time taken for the operation in milliseconds. */
     protected final long took;
 
+    /**
+     * Constructor for SuggestDeleteResponse.
+     * @param errors A list of Throwables representing errors.
+     * @param took The time taken for the operation in milliseconds.
+     */
     protected SuggestDeleteResponse(final List<Throwable> errors, final long took) {
         this.took = took;
         if (errors != null && !errors.isEmpty()) {
@@ -34,14 +41,26 @@ public class SuggestDeleteResponse {
         }
     }
 
+    /**
+     * Checks if the response has any errors.
+     * @return True if there are errors, false otherwise.
+     */
     public boolean hasError() {
         return !errors.isEmpty();
     }
 
+    /**
+     * Returns the list of errors.
+     * @return The list of errors.
+     */
     public List<Throwable> getErrors() {
         return errors;
     }
 
+    /**
+     * Returns the time taken for the operation.
+     * @return The time taken in milliseconds.
+     */
     public long getTook() {
         return took;
     }
