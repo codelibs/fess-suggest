@@ -30,7 +30,6 @@ import org.codelibs.opensearch.extension.analysis.PatternConcatenationFilterFact
 import org.codelibs.opensearch.extension.analysis.PosConcatenationFilterFactory;
 import org.codelibs.opensearch.extension.analysis.ProlongedSoundMarkCharFilterFactory;
 import org.codelibs.opensearch.extension.analysis.ReloadableKeywordMarkerFilterFactory;
-import org.codelibs.opensearch.extension.analysis.ReloadableKuromojiTokenizerFactory;
 import org.codelibs.opensearch.extension.analysis.ReloadableStopFilterFactory;
 import org.codelibs.opensearch.extension.analysis.StopTokenPrefixFilterFactory;
 import org.codelibs.opensearch.extension.analysis.StopTokenSuffixFilterFactory;
@@ -41,6 +40,7 @@ import org.codelibs.opensearch.extension.kuromoji.index.analysis.KuromojiKatakan
 import org.codelibs.opensearch.extension.kuromoji.index.analysis.KuromojiNumberFilterFactory;
 import org.codelibs.opensearch.extension.kuromoji.index.analysis.KuromojiPartOfSpeechFilterFactory;
 import org.codelibs.opensearch.extension.kuromoji.index.analysis.KuromojiReadingFormFilterFactory;
+import org.codelibs.opensearch.extension.kuromoji.index.analysis.KuromojiTokenizerFactory;
 import org.opensearch.index.analysis.CharFilterFactory;
 import org.opensearch.index.analysis.TokenFilterFactory;
 import org.opensearch.index.analysis.TokenizerFactory;
@@ -86,8 +86,8 @@ public class ExtensionPlugin extends Plugin implements AnalysisPlugin {
     @Override
     public Map<String, AnalysisProvider<TokenizerFactory>> getTokenizers() {
         final Map<String, AnalysisProvider<TokenizerFactory>> extra = new HashMap<>();
-        extra.put("reloadable_kuromoji_tokenizer", ReloadableKuromojiTokenizerFactory::new);
-        extra.put("reloadable_kuromoji", ReloadableKuromojiTokenizerFactory::new);
+        extra.put("reloadable_kuromoji_tokenizer", KuromojiTokenizerFactory::new);
+        extra.put("reloadable_kuromoji", KuromojiTokenizerFactory::new);
         extra.put("ngram_synonym", NGramSynonymTokenizerFactory::new);
         return extra;
     }
