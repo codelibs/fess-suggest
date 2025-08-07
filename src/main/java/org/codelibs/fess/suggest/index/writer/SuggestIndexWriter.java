@@ -56,7 +56,8 @@ public class SuggestIndexWriter implements SuggestWriter {
             final GetResponse getResponse = client.prepareGet().setIndex(index).setId(item.getId()).get(TimeValue.timeValueSeconds(30));
             if (update && getResponse.isExists()) {
                 final IndexRequestBuilder indexRequestBuilder = new IndexRequestBuilder(client, IndexAction.INSTANCE, index);
-                indexRequestBuilder.setId(item.getId()).setOpType(IndexRequest.OpType.INDEX)
+                indexRequestBuilder.setId(item.getId())
+                        .setOpType(IndexRequest.OpType.INDEX)
                         .setSource(item.getUpdatedSource(getResponse.getSourceAsMap()));
                 bulkRequestBuilder.add(indexRequestBuilder);
             } else {

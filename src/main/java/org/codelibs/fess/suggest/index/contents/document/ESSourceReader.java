@@ -230,14 +230,19 @@ public class ESSourceReader implements DocumentReader {
             try {
                 final SearchResponse response;
                 if (scrollId == null) {
-                    final SearchRequestBuilder builder = client.prepareSearch().setIndices(indexName).setScroll(settings.getScrollTimeout())
-                            .setQuery(queryBuilder).setSize(scrollSize);
+                    final SearchRequestBuilder builder = client.prepareSearch()
+                            .setIndices(indexName)
+                            .setScroll(settings.getScrollTimeout())
+                            .setQuery(queryBuilder)
+                            .setSize(scrollSize);
                     for (final SortBuilder<?> sortBuilder : sortList) {
                         builder.addSort(sortBuilder);
                     }
                     response = builder.execute().actionGet(settings.getSearchTimeout());
                 } else {
-                    response = client.prepareSearchScroll(scrollId).setScroll(settings.getScrollTimeout()).execute()
+                    response = client.prepareSearchScroll(scrollId)
+                            .setScroll(settings.getScrollTimeout())
+                            .execute()
                             .actionGet(settings.getSearchTimeout());
                     if (!scrollId.equals(response.getScrollId())) {
                         SuggestUtil.deleteScrollContext(client, scrollId);
@@ -303,8 +308,13 @@ public class ESSourceReader implements DocumentReader {
      * @return The total number of documents.
      */
     protected long getTotal() {
-        final SearchResponse response = client.prepareSearch().setIndices(indexName).setQuery(queryBuilder).setSize(0)
-                .setTrackTotalHits(true).execute().actionGet(settings.getSearchTimeout());
+        final SearchResponse response = client.prepareSearch()
+                .setIndices(indexName)
+                .setQuery(queryBuilder)
+                .setSize(0)
+                .setTrackTotalHits(true)
+                .execute()
+                .actionGet(settings.getSearchTimeout());
         return response.getHits().getTotalHits().value();
     }
 

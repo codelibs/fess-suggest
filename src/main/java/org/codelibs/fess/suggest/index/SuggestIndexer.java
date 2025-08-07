@@ -263,17 +263,21 @@ public class SuggestIndexer {
     public SuggestDeleteResponse deleteDocumentWords() {
         final long start = System.currentTimeMillis();
 
-        final SuggestDeleteResponse deleteResponse =
-                deleteByQuery(QueryBuilders.boolQuery().must(QueryBuilders.rangeQuery(FieldNames.DOC_FREQ).gte(1))
-                        .mustNot(QueryBuilders.matchPhraseQuery(FieldNames.KINDS, SuggestItem.Kind.QUERY.toString()))
-                        .mustNot(QueryBuilders.matchPhraseQuery(FieldNames.KINDS, SuggestItem.Kind.USER.toString())));
+        final SuggestDeleteResponse deleteResponse = deleteByQuery(QueryBuilders.boolQuery()
+                .must(QueryBuilders.rangeQuery(FieldNames.DOC_FREQ).gte(1))
+                .mustNot(QueryBuilders.matchPhraseQuery(FieldNames.KINDS, SuggestItem.Kind.QUERY.toString()))
+                .mustNot(QueryBuilders.matchPhraseQuery(FieldNames.KINDS, SuggestItem.Kind.USER.toString())));
         if (deleteResponse.hasError()) {
             throw new SuggestIndexException(deleteResponse.getErrors().get(0));
         }
 
         final List<SuggestItem> updateItems = new ArrayList<>();
-        SearchResponse response = client.prepareSearch(index).setSize(500).setScroll(settings.getScrollTimeout())
-                .setQuery(QueryBuilders.rangeQuery(FieldNames.DOC_FREQ).gte(1)).execute().actionGet(settings.getSearchTimeout());
+        SearchResponse response = client.prepareSearch(index)
+                .setSize(500)
+                .setScroll(settings.getScrollTimeout())
+                .setQuery(QueryBuilders.rangeQuery(FieldNames.DOC_FREQ).gte(1))
+                .execute()
+                .actionGet(settings.getSearchTimeout());
         String scrollId = response.getScrollId();
         try {
             while (scrollId != null) {
@@ -284,7 +288,8 @@ public class SuggestIndexer {
                 for (final SearchHit hit : hits) {
                     final SuggestItem item = SuggestItem.parseSource(hit.getSourceAsMap());
                     item.setDocFreq(0);
-                    item.setKinds(Stream.of(item.getKinds()).filter(kind -> kind != SuggestItem.Kind.DOCUMENT)
+                    item.setKinds(Stream.of(item.getKinds())
+                            .filter(kind -> kind != SuggestItem.Kind.DOCUMENT)
                             .toArray(count -> new SuggestItem.Kind[count]));
                     updateItems.add(item);
                 }
@@ -314,17 +319,21 @@ public class SuggestIndexer {
     public SuggestDeleteResponse deleteQueryWords() {
         final long start = System.currentTimeMillis();
 
-        final SuggestDeleteResponse deleteResponse =
-                deleteByQuery(QueryBuilders.boolQuery().must(QueryBuilders.rangeQuery(FieldNames.QUERY_FREQ).gte(1))
-                        .mustNot(QueryBuilders.matchPhraseQuery(FieldNames.KINDS, SuggestItem.Kind.DOCUMENT.toString()))
-                        .mustNot(QueryBuilders.matchPhraseQuery(FieldNames.KINDS, SuggestItem.Kind.USER.toString())));
+        final SuggestDeleteResponse deleteResponse = deleteByQuery(QueryBuilders.boolQuery()
+                .must(QueryBuilders.rangeQuery(FieldNames.QUERY_FREQ).gte(1))
+                .mustNot(QueryBuilders.matchPhraseQuery(FieldNames.KINDS, SuggestItem.Kind.DOCUMENT.toString()))
+                .mustNot(QueryBuilders.matchPhraseQuery(FieldNames.KINDS, SuggestItem.Kind.USER.toString())));
         if (deleteResponse.hasError()) {
             throw new SuggestIndexException(deleteResponse.getErrors().get(0));
         }
 
         final List<SuggestItem> updateItems = new ArrayList<>();
-        SearchResponse response = client.prepareSearch(index).setSize(500).setScroll(settings.getScrollTimeout())
-                .setQuery(QueryBuilders.rangeQuery(FieldNames.QUERY_FREQ).gte(1)).execute().actionGet(settings.getSearchTimeout());
+        SearchResponse response = client.prepareSearch(index)
+                .setSize(500)
+                .setScroll(settings.getScrollTimeout())
+                .setQuery(QueryBuilders.rangeQuery(FieldNames.QUERY_FREQ).gte(1))
+                .execute()
+                .actionGet(settings.getSearchTimeout());
         String scrollId = response.getScrollId();
         try {
             while (scrollId != null) {
@@ -335,7 +344,8 @@ public class SuggestIndexer {
                 for (final SearchHit hit : hits) {
                     final SuggestItem item = SuggestItem.parseSource(hit.getSourceAsMap());
                     item.setQueryFreq(0);
-                    item.setKinds(Stream.of(item.getKinds()).filter(kind -> kind != SuggestItem.Kind.QUERY)
+                    item.setKinds(Stream.of(item.getKinds())
+                            .filter(kind -> kind != SuggestItem.Kind.QUERY)
                             .toArray(count -> new SuggestItem.Kind[count]));
                     updateItems.add(item);
                 }
@@ -382,10 +392,9 @@ public class SuggestIndexer {
             if (parallel) {
                 stream.parallel();
             }
-            final SuggestItem[] array = stream
-                    .flatMap(queryLog -> contentsParser
-                            .parseQueryLog(queryLog, supportedFields, tagFieldNames, roleFieldName, readingConverter, normalizer).stream())
-                    .toArray(n -> new SuggestItem[n]);
+            final SuggestItem[] array = stream.flatMap(queryLog -> contentsParser
+                    .parseQueryLog(queryLog, supportedFields, tagFieldNames, roleFieldName, readingConverter, normalizer)
+                    .stream()).toArray(n -> new SuggestItem[n]);
             final long parseTime = System.currentTimeMillis();
             final SuggestIndexResponse response = index(array);
             final long indexTime = System.currentTimeMillis();
@@ -459,8 +468,10 @@ public class SuggestIndexer {
             }
             final SuggestItem[] items = stream.flatMap(document -> {
                 try {
-                    return contentsParser.parseDocument(document, supportedFields, tagFieldNames, roleFieldName, langFieldName,
-                            readingConverter, contentsReadingConverter, normalizer, analyzer).stream();
+                    return contentsParser
+                            .parseDocument(document, supportedFields, tagFieldNames, roleFieldName, langFieldName, readingConverter,
+                                    contentsReadingConverter, normalizer, analyzer)
+                            .stream();
                 } catch (OpenSearchStatusException | IllegalStateException e) {
                     final String msg = e.getMessage();
                     if (StringUtil.isNotEmpty(msg) || msg.contains("index.analyze.max_token_count")) {

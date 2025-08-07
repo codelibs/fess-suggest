@@ -68,8 +68,10 @@ public class SuggesterTest {
             settingsBuilder.put("discovery.type", "single-node");
             // settingsBuilder.putList("discovery.seed_hosts", "127.0.0.1:9301");
             // settingsBuilder.putList("cluster.initial_master_nodes", "127.0.0.1:9301");
-        }).build(newConfigs().clusterName("ArraySettingsTest").numOfNode(1)
-                .pluginTypes("org.codelibs.opensearch.extension.ExtensionPlugin"));
+        })
+                .build(newConfigs().clusterName("ArraySettingsTest")
+                        .numOfNode(1)
+                        .pluginTypes("org.codelibs.opensearch.extension.ExtensionPlugin"));
         runner.ensureYellow();
     }
 
@@ -329,8 +331,13 @@ public class SuggesterTest {
         analyzerMapping.put(FieldNames.ANALYZER_SETTINGS_FIELD_NAME, field);
         analyzerMapping.put(FieldNames.ANALYZER_SETTINGS_CONTENTS_ANALYZER, "title_contents_analyzer");
         analyzerMapping.put(FieldNames.ANALYZER_SETTINGS_CONTENTS_READING_ANALYZER, "");
-        runner.client().prepareIndex().setIndex(suggester.settings().analyzer().getAnalyzerSettingsIndexName()).setSource(analyzerMapping)
-                .setRefreshPolicy(WriteRequest.RefreshPolicy.WAIT_UNTIL).execute().actionGet();
+        runner.client()
+                .prepareIndex()
+                .setIndex(suggester.settings().analyzer().getAnalyzerSettingsIndexName())
+                .setSource(analyzerMapping)
+                .setRefreshPolicy(WriteRequest.RefreshPolicy.WAIT_UNTIL)
+                .execute()
+                .actionGet();
         suggester.settings().analyzer().init();
 
         SuggestSettings settings = suggester.settings();

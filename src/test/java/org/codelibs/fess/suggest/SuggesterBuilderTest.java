@@ -39,8 +39,10 @@ public class SuggesterBuilderTest extends TestCase {
             settingsBuilder.put("discovery.type", "single-node");
             // settingsBuilder.putList("discovery.seed_hosts", "127.0.0.1:9301");
             // settingsBuilder.putList("cluster.initial_master_nodes", "127.0.0.1:9301");
-        }).build(newConfigs().clusterName("ArraySettingsTest").numOfNode(1)
-                .pluginTypes("org.codelibs.opensearch.extension.ExtensionPlugin"));
+        })
+                .build(newConfigs().clusterName("ArraySettingsTest")
+                        .numOfNode(1)
+                        .pluginTypes("org.codelibs.opensearch.extension.ExtensionPlugin"));
         runner.ensureYellow();
     }
 
@@ -82,8 +84,11 @@ public class SuggesterBuilderTest extends TestCase {
 
         final Normalizer normalizer = (text, field, lang) -> null;
 
-        final Suggester suggester = Suggester.builder().settings(SuggestSettings.builder().setSettingsIndexName(settingsIndexName))
-                .readingConverter(converter).normalizer(normalizer).build(runner.client(), id);
+        final Suggester suggester = Suggester.builder()
+                .settings(SuggestSettings.builder().setSettingsIndexName(settingsIndexName))
+                .readingConverter(converter)
+                .normalizer(normalizer)
+                .build(runner.client(), id);
 
         assertEquals(runner.client(), suggester.client);
 
