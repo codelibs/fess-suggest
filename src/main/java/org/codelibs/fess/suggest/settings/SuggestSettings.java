@@ -207,7 +207,11 @@ public class SuggestSettings {
         if (doCreate) {
             if (doIndexCreate) {
                 try {
-                    client.admin().indices().prepareCreate(settingsIndexName).setSettings(loadIndexSettings(), XContentType.JSON).execute()
+                    client.admin()
+                            .indices()
+                            .prepareCreate(settingsIndexName)
+                            .setSettings(loadIndexSettings(), XContentType.JSON)
+                            .execute()
                             .actionGet(getIndicesTimeout());
                 } catch (final IOException e) {
                     throw new SuggesterException(e);
@@ -357,8 +361,14 @@ public class SuggestSettings {
             logger.debug("Set suggest settings. {} key: {} value: {}", settingsIndexName, key, value);
         }
         try {
-            client.prepareUpdate().setIndex(settingsIndexName).setId(settingsId).setDocAsUpsert(true).setDoc(key, value)
-                    .setRetryOnConflict(5).execute().actionGet(getIndexTimeout());
+            client.prepareUpdate()
+                    .setIndex(settingsIndexName)
+                    .setId(settingsId)
+                    .setDocAsUpsert(true)
+                    .setDoc(key, value)
+                    .setRetryOnConflict(5)
+                    .execute()
+                    .actionGet(getIndexTimeout());
             client.admin().indices().prepareRefresh().setIndices(settingsIndexName).execute().actionGet(getIndicesTimeout());
         } catch (final Exception e) {
             throw new SuggestSettingsException("Failed to update suggestSettings.", e);
@@ -376,8 +386,14 @@ public class SuggestSettings {
         try {
             final XContentBuilder builder = JsonXContent.contentBuilder().map(map);
             builder.flush();
-            client.prepareUpdate().setIndex(settingsIndexName).setId(settingsId).setDocAsUpsert(true).setDoc(builder).setRetryOnConflict(5)
-                    .execute().actionGet(getIndexTimeout());
+            client.prepareUpdate()
+                    .setIndex(settingsIndexName)
+                    .setId(settingsId)
+                    .setDocAsUpsert(true)
+                    .setDoc(builder)
+                    .setRetryOnConflict(5)
+                    .execute()
+                    .actionGet(getIndexTimeout());
             client.admin().indices().prepareRefresh().setIndices(settingsIndexName).execute().actionGet(getIndicesTimeout());
         } catch (final Exception e) {
             throw new SuggestSettingsException("Failed to update suggestSettings.", e);

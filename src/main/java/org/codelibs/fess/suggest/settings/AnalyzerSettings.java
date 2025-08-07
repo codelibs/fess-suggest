@@ -268,7 +268,11 @@ public class AnalyzerSettings {
      * @param settings The settings to update.
      */
     public void updateAnalyzer(final Map<String, Object> settings) {
-        client.admin().indices().prepareCreate(analyzerSettingsIndexName).setSettings(settings).execute()
+        client.admin()
+                .indices()
+                .prepareCreate(analyzerSettingsIndexName)
+                .setSettings(settings)
+                .execute()
                 .actionGet(this.settings.getIndicesTimeout());
     }
 
@@ -285,8 +289,13 @@ public class AnalyzerSettings {
      * @param mappings The mappings in string format.
      */
     protected void createAnalyzerSettings(final String settings, final String mappings) {
-        client.admin().indices().prepareCreate(analyzerSettingsIndexName).setSettings(settings, XContentType.JSON).setMapping(mappings)
-                .execute().actionGet(this.settings.getIndicesTimeout());
+        client.admin()
+                .indices()
+                .prepareCreate(analyzerSettingsIndexName)
+                .setSettings(settings, XContentType.JSON)
+                .setMapping(mappings)
+                .execute()
+                .actionGet(this.settings.getIndicesTimeout());
     }
 
     /**
@@ -295,7 +304,11 @@ public class AnalyzerSettings {
      * @param mappings The mappings in map format.
      */
     protected void createAnalyzerSettings(final Map<String, Object> settings, final Map<String, Object> mappings) {
-        client.admin().indices().prepareCreate(analyzerSettingsIndexName).setSettings(settings).execute()
+        client.admin()
+                .indices()
+                .prepareCreate(analyzerSettingsIndexName)
+                .setSettings(settings)
+                .execute()
                 .actionGet(this.settings.getIndicesTimeout());
     }
 
@@ -386,8 +399,12 @@ public class AnalyzerSettings {
             if (text == null || text.length() > maxContentLenth) {
                 return Collections.emptyList();
             }
-            final AnalyzeAction.Response analyzeResponse = client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text)
-                    .setAnalyzer(getContentsAnalyzerName(field, lang)).execute().actionGet(settings.getIndicesTimeout());
+            final AnalyzeAction.Response analyzeResponse = client.admin()
+                    .indices()
+                    .prepareAnalyze(analyzerSettingsIndexName, text)
+                    .setAnalyzer(getContentsAnalyzerName(field, lang))
+                    .execute()
+                    .actionGet(settings.getIndicesTimeout());
             return analyzeResponse.getTokens();
         }
 
@@ -405,8 +422,12 @@ public class AnalyzerSettings {
                 if (StringUtil.isBlank(contentsReadingAnalyzerName)) {
                     return null;
                 }
-                final AnalyzeAction.Response analyzeResponse = client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text)
-                        .setAnalyzer(contentsReadingAnalyzerName).execute().actionGet(settings.getIndicesTimeout());
+                final AnalyzeAction.Response analyzeResponse = client.admin()
+                        .indices()
+                        .prepareAnalyze(analyzerSettingsIndexName, text)
+                        .setAnalyzer(contentsReadingAnalyzerName)
+                        .execute()
+                        .actionGet(settings.getIndicesTimeout());
                 return analyzeResponse.getTokens();
             } catch (final IllegalArgumentException e) {
                 return analyze(text, field, lang);
@@ -443,7 +464,9 @@ public class AnalyzerSettings {
         final Map<String, FieldAnalyzerMapping> mappingMap = new HashMap<>();
         SearchResponse response = client.prepareSearch(analyzerSettingsIndexName)
                 .setQuery(QueryBuilders.termQuery(FieldNames.ANALYZER_SETTINGS_TYPE, FIELD_ANALYZER_MAPPING))
-                .setScroll(settings.getScrollTimeout()).execute().actionGet(settings.getSearchTimeout());
+                .setScroll(settings.getScrollTimeout())
+                .execute()
+                .actionGet(settings.getSearchTimeout());
         String scrollId = response.getScrollId();
         try {
             while (scrollId != null) {
@@ -469,7 +492,9 @@ public class AnalyzerSettings {
                             new FieldAnalyzerMapping(fieldReadingAnalyzer, fieldReadingTermAnalyzer, fieldNormalizeAnalyzer,
                                     fieldContentsAnalyzer, fieldContentsReadingAnalyzer));
                 }
-                response = client.prepareSearchScroll(scrollId).setScroll(settings.getScrollTimeout()).execute()
+                response = client.prepareSearchScroll(scrollId)
+                        .setScroll(settings.getScrollTimeout())
+                        .execute()
                         .actionGet(settings.getSearchTimeout());
                 if (!scrollId.equals(response.getScrollId())) {
                     SuggestUtil.deleteScrollContext(client, scrollId);
@@ -492,7 +517,11 @@ public class AnalyzerSettings {
         for (final String lang : SUPPORTED_LANGUAGES) {
             final String readingAnalyzer = getReadingAnalyzerName("", lang);
             try {
-                client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text).setAnalyzer(readingAnalyzer).execute()
+                client.admin()
+                        .indices()
+                        .prepareAnalyze(analyzerSettingsIndexName, text)
+                        .setAnalyzer(readingAnalyzer)
+                        .execute()
                         .actionGet(settings.getIndicesTimeout());
             } catch (final IllegalArgumentException e) {
                 undefinedAnalyzerSet.add(readingAnalyzer);
@@ -500,7 +529,11 @@ public class AnalyzerSettings {
 
             final String readingTermAnalyzer = getReadingTermAnalyzerName("", lang);
             try {
-                client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text).setAnalyzer(readingTermAnalyzer).execute()
+                client.admin()
+                        .indices()
+                        .prepareAnalyze(analyzerSettingsIndexName, text)
+                        .setAnalyzer(readingTermAnalyzer)
+                        .execute()
                         .actionGet(settings.getIndicesTimeout());
             } catch (final IllegalArgumentException e) {
                 undefinedAnalyzerSet.add(readingTermAnalyzer);
@@ -508,7 +541,11 @@ public class AnalyzerSettings {
 
             final String normalizeAnalyzer = getNormalizeAnalyzerName("", lang);
             try {
-                client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text).setAnalyzer(normalizeAnalyzer).execute()
+                client.admin()
+                        .indices()
+                        .prepareAnalyze(analyzerSettingsIndexName, text)
+                        .setAnalyzer(normalizeAnalyzer)
+                        .execute()
                         .actionGet(settings.getIndicesTimeout());
             } catch (final IllegalArgumentException e) {
                 undefinedAnalyzerSet.add(normalizeAnalyzer);
@@ -516,7 +553,11 @@ public class AnalyzerSettings {
 
             final String contentsAnalyzer = getContentsAnalyzerName("", lang);
             try {
-                client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text).setAnalyzer(contentsAnalyzer).execute()
+                client.admin()
+                        .indices()
+                        .prepareAnalyze(analyzerSettingsIndexName, text)
+                        .setAnalyzer(contentsAnalyzer)
+                        .execute()
                         .actionGet(settings.getIndicesTimeout());
             } catch (final IllegalArgumentException e) {
                 undefinedAnalyzerSet.add(contentsAnalyzer);
@@ -524,7 +565,11 @@ public class AnalyzerSettings {
 
             final String contentsReadingAnalyzer = getContentsReadingAnalyzerName("", lang);
             try {
-                client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text).setAnalyzer(contentsReadingAnalyzer).execute()
+                client.admin()
+                        .indices()
+                        .prepareAnalyze(analyzerSettingsIndexName, text)
+                        .setAnalyzer(contentsReadingAnalyzer)
+                        .execute()
                         .actionGet(settings.getIndicesTimeout());
             } catch (final IllegalArgumentException e) {
                 undefinedAnalyzerSet.add(contentsReadingAnalyzer);

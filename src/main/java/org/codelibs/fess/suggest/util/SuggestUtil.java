@@ -325,8 +325,12 @@ public final class SuggestUtil {
     public static boolean deleteByQuery(final Client client, final SuggestSettings settings, final String index,
             final QueryBuilder queryBuilder) {
         try {
-            SearchResponse response = client.prepareSearch(index).setQuery(queryBuilder).setSize(500).setScroll(settings.getScrollTimeout())
-                    .execute().actionGet(settings.getSearchTimeout());
+            SearchResponse response = client.prepareSearch(index)
+                    .setQuery(queryBuilder)
+                    .setSize(500)
+                    .setScroll(settings.getScrollTimeout())
+                    .execute()
+                    .actionGet(settings.getSearchTimeout());
             String scrollId = response.getScrollId();
             try {
                 while (scrollId != null) {
@@ -342,7 +346,9 @@ public final class SuggestUtil {
                     if (bulkResponse.hasFailures()) {
                         throw new SuggesterException(bulkResponse.buildFailureMessage());
                     }
-                    response = client.prepareSearchScroll(scrollId).setScroll(settings.getScrollTimeout()).execute()
+                    response = client.prepareSearchScroll(scrollId)
+                            .setScroll(settings.getScrollTimeout())
+                            .execute()
                             .actionGet(settings.getSearchTimeout());
                     if (!scrollId.equals(response.getScrollId())) {
                         SuggestUtil.deleteScrollContext(client, scrollId);

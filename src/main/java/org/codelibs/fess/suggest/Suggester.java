@@ -195,8 +195,14 @@ public class Suggester {
                     logger.info("Create suggest index: {}", indexName);
                 }
 
-                client.admin().indices().prepareCreate(indexName).setSettings(settingsSource, XContentType.JSON).setMapping(mappingSource)
-                        .addAlias(new Alias(getSearchAlias(index))).addAlias(new Alias(getUpdateAlias(index))).execute()
+                client.admin()
+                        .indices()
+                        .prepareCreate(indexName)
+                        .setSettings(settingsSource, XContentType.JSON)
+                        .setMapping(mappingSource)
+                        .addAlias(new Alias(getSearchAlias(index)))
+                        .addAlias(new Alias(getUpdateAlias(index)))
+                        .execute()
                         .actionGet(suggestSettings.getIndicesTimeout());
 
                 client.admin().cluster().prepareHealth().setWaitForYellowStatus().execute().actionGet(suggestSettings.getClusterTimeout());
@@ -220,7 +226,10 @@ public class Suggester {
             final IndicesExistsResponse response =
                     client.admin().indices().prepareExists(getUpdateAlias(index)).execute().actionGet(suggestSettings.getIndicesTimeout());
             if (response.isExists()) {
-                final GetAliasesResponse getAliasesResponse = client.admin().indices().prepareGetAliases(getUpdateAlias(index)).execute()
+                final GetAliasesResponse getAliasesResponse = client.admin()
+                        .indices()
+                        .prepareGetAliases(getUpdateAlias(index))
+                        .execute()
                         .actionGet(suggestSettings.getIndicesTimeout());
                 getAliasesResponse.getAliases().keySet().forEach(prevIndices::add);
             }
@@ -232,9 +241,13 @@ public class Suggester {
                 logger.info("Create next index: {}", indexName);
             }
 
-            final CreateIndexResponse createIndexResponse =
-                    client.admin().indices().prepareCreate(indexName).setSettings(settingsSource, XContentType.JSON)
-                            .setMapping(mappingSource).execute().actionGet(suggestSettings.getIndicesTimeout());
+            final CreateIndexResponse createIndexResponse = client.admin()
+                    .indices()
+                    .prepareCreate(indexName)
+                    .setSettings(settingsSource, XContentType.JSON)
+                    .setMapping(mappingSource)
+                    .execute()
+                    .actionGet(suggestSettings.getIndicesTimeout());
             if (!createIndexResponse.isAcknowledged()) {
                 if (logger.isDebugEnabled()) {
                     logger.debug("Could not create next index: {}", indexName);
@@ -269,8 +282,12 @@ public class Suggester {
             if (updateIndicesResponse.isExists()) {
                 final GetAliasesResponse getAliasesResponse =
                         client.admin().indices().prepareGetAliases(updateAlias).execute().actionGet(suggestSettings.getIndicesTimeout());
-                getAliasesResponse.getAliases().entrySet().forEach(
-                        x -> x.getValue().stream().filter(y -> updateAlias.equals(y.alias())).forEach(y -> updateIndices.add(x.getKey())));
+                getAliasesResponse.getAliases()
+                        .entrySet()
+                        .forEach(x -> x.getValue()
+                                .stream()
+                                .filter(y -> updateAlias.equals(y.alias()))
+                                .forEach(y -> updateIndices.add(x.getKey())));
             }
             if (updateIndices.size() != 1) {
                 if (logger.isDebugEnabled()) {
@@ -287,8 +304,12 @@ public class Suggester {
             if (searchIndicesResponse.isExists()) {
                 final GetAliasesResponse getAliasesResponse =
                         client.admin().indices().prepareGetAliases(searchAlias).execute().actionGet(suggestSettings.getIndicesTimeout());
-                getAliasesResponse.getAliases().entrySet().forEach(
-                        x -> x.getValue().stream().filter(y -> searchAlias.equals(y.alias())).forEach(y -> searchIndices.add(x.getKey())));
+                getAliasesResponse.getAliases()
+                        .entrySet()
+                        .forEach(x -> x.getValue()
+                                .stream()
+                                .filter(y -> searchAlias.equals(y.alias()))
+                                .forEach(y -> searchIndices.add(x.getKey())));
             }
             if (searchIndices.size() != 1) {
                 if (logger.isDebugEnabled()) {
@@ -305,7 +326,12 @@ public class Suggester {
             if (logger.isInfoEnabled()) {
                 logger.info("Switch suggest.search index. {} => {}", searchIndex, updateIndex);
             }
-            client.admin().indices().prepareAliases().removeAlias(searchIndex, searchAlias).addAlias(updateIndex, searchAlias).execute()
+            client.admin()
+                    .indices()
+                    .prepareAliases()
+                    .removeAlias(searchIndex, searchAlias)
+                    .addAlias(updateIndex, searchAlias)
+                    .execute()
                     .actionGet(suggestSettings.getIndicesTimeout());
         } catch (final Exception e) {
             if (logger.isDebugEnabled()) {
@@ -421,8 +447,13 @@ public class Suggester {
     }
 
     private long getNum(final QueryBuilder queryBuilder) {
-        final SearchResponse searchResponse = client.prepareSearch().setIndices(getSearchAlias(index)).setSize(0).setQuery(queryBuilder)
-                .setTrackTotalHits(true).execute().actionGet(suggestSettings.getSearchTimeout());
+        final SearchResponse searchResponse = client.prepareSearch()
+                .setIndices(getSearchAlias(index))
+                .setSize(0)
+                .setQuery(queryBuilder)
+                .setTrackTotalHits(true)
+                .execute()
+                .actionGet(suggestSettings.getSearchTimeout());
         return searchResponse.getHits().getTotalHits().value();
     }
 

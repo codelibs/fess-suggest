@@ -391,9 +391,13 @@ public class SuggestRequest extends Request<SuggestResponse> {
         }
 
         flist.add(new FunctionScoreQueryBuilder.FilterFunctionBuilder(ScoreFunctionBuilders.fieldValueFactorFunction(FieldNames.DOC_FREQ)
-                .missing(0.1f).modifier(FieldValueFactorFunction.Modifier.LOG2P).setWeight(1.0F)));
+                .missing(0.1f)
+                .modifier(FieldValueFactorFunction.Modifier.LOG2P)
+                .setWeight(1.0F)));
         flist.add(new FunctionScoreQueryBuilder.FilterFunctionBuilder(ScoreFunctionBuilders.fieldValueFactorFunction(FieldNames.QUERY_FREQ)
-                .missing(0.1f).modifier(FieldValueFactorFunction.Modifier.LOG2P).setWeight(1.0F)));
+                .missing(0.1f)
+                .modifier(FieldValueFactorFunction.Modifier.LOG2P)
+                .setWeight(1.0F)));
         flist.add(new FunctionScoreQueryBuilder.FilterFunctionBuilder(
                 ScoreFunctionBuilders.fieldValueFactorFunction(FieldNames.USER_BOOST).missing(1f).setWeight(1.0F)));
         final FunctionScoreQueryBuilder functionScoreQueryBuilder = QueryBuilders.functionScoreQuery(queryBuilder,

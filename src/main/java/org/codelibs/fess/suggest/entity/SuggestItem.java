@@ -718,7 +718,10 @@ public class SuggestItem {
         buf.append(',').append('"').append(FieldNames.TAGS).append("\":").append(convertJsonStrings(tags));
         buf.append(',').append('"').append(FieldNames.ROLES).append("\":").append(convertJsonStrings(roles));
         buf.append(',').append('"').append(FieldNames.LANGUAGES).append("\":").append(convertJsonStrings(languages));
-        buf.append(',').append('"').append(FieldNames.KINDS).append("\":")
+        buf.append(',')
+                .append('"')
+                .append(FieldNames.KINDS)
+                .append("\":")
                 .append(convertJsonStrings(Stream.of(kinds).map(Kind::toString).toArray(n -> new String[n])));
         buf.append(',').append('"').append(FieldNames.QUERY_FREQ).append("\":").append(queryFreq);
         buf.append(',').append('"').append(FieldNames.DOC_FREQ).append("\":").append(docFreq);

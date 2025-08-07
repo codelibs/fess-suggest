@@ -199,8 +199,12 @@ public class ArraySettings {
     protected Map<String, Object>[] getFromArrayIndex(final String index, final String type, final String key) {
         final String actualIndex = index + "." + type.toLowerCase(Locale.ENGLISH);
         try {
-            SearchResponse response = client.prepareSearch().setIndices(actualIndex).setScroll(settings.getScrollTimeout())
-                    .setQuery(QueryBuilders.termQuery(FieldNames.ARRAY_KEY, key)).setSize(500).execute()
+            SearchResponse response = client.prepareSearch()
+                    .setIndices(actualIndex)
+                    .setScroll(settings.getScrollTimeout())
+                    .setQuery(QueryBuilders.termQuery(FieldNames.ARRAY_KEY, key))
+                    .setSize(500)
+                    .execute()
                     .actionGet(settings.getSearchTimeout());
             String scrollId = response.getScrollId();
 
@@ -217,7 +221,9 @@ public class ArraySettings {
                         array[count] = hit.getSourceAsMap();
                         count++;
                     }
-                    response = client.prepareSearchScroll(scrollId).setScroll(settings.getScrollTimeout()).execute()
+                    response = client.prepareSearchScroll(scrollId)
+                            .setScroll(settings.getScrollTimeout())
+                            .execute()
                             .actionGet(settings.getSearchTimeout());
                     if (!scrollId.equals(response.getScrollId())) {
                         SuggestUtil.deleteScrollContext(client, scrollId);
@@ -271,7 +277,12 @@ public class ArraySettings {
         try {
             final XContentBuilder builder = JsonXContent.contentBuilder().map(source);
             builder.flush();
-            client.prepareUpdate().setIndex(actualIndex).setId(id).setDocAsUpsert(true).setDoc(builder).execute()
+            client.prepareUpdate()
+                    .setIndex(actualIndex)
+                    .setId(id)
+                    .setDocAsUpsert(true)
+                    .setDoc(builder)
+                    .execute()
                     .actionGet(settings.getIndexTimeout());
             client.admin().indices().prepareRefresh().setIndices(actualIndex).execute().actionGet(settings.getIndicesTimeout());
         } catch (final Exception e) {
@@ -321,23 +332,45 @@ public class ArraySettings {
         try {
             boolean empty;
             try {
-                empty = client.admin().indices().prepareGetMappings(actualIndex).execute().actionGet(settings.getIndicesTimeout())
-                        .getMappings().isEmpty();
+                empty = client.admin()
+                        .indices()
+                        .prepareGetMappings(actualIndex)
+                        .execute()
+                        .actionGet(settings.getIndicesTimeout())
+                        .getMappings()
+                        .isEmpty();
             } catch (final IndexNotFoundException e) {
                 empty = true;
-                final CreateIndexResponse response = client.admin().indices().prepareCreate(actualIndex)
-                        .setSettings(loadIndexSettings(), XContentType.JSON).execute().actionGet(settings.getIndicesTimeout());
+                final CreateIndexResponse response = client.admin()
+                        .indices()
+                        .prepareCreate(actualIndex)
+                        .setSettings(loadIndexSettings(), XContentType.JSON)
+                        .execute()
+                        .actionGet(settings.getIndicesTimeout());
                 if (!response.isAcknowledged()) {
                     throw new SuggestSettingsException("Failed to create " + actualIndex + "/" + type + " index.", e);
                 }
-                client.admin().cluster().prepareHealth(actualIndex).setWaitForYellowStatus().execute()
+                client.admin()
+                        .cluster()
+                        .prepareHealth(actualIndex)
+                        .setWaitForYellowStatus()
+                        .execute()
                         .actionGet(settings.getClusterTimeout());
             }
             if (empty) {
-                client.admin().indices().preparePutMapping(actualIndex)
-                        .setSource(XContentFactory.jsonBuilder().startObject().startObject("properties").startObject(FieldNames.ARRAY_KEY)
-                                .field("type", "keyword").endObject().endObject().endObject())
-                        .execute().actionGet(settings.getIndicesTimeout());
+                client.admin()
+                        .indices()
+                        .preparePutMapping(actualIndex)
+                        .setSource(XContentFactory.jsonBuilder()
+                                .startObject()
+                                .startObject("properties")
+                                .startObject(FieldNames.ARRAY_KEY)
+                                .field("type", "keyword")
+                                .endObject()
+                                .endObject()
+                                .endObject())
+                        .execute()
+                        .actionGet(settings.getIndicesTimeout());
             }
         } catch (final IOException e) {
             throw new SuggestSettingsException("Failed to create mappings.");

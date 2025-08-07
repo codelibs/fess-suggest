@@ -98,9 +98,12 @@ public class AnalyzerNormalizer implements Normalizer {
          */
         @Override
         public String normalize(final String text, final String field, final String... dummy) {
-            final AnalyzeAction.Response termResponse = client.admin().indices()
+            final AnalyzeAction.Response termResponse = client.admin()
+                    .indices()
                     .prepareAnalyze(analyzerSettings.getAnalyzerSettingsIndexName(), text)
-                    .setAnalyzer(analyzerSettings.getNormalizeAnalyzerName(field, lang)).execute().actionGet(settings.getIndicesTimeout());
+                    .setAnalyzer(analyzerSettings.getNormalizeAnalyzerName(field, lang))
+                    .execute()
+                    .actionGet(settings.getIndicesTimeout());
 
             final List<AnalyzeToken> termTokenList = termResponse.getTokens();
             if (termTokenList.isEmpty()) {
