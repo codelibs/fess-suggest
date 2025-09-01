@@ -123,7 +123,9 @@ public final class SuggestUtil {
             final StandardQueryParser parser = new StandardQueryParser();
             parser.setDefaultOperator(StandardQueryConfigHandler.Operator.AND);
 
-            termQueryList = getTermQueryList(parser.parse(q, "default"), fields);
+            // Parse with the first field if available, otherwise use "default"
+            String defaultField = fields != null && fields.length > 0 ? fields[0] : "default";
+            termQueryList = getTermQueryList(parser.parse(q, defaultField), fields);
         } catch (final Exception e) {
             return keywords;
         }
@@ -184,6 +186,10 @@ public final class SuggestUtil {
      * @throws SuggesterException if an I/O error occurs during the creation of the bulk line
      */
     public static String createBulkLine(final String index, final String type, final SuggestItem item) {
+        if (item == null || item.getId() == null || item.getText() == null) {
+            throw new SuggesterException("Invalid SuggestItem: item, id, or text is null");
+        }
+
         final Map<String, Object> firstLineMap = new HashMap<>();
         final Map<String, Object> firstLineInnerMap = new HashMap<>();
         firstLineInnerMap.put("_index", index);
