@@ -36,8 +36,6 @@ public class DefaultNormalizerTest {
         runner.onBuild((number, settingsBuilder) -> {
             settingsBuilder.put("http.cors.enabled", true);
             settingsBuilder.put("discovery.type", "single-node");
-            // settingsBuilder.putList("discovery.seed_hosts", "127.0.0.1:9301");
-            // settingsBuilder.putList("cluster.initial_master_nodes", "127.0.0.1:9301");
         })
                 .build(newConfigs().clusterName("DefaultNormalizerTest")
                         .numOfNode(1)
