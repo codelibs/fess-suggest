@@ -340,6 +340,7 @@ public final class SuggestUtil {
     public static boolean deleteByQuery(final Client client, final SuggestSettings settings, final String index,
             final QueryBuilder queryBuilder) {
         String pitId = null;
+        Object[] searchAfter = null;
         try {
             // Create PIT
             final TimeValue keepAlive = TimeValue.parseTimeValue(settings.getPitKeepAlive(), "keep_alive");
@@ -354,12 +355,17 @@ public final class SuggestUtil {
                     final PointInTimeBuilder pointInTimeBuilder = new PointInTimeBuilder(pitId);
                     pointInTimeBuilder.setKeepAlive(keepAlive);
 
-                    SearchResponse response = client.prepareSearch()
+                    final org.opensearch.action.search.SearchRequestBuilder builder = client.prepareSearch()
                             .setPointInTime(pointInTimeBuilder)
                             .setQuery(queryBuilder)
                             .setSize(500)
-                            .addSort(new FieldSortBuilder("_shard_doc").order(SortOrder.ASC))
-                            .execute()
+                            .addSort(new FieldSortBuilder("_shard_doc").order(SortOrder.ASC));
+
+                    if (searchAfter != null) {
+                        builder.searchAfter(searchAfter);
+                    }
+
+                    SearchResponse response = builder.execute()
                             .actionGet(settings.getSearchTimeout());
 
                     final SearchHit[] hits = response.getHits().getHits();
@@ -374,6 +380,9 @@ public final class SuggestUtil {
                     if (bulkResponse.hasFailures()) {
                         throw new SuggesterException(bulkResponse.buildFailureMessage());
                     }
+
+                    // Update search_after for next iteration
+                    searchAfter = hits[hits.length - 1].getSortValues();
                 }
             } finally {
                 SuggestUtil.deletePitContext(client, pitId);

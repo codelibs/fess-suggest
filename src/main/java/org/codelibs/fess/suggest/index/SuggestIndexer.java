@@ -280,6 +280,7 @@ public class SuggestIndexer {
 
         final List<SuggestItem> updateItems = new ArrayList<>();
         String pitId = null;
+        Object[] searchAfter = null;
         try {
             // Create PIT
             final TimeValue keepAlive = TimeValue.parseTimeValue(settings.getPitKeepAlive(), "keep_alive");
@@ -294,12 +295,17 @@ public class SuggestIndexer {
                     final PointInTimeBuilder pointInTimeBuilder = new PointInTimeBuilder(pitId);
                     pointInTimeBuilder.setKeepAlive(keepAlive);
 
-                    SearchResponse response = client.prepareSearch()
+                    final org.opensearch.action.search.SearchRequestBuilder builder = client.prepareSearch()
                             .setPointInTime(pointInTimeBuilder)
                             .setQuery(QueryBuilders.rangeQuery(FieldNames.DOC_FREQ).gte(1))
                             .setSize(500)
-                            .addSort(new FieldSortBuilder("_shard_doc").order(SortOrder.ASC))
-                            .execute()
+                            .addSort(new FieldSortBuilder("_shard_doc").order(SortOrder.ASC));
+
+                    if (searchAfter != null) {
+                        builder.searchAfter(searchAfter);
+                    }
+
+                    SearchResponse response = builder.execute()
                             .actionGet(settings.getSearchTimeout());
 
                     final SearchHit[] hits = response.getHits().getHits();
@@ -319,6 +325,9 @@ public class SuggestIndexer {
                     if (result.hasFailure()) {
                         throw new SuggestIndexException(result.getFailures().get(0));
                     }
+
+                    // Update search_after for next iteration
+                    searchAfter = hits[hits.length - 1].getSortValues();
                 }
             } finally {
                 SuggestUtil.deletePitContext(client, pitId);
@@ -348,6 +357,7 @@ public class SuggestIndexer {
 
         final List<SuggestItem> updateItems = new ArrayList<>();
         String pitId = null;
+        Object[] searchAfter = null;
         try {
             // Create PIT
             final TimeValue keepAlive = TimeValue.parseTimeValue(settings.getPitKeepAlive(), "keep_alive");
@@ -362,12 +372,17 @@ public class SuggestIndexer {
                     final PointInTimeBuilder pointInTimeBuilder = new PointInTimeBuilder(pitId);
                     pointInTimeBuilder.setKeepAlive(keepAlive);
 
-                    SearchResponse response = client.prepareSearch()
+                    final org.opensearch.action.search.SearchRequestBuilder builder = client.prepareSearch()
                             .setPointInTime(pointInTimeBuilder)
                             .setQuery(QueryBuilders.rangeQuery(FieldNames.QUERY_FREQ).gte(1))
                             .setSize(500)
-                            .addSort(new FieldSortBuilder("_shard_doc").order(SortOrder.ASC))
-                            .execute()
+                            .addSort(new FieldSortBuilder("_shard_doc").order(SortOrder.ASC));
+
+                    if (searchAfter != null) {
+                        builder.searchAfter(searchAfter);
+                    }
+
+                    SearchResponse response = builder.execute()
                             .actionGet(settings.getSearchTimeout());
 
                     final SearchHit[] hits = response.getHits().getHits();
@@ -387,6 +402,9 @@ public class SuggestIndexer {
                     if (result.hasFailure()) {
                         throw new SuggestIndexException(result.getFailures().get(0));
                     }
+
+                    // Update search_after for next iteration
+                    searchAfter = hits[hits.length - 1].getSortValues();
                 }
             } finally {
                 SuggestUtil.deletePitContext(client, pitId);

@@ -225,18 +225,24 @@ public class ArraySettings {
             final Map<String, Object>[] array = new Map[(int) countResponse.getHits().getTotalHits().value()];
 
             int count = 0;
+            Object[] searchAfter = null;
             try {
                 while (true) {
                     // Search with PIT
                     final PointInTimeBuilder pointInTimeBuilder = new PointInTimeBuilder(pitId);
                     pointInTimeBuilder.setKeepAlive(keepAlive);
 
-                    SearchResponse response = client.prepareSearch()
+                    final org.opensearch.action.search.SearchRequestBuilder builder = client.prepareSearch()
                             .setPointInTime(pointInTimeBuilder)
                             .setQuery(QueryBuilders.termQuery(FieldNames.ARRAY_KEY, key))
                             .setSize(500)
-                            .addSort(new FieldSortBuilder("_shard_doc").order(SortOrder.ASC))
-                            .execute()
+                            .addSort(new FieldSortBuilder("_shard_doc").order(SortOrder.ASC));
+
+                    if (searchAfter != null) {
+                        builder.searchAfter(searchAfter);
+                    }
+
+                    SearchResponse response = builder.execute()
                             .actionGet(settings.getSearchTimeout());
 
                     final SearchHit[] hits = response.getHits().getHits();
@@ -247,6 +253,9 @@ public class ArraySettings {
                         array[count] = hit.getSourceAsMap();
                         count++;
                     }
+
+                    // Update search_after for next iteration
+                    searchAfter = hits[hits.length - 1].getSortValues();
                 }
             } finally {
                 SuggestUtil.deletePitContext(client, pitId);

@@ -283,6 +283,11 @@ public class ESSourceReader implements DocumentReader {
                     // Add _shard_doc for consistent pagination
                     builder.addSort(new FieldSortBuilder("_shard_doc").order(SortOrder.ASC));
 
+                    // Apply search_after for pagination
+                    if (searchAfter != null) {
+                        builder.searchAfter(searchAfter);
+                    }
+
                     response = builder.execute().actionGet(settings.getSearchTimeout());
                 }
 
