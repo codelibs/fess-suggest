@@ -38,11 +38,18 @@ import org.opensearch.action.admin.indices.analyze.AnalyzeAction;
 import org.opensearch.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken;
 import org.opensearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.opensearch.action.admin.indices.settings.get.GetSettingsResponse;
+import org.opensearch.action.search.CreatePitAction;
+import org.opensearch.action.search.CreatePitRequest;
+import org.opensearch.action.search.CreatePitResponse;
 import org.opensearch.action.search.SearchResponse;
 import org.opensearch.common.settings.Settings;
+import org.opensearch.common.unit.TimeValue;
 import org.opensearch.common.xcontent.XContentType;
 import org.opensearch.index.query.QueryBuilders;
 import org.opensearch.search.SearchHit;
+import org.opensearch.search.builder.PointInTimeBuilder;
+import org.opensearch.search.sort.FieldSortBuilder;
+import org.opensearch.search.sort.SortOrder;
 import org.opensearch.transport.client.Client;
 
 /**
@@ -462,47 +469,61 @@ public class AnalyzerSettings {
      */
     protected Map<String, FieldAnalyzerMapping> getFieldAnalyzerMapping() {
         final Map<String, FieldAnalyzerMapping> mappingMap = new HashMap<>();
-        SearchResponse response = client.prepareSearch(analyzerSettingsIndexName)
-                .setQuery(QueryBuilders.termQuery(FieldNames.ANALYZER_SETTINGS_TYPE, FIELD_ANALYZER_MAPPING))
-                .setScroll(settings.getScrollTimeout())
-                .execute()
-                .actionGet(settings.getSearchTimeout());
-        String scrollId = response.getScrollId();
+        String pitId = null;
         try {
-            while (scrollId != null) {
-                final SearchHit[] hits = response.getHits().getHits();
-                if (hits.length == 0) {
-                    break;
-                }
-                for (final SearchHit hit : hits) {
-                    final Map<String, Object> source = hit.getSourceAsMap();
-                    final String fieldReadingAnalyzer = source.get(FieldNames.ANALYZER_SETTINGS_READING_ANALYZER) == null ? null
-                            : source.get(FieldNames.ANALYZER_SETTINGS_READING_ANALYZER).toString();
-                    final String fieldReadingTermAnalyzer = source.get(FieldNames.ANALYZER_SETTINGS_READING_TERM_ANALYZER) == null ? null
-                            : source.get(FieldNames.ANALYZER_SETTINGS_READING_TERM_ANALYZER).toString();
-                    final String fieldNormalizeAnalyzer = source.get(FieldNames.ANALYZER_SETTINGS_NORMALIZE_ANALYZER) == null ? null
-                            : source.get(FieldNames.ANALYZER_SETTINGS_NORMALIZE_ANALYZER).toString();
-                    final String fieldContentsAnalyzer = source.get(FieldNames.ANALYZER_SETTINGS_CONTENTS_ANALYZER) == null ? null
-                            : source.get(FieldNames.ANALYZER_SETTINGS_CONTENTS_ANALYZER).toString();
-                    final String fieldContentsReadingAnalyzer =
-                            source.get(FieldNames.ANALYZER_SETTINGS_CONTENTS_READING_ANALYZER) == null ? null
-                                    : source.get(FieldNames.ANALYZER_SETTINGS_CONTENTS_READING_ANALYZER).toString();
+            // Create PIT
+            final CreatePitRequest createPitRequest = new CreatePitRequest(TimeValue.parseTimeValue(settings.getPitKeepAlive(), "keep_alive"), analyzerSettingsIndexName);
+            final CreatePitResponse createPitResponse = client.execute(CreatePitAction.INSTANCE, createPitRequest)
+                    .actionGet(settings.getSearchTimeout());
+            pitId = createPitResponse.getId();
 
-                    mappingMap.put(source.get(FieldNames.ANALYZER_SETTINGS_FIELD_NAME).toString(),
-                            new FieldAnalyzerMapping(fieldReadingAnalyzer, fieldReadingTermAnalyzer, fieldNormalizeAnalyzer,
-                                    fieldContentsAnalyzer, fieldContentsReadingAnalyzer));
+            Object[] searchAfter = null;
+            try {
+                while (true) {
+                    // Search with PIT
+                    final PointInTimeBuilder pointInTimeBuilder = new PointInTimeBuilder(pitId)
+                            .setKeepAlive(TimeValue.parseTimeValue(settings.getPitKeepAlive(), "keep_alive"));
+
+                    SearchResponse response = client.prepareSearch()
+                            .setPointInTime(pointInTimeBuilder)
+                            .setQuery(QueryBuilders.termQuery(FieldNames.ANALYZER_SETTINGS_TYPE, FIELD_ANALYZER_MAPPING))
+                            .setSize(500)
+                            .addSort(new FieldSortBuilder("_shard_doc").order(SortOrder.ASC))
+                            .setSearchAfter(searchAfter)
+                            .execute()
+                            .actionGet(settings.getSearchTimeout());
+
+                    final SearchHit[] hits = response.getHits().getHits();
+                    if (hits.length == 0) {
+                        break;
+                    }
+                    for (final SearchHit hit : hits) {
+                        final Map<String, Object> source = hit.getSourceAsMap();
+                        final String fieldReadingAnalyzer = source.get(FieldNames.ANALYZER_SETTINGS_READING_ANALYZER) == null ? null
+                                : source.get(FieldNames.ANALYZER_SETTINGS_READING_ANALYZER).toString();
+                        final String fieldReadingTermAnalyzer = source.get(FieldNames.ANALYZER_SETTINGS_READING_TERM_ANALYZER) == null ? null
+                                : source.get(FieldNames.ANALYZER_SETTINGS_READING_TERM_ANALYZER).toString();
+                        final String fieldNormalizeAnalyzer = source.get(FieldNames.ANALYZER_SETTINGS_NORMALIZE_ANALYZER) == null ? null
+                                : source.get(FieldNames.ANALYZER_SETTINGS_NORMALIZE_ANALYZER).toString();
+                        final String fieldContentsAnalyzer = source.get(FieldNames.ANALYZER_SETTINGS_CONTENTS_ANALYZER) == null ? null
+                                : source.get(FieldNames.ANALYZER_SETTINGS_CONTENTS_ANALYZER).toString();
+                        final String fieldContentsReadingAnalyzer =
+                                source.get(FieldNames.ANALYZER_SETTINGS_CONTENTS_READING_ANALYZER) == null ? null
+                                        : source.get(FieldNames.ANALYZER_SETTINGS_CONTENTS_READING_ANALYZER).toString();
+
+                        mappingMap.put(source.get(FieldNames.ANALYZER_SETTINGS_FIELD_NAME).toString(),
+                                new FieldAnalyzerMapping(fieldReadingAnalyzer, fieldReadingTermAnalyzer, fieldNormalizeAnalyzer,
+                                        fieldContentsAnalyzer, fieldContentsReadingAnalyzer));
+                    }
+                    // Update search_after for next iteration
+                    searchAfter = hits[hits.length - 1].getSortValues();
                 }
-                response = client.prepareSearchScroll(scrollId)
-                        .setScroll(settings.getScrollTimeout())
-                        .execute()
-                        .actionGet(settings.getSearchTimeout());
-                if (!scrollId.equals(response.getScrollId())) {
-                    SuggestUtil.deleteScrollContext(client, scrollId);
-                }
-                scrollId = response.getScrollId();
+            } finally {
+                SuggestUtil.deletePitContext(client, pitId);
             }
-        } finally {
-            SuggestUtil.deleteScrollContext(client, scrollId);
+        } catch (final Exception e) {
+            SuggestUtil.deletePitContext(client, pitId);
+            throw e;
         }
         return mappingMap;
     }

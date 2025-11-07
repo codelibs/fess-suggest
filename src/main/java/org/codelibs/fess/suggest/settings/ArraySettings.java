@@ -35,7 +35,11 @@ import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.exception.SuggestSettingsException;
 import org.codelibs.fess.suggest.util.SuggestUtil;
 import org.opensearch.action.admin.indices.create.CreateIndexResponse;
+import org.opensearch.action.search.CreatePitAction;
+import org.opensearch.action.search.CreatePitRequest;
+import org.opensearch.action.search.CreatePitResponse;
 import org.opensearch.action.search.SearchResponse;
+import org.opensearch.common.unit.TimeValue;
 import org.opensearch.common.xcontent.XContentFactory;
 import org.opensearch.common.xcontent.XContentType;
 import org.opensearch.common.xcontent.json.JsonXContent;
@@ -43,6 +47,9 @@ import org.opensearch.core.xcontent.XContentBuilder;
 import org.opensearch.index.IndexNotFoundException;
 import org.opensearch.index.query.QueryBuilders;
 import org.opensearch.search.SearchHit;
+import org.opensearch.search.builder.PointInTimeBuilder;
+import org.opensearch.search.sort.FieldSortBuilder;
+import org.opensearch.search.sort.SortOrder;
 import org.opensearch.transport.client.Client;
 
 /**
@@ -198,21 +205,41 @@ public class ArraySettings {
     @SuppressWarnings("unchecked")
     protected Map<String, Object>[] getFromArrayIndex(final String index, final String type, final String key) {
         final String actualIndex = index + "." + type.toLowerCase(Locale.ENGLISH);
+        String pitId = null;
         try {
-            SearchResponse response = client.prepareSearch()
+            // Create PIT
+            final CreatePitRequest createPitRequest = new CreatePitRequest(TimeValue.parseTimeValue(settings.getPitKeepAlive(), "keep_alive"), actualIndex);
+            final CreatePitResponse createPitResponse = client.execute(CreatePitAction.INSTANCE, createPitRequest)
+                    .actionGet(settings.getSearchTimeout());
+            pitId = createPitResponse.getId();
+
+            // Get total count first
+            SearchResponse countResponse = client.prepareSearch()
                     .setIndices(actualIndex)
-                    .setScroll(settings.getScrollTimeout())
                     .setQuery(QueryBuilders.termQuery(FieldNames.ARRAY_KEY, key))
-                    .setSize(500)
+                    .setSize(0)
+                    .setTrackTotalHits(true)
                     .execute()
                     .actionGet(settings.getSearchTimeout());
-            String scrollId = response.getScrollId();
-
-            final Map<String, Object>[] array = new Map[(int) response.getHits().getTotalHits().value()];
+            final Map<String, Object>[] array = new Map[(int) countResponse.getHits().getTotalHits().value()];
 
             int count = 0;
+            Object[] searchAfter = null;
             try {
-                while (scrollId != null) {
+                while (true) {
+                    // Search with PIT
+                    final PointInTimeBuilder pointInTimeBuilder = new PointInTimeBuilder(pitId)
+                            .setKeepAlive(TimeValue.parseTimeValue(settings.getPitKeepAlive(), "keep_alive"));
+
+                    SearchResponse response = client.prepareSearch()
+                            .setPointInTime(pointInTimeBuilder)
+                            .setQuery(QueryBuilders.termQuery(FieldNames.ARRAY_KEY, key))
+                            .setSize(500)
+                            .addSort(new FieldSortBuilder("_shard_doc").order(SortOrder.ASC))
+                            .setSearchAfter(searchAfter)
+                            .execute()
+                            .actionGet(settings.getSearchTimeout());
+
                     final SearchHit[] hits = response.getHits().getHits();
                     if (hits.length == 0) {
                         break;
@@ -221,17 +248,11 @@ public class ArraySettings {
                         array[count] = hit.getSourceAsMap();
                         count++;
                     }
-                    response = client.prepareSearchScroll(scrollId)
-                            .setScroll(settings.getScrollTimeout())
-                            .execute()
-                            .actionGet(settings.getSearchTimeout());
-                    if (!scrollId.equals(response.getScrollId())) {
-                        SuggestUtil.deleteScrollContext(client, scrollId);
-                    }
-                    scrollId = response.getScrollId();
+                    // Update search_after for next iteration
+                    searchAfter = hits[hits.length - 1].getSortValues();
                 }
             } finally {
-                SuggestUtil.deleteScrollContext(client, scrollId);
+                SuggestUtil.deletePitContext(client, pitId);
             }
 
             Arrays.sort(array, (o1, o2) -> {

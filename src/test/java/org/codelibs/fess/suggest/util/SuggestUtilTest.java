@@ -379,13 +379,13 @@ public class SuggestUtilTest {
     }
 
     @Test
-    public void testDeleteScrollContext() {
-        // Test with null scrollId (should not throw exception)
-        SuggestUtil.deleteScrollContext(client, null);
+    public void testDeletePitContext() {
+        // Test with null pitId (should not throw exception)
+        SuggestUtil.deletePitContext(client, null);
 
-        // Test with non-null scrollId
-        String scrollId = "test_scroll_id";
-        SuggestUtil.deleteScrollContext(client, scrollId);
+        // Test with non-null pitId
+        String pitId = "test_pit_id";
+        SuggestUtil.deletePitContext(client, pitId);
         // No exception should be thrown
     }
 

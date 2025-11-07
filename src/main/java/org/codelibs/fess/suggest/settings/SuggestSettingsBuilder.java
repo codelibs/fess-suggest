@@ -64,12 +64,24 @@ public class SuggestSettingsBuilder {
     }
 
     /**
+     * Sets the PIT (Point in Time) keep alive duration.
+     * @param keepAlive The PIT keep alive duration.
+     * @return This builder instance.
+     */
+    public SuggestSettingsBuilder pitKeepAlive(final String keepAlive) {
+        timeoutSettings.pitKeepAlive = keepAlive;
+        return this;
+    }
+
+    /**
      * Sets the scroll timeout.
      * @param timeout The scroll timeout.
      * @return This builder instance.
+     * @deprecated Use {@link #pitKeepAlive(String)} instead. Scroll API has been replaced with PIT API.
      */
+    @Deprecated
     public SuggestSettingsBuilder scrollTimeout(final String timeout) {
-        timeoutSettings.scrollTimeout = timeout;
+        timeoutSettings.pitKeepAlive = timeout;
         return this;
     }
 
