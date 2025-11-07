@@ -242,14 +242,15 @@ public class ESSourceReader implements DocumentReader {
                 final SearchResponse response;
                 if (pitId == null) {
                     // Create PIT on first request
-                    final CreatePitRequest createPitRequest = new CreatePitRequest(TimeValue.parseTimeValue(settings.getPitKeepAlive(), "keep_alive"), indexName);
+                    final TimeValue keepAlive = TimeValue.parseTimeValue(settings.getPitKeepAlive(), "keep_alive");
+                    final CreatePitRequest createPitRequest = new CreatePitRequest(keepAlive, indexName);
                     final CreatePitResponse createPitResponse = client.execute(CreatePitAction.INSTANCE, createPitRequest)
                             .actionGet(settings.getSearchTimeout());
                     pitId = createPitResponse.getId();
 
                     // Build search request with PIT
-                    final PointInTimeBuilder pointInTimeBuilder = new PointInTimeBuilder(pitId)
-                            .setKeepAlive(TimeValue.parseTimeValue(settings.getPitKeepAlive(), "keep_alive"));
+                    final PointInTimeBuilder pointInTimeBuilder = new PointInTimeBuilder(pitId);
+                    pointInTimeBuilder.setKeepAlive(keepAlive);
 
                     final SearchRequestBuilder builder = client.prepareSearch()
                             .setPointInTime(pointInTimeBuilder)
@@ -265,15 +266,15 @@ public class ESSourceReader implements DocumentReader {
 
                     response = builder.execute().actionGet(settings.getSearchTimeout());
                 } else {
-                    // Use search_after for pagination
-                    final PointInTimeBuilder pointInTimeBuilder = new PointInTimeBuilder(pitId)
-                            .setKeepAlive(TimeValue.parseTimeValue(settings.getPitKeepAlive(), "keep_alive"));
+                    // Continue with PIT
+                    final TimeValue keepAlive = TimeValue.parseTimeValue(settings.getPitKeepAlive(), "keep_alive");
+                    final PointInTimeBuilder pointInTimeBuilder = new PointInTimeBuilder(pitId);
+                    pointInTimeBuilder.setKeepAlive(keepAlive);
 
                     final SearchRequestBuilder builder = client.prepareSearch()
                             .setPointInTime(pointInTimeBuilder)
                             .setQuery(queryBuilder)
-                            .setSize(scrollSize)
-                            .setSearchAfter(searchAfter);
+                            .setSize(scrollSize);
 
                     // Add user-defined sorts first
                     for (final SortBuilder<?> sortBuilder : sortList) {

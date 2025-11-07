@@ -472,24 +472,23 @@ public class AnalyzerSettings {
         String pitId = null;
         try {
             // Create PIT
-            final CreatePitRequest createPitRequest = new CreatePitRequest(TimeValue.parseTimeValue(settings.getPitKeepAlive(), "keep_alive"), analyzerSettingsIndexName);
+            final TimeValue keepAlive = TimeValue.parseTimeValue(settings.getPitKeepAlive(), "keep_alive");
+            final CreatePitRequest createPitRequest = new CreatePitRequest(keepAlive, analyzerSettingsIndexName);
             final CreatePitResponse createPitResponse = client.execute(CreatePitAction.INSTANCE, createPitRequest)
                     .actionGet(settings.getSearchTimeout());
             pitId = createPitResponse.getId();
 
-            Object[] searchAfter = null;
             try {
                 while (true) {
                     // Search with PIT
-                    final PointInTimeBuilder pointInTimeBuilder = new PointInTimeBuilder(pitId)
-                            .setKeepAlive(TimeValue.parseTimeValue(settings.getPitKeepAlive(), "keep_alive"));
+                    final PointInTimeBuilder pointInTimeBuilder = new PointInTimeBuilder(pitId);
+                    pointInTimeBuilder.setKeepAlive(keepAlive);
 
                     SearchResponse response = client.prepareSearch()
                             .setPointInTime(pointInTimeBuilder)
                             .setQuery(QueryBuilders.termQuery(FieldNames.ANALYZER_SETTINGS_TYPE, FIELD_ANALYZER_MAPPING))
                             .setSize(500)
                             .addSort(new FieldSortBuilder("_shard_doc").order(SortOrder.ASC))
-                            .setSearchAfter(searchAfter)
                             .execute()
                             .actionGet(settings.getSearchTimeout());
 
@@ -515,8 +514,6 @@ public class AnalyzerSettings {
                                 new FieldAnalyzerMapping(fieldReadingAnalyzer, fieldReadingTermAnalyzer, fieldNormalizeAnalyzer,
                                         fieldContentsAnalyzer, fieldContentsReadingAnalyzer));
                     }
-                    // Update search_after for next iteration
-                    searchAfter = hits[hits.length - 1].getSortValues();
                 }
             } finally {
                 SuggestUtil.deletePitContext(client, pitId);

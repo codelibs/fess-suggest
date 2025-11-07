@@ -342,24 +342,23 @@ public final class SuggestUtil {
         String pitId = null;
         try {
             // Create PIT
-            final CreatePitRequest createPitRequest = new CreatePitRequest(TimeValue.parseTimeValue(settings.getPitKeepAlive(), "keep_alive"), index);
+            final TimeValue keepAlive = TimeValue.parseTimeValue(settings.getPitKeepAlive(), "keep_alive");
+            final CreatePitRequest createPitRequest = new CreatePitRequest(keepAlive, index);
             final CreatePitResponse createPitResponse = client.execute(CreatePitAction.INSTANCE, createPitRequest)
                     .actionGet(settings.getSearchTimeout());
             pitId = createPitResponse.getId();
 
-            Object[] searchAfter = null;
             try {
                 while (true) {
                     // Search with PIT
-                    final PointInTimeBuilder pointInTimeBuilder = new PointInTimeBuilder(pitId)
-                            .setKeepAlive(TimeValue.parseTimeValue(settings.getPitKeepAlive(), "keep_alive"));
+                    final PointInTimeBuilder pointInTimeBuilder = new PointInTimeBuilder(pitId);
+                    pointInTimeBuilder.setKeepAlive(keepAlive);
 
                     SearchResponse response = client.prepareSearch()
                             .setPointInTime(pointInTimeBuilder)
                             .setQuery(queryBuilder)
                             .setSize(500)
                             .addSort(new FieldSortBuilder("_shard_doc").order(SortOrder.ASC))
-                            .setSearchAfter(searchAfter)
                             .execute()
                             .actionGet(settings.getSearchTimeout());
 
@@ -375,9 +374,6 @@ public final class SuggestUtil {
                     if (bulkResponse.hasFailures()) {
                         throw new SuggesterException(bulkResponse.buildFailureMessage());
                     }
-
-                    // Update search_after for next iteration
-                    searchAfter = hits[hits.length - 1].getSortValues();
                 }
             } finally {
                 SuggestUtil.deletePitContext(client, pitId);
