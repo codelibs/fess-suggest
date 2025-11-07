@@ -343,7 +343,7 @@ public final class SuggestUtil {
         try {
             // Create PIT
             final TimeValue keepAlive = TimeValue.parseTimeValue(settings.getPitKeepAlive(), "keep_alive");
-            final CreatePitRequest createPitRequest = new CreatePitRequest(keepAlive, index);
+            final CreatePitRequest createPitRequest = new CreatePitRequest(keepAlive, true, index);
             final CreatePitResponse createPitResponse = client.execute(CreatePitAction.INSTANCE, createPitRequest)
                     .actionGet(settings.getSearchTimeout());
             pitId = createPitResponse.getId();

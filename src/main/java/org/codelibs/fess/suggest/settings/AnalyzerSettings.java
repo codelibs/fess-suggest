@@ -473,7 +473,7 @@ public class AnalyzerSettings {
         try {
             // Create PIT
             final TimeValue keepAlive = TimeValue.parseTimeValue(settings.getPitKeepAlive(), "keep_alive");
-            final CreatePitRequest createPitRequest = new CreatePitRequest(keepAlive, analyzerSettingsIndexName);
+            final CreatePitRequest createPitRequest = new CreatePitRequest(keepAlive, true, analyzerSettingsIndexName);
             final CreatePitResponse createPitResponse = client.execute(CreatePitAction.INSTANCE, createPitRequest)
                     .actionGet(settings.getSearchTimeout());
             pitId = createPitResponse.getId();

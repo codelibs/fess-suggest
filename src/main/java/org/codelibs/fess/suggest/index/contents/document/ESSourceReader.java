@@ -243,7 +243,7 @@ public class ESSourceReader implements DocumentReader {
                 if (pitId == null) {
                     // Create PIT on first request
                     final TimeValue keepAlive = TimeValue.parseTimeValue(settings.getPitKeepAlive(), "keep_alive");
-                    final CreatePitRequest createPitRequest = new CreatePitRequest(keepAlive, indexName);
+                    final CreatePitRequest createPitRequest = new CreatePitRequest(keepAlive, true, indexName);
                     final CreatePitResponse createPitResponse = client.execute(CreatePitAction.INSTANCE, createPitRequest)
                             .actionGet(settings.getSearchTimeout());
                     pitId = createPitResponse.getId();
