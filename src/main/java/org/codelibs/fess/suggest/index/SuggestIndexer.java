@@ -48,11 +48,18 @@ import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.codelibs.fess.suggest.util.SuggestUtil;
 import org.opensearch.OpenSearchStatusException;
+import org.opensearch.action.search.CreatePitAction;
+import org.opensearch.action.search.CreatePitRequest;
+import org.opensearch.action.search.CreatePitResponse;
 import org.opensearch.action.search.SearchResponse;
+import org.opensearch.common.unit.TimeValue;
 import org.opensearch.index.query.Operator;
 import org.opensearch.index.query.QueryBuilder;
 import org.opensearch.index.query.QueryBuilders;
 import org.opensearch.search.SearchHit;
+import org.opensearch.search.builder.PointInTimeBuilder;
+import org.opensearch.search.sort.FieldSortBuilder;
+import org.opensearch.search.sort.SortOrder;
 import org.opensearch.transport.client.Client;
 
 /**
@@ -272,41 +279,53 @@ public class SuggestIndexer {
         }
 
         final List<SuggestItem> updateItems = new ArrayList<>();
-        SearchResponse response = client.prepareSearch(index)
-                .setSize(500)
-                .setScroll(settings.getScrollTimeout())
-                .setQuery(QueryBuilders.rangeQuery(FieldNames.DOC_FREQ).gte(1))
-                .execute()
-                .actionGet(settings.getSearchTimeout());
-        String scrollId = response.getScrollId();
+        String pitId = null;
         try {
-            while (scrollId != null) {
-                final SearchHit[] hits = response.getHits().getHits();
-                if (hits.length == 0) {
-                    break;
-                }
-                for (final SearchHit hit : hits) {
-                    final SuggestItem item = SuggestItem.parseSource(hit.getSourceAsMap());
-                    item.setDocFreq(0);
-                    item.setKinds(Stream.of(item.getKinds())
-                            .filter(kind -> kind != SuggestItem.Kind.DOCUMENT)
-                            .toArray(count -> new SuggestItem.Kind[count]));
-                    updateItems.add(item);
-                }
-                final SuggestWriterResult result =
-                        suggestWriter.write(client, settings, index, updateItems.toArray(new SuggestItem[updateItems.size()]), false);
-                if (result.hasFailure()) {
-                    throw new SuggestIndexException(result.getFailures().get(0));
-                }
+            // Create PIT
+            final TimeValue keepAlive = TimeValue.parseTimeValue(settings.getPitKeepAlive(), "keep_alive");
+            final CreatePitRequest createPitRequest = new CreatePitRequest(keepAlive, true, index);
+            final CreatePitResponse createPitResponse = client.execute(CreatePitAction.INSTANCE, createPitRequest)
+                    .actionGet(settings.getSearchTimeout());
+            pitId = createPitResponse.getId();
 
-                response = client.prepareSearchScroll(scrollId).execute().actionGet(settings.getSearchTimeout());
-                if (!scrollId.equals(response.getScrollId())) {
-                    SuggestUtil.deleteScrollContext(client, scrollId);
+            try {
+                while (true) {
+                    // Search with PIT
+                    final PointInTimeBuilder pointInTimeBuilder = new PointInTimeBuilder(pitId);
+                    pointInTimeBuilder.setKeepAlive(keepAlive);
+
+                    SearchResponse response = client.prepareSearch()
+                            .setPointInTime(pointInTimeBuilder)
+                            .setQuery(QueryBuilders.rangeQuery(FieldNames.DOC_FREQ).gte(1))
+                            .setSize(500)
+                            .addSort(new FieldSortBuilder("_shard_doc").order(SortOrder.ASC))
+                            .execute()
+                            .actionGet(settings.getSearchTimeout());
+
+                    final SearchHit[] hits = response.getHits().getHits();
+                    if (hits.length == 0) {
+                        break;
+                    }
+                    for (final SearchHit hit : hits) {
+                        final SuggestItem item = SuggestItem.parseSource(hit.getSourceAsMap());
+                        item.setDocFreq(0);
+                        item.setKinds(Stream.of(item.getKinds())
+                                .filter(kind -> kind != SuggestItem.Kind.DOCUMENT)
+                                .toArray(count -> new SuggestItem.Kind[count]));
+                        updateItems.add(item);
+                    }
+                    final SuggestWriterResult result =
+                            suggestWriter.write(client, settings, index, updateItems.toArray(new SuggestItem[updateItems.size()]), false);
+                    if (result.hasFailure()) {
+                        throw new SuggestIndexException(result.getFailures().get(0));
+                    }
                 }
-                scrollId = response.getScrollId();
+            } finally {
+                SuggestUtil.deletePitContext(client, pitId);
             }
-        } finally {
-            SuggestUtil.deleteScrollContext(client, scrollId);
+        } catch (final Exception e) {
+            SuggestUtil.deletePitContext(client, pitId);
+            throw e;
         }
 
         return new SuggestDeleteResponse(null, System.currentTimeMillis() - start);
@@ -328,41 +347,53 @@ public class SuggestIndexer {
         }
 
         final List<SuggestItem> updateItems = new ArrayList<>();
-        SearchResponse response = client.prepareSearch(index)
-                .setSize(500)
-                .setScroll(settings.getScrollTimeout())
-                .setQuery(QueryBuilders.rangeQuery(FieldNames.QUERY_FREQ).gte(1))
-                .execute()
-                .actionGet(settings.getSearchTimeout());
-        String scrollId = response.getScrollId();
+        String pitId = null;
         try {
-            while (scrollId != null) {
-                final SearchHit[] hits = response.getHits().getHits();
-                if (hits.length == 0) {
-                    break;
-                }
-                for (final SearchHit hit : hits) {
-                    final SuggestItem item = SuggestItem.parseSource(hit.getSourceAsMap());
-                    item.setQueryFreq(0);
-                    item.setKinds(Stream.of(item.getKinds())
-                            .filter(kind -> kind != SuggestItem.Kind.QUERY)
-                            .toArray(count -> new SuggestItem.Kind[count]));
-                    updateItems.add(item);
-                }
-                final SuggestWriterResult result =
-                        suggestWriter.write(client, settings, index, updateItems.toArray(new SuggestItem[updateItems.size()]), false);
-                if (result.hasFailure()) {
-                    throw new SuggestIndexException(result.getFailures().get(0));
-                }
+            // Create PIT
+            final TimeValue keepAlive = TimeValue.parseTimeValue(settings.getPitKeepAlive(), "keep_alive");
+            final CreatePitRequest createPitRequest = new CreatePitRequest(keepAlive, true, index);
+            final CreatePitResponse createPitResponse = client.execute(CreatePitAction.INSTANCE, createPitRequest)
+                    .actionGet(settings.getSearchTimeout());
+            pitId = createPitResponse.getId();
 
-                response = client.prepareSearchScroll(scrollId).execute().actionGet(settings.getSearchTimeout());
-                if (!scrollId.equals(response.getScrollId())) {
-                    SuggestUtil.deleteScrollContext(client, scrollId);
+            try {
+                while (true) {
+                    // Search with PIT
+                    final PointInTimeBuilder pointInTimeBuilder = new PointInTimeBuilder(pitId);
+                    pointInTimeBuilder.setKeepAlive(keepAlive);
+
+                    SearchResponse response = client.prepareSearch()
+                            .setPointInTime(pointInTimeBuilder)
+                            .setQuery(QueryBuilders.rangeQuery(FieldNames.QUERY_FREQ).gte(1))
+                            .setSize(500)
+                            .addSort(new FieldSortBuilder("_shard_doc").order(SortOrder.ASC))
+                            .execute()
+                            .actionGet(settings.getSearchTimeout());
+
+                    final SearchHit[] hits = response.getHits().getHits();
+                    if (hits.length == 0) {
+                        break;
+                    }
+                    for (final SearchHit hit : hits) {
+                        final SuggestItem item = SuggestItem.parseSource(hit.getSourceAsMap());
+                        item.setQueryFreq(0);
+                        item.setKinds(Stream.of(item.getKinds())
+                                .filter(kind -> kind != SuggestItem.Kind.QUERY)
+                                .toArray(count -> new SuggestItem.Kind[count]));
+                        updateItems.add(item);
+                    }
+                    final SuggestWriterResult result =
+                            suggestWriter.write(client, settings, index, updateItems.toArray(new SuggestItem[updateItems.size()]), false);
+                    if (result.hasFailure()) {
+                        throw new SuggestIndexException(result.getFailures().get(0));
+                    }
                 }
-                scrollId = response.getScrollId();
+            } finally {
+                SuggestUtil.deletePitContext(client, pitId);
             }
-        } finally {
-            SuggestUtil.deleteScrollContext(client, scrollId);
+        } catch (final Exception e) {
+            SuggestUtil.deletePitContext(client, pitId);
+            throw e;
         }
 
         return new SuggestDeleteResponse(null, System.currentTimeMillis() - start);

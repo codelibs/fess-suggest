@@ -72,7 +72,7 @@ import org.opensearch.transport.client.Client;
  *
  * <p>Timeout settings can be accessed via:</p>
  * <ul>
- *   <li>{@link #getScrollTimeout()}</li>
+ *   <li>{@link #getPitKeepAlive()}</li>
  *   <li>{@link #getSearchTimeout()}</li>
  *   <li>{@link #getIndexTimeout()}</li>
  *   <li>{@link #getIndicesTimeout()}</li>
@@ -153,8 +153,8 @@ public class SuggestSettings {
         protected String indicesTimeout = "1m";
         /** Cluster timeout. */
         protected String clusterTimeout = "1m";
-        /** Scroll timeout. */
-        protected String scrollTimeout = "1m";
+        /** PIT (Point in Time) keep alive duration. */
+        protected String pitKeepAlive = "1m";
     }
 
     /**
@@ -441,11 +441,11 @@ public class SuggestSettings {
     }
 
     /**
-     * Returns the scroll timeout.
-     * @return The scroll timeout.
+     * Returns the PIT (Point in Time) keep alive duration.
+     * @return The PIT keep alive duration.
      */
-    public String getScrollTimeout() {
-        return timeoutSettings.scrollTimeout;
+    public String getPitKeepAlive() {
+        return timeoutSettings.pitKeepAlive;
     }
 
     /**
