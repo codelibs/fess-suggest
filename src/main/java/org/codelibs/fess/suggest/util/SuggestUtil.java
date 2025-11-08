@@ -319,10 +319,10 @@ public final class SuggestUtil {
     }
 
     /**
-     * Deletes documents from the specified index based on the given query.
+     * Deletes documents from the specified index based on the given query using PIT API.
      *
      * @param client the OpenSearch client to use for executing the query and delete operations
-     * @param settings the settings for the suggest feature, including timeouts and scroll settings
+     * @param settings the settings for the suggest feature, including timeouts and PIT settings
      * @param index the name of the index from which documents should be deleted
      * @param queryBuilder the query used to identify documents to delete
      * @return true if the operation completes successfully
@@ -330,46 +330,101 @@ public final class SuggestUtil {
      */
     public static boolean deleteByQuery(final Client client, final SuggestSettings settings, final String index,
             final QueryBuilder queryBuilder) {
+        String pitId = null;
         try {
-            SearchResponse response = client.prepareSearch(index)
-                    .setQuery(queryBuilder)
-                    .setSize(500)
-                    .setScroll(settings.getScrollTimeout())
-                    .execute()
-                    .actionGet(settings.getSearchTimeout());
-            String scrollId = response.getScrollId();
-            try {
-                while (scrollId != null) {
-                    final SearchHit[] hits = response.getHits().getHits();
-                    if (hits.length == 0) {
-                        break;
-                    }
+            // Create PIT
+            pitId = createPit(client, settings, index);
 
-                    final BulkRequestBuilder bulkRequestBuiler = client.prepareBulk();
-                    Stream.of(hits).map(SearchHit::getId).forEach(id -> bulkRequestBuiler.add(new DeleteRequest(index, id)));
+            Object[] searchAfter = null;
+            while (true) {
+                final org.opensearch.action.search.SearchRequestBuilder builder = client.prepareSearch()
+                        .setQuery(queryBuilder)
+                        .setSize(500);
 
-                    final BulkResponse bulkResponse = bulkRequestBuiler.execute().actionGet(settings.getBulkTimeout());
-                    if (bulkResponse.hasFailures()) {
-                        throw new SuggesterException(bulkResponse.buildFailureMessage());
-                    }
-                    response = client.prepareSearchScroll(scrollId)
-                            .setScroll(settings.getScrollTimeout())
-                            .execute()
-                            .actionGet(settings.getSearchTimeout());
-                    if (!scrollId.equals(response.getScrollId())) {
-                        SuggestUtil.deleteScrollContext(client, scrollId);
-                    }
-                    scrollId = response.getScrollId();
+                // Add PIT to search request
+                builder.setPointInTime(
+                    new org.opensearch.search.builder.PointInTimeBuilder(pitId)
+                        .setKeepAlive(org.opensearch.core.common.unit.TimeValue.parseTimeValue(
+                            settings.getPitKeepAlive(), "pit_keep_alive"))
+                );
+
+                // Sort is required for search_after
+                builder.addSort("_shard_doc", org.opensearch.search.sort.SortOrder.ASC);
+
+                // Add search_after if we have it
+                if (searchAfter != null) {
+                    builder.searchAfter(searchAfter);
                 }
-            } finally {
-                SuggestUtil.deleteScrollContext(client, scrollId);
+
+                final SearchResponse response = builder.execute().actionGet(settings.getSearchTimeout());
+                final SearchHit[] hits = response.getHits().getHits();
+                if (hits.length == 0) {
+                    break;
+                }
+
+                final BulkRequestBuilder bulkRequestBuilder = client.prepareBulk();
+                Stream.of(hits).map(SearchHit::getId).forEach(id -> bulkRequestBuilder.add(new DeleteRequest(index, id)));
+
+                final BulkResponse bulkResponse = bulkRequestBuilder.execute().actionGet(settings.getBulkTimeout());
+                if (bulkResponse.hasFailures()) {
+                    throw new SuggesterException(bulkResponse.buildFailureMessage());
+                }
+
+                // Save last sort values for next search_after
+                searchAfter = hits[hits.length - 1].getSortValues();
             }
+
             client.admin().indices().prepareRefresh(index).execute().actionGet(settings.getIndicesTimeout());
         } catch (final Exception e) {
             throw new SuggesterException("Failed to exec delete by query.", e);
+        } finally {
+            deletePitContext(client, pitId);
         }
 
         return true;
+    }
+
+    /**
+     * Creates a Point in Time (PIT) for the specified index.
+     *
+     * @param client the OpenSearch client used to create the PIT
+     * @param settings the settings containing the PIT keep alive duration
+     * @param index the name of the index to create PIT for
+     * @return the PIT ID
+     * @throws SuggesterException if an error occurs during PIT creation
+     */
+    public static String createPit(final Client client, final SuggestSettings settings, final String index) {
+        try {
+            final org.opensearch.action.search.CreatePitRequest createPitRequest =
+                new org.opensearch.action.search.CreatePitRequest(
+                    org.opensearch.core.common.unit.TimeValue.parseTimeValue(settings.getPitKeepAlive(), "pit_keep_alive"),
+                    true,
+                    index
+                );
+            final org.opensearch.action.search.CreatePitResponse createPitResponse =
+                client.createPit(createPitRequest).actionGet(settings.getSearchTimeout());
+            return createPitResponse.getId();
+        } catch (final Exception e) {
+            throw new SuggesterException("Failed to create PIT for index: " + index, e);
+        }
+    }
+
+    /**
+     * Deletes the Point in Time (PIT) context associated with the given PIT ID.
+     *
+     * @param client the OpenSearch client used to delete the PIT context
+     * @param pitId the ID of the PIT context to be deleted; if null, no action is taken
+     */
+    public static void deletePitContext(final Client client, final String pitId) {
+        if (pitId != null) {
+            try {
+                final org.opensearch.action.search.DeletePitRequest deletePitRequest =
+                    new org.opensearch.action.search.DeletePitRequest(pitId);
+                client.deletePit(deletePitRequest).actionGet();
+            } catch (final Exception e) {
+                // Ignore errors when deleting PIT
+            }
+        }
     }
 
     /**
@@ -377,7 +432,9 @@ public final class SuggestUtil {
      *
      * @param client the OpenSearch client used to clear the scroll context
      * @param scrollId the ID of the scroll context to be deleted; if null, no action is taken
+     * @deprecated Use {@link #deletePitContext(Client, String)} instead
      */
+    @Deprecated
     public static void deleteScrollContext(final Client client, final String scrollId) {
         if (scrollId != null) {
             client.prepareClearScroll().addScrollId(scrollId).execute(ActionListener.wrap(res -> {}, e -> {}));

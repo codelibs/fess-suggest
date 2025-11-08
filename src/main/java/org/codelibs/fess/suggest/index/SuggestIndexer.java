@@ -272,19 +272,38 @@ public class SuggestIndexer {
         }
 
         final List<SuggestItem> updateItems = new ArrayList<>();
-        SearchResponse response = client.prepareSearch(index)
-                .setSize(500)
-                .setScroll(settings.getScrollTimeout())
-                .setQuery(QueryBuilders.rangeQuery(FieldNames.DOC_FREQ).gte(1))
-                .execute()
-                .actionGet(settings.getSearchTimeout());
-        String scrollId = response.getScrollId();
+        String pitId = null;
         try {
-            while (scrollId != null) {
+            // Create PIT
+            pitId = SuggestUtil.createPit(client, settings, index);
+
+            Object[] searchAfter = null;
+            while (true) {
+                final org.opensearch.action.search.SearchRequestBuilder builder = client.prepareSearch()
+                        .setQuery(QueryBuilders.rangeQuery(FieldNames.DOC_FREQ).gte(1))
+                        .setSize(500);
+
+                // Add PIT to search request
+                builder.setPointInTime(
+                    new org.opensearch.search.builder.PointInTimeBuilder(pitId)
+                        .setKeepAlive(org.opensearch.core.common.unit.TimeValue.parseTimeValue(
+                            settings.getPitKeepAlive(), "pit_keep_alive"))
+                );
+
+                // Sort is required for search_after
+                builder.addSort("_shard_doc", org.opensearch.search.sort.SortOrder.ASC);
+
+                // Add search_after if we have it
+                if (searchAfter != null) {
+                    builder.searchAfter(searchAfter);
+                }
+
+                final SearchResponse response = builder.execute().actionGet(settings.getSearchTimeout());
                 final SearchHit[] hits = response.getHits().getHits();
                 if (hits.length == 0) {
                     break;
                 }
+
                 for (final SearchHit hit : hits) {
                     final SuggestItem item = SuggestItem.parseSource(hit.getSourceAsMap());
                     item.setDocFreq(0);
@@ -299,14 +318,11 @@ public class SuggestIndexer {
                     throw new SuggestIndexException(result.getFailures().get(0));
                 }
 
-                response = client.prepareSearchScroll(scrollId).execute().actionGet(settings.getSearchTimeout());
-                if (!scrollId.equals(response.getScrollId())) {
-                    SuggestUtil.deleteScrollContext(client, scrollId);
-                }
-                scrollId = response.getScrollId();
+                // Save last sort values for next search_after
+                searchAfter = hits[hits.length - 1].getSortValues();
             }
         } finally {
-            SuggestUtil.deleteScrollContext(client, scrollId);
+            SuggestUtil.deletePitContext(client, pitId);
         }
 
         return new SuggestDeleteResponse(null, System.currentTimeMillis() - start);
@@ -328,19 +344,38 @@ public class SuggestIndexer {
         }
 
         final List<SuggestItem> updateItems = new ArrayList<>();
-        SearchResponse response = client.prepareSearch(index)
-                .setSize(500)
-                .setScroll(settings.getScrollTimeout())
-                .setQuery(QueryBuilders.rangeQuery(FieldNames.QUERY_FREQ).gte(1))
-                .execute()
-                .actionGet(settings.getSearchTimeout());
-        String scrollId = response.getScrollId();
+        String pitId = null;
         try {
-            while (scrollId != null) {
+            // Create PIT
+            pitId = SuggestUtil.createPit(client, settings, index);
+
+            Object[] searchAfter = null;
+            while (true) {
+                final org.opensearch.action.search.SearchRequestBuilder builder = client.prepareSearch()
+                        .setQuery(QueryBuilders.rangeQuery(FieldNames.QUERY_FREQ).gte(1))
+                        .setSize(500);
+
+                // Add PIT to search request
+                builder.setPointInTime(
+                    new org.opensearch.search.builder.PointInTimeBuilder(pitId)
+                        .setKeepAlive(org.opensearch.core.common.unit.TimeValue.parseTimeValue(
+                            settings.getPitKeepAlive(), "pit_keep_alive"))
+                );
+
+                // Sort is required for search_after
+                builder.addSort("_shard_doc", org.opensearch.search.sort.SortOrder.ASC);
+
+                // Add search_after if we have it
+                if (searchAfter != null) {
+                    builder.searchAfter(searchAfter);
+                }
+
+                final SearchResponse response = builder.execute().actionGet(settings.getSearchTimeout());
                 final SearchHit[] hits = response.getHits().getHits();
                 if (hits.length == 0) {
                     break;
                 }
+
                 for (final SearchHit hit : hits) {
                     final SuggestItem item = SuggestItem.parseSource(hit.getSourceAsMap());
                     item.setQueryFreq(0);
@@ -355,14 +390,11 @@ public class SuggestIndexer {
                     throw new SuggestIndexException(result.getFailures().get(0));
                 }
 
-                response = client.prepareSearchScroll(scrollId).execute().actionGet(settings.getSearchTimeout());
-                if (!scrollId.equals(response.getScrollId())) {
-                    SuggestUtil.deleteScrollContext(client, scrollId);
-                }
-                scrollId = response.getScrollId();
+                // Save last sort values for next search_after
+                searchAfter = hits[hits.length - 1].getSortValues();
             }
         } finally {
-            SuggestUtil.deleteScrollContext(client, scrollId);
+            SuggestUtil.deletePitContext(client, pitId);
         }
 
         return new SuggestDeleteResponse(null, System.currentTimeMillis() - start);

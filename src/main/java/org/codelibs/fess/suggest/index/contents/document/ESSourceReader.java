@@ -39,7 +39,7 @@ import org.opensearch.transport.client.Client;
 
 /**
  * <p>
- * {@link ESSourceReader} reads documents from Elasticsearch using the scroll API.
+ * {@link ESSourceReader} reads documents from OpenSearch using the Point in Time (PIT) API.
  * It implements the {@link DocumentReader} interface to provide a way to iterate over documents
  * in a large index without loading all of them into memory at once.
  * </p>
@@ -51,7 +51,7 @@ import org.opensearch.transport.client.Client;
  * </p>
  *
  * <p>
- * The reader uses a queue to buffer documents read from Elasticsearch, and it retries failed requests
+ * The reader uses a queue to buffer documents read from OpenSearch, and it retries failed requests
  * up to a maximum number of times.
  * </p>
  *
@@ -60,12 +60,12 @@ import org.opensearch.transport.client.Client;
  * </p>
  * <pre>
  * {@code
- * Client client = // Obtain Elasticsearch client
+ * Client client = // Obtain OpenSearch client
  * SuggestSettings settings = // Obtain SuggestSettings
  * String indexName = "your_index_name";
  *
  * ESSourceReader reader = new ESSourceReader(client, settings, indexName);
- * reader.setScrollSize(1000); // Set the scroll size
+ * reader.setPageSize(1000); // Set the page size
  * reader.setLimitOfDocumentSize(1024 * 1024); // Limit document size to 1MB
  * reader.setQuery(QueryBuilders.termQuery("field", "value")); // Set a query
  *
@@ -98,8 +98,8 @@ public class ESSourceReader implements DocumentReader {
     /** Supported fields. */
     protected final String[] supportedFields;
 
-    /** Scroll size. */
-    protected int scrollSize = 1;
+    /** Page size for PIT searches. */
+    protected int pageSize = 1;
     /** Maximum retry count. */
     protected int maxRetryCount = 5;
     /** Limit of document size. */
@@ -113,8 +113,10 @@ public class ESSourceReader implements DocumentReader {
     /** Sort list. */
     protected List<SortBuilder<?>> sortList = new ArrayList<>();
 
-    /** Scroll ID. */
-    protected String scrollId = null;
+    /** Point in Time ID. */
+    protected String pitId = null;
+    /** Last sort values for search_after. */
+    protected Object[] lastSortValues = null;
 
     /** Document count. */
     protected final AtomicLong docCount = new AtomicLong(0);
@@ -148,14 +150,26 @@ public class ESSourceReader implements DocumentReader {
     public void close() {
         isFinished.set(true);
         queue.clear();
+        SuggestUtil.deletePitContext(client, pitId);
+        pitId = null;
     }
 
     /**
-     * Sets the scroll size.
-     * @param scrollSize The scroll size.
+     * Sets the page size for PIT searches.
+     * @param pageSize The page size.
      */
+    public void setPageSize(final int pageSize) {
+        this.pageSize = pageSize;
+    }
+
+    /**
+     * Sets the scroll size (deprecated, use setPageSize instead).
+     * @param scrollSize The scroll size.
+     * @deprecated Use {@link #setPageSize(int)} instead
+     */
+    @Deprecated
     public void setScrollSize(final int scrollSize) {
-        this.scrollSize = scrollSize;
+        this.pageSize = scrollSize;
     }
 
     /**
@@ -216,7 +230,7 @@ public class ESSourceReader implements DocumentReader {
     }
 
     /**
-     * Adds documents to the queue by fetching them from OpenSearch.
+     * Adds documents to the queue by fetching them from OpenSearch using PIT API.
      */
     protected void addDocumentToQueue() {
         if (docCount.get() > getLimitDocNum(totalDocNum, limitPercentage, limitNumber)) {
@@ -229,29 +243,65 @@ public class ESSourceReader implements DocumentReader {
         for (int i = 0; i < maxRetryCount; i++) {
             try {
                 final SearchResponse response;
-                if (scrollId == null) {
+                if (pitId == null) {
+                    // Create PIT
+                    pitId = SuggestUtil.createPit(client, settings, indexName);
+
+                    // First search with PIT
                     final SearchRequestBuilder builder = client.prepareSearch()
-                            .setIndices(indexName)
-                            .setScroll(settings.getScrollTimeout())
                             .setQuery(queryBuilder)
-                            .setSize(scrollSize);
-                    for (final SortBuilder<?> sortBuilder : sortList) {
-                        builder.addSort(sortBuilder);
+                            .setSize(pageSize);
+
+                    // Add PIT to search request
+                    builder.setPointInTime(
+                        new org.opensearch.search.builder.PointInTimeBuilder(pitId)
+                            .setKeepAlive(org.opensearch.core.common.unit.TimeValue.parseTimeValue(
+                                settings.getPitKeepAlive(), "pit_keep_alive"))
+                    );
+
+                    // Sort is required for search_after
+                    if (sortList.isEmpty()) {
+                        builder.addSort("_shard_doc", org.opensearch.search.sort.SortOrder.ASC);
+                    } else {
+                        for (final SortBuilder<?> sortBuilder : sortList) {
+                            builder.addSort(sortBuilder);
+                        }
                     }
+
                     response = builder.execute().actionGet(settings.getSearchTimeout());
                 } else {
-                    response = client.prepareSearchScroll(scrollId)
-                            .setScroll(settings.getScrollTimeout())
-                            .execute()
-                            .actionGet(settings.getSearchTimeout());
-                    if (!scrollId.equals(response.getScrollId())) {
-                        SuggestUtil.deleteScrollContext(client, scrollId);
+                    // Subsequent searches with search_after
+                    final SearchRequestBuilder builder = client.prepareSearch()
+                            .setQuery(queryBuilder)
+                            .setSize(pageSize);
+
+                    // Add PIT to search request
+                    builder.setPointInTime(
+                        new org.opensearch.search.builder.PointInTimeBuilder(pitId)
+                            .setKeepAlive(org.opensearch.core.common.unit.TimeValue.parseTimeValue(
+                                settings.getPitKeepAlive(), "pit_keep_alive"))
+                    );
+
+                    // Sort is required for search_after
+                    if (sortList.isEmpty()) {
+                        builder.addSort("_shard_doc", org.opensearch.search.sort.SortOrder.ASC);
+                    } else {
+                        for (final SortBuilder<?> sortBuilder : sortList) {
+                            builder.addSort(sortBuilder);
+                        }
                     }
+
+                    // Add search_after
+                    if (lastSortValues != null) {
+                        builder.searchAfter(lastSortValues);
+                    }
+
+                    response = builder.execute().actionGet(settings.getSearchTimeout());
                 }
-                scrollId = response.getScrollId();
+
                 final SearchHit[] hits = response.getHits().getHits();
-                if (scrollId == null || hits.length == 0) {
-                    SuggestUtil.deleteScrollContext(client, scrollId);
+                if (hits.length == 0) {
+                    SuggestUtil.deletePitContext(client, pitId);
                     isFinished.set(true);
                 }
 
@@ -273,11 +323,18 @@ public class ESSourceReader implements DocumentReader {
                         queue.add(source);
                     }
                 }
+
+                // Save last sort values for next search_after
+                if (hits.length > 0) {
+                    lastSortValues = hits[hits.length - 1].getSortValues();
+                }
+
                 exception = null;
                 break;
             } catch (final Exception e) {
                 exception = new SuggesterException(e);
-                scrollId = null;
+                pitId = null;
+                lastSortValues = null;
             }
         }
 

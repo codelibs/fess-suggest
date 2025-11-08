@@ -64,12 +64,12 @@ public class SuggestSettingsBuilder {
     }
 
     /**
-     * Sets the scroll timeout.
-     * @param timeout The scroll timeout.
+     * Sets the PIT keep alive duration.
+     * @param keepAlive The PIT keep alive duration.
      * @return This builder instance.
      */
-    public SuggestSettingsBuilder scrollTimeout(final String timeout) {
-        timeoutSettings.scrollTimeout = timeout;
+    public SuggestSettingsBuilder pitKeepAlive(final String keepAlive) {
+        timeoutSettings.pitKeepAlive = keepAlive;
         return this;
     }
 

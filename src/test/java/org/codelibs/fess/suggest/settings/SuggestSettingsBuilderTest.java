@@ -117,15 +117,15 @@ public class SuggestSettingsBuilderTest {
     }
 
     @Test
-    public void testScrollTimeout() {
-        // Test setting scroll timeout
-        SuggestSettingsBuilder result = builder.scrollTimeout("10s");
+    public void testPitKeepAlive() {
+        // Test setting PIT keep alive
+        SuggestSettingsBuilder result = builder.pitKeepAlive("10s");
         assertEquals(builder, result); // Test method chaining
-        assertEquals("10s", builder.timeoutSettings.scrollTimeout);
+        assertEquals("10s", builder.timeoutSettings.pitKeepAlive);
 
-        // Test updating scroll timeout
-        builder.scrollTimeout("30s");
-        assertEquals("30s", builder.timeoutSettings.scrollTimeout);
+        // Test updating PIT keep alive
+        builder.pitKeepAlive("30s");
+        assertEquals("30s", builder.timeoutSettings.pitKeepAlive);
     }
 
     @Test
@@ -207,7 +207,7 @@ public class SuggestSettingsBuilderTest {
         builder.setSettingsIndexName("CUSTOM_INDEX")
                 .addInitialSettings("custom.key1", "value1")
                 .addInitialSettings("custom.key2", 42)
-                .scrollTimeout("100s")
+                .pitKeepAlive("100s")
                 .searchTimeout("50s")
                 .indexTimeout("200s")
                 .bulkTimeout("300s")
@@ -221,7 +221,7 @@ public class SuggestSettingsBuilderTest {
         assertEquals(2, builder.initialSettings.size());
         assertEquals("value1", builder.initialSettings.get("custom.key1"));
         assertEquals(42, builder.initialSettings.get("custom.key2"));
-        assertEquals("100s", builder.timeoutSettings.scrollTimeout);
+        assertEquals("100s", builder.timeoutSettings.pitKeepAlive);
         assertEquals("50s", builder.timeoutSettings.searchTimeout);
         assertEquals("200s", builder.timeoutSettings.indexTimeout);
         assertEquals("300s", builder.timeoutSettings.bulkTimeout);
@@ -236,7 +236,7 @@ public class SuggestSettingsBuilderTest {
         SuggestSettings settings = builder.setSettingsIndexName("CHAINED_INDEX")
                 .addInitialSettings("chain.key1", "chainValue1")
                 .addInitialSettings("chain.key2", "chainValue2")
-                .scrollTimeout("11s")
+                .pitKeepAlive("11s")
                 .searchTimeout("12s")
                 .indexTimeout("13s")
                 .bulkTimeout("14s")
@@ -246,7 +246,7 @@ public class SuggestSettingsBuilderTest {
 
         assertNotNull(settings);
         assertEquals("chained_index", builder.settingsIndexName);
-        assertEquals("11s", builder.timeoutSettings.scrollTimeout);
+        assertEquals("11s", builder.timeoutSettings.pitKeepAlive);
         assertEquals("12s", builder.timeoutSettings.searchTimeout);
         assertEquals("13s", builder.timeoutSettings.indexTimeout);
         assertEquals("14s", builder.timeoutSettings.bulkTimeout);
@@ -260,11 +260,11 @@ public class SuggestSettingsBuilderTest {
         SuggestSettingsBuilder builder1 = new SuggestSettingsBuilder();
         SuggestSettingsBuilder builder2 = new SuggestSettingsBuilder();
 
-        builder1.scrollTimeout("10s");
-        builder2.scrollTimeout("20s");
+        builder1.pitKeepAlive("10s");
+        builder2.pitKeepAlive("20s");
 
-        assertEquals("10s", builder1.timeoutSettings.scrollTimeout);
-        assertEquals("20s", builder2.timeoutSettings.scrollTimeout);
+        assertEquals("10s", builder1.timeoutSettings.pitKeepAlive);
+        assertEquals("20s", builder2.timeoutSettings.pitKeepAlive);
     }
 
     @Test
@@ -283,7 +283,7 @@ public class SuggestSettingsBuilderTest {
     @Test
     public void testBuildMultipleInstances() {
         // Test that multiple SuggestSettings can be built from the same builder
-        builder.setSettingsIndexName("MULTI_INDEX").addInitialSettings("multi.key", "multiValue").scrollTimeout("25s");
+        builder.setSettingsIndexName("MULTI_INDEX").addInitialSettings("multi.key", "multiValue").pitKeepAlive("25s");
 
         SuggestSettings settings1 = builder.build(client, "id1");
         SuggestSettings settings2 = builder.build(client, "id2");
@@ -293,15 +293,15 @@ public class SuggestSettingsBuilderTest {
         // Both should be created with the same configuration
         assertEquals("multi_index", builder.settingsIndexName);
         assertEquals("multiValue", builder.initialSettings.get("multi.key"));
-        assertEquals("25s", builder.timeoutSettings.scrollTimeout);
+        assertEquals("25s", builder.timeoutSettings.pitKeepAlive);
     }
 
     @Test
     public void testEmptyTimeoutValues() {
         // Test setting empty timeout values
-        builder.scrollTimeout("").searchTimeout("").indexTimeout("").bulkTimeout("").indicesTimeout("").clusterTimeout("");
+        builder.pitKeepAlive("").searchTimeout("").indexTimeout("").bulkTimeout("").indicesTimeout("").clusterTimeout("");
 
-        assertEquals("", builder.timeoutSettings.scrollTimeout);
+        assertEquals("", builder.timeoutSettings.pitKeepAlive);
         assertEquals("", builder.timeoutSettings.searchTimeout);
         assertEquals("", builder.timeoutSettings.indexTimeout);
         assertEquals("", builder.timeoutSettings.bulkTimeout);
@@ -327,14 +327,14 @@ public class SuggestSettingsBuilderTest {
     @Test
     public void testVariousTimeoutFormats() {
         // Test various timeout format strings
-        builder.scrollTimeout("1000ms")
+        builder.pitKeepAlive("1000ms")
                 .searchTimeout("1m")
                 .indexTimeout("1h")
                 .bulkTimeout("1d")
                 .indicesTimeout("500")
                 .clusterTimeout("10000ms");
 
-        assertEquals("1000ms", builder.timeoutSettings.scrollTimeout);
+        assertEquals("1000ms", builder.timeoutSettings.pitKeepAlive);
         assertEquals("1m", builder.timeoutSettings.searchTimeout);
         assertEquals("1h", builder.timeoutSettings.indexTimeout);
         assertEquals("1d", builder.timeoutSettings.bulkTimeout);
@@ -348,9 +348,9 @@ public class SuggestSettingsBuilderTest {
     @Test
     public void testNullTimeoutValues() {
         // Test setting null timeout values
-        builder.scrollTimeout(null).searchTimeout(null).indexTimeout(null).bulkTimeout(null).indicesTimeout(null).clusterTimeout(null);
+        builder.pitKeepAlive(null).searchTimeout(null).indexTimeout(null).bulkTimeout(null).indicesTimeout(null).clusterTimeout(null);
 
-        assertEquals(null, builder.timeoutSettings.scrollTimeout);
+        assertEquals(null, builder.timeoutSettings.pitKeepAlive);
         assertEquals(null, builder.timeoutSettings.searchTimeout);
         assertEquals(null, builder.timeoutSettings.indexTimeout);
         assertEquals(null, builder.timeoutSettings.bulkTimeout);
