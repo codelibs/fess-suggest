@@ -29,17 +29,22 @@ import org.apache.logging.log4j.Logger;
 import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.codelibs.fess.suggest.util.SuggestUtil;
+import org.opensearch.action.search.CreatePitRequest;
+import org.opensearch.action.search.CreatePitResponse;
+import org.opensearch.action.search.DeletePitRequest;
 import org.opensearch.action.search.SearchRequestBuilder;
 import org.opensearch.action.search.SearchResponse;
+import org.opensearch.common.unit.TimeValue;
 import org.opensearch.index.query.QueryBuilder;
 import org.opensearch.index.query.QueryBuilders;
 import org.opensearch.search.SearchHit;
+import org.opensearch.search.builder.PointInTimeBuilder;
 import org.opensearch.search.sort.SortBuilder;
 import org.opensearch.transport.client.Client;
 
 /**
  * <p>
- * {@link ESSourceReader} reads documents from Elasticsearch using the scroll API.
+ * {@link ESSourceReader} reads documents from OpenSearch using the Point in Time (PIT) API.
  * It implements the {@link DocumentReader} interface to provide a way to iterate over documents
  * in a large index without loading all of them into memory at once.
  * </p>
@@ -51,7 +56,7 @@ import org.opensearch.transport.client.Client;
  * </p>
  *
  * <p>
- * The reader uses a queue to buffer documents read from Elasticsearch, and it retries failed requests
+ * The reader uses a queue to buffer documents read from OpenSearch, and it retries failed requests
  * up to a maximum number of times.
  * </p>
  *
@@ -60,12 +65,12 @@ import org.opensearch.transport.client.Client;
  * </p>
  * <pre>
  * {@code
- * Client client = // Obtain Elasticsearch client
+ * Client client = // Obtain OpenSearch client
  * SuggestSettings settings = // Obtain SuggestSettings
  * String indexName = "your_index_name";
  *
  * ESSourceReader reader = new ESSourceReader(client, settings, indexName);
- * reader.setScrollSize(1000); // Set the scroll size
+ * reader.setBatchSize(1000); // Set the batch size
  * reader.setLimitOfDocumentSize(1024 * 1024); // Limit document size to 1MB
  * reader.setQuery(QueryBuilders.termQuery("field", "value")); // Set a query
  *
@@ -98,8 +103,8 @@ public class ESSourceReader implements DocumentReader {
     /** Supported fields. */
     protected final String[] supportedFields;
 
-    /** Scroll size. */
-    protected int scrollSize = 1;
+    /** Batch size for PIT queries. */
+    protected int batchSize = 1;
     /** Maximum retry count. */
     protected int maxRetryCount = 5;
     /** Limit of document size. */
@@ -113,8 +118,10 @@ public class ESSourceReader implements DocumentReader {
     /** Sort list. */
     protected List<SortBuilder<?>> sortList = new ArrayList<>();
 
-    /** Scroll ID. */
-    protected String scrollId = null;
+    /** PIT ID. */
+    protected String pitId = null;
+    /** Search after values for pagination. */
+    protected Object[] searchAfter = null;
 
     /** Document count. */
     protected final AtomicLong docCount = new AtomicLong(0);
@@ -148,14 +155,25 @@ public class ESSourceReader implements DocumentReader {
     public void close() {
         isFinished.set(true);
         queue.clear();
+        SuggestUtil.deletePitContext(client, pitId);
     }
 
     /**
-     * Sets the scroll size.
-     * @param scrollSize The scroll size.
+     * Sets the batch size for PIT queries.
+     * @param batchSize The batch size.
      */
+    public void setBatchSize(final int batchSize) {
+        this.batchSize = batchSize;
+    }
+
+    /**
+     * Sets the scroll size (deprecated, use setBatchSize instead).
+     * @param scrollSize The scroll size.
+     * @deprecated Use {@link #setBatchSize(int)} instead
+     */
+    @Deprecated
     public void setScrollSize(final int scrollSize) {
-        this.scrollSize = scrollSize;
+        this.batchSize = scrollSize;
     }
 
     /**
@@ -216,7 +234,7 @@ public class ESSourceReader implements DocumentReader {
     }
 
     /**
-     * Adds documents to the queue by fetching them from OpenSearch.
+     * Adds documents to the queue by fetching them from OpenSearch using PIT.
      */
     protected void addDocumentToQueue() {
         if (docCount.get() > getLimitDocNum(totalDocNum, limitPercentage, limitNumber)) {
@@ -229,30 +247,47 @@ public class ESSourceReader implements DocumentReader {
         for (int i = 0; i < maxRetryCount; i++) {
             try {
                 final SearchResponse response;
-                if (scrollId == null) {
+                if (pitId == null) {
+                    // Create PIT
+                    final CreatePitRequest createPitRequest = new CreatePitRequest(
+                            TimeValue.parseTimeValue(settings.getScrollTimeout(), "keep_alive"),
+                            indexName);
+                    final CreatePitResponse createPitResponse = client.createPit(createPitRequest)
+                            .actionGet(settings.getSearchTimeout());
+                    pitId = createPitResponse.getId();
+
+                    // First search with PIT
                     final SearchRequestBuilder builder = client.prepareSearch()
-                            .setIndices(indexName)
-                            .setScroll(settings.getScrollTimeout())
                             .setQuery(queryBuilder)
-                            .setSize(scrollSize);
+                            .setSize(batchSize)
+                            .setPointInTime(new PointInTimeBuilder(pitId));
                     for (final SortBuilder<?> sortBuilder : sortList) {
                         builder.addSort(sortBuilder);
                     }
                     response = builder.execute().actionGet(settings.getSearchTimeout());
                 } else {
-                    response = client.prepareSearchScroll(scrollId)
-                            .setScroll(settings.getScrollTimeout())
-                            .execute()
-                            .actionGet(settings.getSearchTimeout());
-                    if (!scrollId.equals(response.getScrollId())) {
-                        SuggestUtil.deleteScrollContext(client, scrollId);
+                    // Subsequent searches with search_after
+                    final SearchRequestBuilder builder = client.prepareSearch()
+                            .setQuery(queryBuilder)
+                            .setSize(batchSize)
+                            .setPointInTime(new PointInTimeBuilder(pitId));
+                    for (final SortBuilder<?> sortBuilder : sortList) {
+                        builder.addSort(sortBuilder);
                     }
+                    if (searchAfter != null) {
+                        builder.searchAfter(searchAfter);
+                    }
+                    response = builder.execute().actionGet(settings.getSearchTimeout());
                 }
-                scrollId = response.getScrollId();
+
                 final SearchHit[] hits = response.getHits().getHits();
-                if (scrollId == null || hits.length == 0) {
-                    SuggestUtil.deleteScrollContext(client, scrollId);
+                if (hits.length == 0) {
+                    SuggestUtil.deletePitContext(client, pitId);
                     isFinished.set(true);
+                } else {
+                    // Update search_after for next iteration
+                    final SearchHit lastHit = hits[hits.length - 1];
+                    searchAfter = lastHit.getSortValues();
                 }
 
                 for (final SearchHit hit : hits) {
@@ -277,7 +312,8 @@ public class ESSourceReader implements DocumentReader {
                 break;
             } catch (final Exception e) {
                 exception = new SuggesterException(e);
-                scrollId = null;
+                pitId = null;
+                searchAfter = null;
             }
         }
 

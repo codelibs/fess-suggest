@@ -38,11 +38,16 @@ import org.opensearch.action.admin.indices.analyze.AnalyzeAction;
 import org.opensearch.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken;
 import org.opensearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.opensearch.action.admin.indices.settings.get.GetSettingsResponse;
+import org.opensearch.action.search.CreatePitRequest;
+import org.opensearch.action.search.CreatePitResponse;
+import org.opensearch.action.search.SearchRequestBuilder;
 import org.opensearch.action.search.SearchResponse;
 import org.opensearch.common.settings.Settings;
+import org.opensearch.common.unit.TimeValue;
 import org.opensearch.common.xcontent.XContentType;
 import org.opensearch.index.query.QueryBuilders;
 import org.opensearch.search.SearchHit;
+import org.opensearch.search.builder.PointInTimeBuilder;
 import org.opensearch.transport.client.Client;
 
 /**
@@ -457,23 +462,37 @@ public class AnalyzerSettings {
     }
 
     /**
-     * Get field analyzer mapping.
+     * Get field analyzer mapping using PIT API.
      * @return Field analyzer mapping
      */
     protected Map<String, FieldAnalyzerMapping> getFieldAnalyzerMapping() {
         final Map<String, FieldAnalyzerMapping> mappingMap = new HashMap<>();
-        SearchResponse response = client.prepareSearch(analyzerSettingsIndexName)
-                .setQuery(QueryBuilders.termQuery(FieldNames.ANALYZER_SETTINGS_TYPE, FIELD_ANALYZER_MAPPING))
-                .setScroll(settings.getScrollTimeout())
-                .execute()
-                .actionGet(settings.getSearchTimeout());
-        String scrollId = response.getScrollId();
+        String pitId = null;
         try {
-            while (scrollId != null) {
+            // Create PIT
+            final CreatePitRequest createPitRequest = new CreatePitRequest(
+                    TimeValue.parseTimeValue(settings.getScrollTimeout(), "keep_alive"),
+                    analyzerSettingsIndexName);
+            final CreatePitResponse createPitResponse = client.createPit(createPitRequest)
+                    .actionGet(settings.getSearchTimeout());
+            pitId = createPitResponse.getId();
+
+            Object[] searchAfter = null;
+            while (true) {
+                final SearchRequestBuilder searchBuilder = client.prepareSearch()
+                        .setQuery(QueryBuilders.termQuery(FieldNames.ANALYZER_SETTINGS_TYPE, FIELD_ANALYZER_MAPPING))
+                        .setPointInTime(new PointInTimeBuilder(pitId));
+
+                if (searchAfter != null) {
+                    searchBuilder.searchAfter(searchAfter);
+                }
+
+                final SearchResponse response = searchBuilder.execute().actionGet(settings.getSearchTimeout());
                 final SearchHit[] hits = response.getHits().getHits();
                 if (hits.length == 0) {
                     break;
                 }
+
                 for (final SearchHit hit : hits) {
                     final Map<String, Object> source = hit.getSourceAsMap();
                     final String fieldReadingAnalyzer = source.get(FieldNames.ANALYZER_SETTINGS_READING_ANALYZER) == null ? null
@@ -492,17 +511,13 @@ public class AnalyzerSettings {
                             new FieldAnalyzerMapping(fieldReadingAnalyzer, fieldReadingTermAnalyzer, fieldNormalizeAnalyzer,
                                     fieldContentsAnalyzer, fieldContentsReadingAnalyzer));
                 }
-                response = client.prepareSearchScroll(scrollId)
-                        .setScroll(settings.getScrollTimeout())
-                        .execute()
-                        .actionGet(settings.getSearchTimeout());
-                if (!scrollId.equals(response.getScrollId())) {
-                    SuggestUtil.deleteScrollContext(client, scrollId);
-                }
-                scrollId = response.getScrollId();
+
+                // Update search_after for next iteration
+                final SearchHit lastHit = hits[hits.length - 1];
+                searchAfter = lastHit.getSortValues();
             }
         } finally {
-            SuggestUtil.deleteScrollContext(client, scrollId);
+            SuggestUtil.deletePitContext(client, pitId);
         }
         return mappingMap;
     }

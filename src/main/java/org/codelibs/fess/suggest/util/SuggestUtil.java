@@ -48,12 +48,18 @@ import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.opensearch.action.bulk.BulkRequestBuilder;
 import org.opensearch.action.bulk.BulkResponse;
 import org.opensearch.action.delete.DeleteRequest;
+import org.opensearch.action.search.CreatePitRequest;
+import org.opensearch.action.search.CreatePitResponse;
+import org.opensearch.action.search.DeletePitRequest;
+import org.opensearch.action.search.SearchRequestBuilder;
 import org.opensearch.action.search.SearchResponse;
+import org.opensearch.common.unit.TimeValue;
 import org.opensearch.common.xcontent.json.JsonXContent;
 import org.opensearch.core.action.ActionListener;
 import org.opensearch.core.xcontent.XContentBuilder;
 import org.opensearch.index.query.QueryBuilder;
 import org.opensearch.search.SearchHit;
+import org.opensearch.search.builder.PointInTimeBuilder;
 import org.opensearch.transport.client.Client;
 
 /**
@@ -319,10 +325,10 @@ public final class SuggestUtil {
     }
 
     /**
-     * Deletes documents from the specified index based on the given query.
+     * Deletes documents from the specified index based on the given query using PIT API.
      *
      * @param client the OpenSearch client to use for executing the query and delete operations
-     * @param settings the settings for the suggest feature, including timeouts and scroll settings
+     * @param settings the settings for the suggest feature, including timeouts and PIT settings
      * @param index the name of the index from which documents should be deleted
      * @param queryBuilder the query used to identify documents to delete
      * @return true if the operation completes successfully
@@ -330,54 +336,77 @@ public final class SuggestUtil {
      */
     public static boolean deleteByQuery(final Client client, final SuggestSettings settings, final String index,
             final QueryBuilder queryBuilder) {
+        String pitId = null;
         try {
-            SearchResponse response = client.prepareSearch(index)
-                    .setQuery(queryBuilder)
-                    .setSize(500)
-                    .setScroll(settings.getScrollTimeout())
-                    .execute()
+            // Create PIT
+            final CreatePitRequest createPitRequest = new CreatePitRequest(
+                    TimeValue.parseTimeValue(settings.getScrollTimeout(), "keep_alive"),
+                    index);
+            final CreatePitResponse createPitResponse = client.createPit(createPitRequest)
                     .actionGet(settings.getSearchTimeout());
-            String scrollId = response.getScrollId();
-            try {
-                while (scrollId != null) {
-                    final SearchHit[] hits = response.getHits().getHits();
-                    if (hits.length == 0) {
-                        break;
-                    }
+            pitId = createPitResponse.getId();
 
-                    final BulkRequestBuilder bulkRequestBuiler = client.prepareBulk();
-                    Stream.of(hits).map(SearchHit::getId).forEach(id -> bulkRequestBuiler.add(new DeleteRequest(index, id)));
+            Object[] searchAfter = null;
+            while (true) {
+                final SearchRequestBuilder searchBuilder = client.prepareSearch()
+                        .setQuery(queryBuilder)
+                        .setSize(500)
+                        .setPointInTime(new PointInTimeBuilder(pitId));
 
-                    final BulkResponse bulkResponse = bulkRequestBuiler.execute().actionGet(settings.getBulkTimeout());
-                    if (bulkResponse.hasFailures()) {
-                        throw new SuggesterException(bulkResponse.buildFailureMessage());
-                    }
-                    response = client.prepareSearchScroll(scrollId)
-                            .setScroll(settings.getScrollTimeout())
-                            .execute()
-                            .actionGet(settings.getSearchTimeout());
-                    if (!scrollId.equals(response.getScrollId())) {
-                        SuggestUtil.deleteScrollContext(client, scrollId);
-                    }
-                    scrollId = response.getScrollId();
+                if (searchAfter != null) {
+                    searchBuilder.searchAfter(searchAfter);
                 }
-            } finally {
-                SuggestUtil.deleteScrollContext(client, scrollId);
+
+                final SearchResponse response = searchBuilder.execute().actionGet(settings.getSearchTimeout());
+                final SearchHit[] hits = response.getHits().getHits();
+                if (hits.length == 0) {
+                    break;
+                }
+
+                final BulkRequestBuilder bulkRequestBuiler = client.prepareBulk();
+                Stream.of(hits).map(SearchHit::getId).forEach(id -> bulkRequestBuiler.add(new DeleteRequest(index, id)));
+
+                final BulkResponse bulkResponse = bulkRequestBuiler.execute().actionGet(settings.getBulkTimeout());
+                if (bulkResponse.hasFailures()) {
+                    throw new SuggesterException(bulkResponse.buildFailureMessage());
+                }
+
+                // Update search_after for next iteration
+                final SearchHit lastHit = hits[hits.length - 1];
+                searchAfter = lastHit.getSortValues();
             }
+
             client.admin().indices().prepareRefresh(index).execute().actionGet(settings.getIndicesTimeout());
         } catch (final Exception e) {
             throw new SuggesterException("Failed to exec delete by query.", e);
+        } finally {
+            deletePitContext(client, pitId);
         }
 
         return true;
     }
 
     /**
+     * Deletes the PIT context associated with the given PIT ID.
+     *
+     * @param client the OpenSearch client used to delete the PIT context
+     * @param pitId the ID of the PIT context to be deleted; if null, no action is taken
+     */
+    public static void deletePitContext(final Client client, final String pitId) {
+        if (pitId != null) {
+            final DeletePitRequest deletePitRequest = new DeletePitRequest(pitId);
+            client.deletePit(deletePitRequest, ActionListener.wrap(res -> {}, e -> {}));
+        }
+    }
+
+    /**
      * Deletes the scroll context associated with the given scroll ID.
+     * @deprecated Use {@link #deletePitContext(Client, String)} instead
      *
      * @param client the OpenSearch client used to clear the scroll context
      * @param scrollId the ID of the scroll context to be deleted; if null, no action is taken
      */
+    @Deprecated
     public static void deleteScrollContext(final Client client, final String scrollId) {
         if (scrollId != null) {
             client.prepareClearScroll().addScrollId(scrollId).execute(ActionListener.wrap(res -> {}, e -> {}));

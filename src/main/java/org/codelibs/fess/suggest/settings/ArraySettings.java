@@ -35,7 +35,11 @@ import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.exception.SuggestSettingsException;
 import org.codelibs.fess.suggest.util.SuggestUtil;
 import org.opensearch.action.admin.indices.create.CreateIndexResponse;
+import org.opensearch.action.search.CreatePitRequest;
+import org.opensearch.action.search.CreatePitResponse;
+import org.opensearch.action.search.SearchRequestBuilder;
 import org.opensearch.action.search.SearchResponse;
+import org.opensearch.common.unit.TimeValue;
 import org.opensearch.common.xcontent.XContentFactory;
 import org.opensearch.common.xcontent.XContentType;
 import org.opensearch.common.xcontent.json.JsonXContent;
@@ -43,6 +47,7 @@ import org.opensearch.core.xcontent.XContentBuilder;
 import org.opensearch.index.IndexNotFoundException;
 import org.opensearch.index.query.QueryBuilders;
 import org.opensearch.search.SearchHit;
+import org.opensearch.search.builder.PointInTimeBuilder;
 import org.opensearch.transport.client.Client;
 
 /**
@@ -198,40 +203,52 @@ public class ArraySettings {
     @SuppressWarnings("unchecked")
     protected Map<String, Object>[] getFromArrayIndex(final String index, final String type, final String key) {
         final String actualIndex = index + "." + type.toLowerCase(Locale.ENGLISH);
+        String pitId = null;
         try {
+            // Create PIT
+            final CreatePitRequest createPitRequest = new CreatePitRequest(
+                    TimeValue.parseTimeValue(settings.getScrollTimeout(), "keep_alive"),
+                    actualIndex);
+            final CreatePitResponse createPitResponse = client.createPit(createPitRequest)
+                    .actionGet(settings.getSearchTimeout());
+            pitId = createPitResponse.getId();
+
+            // First search to get total count
             SearchResponse response = client.prepareSearch()
-                    .setIndices(actualIndex)
-                    .setScroll(settings.getScrollTimeout())
                     .setQuery(QueryBuilders.termQuery(FieldNames.ARRAY_KEY, key))
                     .setSize(500)
+                    .setPointInTime(new PointInTimeBuilder(pitId))
                     .execute()
                     .actionGet(settings.getSearchTimeout());
-            String scrollId = response.getScrollId();
 
             final Map<String, Object>[] array = new Map[(int) response.getHits().getTotalHits().value()];
 
             int count = 0;
-            try {
-                while (scrollId != null) {
-                    final SearchHit[] hits = response.getHits().getHits();
-                    if (hits.length == 0) {
-                        break;
-                    }
-                    for (final SearchHit hit : hits) {
-                        array[count] = hit.getSourceAsMap();
-                        count++;
-                    }
-                    response = client.prepareSearchScroll(scrollId)
-                            .setScroll(settings.getScrollTimeout())
-                            .execute()
-                            .actionGet(settings.getSearchTimeout());
-                    if (!scrollId.equals(response.getScrollId())) {
-                        SuggestUtil.deleteScrollContext(client, scrollId);
-                    }
-                    scrollId = response.getScrollId();
+            Object[] searchAfter = null;
+            while (true) {
+                final SearchHit[] hits = response.getHits().getHits();
+                if (hits.length == 0) {
+                    break;
                 }
-            } finally {
-                SuggestUtil.deleteScrollContext(client, scrollId);
+                for (final SearchHit hit : hits) {
+                    array[count] = hit.getSourceAsMap();
+                    count++;
+                }
+
+                // Update search_after for next iteration
+                final SearchHit lastHit = hits[hits.length - 1];
+                searchAfter = lastHit.getSortValues();
+
+                final SearchRequestBuilder searchBuilder = client.prepareSearch()
+                        .setQuery(QueryBuilders.termQuery(FieldNames.ARRAY_KEY, key))
+                        .setSize(500)
+                        .setPointInTime(new PointInTimeBuilder(pitId));
+
+                if (searchAfter != null) {
+                    searchBuilder.searchAfter(searchAfter);
+                }
+
+                response = searchBuilder.execute().actionGet(settings.getSearchTimeout());
             }
 
             Arrays.sort(array, (o1, o2) -> {
@@ -262,6 +279,8 @@ public class ArraySettings {
             return array;
         } catch (final IndexNotFoundException e) {
             return new Map[0];
+        } finally {
+            SuggestUtil.deletePitContext(client, pitId);
         }
     }
 
