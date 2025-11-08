@@ -340,10 +340,39 @@ public final class SuggestUtil {
         try {
             // Create PIT
             final CreatePitRequest createPitRequest = new CreatePitRequest(
-                    TimeValue.parseTimeValue(settings.getScrollTimeout(), "keep_alive"),
+                    TimeValue.parseTimeValue(settings.getScrollTimeout(), TimeValue.timeValueMinutes(1), "keep_alive"),
                     index);
-            final CreatePitResponse createPitResponse = client.createPit(createPitRequest)
-                    .actionGet(settings.getSearchTimeout());
+
+            final java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
+            final java.util.concurrent.atomic.AtomicReference<CreatePitResponse> responseRef = new java.util.concurrent.atomic.AtomicReference<>();
+            final java.util.concurrent.atomic.AtomicReference<Exception> exceptionRef = new java.util.concurrent.atomic.AtomicReference<>();
+
+            client.createPit(createPitRequest, ActionListener.wrap(
+                resp -> {
+                    responseRef.set(resp);
+                    latch.countDown();
+                },
+                e -> {
+                    exceptionRef.set(e);
+                    latch.countDown();
+                }
+            ));
+
+            try {
+                latch.await(settings.getSearchTimeout().millis(), java.util.concurrent.TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new SuggesterException("Interrupted while creating PIT", e);
+            }
+
+            if (exceptionRef.get() != null) {
+                throw new SuggesterException("Failed to create PIT", exceptionRef.get());
+            }
+
+            final CreatePitResponse createPitResponse = responseRef.get();
+            if (createPitResponse == null) {
+                throw new SuggesterException("PIT creation timed out");
+            }
             pitId = createPitResponse.getId();
 
             Object[] searchAfter = null;
@@ -394,8 +423,14 @@ public final class SuggestUtil {
      */
     public static void deletePitContext(final Client client, final String pitId) {
         if (pitId != null) {
-            final DeletePitRequest deletePitRequest = new DeletePitRequest(pitId);
-            client.deletePit(deletePitRequest, ActionListener.wrap(res -> {}, e -> {}));
+            try {
+                final DeletePitRequest deletePitRequest = new DeletePitRequest(pitId);
+                // Use generic execute method with DeletePitAction for Transport Client compatibility
+                client.execute(org.opensearch.action.search.DeletePitAction.INSTANCE, deletePitRequest,
+                    ActionListener.wrap(res -> {}, e -> {}));
+            } catch (final Exception e) {
+                // Silently ignore deletion errors as they are not critical
+            }
         }
     }
 
