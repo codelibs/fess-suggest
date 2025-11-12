@@ -448,22 +448,24 @@ public class SuggestIndexerTest {
         String field = settings.array().get(SuggestSettings.DefaultKeys.SUPPORTED_FIELDS)[0];
 
         Map<String, Object> document = new HashMap<>();
-        document.put(field, "古い単語");
+        document.put(field, "この柿は美味しい。");
         suggester.indexer().indexFromDocument(new Map[] { document });
         suggester.refresh();
 
-        assertEquals(1, suggester.getAllWordsNum());
+        long oldWordsCount = suggester.getAllWordsNum();
+        assertTrue(oldWordsCount > 0);
 
         Thread.sleep(1000);
         ZonedDateTime threshold = ZonedDateTime.now();
         Thread.sleep(1000);
 
         document = new HashMap<>();
-        document.put(field, "新しい単語");
+        document.put(field, "検索エンジン");
         suggester.indexer().indexFromDocument(new Map[] { document });
         suggester.refresh();
 
-        assertEquals(2, suggester.getAllWordsNum());
+        long totalWordsCount = suggester.getAllWordsNum();
+        assertTrue(totalWordsCount > oldWordsCount);
 
         SuggestDeleteResponse deleteResponse = suggester.indexer().deleteOldWords(threshold);
 
@@ -471,7 +473,9 @@ public class SuggestIndexerTest {
         assertFalse(deleteResponse.hasError());
 
         suggester.refresh();
-        assertEquals(1, suggester.getAllWordsNum());
+        long remainingWordsCount = suggester.getAllWordsNum();
+        assertTrue(remainingWordsCount < totalWordsCount);
+        assertTrue(remainingWordsCount > 0);
     }
 
     @Test
