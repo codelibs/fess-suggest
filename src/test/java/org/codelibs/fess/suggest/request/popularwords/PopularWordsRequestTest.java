@@ -78,7 +78,6 @@ public class PopularWordsRequestTest {
         request.setSize(20);
         request.setSeed("test-seed");
         request.setWindowSize(30);
-        request.setDetail(false);
         request.setQueryFreqThreshold(5);
 
         assertNotNull(request);
@@ -154,26 +153,13 @@ public class PopularWordsRequestTest {
     }
 
     @Test
-    public void test_withDetail() throws Exception {
+    public void test_responseItems() throws Exception {
         indexQueryItems();
 
-        PopularWordsResponse response = suggester.popularWords().setSize(10).setDetail(true).execute().getResponse();
+        PopularWordsResponse response = suggester.popularWords().setSize(10).execute().getResponse();
 
         assertNotNull(response);
         assertNotNull(response.getItems());
-        if (response.getNum() > 0) {
-            assertTrue(response.getItems().size() > 0);
-        }
-    }
-
-    @Test
-    public void test_withoutDetail() throws Exception {
-        indexQueryItems();
-
-        PopularWordsResponse response = suggester.popularWords().setSize(10).setDetail(false).execute().getResponse();
-
-        assertNotNull(response);
-        assertEquals(0, response.getItems().size());
     }
 
     @Test
