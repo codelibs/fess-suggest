@@ -28,6 +28,9 @@ public class FullWidthToHalfWidthAlphabetNormalizer implements Normalizer {
 
     @Override
     public String normalize(final String text, final String field, final String... langs) {
+        if (text == null) {
+            return null;
+        }
         final char[] chars = new char[text.length()];
         for (int i = 0; i < chars.length; i++) {
             final char c = text.charAt(i);
@@ -35,8 +38,8 @@ public class FullWidthToHalfWidthAlphabetNormalizer implements Normalizer {
                 chars[i] = (char) (c - 'ａ' + 'a');
             } else if (c >= 'Ａ' && c <= 'Ｚ') {
                 chars[i] = (char) (c - 'Ａ' + 'A');
-            } else if (c >= '１' && c <= '０') {
-                chars[i] = (char) (c - '１' + '1');
+            } else if (c >= '０' && c <= '９') {
+                chars[i] = (char) (c - '０' + '0');
             } else {
                 chars[i] = c;
             }

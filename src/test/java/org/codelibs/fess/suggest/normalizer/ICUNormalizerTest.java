@@ -36,4 +36,27 @@ public class ICUNormalizerTest extends TestCase {
         assertEquals("ケンサク", normalizer.normalize("ｹﾝｻｸ", null));
     }
 
+    public void test_nullInput() {
+        ICUNormalizer normalizer = new ICUNormalizer("Any-Lower");
+        assertNull(normalizer.normalize(null, null));
+    }
+
+    public void test_nullTransliteratorId() {
+        try {
+            new ICUNormalizer(null);
+            fail("Expected IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            assertEquals("transliteratorId must not be null", e.getMessage());
+        }
+    }
+
+    public void test_invalidTransliteratorId() {
+        try {
+            new ICUNormalizer("Invalid-Transliterator-ID-12345");
+            fail("Expected IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().contains("Invalid transliterator ID"));
+        }
+    }
+
 }

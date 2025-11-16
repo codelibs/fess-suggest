@@ -108,4 +108,31 @@ public class FullWidthToHalfWidthAlphabetNormalizerTest {
 
         assertEquals("日本語", result);
     }
+
+    @Test
+    public void test_fullWidthNumbers() throws Exception {
+        FullWidthToHalfWidthAlphabetNormalizer normalizer = new FullWidthToHalfWidthAlphabetNormalizer();
+
+        String result = normalizer.normalize("０１２３４５６７８９", "field");
+
+        assertEquals("0123456789", result);
+    }
+
+    @Test
+    public void test_mixedFullWidthAlphanumeric() throws Exception {
+        FullWidthToHalfWidthAlphabetNormalizer normalizer = new FullWidthToHalfWidthAlphabetNormalizer();
+
+        String result = normalizer.normalize("ａｂｃ１２３ＸＹＺ", "field");
+
+        assertEquals("abc123XYZ", result);
+    }
+
+    @Test
+    public void test_nullInput() throws Exception {
+        FullWidthToHalfWidthAlphabetNormalizer normalizer = new FullWidthToHalfWidthAlphabetNormalizer();
+
+        String result = normalizer.normalize(null, "field");
+
+        assertEquals(null, result);
+    }
 }
