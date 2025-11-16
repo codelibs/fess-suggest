@@ -83,7 +83,7 @@ public final class SuggestUtil {
      */
     public static String createSuggestTextId(final String text) {
         final String id = encoder.encodeToString(text.getBytes(CoreLibConstants.CHARSET_UTF_8));
-        if (id.length() > 445) {
+        if (id.length() > ID_MAX_LENGTH) {
             return id.substring(0, ID_MAX_LENGTH);
         }
         return id;
@@ -106,7 +106,7 @@ public final class SuggestUtil {
                 return new String[0];
             }
         }
-        return keywords.toArray(new String[keywords.size()]);
+        return keywords.toArray(String[]::new);
     }
 
     /**
@@ -225,11 +225,13 @@ public final class SuggestUtil {
         }
     }
 
-    private static OutputStream getXContentOutputStream(final Map<String, Object> firstLineMap) throws IOException {
-        try (XContentBuilder builder = JsonXContent.contentBuilder().map(firstLineMap)) {
+    private static OutputStream getXContentOutputStream(final Map<String, Object> map) throws IOException {
+        final ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try (XContentBuilder builder = JsonXContent.contentBuilder(out)) {
+            builder.map(map);
             builder.flush();
-            return builder.getOutputStream();
         }
+        return out;
     }
 
     /**
@@ -302,6 +304,7 @@ public final class SuggestUtil {
      * @return a list of strings representing the given object
      * @throws IllegalArgumentException if the object is not a string or a list
      */
+    @SuppressWarnings("unchecked")
     public static List<String> getAsList(final Object value) {
         if (value == null) {
             return new ArrayList<>();
@@ -309,7 +312,7 @@ public final class SuggestUtil {
 
         if (value instanceof String) {
             final List<String> list = new ArrayList<>();
-            list.add(value.toString());
+            list.add((String) value);
             return list;
         }
         if (value instanceof List) {
@@ -345,10 +348,10 @@ public final class SuggestUtil {
                         break;
                     }
 
-                    final BulkRequestBuilder bulkRequestBuiler = client.prepareBulk();
-                    Stream.of(hits).map(SearchHit::getId).forEach(id -> bulkRequestBuiler.add(new DeleteRequest(index, id)));
+                    final BulkRequestBuilder bulkRequestBuilder = client.prepareBulk();
+                    Stream.of(hits).map(SearchHit::getId).forEach(id -> bulkRequestBuilder.add(new DeleteRequest(index, id)));
 
-                    final BulkResponse bulkResponse = bulkRequestBuiler.execute().actionGet(settings.getBulkTimeout());
+                    final BulkResponse bulkResponse = bulkRequestBuilder.execute().actionGet(settings.getBulkTimeout());
                     if (bulkResponse.hasFailures()) {
                         throw new SuggesterException(bulkResponse.buildFailureMessage());
                     }
