@@ -26,7 +26,6 @@ import org.opensearch.action.get.GetResponse;
 import org.opensearch.action.index.IndexAction;
 import org.opensearch.action.index.IndexRequest;
 import org.opensearch.action.index.IndexRequestBuilder;
-import org.opensearch.common.unit.TimeValue;
 import org.opensearch.index.query.QueryBuilder;
 import org.opensearch.transport.client.Client;
 
@@ -53,7 +52,7 @@ public class SuggestIndexWriter implements SuggestWriter {
         }
 
         for (final SuggestItem item : mergedItems) {
-            final GetResponse getResponse = client.prepareGet().setIndex(index).setId(item.getId()).get(TimeValue.timeValueSeconds(30));
+            final GetResponse getResponse = client.prepareGet().setIndex(index).setId(item.getId()).get(settings.getIndexTimeout());
             if (update && getResponse.isExists()) {
                 final IndexRequestBuilder indexRequestBuilder = new IndexRequestBuilder(client, IndexAction.INSTANCE, index);
                 indexRequestBuilder.setId(item.getId())
