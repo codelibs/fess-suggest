@@ -52,7 +52,8 @@ import com.ibm.icu.text.Transliterator;
  *
  */
 public class KatakanaToAlphabetConverter implements ReadingConverter {
-    private final Map<String, String[]> convertMap;
+    /** Static conversion map shared across all instances. */
+    private static final Map<String, String[]> CONVERT_MAP = generateConvertMapping();
 
     /** Transliterator for full-width to half-width conversion. */
     protected Transliterator fullWidthHalfWidth;
@@ -64,7 +65,6 @@ public class KatakanaToAlphabetConverter implements ReadingConverter {
      * Constructor for KatakanaToAlphabetConverter.
      */
     public KatakanaToAlphabetConverter() {
-        convertMap = generateConvertMapping();
         fullWidthHalfWidth = Transliterator.getInstance("Fullwidth-Halfwidth");
         anyLower = Transliterator.getInstance("Any-Lower");
     }
@@ -82,12 +82,12 @@ public class KatakanaToAlphabetConverter implements ReadingConverter {
         bufList.add(new StringBuilder());
         for (int i = 0; i < text.length();) {
             String[] alphabets;
-            if (i + 1 < text.length() && convertMap.get(text.substring(i, i + 2)) != null) {
-                alphabets = convertMap.get(text.substring(i, i + 2));
+            if (i + 1 < text.length() && CONVERT_MAP.get(text.substring(i, i + 2)) != null) {
+                alphabets = CONVERT_MAP.get(text.substring(i, i + 2));
                 i += 2;
             } else {
-                if (convertMap.get(text.substring(i, i + 1)) != null) {
-                    alphabets = convertMap.get(text.substring(i, i + 1));
+                if (CONVERT_MAP.get(text.substring(i, i + 1)) != null) {
+                    alphabets = CONVERT_MAP.get(text.substring(i, i + 1));
                 } else {
                     alphabets = new String[] { text.substring(i, i + 1) };
                 }
@@ -119,7 +119,7 @@ public class KatakanaToAlphabetConverter implements ReadingConverter {
         return list;
     }
 
-    private Map<String, String[]> generateConvertMapping() {
+    private static Map<String, String[]> generateConvertMapping() {
         final Map<String, String[]> map = new HashMap<>();
 
         map.put("ア", new String[] { "a" });
@@ -178,6 +178,10 @@ public class KatakanaToAlphabetConverter implements ReadingConverter {
         map.put("ヲ", new String[] { "wo" });
         map.put("ン", new String[] { "nn" });
 
+        map.put("ウィ", new String[] { "wi" });
+        map.put("ウェ", new String[] { "we" });
+        map.put("ウォ", new String[] { "wo" });
+
         map.put("ガ", new String[] { "ga" });
         map.put("ギ", new String[] { "gi" });
         map.put("グ", new String[] { "gu" });
@@ -195,6 +199,12 @@ public class KatakanaToAlphabetConverter implements ReadingConverter {
         map.put("ヅ", new String[] { "du" });
         map.put("デ", new String[] { "de" });
         map.put("ド", new String[] { "do" });
+
+        map.put("ティ", new String[] { "ti", "thi" });
+        map.put("ディ", new String[] { "di", "dhi" });
+        map.put("デュ", new String[] { "dyu" });
+        map.put("トゥ", new String[] { "tu", "twu" });
+        map.put("ドゥ", new String[] { "du", "dwu" });
 
         map.put("バ", new String[] { "ba" });
         map.put("ビ", new String[] { "bi" });
@@ -247,7 +257,7 @@ public class KatakanaToAlphabetConverter implements ReadingConverter {
         map.put("ヒョ", new String[] { "hyo" });
 
         map.put("フャ", new String[] { "fya" });
-        map.put("フュ", new String[] { "hyu", "fyu" });
+        map.put("フュ", new String[] { "fyu" });
         map.put("フョ", new String[] { "fyo" });
 
         map.put("ファ", new String[] { "fa" });
@@ -272,6 +282,11 @@ public class KatakanaToAlphabetConverter implements ReadingConverter {
         map.put("ュ", new String[] { "yu" });
         map.put("ョ", new String[] { "yo" });
         map.put("ッ", new String[] { "tu", "tsu" });
+
+        map.put("ツァ", new String[] { "tsa" });
+        map.put("ツィ", new String[] { "tsi" });
+        map.put("ツェ", new String[] { "tse" });
+        map.put("ツォ", new String[] { "tso" });
 
         return map;
     }
