@@ -15,13 +15,14 @@
  */
 package org.codelibs.fess.suggest;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Stream;
 
@@ -101,6 +102,9 @@ import org.opensearch.transport.client.Client;
 public class Suggester {
     private static final Logger logger = LogManager.getLogger(Suggester.class);
 
+    /** The expected number of indices for an alias. */
+    private static final int EXPECTED_INDEX_COUNT = 1;
+
     /** The OpenSearch client. */
     protected final Client client;
     /** The suggest settings. */
@@ -129,18 +133,19 @@ public class Suggester {
      * @param normalizer The Normalizer instance.
      * @param analyzer The SuggestAnalyzer instance.
      * @param threadPool The ExecutorService for thread pooling.
+     * @throws NullPointerException if any of the required parameters is null.
      */
     public Suggester(final Client client, final SuggestSettings settings, final ReadingConverter readingConverter,
             final ReadingConverter contentsReadingConverter, final Normalizer normalizer, final SuggestAnalyzer analyzer,
             final ExecutorService threadPool) {
-        this.client = client;
-        suggestSettings = settings;
-        this.readingConverter = readingConverter;
-        this.contentsReadingConverter = contentsReadingConverter;
-        this.normalizer = normalizer;
-        this.analyzer = analyzer;
+        this.client = Objects.requireNonNull(client, "client must not be null");
+        suggestSettings = Objects.requireNonNull(settings, "settings must not be null");
+        this.readingConverter = Objects.requireNonNull(readingConverter, "readingConverter must not be null");
+        this.contentsReadingConverter = Objects.requireNonNull(contentsReadingConverter, "contentsReadingConverter must not be null");
+        this.normalizer = Objects.requireNonNull(normalizer, "normalizer must not be null");
+        this.analyzer = Objects.requireNonNull(analyzer, "analyzer must not be null");
         index = settings.getAsString(SuggestSettings.DefaultKeys.INDEX, StringUtil.EMPTY);
-        this.threadPool = threadPool;
+        this.threadPool = Objects.requireNonNull(threadPool, "threadPool must not be null");
 
         if (logger.isDebugEnabled()) {
             logger.debug("Create suggester instance for {}", index);
@@ -222,17 +227,7 @@ public class Suggester {
      */
     public void createNextIndex() {
         try {
-            final List<String> prevIndices = new ArrayList<>();
-            final IndicesExistsResponse response =
-                    client.admin().indices().prepareExists(getUpdateAlias(index)).execute().actionGet(suggestSettings.getIndicesTimeout());
-            if (response.isExists()) {
-                final GetAliasesResponse getAliasesResponse = client.admin()
-                        .indices()
-                        .prepareGetAliases(getUpdateAlias(index))
-                        .execute()
-                        .actionGet(suggestSettings.getIndicesTimeout());
-                getAliasesResponse.getAliases().keySet().forEach(prevIndices::add);
-            }
+            final List<String> prevIndices = getIndicesForAlias(getUpdateAlias(index));
 
             final String mappingSource = getDefaultMappings();
             final String settingsSource = getDefaultIndexSettings();
@@ -275,21 +270,9 @@ public class Suggester {
      */
     public void switchIndex() {
         try {
-            final List<String> updateIndices = new ArrayList<>();
             final String updateAlias = getUpdateAlias(index);
-            final IndicesExistsResponse updateIndicesResponse =
-                    client.admin().indices().prepareExists(updateAlias).execute().actionGet(suggestSettings.getIndicesTimeout());
-            if (updateIndicesResponse.isExists()) {
-                final GetAliasesResponse getAliasesResponse =
-                        client.admin().indices().prepareGetAliases(updateAlias).execute().actionGet(suggestSettings.getIndicesTimeout());
-                getAliasesResponse.getAliases()
-                        .entrySet()
-                        .forEach(x -> x.getValue()
-                                .stream()
-                                .filter(y -> updateAlias.equals(y.alias()))
-                                .forEach(y -> updateIndices.add(x.getKey())));
-            }
-            if (updateIndices.size() != 1) {
+            final List<String> updateIndices = getIndicesForAlias(updateAlias);
+            if (updateIndices.size() != EXPECTED_INDEX_COUNT) {
                 if (logger.isDebugEnabled()) {
                     logger.debug("Unexpected update indices num: {}", updateIndices.size());
                 }
@@ -297,23 +280,11 @@ public class Suggester {
             }
             final String updateIndex = updateIndices.get(0);
 
-            final List<String> searchIndices = new ArrayList<>();
             final String searchAlias = getSearchAlias(index);
-            final IndicesExistsResponse searchIndicesResponse =
-                    client.admin().indices().prepareExists(searchAlias).execute().actionGet(suggestSettings.getIndicesTimeout());
-            if (searchIndicesResponse.isExists()) {
-                final GetAliasesResponse getAliasesResponse =
-                        client.admin().indices().prepareGetAliases(searchAlias).execute().actionGet(suggestSettings.getIndicesTimeout());
-                getAliasesResponse.getAliases()
-                        .entrySet()
-                        .forEach(x -> x.getValue()
-                                .stream()
-                                .filter(y -> searchAlias.equals(y.alias()))
-                                .forEach(y -> searchIndices.add(x.getKey())));
-            }
-            if (searchIndices.size() != 1) {
+            final List<String> searchIndices = getIndicesForAlias(searchAlias);
+            if (searchIndices.size() != EXPECTED_INDEX_COUNT) {
                 if (logger.isDebugEnabled()) {
-                    logger.debug("Unexpected update indices num: {}", searchIndices.size());
+                    logger.debug("Unexpected search indices num: {}", searchIndices.size());
                 }
                 throw new SuggesterException("Unexpected search indices num:" + searchIndices.size());
             }
@@ -470,31 +441,48 @@ public class Suggester {
     }
 
     private String getDefaultMappings() throws IOException {
-        final StringBuilder mappingSource = new StringBuilder();
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(
-                this.getClass().getClassLoader().getResourceAsStream("suggest_indices/suggest/mappings-default.json")))) {
-
-            String line;
-            while ((line = br.readLine()) != null) {
-                mappingSource.append(line);
+        try (final InputStream is = this.getClass().getClassLoader()
+                .getResourceAsStream("suggest_indices/suggest/mappings-default.json")) {
+            if (is == null) {
+                throw new IOException("Resource not found: suggest_indices/suggest/mappings-default.json");
             }
+            return new String(is.readAllBytes(), StandardCharsets.UTF_8);
         }
-        return mappingSource.toString();
     }
 
     private String getDefaultIndexSettings() throws IOException {
-        final StringBuilder settingsSource = new StringBuilder();
-        try (BufferedReader br = new BufferedReader(
-                new InputStreamReader(this.getClass().getClassLoader().getResourceAsStream("suggest_indices/suggest.json")))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                settingsSource.append(line);
+        try (final InputStream is = this.getClass().getClassLoader()
+                .getResourceAsStream("suggest_indices/suggest.json")) {
+            if (is == null) {
+                throw new IOException("Resource not found: suggest_indices/suggest.json");
             }
+            return new String(is.readAllBytes(), StandardCharsets.UTF_8);
         }
-        return settingsSource.toString();
     }
 
     private boolean isSuggestIndex(final String indexName) {
         return indexName.startsWith(index);
+    }
+
+    /**
+     * Returns a list of indices associated with the given alias.
+     * @param alias The alias name.
+     * @return A list of index names associated with the alias.
+     */
+    private List<String> getIndicesForAlias(final String alias) {
+        final List<String> indices = new ArrayList<>();
+        final IndicesExistsResponse response =
+                client.admin().indices().prepareExists(alias).execute().actionGet(suggestSettings.getIndicesTimeout());
+        if (response.isExists()) {
+            final GetAliasesResponse getAliasesResponse =
+                    client.admin().indices().prepareGetAliases(alias).execute().actionGet(suggestSettings.getIndicesTimeout());
+            getAliasesResponse.getAliases()
+                    .entrySet()
+                    .forEach(x -> x.getValue()
+                            .stream()
+                            .filter(y -> alias.equals(y.alias()))
+                            .forEach(y -> indices.add(x.getKey())));
+        }
+        return indices;
     }
 }
