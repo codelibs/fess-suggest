@@ -87,6 +87,9 @@ import org.opensearch.transport.client.Client;
 public class ArraySettings {
     private static final Logger logger = LogManager.getLogger(ArraySettings.class);
 
+    /** Default page size for search results. */
+    protected static final int DEFAULT_SEARCH_SIZE = 500;
+
     /** OpenSearch client. */
     protected final Client client;
     /** Array settings index name. */
@@ -203,7 +206,7 @@ public class ArraySettings {
                     .setIndices(actualIndex)
                     .setScroll(settings.getScrollTimeout())
                     .setQuery(QueryBuilders.termQuery(FieldNames.ARRAY_KEY, key))
-                    .setSize(500)
+                    .setSize(DEFAULT_SEARCH_SIZE)
                     .execute()
                     .actionGet(settings.getSearchTimeout());
             String scrollId = response.getScrollId();

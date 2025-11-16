@@ -155,6 +155,54 @@ public class SuggestSettings {
         protected String clusterTimeout = "1m";
         /** Scroll timeout. */
         protected String scrollTimeout = "1m";
+
+        /**
+         * Sets the search timeout.
+         * @param timeout The search timeout.
+         */
+        public void setSearchTimeout(final String timeout) {
+            this.searchTimeout = timeout;
+        }
+
+        /**
+         * Sets the index timeout.
+         * @param timeout The index timeout.
+         */
+        public void setIndexTimeout(final String timeout) {
+            this.indexTimeout = timeout;
+        }
+
+        /**
+         * Sets the bulk timeout.
+         * @param timeout The bulk timeout.
+         */
+        public void setBulkTimeout(final String timeout) {
+            this.bulkTimeout = timeout;
+        }
+
+        /**
+         * Sets the indices timeout.
+         * @param timeout The indices timeout.
+         */
+        public void setIndicesTimeout(final String timeout) {
+            this.indicesTimeout = timeout;
+        }
+
+        /**
+         * Sets the cluster timeout.
+         * @param timeout The cluster timeout.
+         */
+        public void setClusterTimeout(final String timeout) {
+            this.clusterTimeout = timeout;
+        }
+
+        /**
+         * Sets the scroll timeout.
+         * @param timeout The scroll timeout.
+         */
+        public void setScrollTimeout(final String timeout) {
+            this.scrollTimeout = timeout;
+        }
     }
 
     /**
@@ -564,7 +612,7 @@ public class SuggestSettings {
         /** Parallel processing key. */
         public static final String PARALLEL_PROCESSING = "parallel";
         /** Max content length key. */
-        public static final String MAX_CONTENT_LENGTH = "maxContextLength";
+        public static final String MAX_CONTENT_LENGTH = "maxContentLength";
 
         private DefaultKeys() {
         }
