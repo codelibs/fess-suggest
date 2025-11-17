@@ -124,7 +124,7 @@ public class DefaultContentsParserTest extends TestCase {
         document.put("content", "これはテストです。検索エンジン。");
         document.put("title", "タイトル");
 
-        SuggestAnalyzer analyzer = suggester.settings().analyzer();
+        SuggestAnalyzer analyzer = suggester.settings().analyzer().new DefaultContentsAnalyzer();
         List<SuggestItem> items = defaultContentsParser.parseDocument(document, supportedFields, tagFieldNames, roleFieldName, "lang",
                 createDefaultReadingConverter(), createDefaultReadingConverter(), createDefaultNormalizer(), analyzer);
 
@@ -142,7 +142,7 @@ public class DefaultContentsParserTest extends TestCase {
         document.put("label", "tag1");
         document.put("virtual_host", "host1");
 
-        SuggestAnalyzer analyzer = suggester.settings().analyzer();
+        SuggestAnalyzer analyzer = suggester.settings().analyzer().new DefaultContentsAnalyzer();
         List<SuggestItem> items = defaultContentsParser.parseDocument(document, supportedFields, tagFieldNames, roleFieldName, "lang",
                 createDefaultReadingConverter(), createDefaultReadingConverter(), createDefaultNormalizer(), analyzer);
 
@@ -162,7 +162,7 @@ public class DefaultContentsParserTest extends TestCase {
         Map<String, Object> document = new HashMap<>();
         document.put("content", largeText.toString());
 
-        SuggestAnalyzer analyzer = suggester.settings().analyzer();
+        SuggestAnalyzer analyzer = suggester.settings().analyzer().new DefaultContentsAnalyzer();
         List<SuggestItem> items = defaultContentsParser.parseDocument(document, supportedFields, tagFieldNames, roleFieldName, "lang",
                 createDefaultReadingConverter(), createDefaultReadingConverter(), createDefaultNormalizer(), analyzer);
 
@@ -172,7 +172,7 @@ public class DefaultContentsParserTest extends TestCase {
     }
 
     public void test_analyzeText() throws Exception {
-        SuggestAnalyzer analyzer = suggester.settings().analyzer();
+        SuggestAnalyzer analyzer = suggester.settings().analyzer().new DefaultContentsAnalyzer();
         String text = "これはテストです。検索エンジン。";
 
         List<AnalyzeToken> tokens = defaultContentsParser.analyzeText(analyzer, "content", text, null);
@@ -182,7 +182,7 @@ public class DefaultContentsParserTest extends TestCase {
     }
 
     public void test_analyzeTextByReading() throws Exception {
-        SuggestAnalyzer analyzer = suggester.settings().analyzer();
+        SuggestAnalyzer analyzer = suggester.settings().analyzer().new DefaultContentsAnalyzer();
         String text = "これはテストです。検索エンジン。";
 
         List<AnalyzeToken> tokens = defaultContentsParser.analyzeTextByReading(analyzer, "content", text, null);
@@ -193,7 +193,7 @@ public class DefaultContentsParserTest extends TestCase {
     }
 
     public void test_analyzeTextWithLargeContent() throws Exception {
-        SuggestAnalyzer analyzer = suggester.settings().analyzer();
+        SuggestAnalyzer analyzer = suggester.settings().analyzer().new DefaultContentsAnalyzer();
         // Create text larger than maxAnalyzedContentLength (1000 chars by default)
         StringBuilder largeText = new StringBuilder();
         for (int i = 0; i < 2000; i++) {
@@ -244,7 +244,7 @@ public class DefaultContentsParserTest extends TestCase {
         String[] roles = new String[] { "role1" };
         String[] langs = new String[] { "ja" };
 
-        SuggestAnalyzer analyzer = suggester.settings().analyzer();
+        SuggestAnalyzer analyzer = suggester.settings().analyzer().new DefaultContentsAnalyzer();
         SuggestItem item = defaultContentsParser.parseSearchWords(words, readings, fields, tags, roles, 10, createDefaultReadingConverter(),
                 createDefaultNormalizer(), analyzer, langs);
 
@@ -258,7 +258,7 @@ public class DefaultContentsParserTest extends TestCase {
         String[] words = new String[] { "　　　", "エンジン" }; // First word is whitespace only
         String[] fields = new String[] { "content" };
 
-        SuggestAnalyzer analyzer = suggester.settings().analyzer();
+        SuggestAnalyzer analyzer = suggester.settings().analyzer().new DefaultContentsAnalyzer();
         SuggestItem item = defaultContentsParser.parseSearchWords(words, null, fields, null, null, 1, createDefaultReadingConverter(),
                 createDefaultNormalizer(), analyzer, null);
 
