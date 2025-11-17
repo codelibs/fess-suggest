@@ -48,5 +48,5 @@ public interface ReadingConverter {
      * @return a list of readings for the given text.
      * @throws IOException if an I/O error occurs during conversion.
      */
-    List<String> convert(String text, final String field, String... langs) throws IOException;
+    List<String> convert(String text, String field, String... langs) throws IOException;
 }

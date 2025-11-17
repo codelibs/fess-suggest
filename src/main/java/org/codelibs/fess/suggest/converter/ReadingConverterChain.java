@@ -17,9 +17,9 @@ package org.codelibs.fess.suggest.converter;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.LinkedList;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Queue;
+import java.util.Set;
 
 /**
  * A chain of {@link ReadingConverter} implementations that applies each converter in sequence to generate possible reading variations of a given text.
@@ -45,21 +45,39 @@ public class ReadingConverterChain implements ReadingConverter {
 
     @Override
     public List<String> convert(final String text, final String field, final String... lang) throws IOException {
-        final Queue<String> queue = new LinkedList<>();
-        queue.add(text);
-        final List<String> convertedTexts = new ArrayList<>(getMaxReadingNum());
-        convertedTexts.add(text);
+        // Use LinkedHashSet to maintain insertion order while eliminating duplicates
+        final Set<String> resultSet = new LinkedHashSet<>();
+        resultSet.add(text);
 
+        // Start with the original text as the first input
+        List<String> currentInputs = new ArrayList<>();
+        currentInputs.add(text);
+
+        // Apply each converter in sequence
         for (final ReadingConverter converter : converters) {
-            String s;
-            while ((s = queue.poll()) != null && convertedTexts.size() <= getMaxReadingNum()) {
-                final List<String> results = converter.convert(s, field, lang);
-                convertedTexts.addAll(results);
+            final List<String> nextInputs = new ArrayList<>();
+
+            // Process each input from the previous converter
+            for (final String input : currentInputs) {
+                if (resultSet.size() >= getMaxReadingNum()) {
+                    break;
+                }
+
+                // Convert the input and collect results
+                final List<String> results = converter.convert(input, field, lang);
+                for (final String result : results) {
+                    // Add to result set (automatically handles duplicates)
+                    if (resultSet.add(result) && resultSet.size() <= getMaxReadingNum()) {
+                        nextInputs.add(result);
+                    }
+                }
             }
-            queue.addAll(convertedTexts);
+
+            // Use the outputs of this converter as inputs for the next converter
+            currentInputs = nextInputs;
         }
 
-        return convertedTexts;
+        return new ArrayList<>(resultSet);
     }
 
     /**
