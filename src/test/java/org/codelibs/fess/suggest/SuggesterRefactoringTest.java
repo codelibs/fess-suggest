@@ -44,8 +44,6 @@ import org.junit.Test;
 import org.opensearch.action.admin.indices.alias.Alias;
 import org.opensearch.action.admin.indices.alias.get.GetAliasesResponse;
 import org.opensearch.action.admin.indices.create.CreateIndexResponse;
-import org.opensearch.action.support.master.AcknowledgedResponse;
-import org.opensearch.common.xcontent.XContentType;
 import org.opensearch.transport.client.Client;
 
 /**
