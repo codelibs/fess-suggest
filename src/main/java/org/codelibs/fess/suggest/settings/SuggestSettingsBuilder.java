@@ -69,7 +69,7 @@ public class SuggestSettingsBuilder {
      * @return This builder instance.
      */
     public SuggestSettingsBuilder scrollTimeout(final String timeout) {
-        timeoutSettings.scrollTimeout = timeout;
+        timeoutSettings.setScrollTimeout(timeout);
         return this;
     }
 
@@ -79,7 +79,7 @@ public class SuggestSettingsBuilder {
      * @return This builder instance.
      */
     public SuggestSettingsBuilder searchTimeout(final String timeout) {
-        timeoutSettings.searchTimeout = timeout;
+        timeoutSettings.setSearchTimeout(timeout);
         return this;
     }
 
@@ -89,7 +89,7 @@ public class SuggestSettingsBuilder {
      * @return This builder instance.
      */
     public SuggestSettingsBuilder indexTimeout(final String timeout) {
-        timeoutSettings.indexTimeout = timeout;
+        timeoutSettings.setIndexTimeout(timeout);
         return this;
     }
 
@@ -99,7 +99,7 @@ public class SuggestSettingsBuilder {
      * @return This builder instance.
      */
     public SuggestSettingsBuilder bulkTimeout(final String timeout) {
-        timeoutSettings.bulkTimeout = timeout;
+        timeoutSettings.setBulkTimeout(timeout);
         return this;
     }
 
@@ -109,7 +109,7 @@ public class SuggestSettingsBuilder {
      * @return This builder instance.
      */
     public SuggestSettingsBuilder indicesTimeout(final String timeout) {
-        timeoutSettings.indicesTimeout = timeout;
+        timeoutSettings.setIndicesTimeout(timeout);
         return this;
     }
 
@@ -119,7 +119,7 @@ public class SuggestSettingsBuilder {
      * @return This builder instance.
      */
     public SuggestSettingsBuilder clusterTimeout(final String timeout) {
-        timeoutSettings.clusterTimeout = timeout;
+        timeoutSettings.setClusterTimeout(timeout);
         return this;
     }
 

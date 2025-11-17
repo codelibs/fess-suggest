@@ -71,7 +71,7 @@ public class ElevateWordSettings {
     private static final Logger logger = LogManager.getLogger(ElevateWordSettings.class);
 
     /** Key for elevate word settings. */
-    public static final String ELEVATE_WORD_SETTINGD_KEY = "elevateword";
+    public static final String ELEVATE_WORD_SETTINGS_KEY = "elevateword";
     /** Key for elevate word boost. */
     public static final String ELEVATE_WORD_BOOST = "boost";
     /** Key for elevate word reading. */
@@ -109,7 +109,7 @@ public class ElevateWordSettings {
      */
     public ElevateWord[] get() {
         final Map<String, Object>[] sourceArray =
-                arraySettings.getFromArrayIndex(arraySettings.arraySettingsIndexName, arraySettings.settingsId, ELEVATE_WORD_SETTINGD_KEY);
+                arraySettings.getFromArrayIndex(arraySettings.arraySettingsIndexName, arraySettings.settingsId, ELEVATE_WORD_SETTINGS_KEY);
 
         final ElevateWord[] elevateWords = new ElevateWord[sourceArray.length];
         for (int i = 0; i < elevateWords.length; i++) {
@@ -141,7 +141,7 @@ public class ElevateWordSettings {
         }
 
         final Map<String, Object> source = new HashMap<>();
-        source.put(FieldNames.ARRAY_KEY, ELEVATE_WORD_SETTINGD_KEY);
+        source.put(FieldNames.ARRAY_KEY, ELEVATE_WORD_SETTINGS_KEY);
         source.put(FieldNames.ARRAY_VALUE, elevateWord.getElevateWord());
         source.put(ELEVATE_WORD_BOOST, elevateWord.getBoost());
         source.put(ELEVATE_WORD_READING, elevateWord.getReadings());
@@ -151,7 +151,7 @@ public class ElevateWordSettings {
         source.put(FieldNames.TIMESTAMP, DateTimeFormatter.ISO_INSTANT.format(ZonedDateTime.now()));
 
         arraySettings.addToArrayIndex(arraySettings.arraySettingsIndexName, arraySettings.settingsId,
-                arraySettings.createId(ELEVATE_WORD_SETTINGD_KEY, elevateWord.getElevateWord()), source);
+                arraySettings.createId(ELEVATE_WORD_SETTINGS_KEY, elevateWord.getElevateWord()), source);
     }
 
     /**
@@ -162,7 +162,7 @@ public class ElevateWordSettings {
         if (logger.isDebugEnabled()) {
             logger.debug("Delete elevateword. {} elevateword: {}", arraySettings.arraySettingsIndexName, elevateWord);
         }
-        arraySettings.delete(ELEVATE_WORD_SETTINGD_KEY, elevateWord);
+        arraySettings.delete(ELEVATE_WORD_SETTINGS_KEY, elevateWord);
     }
 
     /**
@@ -172,7 +172,7 @@ public class ElevateWordSettings {
         if (logger.isDebugEnabled()) {
             logger.debug("Delete all elevateword. {}", arraySettings.arraySettingsIndexName);
         }
-        arraySettings.delete(ELEVATE_WORD_SETTINGD_KEY);
+        arraySettings.delete(ELEVATE_WORD_SETTINGS_KEY);
     }
 
 }

@@ -35,7 +35,7 @@ public class BadWordSettings {
     private static final Logger logger = LogManager.getLogger(BadWordSettings.class);
 
     /** Key for bad word settings. */
-    public static final String BAD_WORD_SETTINGD_KEY = "badword";
+    public static final String BAD_WORD_SETTINGS_KEY = "badword";
 
     /** Array settings for bad words. */
     protected ArraySettings arraySettings;
@@ -66,7 +66,7 @@ public class BadWordSettings {
      * @return Bad words
      */
     public String[] get(final boolean includeDefault) {
-        final String[] badWords = arraySettings.get(BAD_WORD_SETTINGD_KEY);
+        final String[] badWords = arraySettings.get(BAD_WORD_SETTINGS_KEY);
         if (!includeDefault) {
             return badWords;
         }
@@ -93,7 +93,7 @@ public class BadWordSettings {
         if (validationError != null) {
             throw new IllegalArgumentException("Validation error. " + validationError);
         }
-        arraySettings.add(BAD_WORD_SETTINGD_KEY, badWord);
+        arraySettings.add(BAD_WORD_SETTINGS_KEY, badWord);
     }
 
     /**
@@ -104,7 +104,7 @@ public class BadWordSettings {
         if (logger.isDebugEnabled()) {
             logger.debug("Delete badword. {} badword: {}", arraySettings.arraySettingsIndexName, badWord);
         }
-        arraySettings.delete(BAD_WORD_SETTINGD_KEY, badWord);
+        arraySettings.delete(BAD_WORD_SETTINGS_KEY, badWord);
     }
 
     /**
@@ -112,9 +112,9 @@ public class BadWordSettings {
      */
     public void deleteAll() {
         if (logger.isDebugEnabled()) {
-            logger.debug("Add all badword. {}", arraySettings.arraySettingsIndexName);
+            logger.debug("Delete all badword. {}", arraySettings.arraySettingsIndexName);
         }
-        arraySettings.delete(BAD_WORD_SETTINGD_KEY);
+        arraySettings.delete(BAD_WORD_SETTINGS_KEY);
     }
 
     /**
