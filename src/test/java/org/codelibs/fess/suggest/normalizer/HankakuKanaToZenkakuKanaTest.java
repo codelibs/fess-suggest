@@ -174,4 +174,13 @@ public class HankakuKanaToZenkakuKanaTest {
         assertEquals('ｱ', HankakuKanaToZenkakuKana.mergeChar('ｱ', 'ﾟ'));
         assertEquals('ｶ', HankakuKanaToZenkakuKana.mergeChar('ｶ', 'a'));
     }
+
+    @Test
+    public void test_nullInput() throws Exception {
+        HankakuKanaToZenkakuKana normalizer = new HankakuKanaToZenkakuKana();
+
+        String result = normalizer.normalize(null, "field");
+
+        assertEquals(null, result);
+    }
 }

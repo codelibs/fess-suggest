@@ -49,13 +49,19 @@ public class NormalizerChain implements Normalizer {
         // nothing
     }
 
-    List<Normalizer> normalizers = new ArrayList<>();
+    private final List<Normalizer> normalizers = new ArrayList<>();
 
     @Override
     public String normalize(final String text, final String field, final String... langs) {
+        if (text == null) {
+            return null;
+        }
         String tmp = text;
         for (final Normalizer normalizer : normalizers) {
             tmp = normalizer.normalize(tmp, field, langs);
+            if (tmp == null) {
+                return null;
+            }
         }
         return tmp;
     }
@@ -63,8 +69,12 @@ public class NormalizerChain implements Normalizer {
     /**
      * Adds a normalizer to the chain.
      * @param normalizer The normalizer to add.
+     * @throws IllegalArgumentException if normalizer is null
      */
     public void add(final Normalizer normalizer) {
+        if (normalizer == null) {
+            throw new IllegalArgumentException("normalizer must not be null");
+        }
         normalizers.add(normalizer);
     }
 }

@@ -35,18 +35,29 @@ import com.ibm.icu.text.Transliterator;
  */
 public class ICUNormalizer implements Normalizer {
     /** The transliterator used for normalization. */
-    protected Transliterator transliterator;
+    private final Transliterator transliterator;
 
     /**
      * Constructor for ICUNormalizer.
      * @param transliteratorId The ID of the transliterator to use.
+     * @throws IllegalArgumentException if transliteratorId is null or invalid
      */
     public ICUNormalizer(final String transliteratorId) {
-        transliterator = Transliterator.getInstance(transliteratorId);
+        if (transliteratorId == null) {
+            throw new IllegalArgumentException("transliteratorId must not be null");
+        }
+        try {
+            this.transliterator = Transliterator.getInstance(transliteratorId);
+        } catch (final IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid transliterator ID: " + transliteratorId, e);
+        }
     }
 
     @Override
     public String normalize(final String text, final String field, final String... langs) {
+        if (text == null) {
+            return null;
+        }
         return transliterator.transliterate(text);
     }
 }

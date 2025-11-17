@@ -31,12 +31,12 @@ public class AnalyzerNormalizer implements Normalizer {
     /**
      * The OpenSearch client used for analyzing text.
      */
-    protected final Client client;
+    private final Client client;
 
     /**
      * The settings for the analyzer.
      */
-    protected final AnalyzerSettings analyzerSettings;
+    private final AnalyzerSettings analyzerSettings;
 
     /**
      * The settings for suggestions.
@@ -98,6 +98,9 @@ public class AnalyzerNormalizer implements Normalizer {
          */
         @Override
         public String normalize(final String text, final String field, final String... dummy) {
+            if (text == null) {
+                return null;
+            }
             final AnalyzeAction.Response termResponse = client.admin()
                     .indices()
                     .prepareAnalyze(analyzerSettings.getAnalyzerSettingsIndexName(), text)

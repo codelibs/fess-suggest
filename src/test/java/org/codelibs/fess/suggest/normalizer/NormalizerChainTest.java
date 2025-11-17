@@ -106,4 +106,31 @@ public class NormalizerChainTest {
 
         assertEquals("test_case", result);
     }
+
+    @Test
+    public void test_nullInput() throws Exception {
+        NormalizerChain chain = new NormalizerChain();
+        chain.add(new FullWidthToHalfWidthAlphabetNormalizer());
+
+        String result = chain.normalize(null, "field");
+
+        assertEquals(null, result);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void test_addNullNormalizer() throws Exception {
+        NormalizerChain chain = new NormalizerChain();
+        chain.add(null);
+    }
+
+    @Test
+    public void test_chainWithNormalizerReturningNull() throws Exception {
+        NormalizerChain chain = new NormalizerChain();
+        chain.add((text, field, langs) -> null);
+        chain.add((text, field, langs) -> text.toUpperCase());
+
+        String result = chain.normalize("test", "field");
+
+        assertEquals(null, result);
+    }
 }

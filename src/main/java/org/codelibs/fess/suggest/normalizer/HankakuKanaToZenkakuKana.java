@@ -63,7 +63,7 @@ public class HankakuKanaToZenkakuKana implements Normalizer {
 
     @Override
     public String normalize(final String s, final String field, final String... langs) {
-        if (s.length() == 0) {
+        if (s == null || s.length() == 0) {
             return s;
         }
         if (s.length() == 1) {
