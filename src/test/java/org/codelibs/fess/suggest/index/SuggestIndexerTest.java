@@ -571,9 +571,9 @@ public class SuggestIndexerTest {
         // Both Document and Query (simulated by setting both frequencies)
         String[][] readings3 = new String[1][];
         readings3[0] = new String[] { "both" };
-        items[2] = new SuggestItem(new String[] { "両方" }, readings3, new String[] { "content" }, 1, 1, -1,
-                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT,
-                SuggestItem.Kind.QUERY);
+        items[2] = new SuggestItem(new String[] { "両方" }, readings3, new String[] { "content" }, 1L, 1L, -1.0f,
+                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
+        items[2].setKinds(new SuggestItem.Kind[] { SuggestItem.Kind.DOCUMENT, SuggestItem.Kind.QUERY });
 
         suggester.indexer().index(items);
         suggester.refresh();
@@ -612,9 +612,9 @@ public class SuggestIndexerTest {
         // Both Document and Query
         String[][] readings3 = new String[1][];
         readings3[0] = new String[] { "both" };
-        items[2] = new SuggestItem(new String[] { "両方" }, readings3, new String[] { "content" }, 1, 1, -1,
-                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT,
-                SuggestItem.Kind.QUERY);
+        items[2] = new SuggestItem(new String[] { "両方" }, readings3, new String[] { "content" }, 1L, 1L, -1.0f,
+                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
+        items[2].setKinds(new SuggestItem.Kind[] { SuggestItem.Kind.DOCUMENT, SuggestItem.Kind.QUERY });
 
         suggester.indexer().index(items);
         suggester.refresh();
