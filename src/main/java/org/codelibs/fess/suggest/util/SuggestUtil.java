@@ -225,13 +225,11 @@ public final class SuggestUtil {
         }
     }
 
-    private static OutputStream getXContentOutputStream(final Map<String, Object> map) throws IOException {
-        final ByteArrayOutputStream out = new ByteArrayOutputStream();
-        try (XContentBuilder builder = JsonXContent.contentBuilder(out)) {
-            builder.map(map);
+    private static OutputStream getXContentOutputStream(final Map<String, Object> firstLineMap) throws IOException {
+        try (XContentBuilder builder = JsonXContent.contentBuilder().map(firstLineMap)) {
             builder.flush();
+            return builder.getOutputStream();
         }
-        return out;
     }
 
     /**
