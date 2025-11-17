@@ -308,13 +308,13 @@ public final class SuggestUtil {
             return new ArrayList<>();
         }
 
-        if (value instanceof String) {
+        if (value instanceof String strValue) {
             final List<String> list = new ArrayList<>();
-            list.add((String) value);
+            list.add(strValue);
             return list;
         }
-        if (value instanceof List) {
-            return (List<String>) value;
+        if (value instanceof List<?> listValue) {
+            return (List<String>) listValue;
         }
         throw new IllegalArgumentException("The value should be String or List, but " + value.getClass());
     }
