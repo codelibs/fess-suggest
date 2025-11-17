@@ -602,7 +602,8 @@ public class SuggestUtilTest {
         // Test that null ID causes exception
         SuggestItem item = new SuggestItem(new String[] { "text" }, new String[0][0], new String[0], 0, 0, 1.0f,
                 new String[0], new String[0], new String[0], SuggestItem.Kind.DOCUMENT);
-        // Don't set ID, it will be null by default
+        // Explicitly set ID to null (constructor auto-generates ID)
+        item.setId(null);
         item.setTimestamp(ZonedDateTime.now());
         SuggestUtil.createBulkLine("test_index", "_doc", item);
     }
@@ -610,9 +611,11 @@ public class SuggestUtilTest {
     @Test(expected = SuggesterException.class)
     public void testCreateBulkLineWithNullText() {
         // Test that null text causes exception
-        // Create item with null text array
-        SuggestItem item = new SuggestItem(null, new String[0][0], new String[0], 0, 0, 1.0f,
+        // Create item with valid text first, then set to null
+        SuggestItem item = new SuggestItem(new String[] { "text" }, new String[0][0], new String[0], 0, 0, 1.0f,
                 new String[0], new String[0], new String[0], SuggestItem.Kind.DOCUMENT);
+        // Set text to null after construction
+        item.setText(null);
         item.setTimestamp(ZonedDateTime.now());
         SuggestUtil.createBulkLine("test_index", "_doc", item);
     }
