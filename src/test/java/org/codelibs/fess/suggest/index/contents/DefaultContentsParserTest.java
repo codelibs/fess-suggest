@@ -48,7 +48,7 @@ public class DefaultContentsParserTest extends TestCase {
     String roleFieldName = "role";
 
     @BeforeClass
-    public static void beforeClass() throws Exception {
+    public static void setUpBeforeClass() throws Exception {
         runner = new OpenSearchRunner();
         runner.onBuild((number, settingsBuilder) -> {
             settingsBuilder.put("http.cors.enabled", true);
@@ -59,7 +59,7 @@ public class DefaultContentsParserTest extends TestCase {
     }
 
     @AfterClass
-    public static void afterClass() throws Exception {
+    public static void tearDownAfterClass() throws Exception {
         if (runner != null) {
             runner.close();
             runner.clean();
@@ -67,7 +67,7 @@ public class DefaultContentsParserTest extends TestCase {
     }
 
     @Before
-    public void before() throws Exception {
+    public void setUp() throws Exception {
         try {
             runner.admin().indices().prepareDelete("_all").execute().actionGet();
         } catch (Exception e) {
