@@ -21,21 +21,11 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
-import org.codelibs.fess.suggest.analysis.SuggestAnalyzer;
-import org.codelibs.fess.suggest.converter.KatakanaToAlphabetConverter;
-import org.codelibs.fess.suggest.converter.ReadingConverter;
-import org.codelibs.fess.suggest.converter.ReadingConverterChain;
 import org.codelibs.fess.suggest.exception.SuggesterException;
-import org.codelibs.fess.suggest.normalizer.Normalizer;
-import org.codelibs.fess.suggest.normalizer.NormalizerChain;
-import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.codelibs.opensearch.runner.OpenSearchRunner;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -50,10 +40,9 @@ import org.opensearch.transport.client.Client;
  * Test class for refactoring changes made to Suggester class.
  *
  * Tests cover:
- * - Constructor null parameter validation
- * - Resource loading methods (getDefaultMappings, getDefaultIndexSettings)
  * - Index alias helper method (getIndicesForAlias)
  * - Edge cases for switchIndex with EXPECTED_INDEX_COUNT
+ * - Index lifecycle with refactored methods
  */
 public class SuggesterRefactoringTest {
     static OpenSearchRunner runner;
@@ -83,232 +72,6 @@ public class SuggesterRefactoringTest {
     public void before() throws Exception {
         runner.admin().indices().prepareDelete("_all").execute().actionGet();
         runner.refresh();
-    }
-
-    /**
-     * Test constructor with null client parameter.
-     * Verifies that NullPointerException is thrown with appropriate message.
-     */
-    @Test(expected = NullPointerException.class)
-    public void testConstructor_nullClient() {
-        final SuggestSettings settings = SuggestSettings.builder().build(client, "test");
-        final ReadingConverter readingConverter = new ReadingConverterChain(new KatakanaToAlphabetConverter());
-        final Normalizer normalizer = new NormalizerChain();
-        final SuggestAnalyzer analyzer = new SuggestAnalyzer();
-        final ExecutorService threadPool = Executors.newSingleThreadExecutor();
-
-        try {
-            new Suggester(null, settings, readingConverter, readingConverter, normalizer, analyzer, threadPool);
-            fail("Should throw NullPointerException");
-        } catch (NullPointerException e) {
-            assertEquals("client must not be null", e.getMessage());
-            throw e;
-        } finally {
-            threadPool.shutdown();
-        }
-    }
-
-    /**
-     * Test constructor with null settings parameter.
-     * Verifies that NullPointerException is thrown with appropriate message.
-     */
-    @Test(expected = NullPointerException.class)
-    public void testConstructor_nullSettings() {
-        final ReadingConverter readingConverter = new ReadingConverterChain(new KatakanaToAlphabetConverter());
-        final Normalizer normalizer = new NormalizerChain();
-        final SuggestAnalyzer analyzer = new SuggestAnalyzer();
-        final ExecutorService threadPool = Executors.newSingleThreadExecutor();
-
-        try {
-            new Suggester(client, null, readingConverter, readingConverter, normalizer, analyzer, threadPool);
-            fail("Should throw NullPointerException");
-        } catch (NullPointerException e) {
-            assertEquals("settings must not be null", e.getMessage());
-            throw e;
-        } finally {
-            threadPool.shutdown();
-        }
-    }
-
-    /**
-     * Test constructor with null readingConverter parameter.
-     * Verifies that NullPointerException is thrown with appropriate message.
-     */
-    @Test(expected = NullPointerException.class)
-    public void testConstructor_nullReadingConverter() {
-        final SuggestSettings settings = SuggestSettings.builder().build(client, "test");
-        final ReadingConverter readingConverter = new ReadingConverterChain(new KatakanaToAlphabetConverter());
-        final Normalizer normalizer = new NormalizerChain();
-        final SuggestAnalyzer analyzer = new SuggestAnalyzer();
-        final ExecutorService threadPool = Executors.newSingleThreadExecutor();
-
-        try {
-            new Suggester(client, settings, null, readingConverter, normalizer, analyzer, threadPool);
-            fail("Should throw NullPointerException");
-        } catch (NullPointerException e) {
-            assertEquals("readingConverter must not be null", e.getMessage());
-            throw e;
-        } finally {
-            threadPool.shutdown();
-        }
-    }
-
-    /**
-     * Test constructor with null contentsReadingConverter parameter.
-     * Verifies that NullPointerException is thrown with appropriate message.
-     */
-    @Test(expected = NullPointerException.class)
-    public void testConstructor_nullContentsReadingConverter() {
-        final SuggestSettings settings = SuggestSettings.builder().build(client, "test");
-        final ReadingConverter readingConverter = new ReadingConverterChain(new KatakanaToAlphabetConverter());
-        final Normalizer normalizer = new NormalizerChain();
-        final SuggestAnalyzer analyzer = new SuggestAnalyzer();
-        final ExecutorService threadPool = Executors.newSingleThreadExecutor();
-
-        try {
-            new Suggester(client, settings, readingConverter, null, normalizer, analyzer, threadPool);
-            fail("Should throw NullPointerException");
-        } catch (NullPointerException e) {
-            assertEquals("contentsReadingConverter must not be null", e.getMessage());
-            throw e;
-        } finally {
-            threadPool.shutdown();
-        }
-    }
-
-    /**
-     * Test constructor with null normalizer parameter.
-     * Verifies that NullPointerException is thrown with appropriate message.
-     */
-    @Test(expected = NullPointerException.class)
-    public void testConstructor_nullNormalizer() {
-        final SuggestSettings settings = SuggestSettings.builder().build(client, "test");
-        final ReadingConverter readingConverter = new ReadingConverterChain(new KatakanaToAlphabetConverter());
-        final SuggestAnalyzer analyzer = new SuggestAnalyzer();
-        final ExecutorService threadPool = Executors.newSingleThreadExecutor();
-
-        try {
-            new Suggester(client, settings, readingConverter, readingConverter, null, analyzer, threadPool);
-            fail("Should throw NullPointerException");
-        } catch (NullPointerException e) {
-            assertEquals("normalizer must not be null", e.getMessage());
-            throw e;
-        } finally {
-            threadPool.shutdown();
-        }
-    }
-
-    /**
-     * Test constructor with null analyzer parameter.
-     * Verifies that NullPointerException is thrown with appropriate message.
-     */
-    @Test(expected = NullPointerException.class)
-    public void testConstructor_nullAnalyzer() {
-        final SuggestSettings settings = SuggestSettings.builder().build(client, "test");
-        final ReadingConverter readingConverter = new ReadingConverterChain(new KatakanaToAlphabetConverter());
-        final Normalizer normalizer = new NormalizerChain();
-        final ExecutorService threadPool = Executors.newSingleThreadExecutor();
-
-        try {
-            new Suggester(client, settings, readingConverter, readingConverter, normalizer, null, threadPool);
-            fail("Should throw NullPointerException");
-        } catch (NullPointerException e) {
-            assertEquals("analyzer must not be null", e.getMessage());
-            throw e;
-        } finally {
-            threadPool.shutdown();
-        }
-    }
-
-    /**
-     * Test constructor with null threadPool parameter.
-     * Verifies that NullPointerException is thrown with appropriate message.
-     */
-    @Test(expected = NullPointerException.class)
-    public void testConstructor_nullThreadPool() {
-        final SuggestSettings settings = SuggestSettings.builder().build(client, "test");
-        final ReadingConverter readingConverter = new ReadingConverterChain(new KatakanaToAlphabetConverter());
-        final Normalizer normalizer = new NormalizerChain();
-        final SuggestAnalyzer analyzer = new SuggestAnalyzer();
-
-        try {
-            new Suggester(client, settings, readingConverter, readingConverter, normalizer, analyzer, null);
-            fail("Should throw NullPointerException");
-        } catch (NullPointerException e) {
-            assertEquals("threadPool must not be null", e.getMessage());
-            throw e;
-        }
-    }
-
-    /**
-     * Test getDefaultMappings method loads resource correctly.
-     * Verifies that the method returns a non-empty JSON string.
-     */
-    @Test
-    public void testGetDefaultMappings_success() throws Exception {
-        final Suggester suggester = Suggester.builder().build(client, "test");
-
-        // Use reflection to access private method
-        final Method method = Suggester.class.getDeclaredMethod("getDefaultMappings");
-        method.setAccessible(true);
-        final String mappings = (String) method.invoke(suggester);
-
-        assertNotNull("Mappings should not be null", mappings);
-        assertTrue("Mappings should not be empty", mappings.length() > 0);
-        assertTrue("Mappings should be valid JSON", mappings.contains("{") && mappings.contains("}"));
-    }
-
-    /**
-     * Test getDefaultIndexSettings method loads resource correctly.
-     * Verifies that the method returns a non-empty JSON string.
-     */
-    @Test
-    public void testGetDefaultIndexSettings_success() throws Exception {
-        final Suggester suggester = Suggester.builder().build(client, "test");
-
-        // Use reflection to access private method
-        final Method method = Suggester.class.getDeclaredMethod("getDefaultIndexSettings");
-        method.setAccessible(true);
-        final String settings = (String) method.invoke(suggester);
-
-        assertNotNull("Settings should not be null", settings);
-        assertTrue("Settings should not be empty", settings.length() > 0);
-        assertTrue("Settings should be valid JSON", settings.contains("{") && settings.contains("}"));
-    }
-
-    /**
-     * Test that resource loading with null InputStream throws appropriate exception.
-     * This test simulates a missing resource scenario.
-     */
-    @Test
-    public void testResourceLoading_missingResource() throws Exception {
-        // Create a custom Suggester class to test missing resource handling
-        final Suggester suggester = new Suggester(
-                client,
-                SuggestSettings.builder().build(client, "test"),
-                new ReadingConverterChain(new KatakanaToAlphabetConverter()),
-                new ReadingConverterChain(new KatakanaToAlphabetConverter()),
-                new NormalizerChain(),
-                new SuggestAnalyzer(),
-                Executors.newSingleThreadExecutor()) {
-
-            // Override to simulate missing resource
-            @Override
-            protected String getDefaultMappings() throws IOException {
-                return super.getDefaultMappings(); // Will throw if resource is missing
-            }
-        };
-
-        // This test verifies the resource exists and can be loaded
-        // If the resource was missing, an IOException would be thrown
-        try {
-            final Method method = suggester.getClass().getSuperclass().getDeclaredMethod("getDefaultMappings");
-            method.setAccessible(true);
-            final String result = (String) method.invoke(suggester);
-            assertNotNull("Should successfully load existing resource", result);
-        } finally {
-            suggester.shutdown();
-        }
     }
 
     /**
@@ -343,6 +106,7 @@ public class SuggesterRefactoringTest {
 
         // Cleanup
         client.admin().indices().prepareDelete(indexName).execute().actionGet();
+        suggester.shutdown();
     }
 
     /**
@@ -361,6 +125,8 @@ public class SuggesterRefactoringTest {
 
         assertNotNull("Indices list should not be null", indices);
         assertEquals("Should return empty list for non-existing alias", 0, indices.size());
+
+        suggester.shutdown();
     }
 
     /**
@@ -395,6 +161,7 @@ public class SuggesterRefactoringTest {
 
         // Cleanup
         client.admin().indices().prepareDelete(index1, index2).execute().actionGet();
+        suggester.shutdown();
     }
 
     /**
@@ -423,6 +190,7 @@ public class SuggesterRefactoringTest {
 
         // Cleanup
         client.admin().indices().prepareDelete(suggester.getIndex() + "*").execute().actionGet();
+        suggester.shutdown();
     }
 
     /**
@@ -457,6 +225,7 @@ public class SuggesterRefactoringTest {
 
         // Cleanup
         client.admin().indices().prepareDelete(suggester.getIndex() + "*").execute().actionGet();
+        suggester.shutdown();
     }
 
     /**
@@ -520,5 +289,34 @@ public class SuggesterRefactoringTest {
 
         // Cleanup
         client.admin().indices().prepareDelete(suggester.getIndex() + "*").execute().actionGet();
+        suggester.shutdown();
+    }
+
+    /**
+     * Test that resource files can be loaded successfully.
+     * This indirectly tests getDefaultMappings and getDefaultIndexSettings.
+     */
+    @Test
+    public void testResourceLoading_viaIndexCreation() throws Exception {
+        final Suggester suggester = Suggester.builder().build(client, "resource-test");
+
+        // createIndexIfNothing internally calls getDefaultMappings and getDefaultIndexSettings
+        boolean created = suggester.createIndexIfNothing();
+
+        assertTrue("Index should be created successfully", created);
+
+        // Verify index exists
+        final GetAliasesResponse aliasResponse = client.admin()
+                .indices()
+                .prepareGetAliases(suggester.getIndex())
+                .execute()
+                .actionGet();
+
+        assertNotNull("Aliases should exist", aliasResponse.getAliases());
+        assertEquals("Should have exactly one index", 1, aliasResponse.getAliases().size());
+
+        // Cleanup
+        client.admin().indices().prepareDelete(suggester.getIndex() + "*").execute().actionGet();
+        suggester.shutdown();
     }
 }

@@ -22,17 +22,8 @@ import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.Executors;
 
-import org.codelibs.fess.suggest.analysis.SuggestAnalyzer;
-import org.codelibs.fess.suggest.converter.KatakanaToAlphabetConverter;
-import org.codelibs.fess.suggest.converter.ReadingConverter;
-import org.codelibs.fess.suggest.converter.ReadingConverterChain;
-import org.codelibs.fess.suggest.normalizer.Normalizer;
-import org.codelibs.fess.suggest.normalizer.NormalizerChain;
-import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.junit.Test;
 
 /**
