@@ -16,6 +16,10 @@
 package org.codelibs.fess.suggest.index.contents;
 
 import static org.codelibs.opensearch.runner.OpenSearchRunner.newConfigs;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -35,11 +39,10 @@ import org.codelibs.opensearch.runner.OpenSearchRunner;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Test;
 import org.opensearch.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken;
 
-import junit.framework.TestCase;
-
-public class DefaultContentsParserTest extends TestCase {
+public class DefaultContentsParserTest {
     static Suggester suggester;
     static OpenSearchRunner runner;
     DefaultContentsParser defaultContentsParser = new DefaultContentsParser();
@@ -48,7 +51,7 @@ public class DefaultContentsParserTest extends TestCase {
     String roleFieldName = "role";
 
     @BeforeClass
-    public static void setUpBeforeClass() throws Exception {
+    public static void beforeClass() throws Exception {
         runner = new OpenSearchRunner();
         runner.onBuild((number, settingsBuilder) -> {
             settingsBuilder.put("http.cors.enabled", true);
@@ -59,7 +62,7 @@ public class DefaultContentsParserTest extends TestCase {
     }
 
     @AfterClass
-    public static void tearDownAfterClass() throws Exception {
+    public static void afterClass() throws Exception {
         if (runner != null) {
             runner.close();
             runner.clean();
@@ -67,7 +70,7 @@ public class DefaultContentsParserTest extends TestCase {
     }
 
     @Before
-    public void setUp() throws Exception {
+    public void before() throws Exception {
         try {
             runner.admin().indices().prepareDelete("_all").execute().actionGet();
         } catch (Exception e) {
@@ -78,6 +81,7 @@ public class DefaultContentsParserTest extends TestCase {
         suggester.createIndexIfNothing();
     }
 
+    @Test
     public void test_parseQueryLog() throws Exception {
 
         QueryLog queryLog = new QueryLog("content:検索エンジン", null);
@@ -89,6 +93,7 @@ public class DefaultContentsParserTest extends TestCase {
         assertEquals(1, item.getQueryFreq());
     }
 
+    @Test
     public void test_parseQueryLog2Word() throws Exception {
         QueryLog queryLog = new QueryLog("content:検索エンジン AND content:柿", null);
         List<SuggestItem> items = defaultContentsParser.parseQueryLog(queryLog, supportedFields, tagFieldNames, roleFieldName,
@@ -96,6 +101,7 @@ public class DefaultContentsParserTest extends TestCase {
         assertEquals("検索エンジン 柿", items.get(0).getText());
     }
 
+    @Test
     public void test_parseQueryLogAndRole() throws Exception {
         QueryLog queryLog = new QueryLog("content:検索エンジン AND label:tag1", "role:role1");
         List<SuggestItem> items = defaultContentsParser.parseQueryLog(queryLog, supportedFields, tagFieldNames, roleFieldName,
@@ -119,6 +125,7 @@ public class DefaultContentsParserTest extends TestCase {
         return new NormalizerChain();
     }
 
+    @Test
     public void test_parseDocument() throws Exception {
         Map<String, Object> document = new HashMap<>();
         document.put("content", "これはテストです。検索エンジン。");
@@ -136,6 +143,7 @@ public class DefaultContentsParserTest extends TestCase {
         }
     }
 
+    @Test
     public void test_parseDocumentWithTags() throws Exception {
         Map<String, Object> document = new HashMap<>();
         document.put("content", "テストドキュメント");
@@ -152,6 +160,7 @@ public class DefaultContentsParserTest extends TestCase {
         assertTrue(firstItem.getTags().length >= 2);
     }
 
+    @Test
     public void test_parseDocumentWithLargeText() throws Exception {
         // Test with text larger than maxAnalyzedContentLength
         StringBuilder largeText = new StringBuilder();
@@ -171,6 +180,7 @@ public class DefaultContentsParserTest extends TestCase {
         assertTrue(items.size() > 0);
     }
 
+    @Test
     public void test_analyzeText() throws Exception {
         SuggestAnalyzer analyzer = suggester.settings().analyzer().new DefaultContentsAnalyzer();
         String text = "これはテストです。検索エンジン。";
@@ -181,6 +191,7 @@ public class DefaultContentsParserTest extends TestCase {
         assertTrue(tokens.size() > 0);
     }
 
+    @Test
     public void test_analyzeTextByReading() throws Exception {
         SuggestAnalyzer analyzer = suggester.settings().analyzer().new DefaultContentsAnalyzer();
         String text = "これはテストです。検索エンジン。";
@@ -192,6 +203,7 @@ public class DefaultContentsParserTest extends TestCase {
         // Just verify it doesn't throw an exception
     }
 
+    @Test
     public void test_analyzeTextWithLargeContent() throws Exception {
         SuggestAnalyzer analyzer = suggester.settings().analyzer().new DefaultContentsAnalyzer();
         // Create text larger than maxAnalyzedContentLength (1000 chars by default)
@@ -207,6 +219,7 @@ public class DefaultContentsParserTest extends TestCase {
         assertTrue(tokens.size() > 0);
     }
 
+    @Test
     public void test_getFieldValues() throws Exception {
         Map<String, Object> document = new HashMap<>();
         document.put("string_field", "value1");
@@ -236,6 +249,7 @@ public class DefaultContentsParserTest extends TestCase {
         assertEquals(0, nullValues.length);
     }
 
+    @Test
     public void test_parseSearchWords() throws Exception {
         String[] words = new String[] { "検索", "エンジン" };
         String[][] readings = new String[][] { new String[] { "kensaku" }, new String[] { "enjin" } };
@@ -254,6 +268,7 @@ public class DefaultContentsParserTest extends TestCase {
         assertEquals(10, item.getQueryFreq());
     }
 
+    @Test
     public void test_parseSearchWordsWithExcludedWords() throws Exception {
         String[] words = new String[] { "　　　", "エンジン" }; // First word is whitespace only
         String[] fields = new String[] { "content" };
