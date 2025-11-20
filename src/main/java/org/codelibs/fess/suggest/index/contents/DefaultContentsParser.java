@@ -97,12 +97,12 @@ public class DefaultContentsParser implements ContentsParser {
                 }
 
                 wordsList.add(word);
-                readingList.add(l.toArray(new String[l.size()]));
+                readingList.add(l.toArray(String[]::new));
             }
             if (wordsList.isEmpty()) {
                 return null;
             }
-            return new SuggestItem(wordsList.toArray(new String[wordsList.size()]), readingList.toArray(new String[readingList.size()][]),
+            return new SuggestItem(wordsList.toArray(String[]::new), readingList.toArray(String[][]::new),
                     fields, 0, score, -1, tags, roles, langs, SuggestItem.Kind.QUERY);
         } catch (final IOException e) {
             throw new SuggesterException("Failed to create SuggestItem from search words.", e);
@@ -146,7 +146,7 @@ public class DefaultContentsParser implements ContentsParser {
                 for (int j = 0; j < words.length; j++) {
                     words[j] = normalizer.normalize(words[j], field, "");
                     final List<String> l = readingConverter.convert(words[j], field);
-                    readings[j] = l.toArray(new String[l.size()]);
+                    readings[j] = l.toArray(String[]::new);
                 }
 
                 items.add(new SuggestItem(words, readings, new String[] { field }, 0, 1, -1, tags, roles, null, SuggestItem.Kind.QUERY));
@@ -204,7 +204,7 @@ public class DefaultContentsParser implements ContentsParser {
                         l = contentsReadingConverter.convert(reading, field, lang);
                     }
                     l.add(word);
-                    readings[0] = l.toArray(new String[l.size()]);
+                    readings[0] = l.toArray(String[]::new);
 
                     if (items == null) {
                         items = new ArrayList<>(text.length() * fields.length / field.length());
@@ -231,35 +231,7 @@ public class DefaultContentsParser implements ContentsParser {
      * @return List of tokens
      */
     protected List<AnalyzeToken> analyzeText(final SuggestAnalyzer analyzer, final String field, final String text, final String lang) {
-        final List<AnalyzeToken> tokens = new ArrayList<>();
-        final StringBuilder buf = new StringBuilder(maxAnalyzedContentLength);
-        for (final String t : text.split("\\s")) {
-            buf.append(t).append(' ');
-            if (buf.length() > maxAnalyzedContentLength) {
-                try {
-                    tokens.addAll(analyzer.analyze(buf.toString().trim(), field, lang));
-                } catch (OpenSearchStatusException | IllegalStateException e) {
-                    if (logger.isDebugEnabled()) {
-                        logger.warn("[{}][{}] Failed to analyze a text(size:{}).", field, lang, buf.length(), e);
-                    } else {
-                        logger.warn("[{}][{}] Failed to analyze a text(size:{}). {}", field, lang, buf.length(), e.getMessage());
-                    }
-                }
-                buf.setLength(0);
-            }
-        }
-        if (buf.length() > 0) {
-            try {
-                tokens.addAll(analyzer.analyze(buf.toString().trim(), field, lang));
-            } catch (OpenSearchStatusException | IllegalStateException e) {
-                if (logger.isDebugEnabled()) {
-                    logger.warn("[{}][{}] Failed to analyze a last text(size:{}).", field, lang, buf.length(), e);
-                } else {
-                    logger.warn("[{}][{}] Failed to analyze a last text(size:{}). {}", field, lang, buf.length(), e.getMessage());
-                }
-            }
-        }
-        return tokens;
+        return analyzeTextInternal(analyzer, field, text, lang, false);
     }
 
     /**
@@ -272,41 +244,66 @@ public class DefaultContentsParser implements ContentsParser {
      */
     protected List<AnalyzeToken> analyzeTextByReading(final SuggestAnalyzer analyzer, final String field, final String text,
             final String lang) {
+        return analyzeTextInternal(analyzer, field, text, lang, true);
+    }
+
+    /**
+     * Internal method for analyzing text with optional reading support.
+     * @param analyzer Analyzer
+     * @param field Field
+     * @param text Text
+     * @param lang Language
+     * @param useReading Whether to use reading analysis
+     * @return List of tokens
+     */
+    private List<AnalyzeToken> analyzeTextInternal(final SuggestAnalyzer analyzer, final String field, final String text,
+            final String lang, final boolean useReading) {
         final List<AnalyzeToken> tokens = new ArrayList<>();
         final StringBuilder buf = new StringBuilder(maxAnalyzedContentLength);
+        final String analyzeType = useReading ? "reading " : "";
+
         for (final String t : text.split("\\s")) {
             buf.append(t).append(' ');
             if (buf.length() > maxAnalyzedContentLength) {
-                try {
-                    final List<AnalyzeToken> readings = analyzer.analyzeAndReading(buf.toString().trim(), field, lang);
-                    if (readings != null) {
-                        tokens.addAll(readings);
-                    }
-                } catch (OpenSearchStatusException | IllegalStateException e) {
-                    if (logger.isDebugEnabled()) {
-                        logger.warn("[{}][{}] Failed to analyze a reading text(size:{}).", field, lang, buf.length(), e);
-                    } else {
-                        logger.warn("[{}][{}] Failed to analyze a reading text(size:{}). {}", field, lang, buf.length(), e.getMessage());
-                    }
-                }
+                processBuffer(analyzer, field, lang, useReading, tokens, buf, analyzeType, false);
                 buf.setLength(0);
             }
         }
         if (buf.length() > 0) {
-            try {
-                final List<AnalyzeToken> readings = analyzer.analyzeAndReading(buf.toString().trim(), field, lang);
-                if (readings != null) {
-                    tokens.addAll(readings);
-                }
-            } catch (OpenSearchStatusException | IllegalStateException e) {
-                if (logger.isDebugEnabled()) {
-                    logger.warn("[{}][{}] Failed to analyze a last reading text(size:{}).", field, lang, buf.length(), e);
-                } else {
-                    logger.warn("[{}][{}] Failed to analyze a last reading text(size:{}). {}", field, lang, buf.length(), e.getMessage());
-                }
-            }
+            processBuffer(analyzer, field, lang, useReading, tokens, buf, analyzeType, true);
         }
         return tokens;
+    }
+
+    /**
+     * Process the buffer and add analyzed tokens.
+     * @param analyzer Analyzer
+     * @param field Field
+     * @param lang Language
+     * @param useReading Whether to use reading analysis
+     * @param tokens Token list to add to
+     * @param buf Buffer containing text
+     * @param analyzeType Type of analysis (for logging)
+     * @param isLast Whether this is the last buffer
+     */
+    private void processBuffer(final SuggestAnalyzer analyzer, final String field, final String lang, final boolean useReading,
+            final List<AnalyzeToken> tokens, final StringBuilder buf, final String analyzeType, final boolean isLast) {
+        try {
+            final List<AnalyzeToken> result = useReading
+                    ? analyzer.analyzeAndReading(buf.toString().trim(), field, lang)
+                    : analyzer.analyze(buf.toString().trim(), field, lang);
+            if (result != null) {
+                tokens.addAll(result);
+            }
+        } catch (OpenSearchStatusException | IllegalStateException e) {
+            final String lastPrefix = isLast ? "last " : "";
+            if (logger.isDebugEnabled()) {
+                logger.warn("[{}][{}] Failed to analyze a {}{}text(size:{}).", field, lang, lastPrefix, analyzeType, buf.length(), e);
+            } else {
+                logger.warn("[{}][{}] Failed to analyze a {}{}text(size:{}). {}", field, lang, lastPrefix, analyzeType, buf.length(),
+                        e.getMessage());
+            }
+        }
     }
 
     /**
@@ -324,7 +321,7 @@ public class DefaultContentsParser implements ContentsParser {
             return (String[]) value;
         }
         if (value instanceof List) {
-            return ((List<?>) value).stream().map(Object::toString).toArray(n -> new String[n]);
+            return ((List<?>) value).stream().map(Object::toString).toArray(String[]::new);
         }
         if (value != null) {
             return new String[] { value.toString() };

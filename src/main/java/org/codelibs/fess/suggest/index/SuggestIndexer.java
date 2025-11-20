@@ -203,8 +203,7 @@ public class SuggestIndexer {
      * @return The SuggestIndexResponse.
      */
     public SuggestIndexResponse index(final SuggestItem[] items) {
-        // TODO parallel?
-        final SuggestItem[] array = Stream.of(items).filter(item -> !item.isBadWord(badWords)).toArray(n -> new SuggestItem[n]);
+        final SuggestItem[] array = Stream.of(items).filter(item -> !item.isBadWord(badWords)).toArray(SuggestItem[]::new);
 
         try {
             final long start = System.currentTimeMillis();
@@ -261,55 +260,9 @@ public class SuggestIndexer {
      * @return The SuggestDeleteResponse.
      */
     public SuggestDeleteResponse deleteDocumentWords() {
-        final long start = System.currentTimeMillis();
-
-        final SuggestDeleteResponse deleteResponse = deleteByQuery(QueryBuilders.boolQuery()
-                .must(QueryBuilders.rangeQuery(FieldNames.DOC_FREQ).gte(1))
-                .mustNot(QueryBuilders.matchPhraseQuery(FieldNames.KINDS, SuggestItem.Kind.QUERY.toString()))
-                .mustNot(QueryBuilders.matchPhraseQuery(FieldNames.KINDS, SuggestItem.Kind.USER.toString())));
-        if (deleteResponse.hasError()) {
-            throw new SuggestIndexException(deleteResponse.getErrors().get(0));
-        }
-
-        final List<SuggestItem> updateItems = new ArrayList<>();
-        SearchResponse response = client.prepareSearch(index)
-                .setSize(500)
-                .setScroll(settings.getScrollTimeout())
-                .setQuery(QueryBuilders.rangeQuery(FieldNames.DOC_FREQ).gte(1))
-                .execute()
-                .actionGet(settings.getSearchTimeout());
-        String scrollId = response.getScrollId();
-        try {
-            while (scrollId != null) {
-                final SearchHit[] hits = response.getHits().getHits();
-                if (hits.length == 0) {
-                    break;
-                }
-                for (final SearchHit hit : hits) {
-                    final SuggestItem item = SuggestItem.parseSource(hit.getSourceAsMap());
-                    item.setDocFreq(0);
-                    item.setKinds(Stream.of(item.getKinds())
-                            .filter(kind -> kind != SuggestItem.Kind.DOCUMENT)
-                            .toArray(count -> new SuggestItem.Kind[count]));
-                    updateItems.add(item);
-                }
-                final SuggestWriterResult result =
-                        suggestWriter.write(client, settings, index, updateItems.toArray(new SuggestItem[updateItems.size()]), false);
-                if (result.hasFailure()) {
-                    throw new SuggestIndexException(result.getFailures().get(0));
-                }
-
-                response = client.prepareSearchScroll(scrollId).execute().actionGet(settings.getSearchTimeout());
-                if (!scrollId.equals(response.getScrollId())) {
-                    SuggestUtil.deleteScrollContext(client, scrollId);
-                }
-                scrollId = response.getScrollId();
-            }
-        } finally {
-            SuggestUtil.deleteScrollContext(client, scrollId);
-        }
-
-        return new SuggestDeleteResponse(null, System.currentTimeMillis() - start);
+        return deleteWordsByKind(FieldNames.DOC_FREQ, SuggestItem.Kind.DOCUMENT,
+                item -> item.setDocFreq(0),
+                SuggestItem.Kind.QUERY, SuggestItem.Kind.USER);
     }
 
     /**
@@ -317,12 +270,31 @@ public class SuggestIndexer {
      * @return The SuggestDeleteResponse.
      */
     public SuggestDeleteResponse deleteQueryWords() {
+        return deleteWordsByKind(FieldNames.QUERY_FREQ, SuggestItem.Kind.QUERY,
+                item -> item.setQueryFreq(0),
+                SuggestItem.Kind.DOCUMENT, SuggestItem.Kind.USER);
+    }
+
+    /**
+     * Common method to delete words by kind.
+     * @param freqField The frequency field name.
+     * @param kindToRemove The kind to remove.
+     * @param freqSetter The consumer to set frequency to 0.
+     * @param excludeKinds The kinds to exclude from deletion.
+     * @return The SuggestDeleteResponse.
+     */
+    private SuggestDeleteResponse deleteWordsByKind(final String freqField, final SuggestItem.Kind kindToRemove,
+            final java.util.function.Consumer<SuggestItem> freqSetter, final SuggestItem.Kind... excludeKinds) {
         final long start = System.currentTimeMillis();
 
-        final SuggestDeleteResponse deleteResponse = deleteByQuery(QueryBuilders.boolQuery()
-                .must(QueryBuilders.rangeQuery(FieldNames.QUERY_FREQ).gte(1))
-                .mustNot(QueryBuilders.matchPhraseQuery(FieldNames.KINDS, SuggestItem.Kind.DOCUMENT.toString()))
-                .mustNot(QueryBuilders.matchPhraseQuery(FieldNames.KINDS, SuggestItem.Kind.USER.toString())));
+        // Build query to exclude certain kinds
+        final org.opensearch.index.query.BoolQueryBuilder boolQuery = QueryBuilders.boolQuery()
+                .must(QueryBuilders.rangeQuery(freqField).gte(1));
+        for (final SuggestItem.Kind kind : excludeKinds) {
+            boolQuery.mustNot(QueryBuilders.matchPhraseQuery(FieldNames.KINDS, kind.toString()));
+        }
+
+        final SuggestDeleteResponse deleteResponse = deleteByQuery(boolQuery);
         if (deleteResponse.hasError()) {
             throw new SuggestIndexException(deleteResponse.getErrors().get(0));
         }
@@ -331,7 +303,7 @@ public class SuggestIndexer {
         SearchResponse response = client.prepareSearch(index)
                 .setSize(500)
                 .setScroll(settings.getScrollTimeout())
-                .setQuery(QueryBuilders.rangeQuery(FieldNames.QUERY_FREQ).gte(1))
+                .setQuery(QueryBuilders.rangeQuery(freqField).gte(1))
                 .execute()
                 .actionGet(settings.getSearchTimeout());
         String scrollId = response.getScrollId();
@@ -343,10 +315,10 @@ public class SuggestIndexer {
                 }
                 for (final SearchHit hit : hits) {
                     final SuggestItem item = SuggestItem.parseSource(hit.getSourceAsMap());
-                    item.setQueryFreq(0);
+                    freqSetter.accept(item);
                     item.setKinds(Stream.of(item.getKinds())
-                            .filter(kind -> kind != SuggestItem.Kind.QUERY)
-                            .toArray(count -> new SuggestItem.Kind[count]));
+                            .filter(kind -> kind != kindToRemove)
+                            .toArray(SuggestItem.Kind[]::new));
                     updateItems.add(item);
                 }
                 final SuggestWriterResult result =
@@ -394,7 +366,7 @@ public class SuggestIndexer {
             }
             final SuggestItem[] array = stream.flatMap(queryLog -> contentsParser
                     .parseQueryLog(queryLog, supportedFields, tagFieldNames, roleFieldName, readingConverter, normalizer)
-                    .stream()).toArray(n -> new SuggestItem[n]);
+                    .stream()).toArray(SuggestItem[]::new);
             final long parseTime = System.currentTimeMillis();
             final SuggestIndexResponse response = index(array);
             final long indexTime = System.currentTimeMillis();
@@ -433,7 +405,7 @@ public class SuggestIndexer {
                     }
                     queryLogs.add(queryLog);
                     queryLog = queryLogReader.read();
-                    if (queryLog == null && !queryLogs.isEmpty() || queryLogs.size() >= docPerReq) {
+                    if ((queryLog == null && !queryLogs.isEmpty()) || queryLogs.size() >= docPerReq) {
                         final SuggestIndexResponse res = indexFromQueryLog(queryLogs.toArray(new QueryLog[queryLogs.size()]));
                         errors.addAll(res.getErrors());
                         numberOfSuggestDocs += res.getNumberOfSuggestDocs();
@@ -474,13 +446,13 @@ public class SuggestIndexer {
                             .stream();
                 } catch (OpenSearchStatusException | IllegalStateException e) {
                     final String msg = e.getMessage();
-                    if (StringUtil.isNotEmpty(msg) || msg.contains("index.analyze.max_token_count")) {
+                    if (StringUtil.isNotEmpty(msg) && msg.contains("index.analyze.max_token_count")) {
                         logger.warn("Failed to parse document. ", e);
                         return Stream.empty();
                     }
                     throw e;
                 }
-            }).toArray(n -> new SuggestItem[n]);
+            }).toArray(SuggestItem[]::new);
             final long parseTime = System.currentTimeMillis();
             final SuggestIndexResponse response = index(items);
             final long indexTime = System.currentTimeMillis();

@@ -509,4 +509,192 @@ public class SuggestIndexerTest {
         assertEquals(1, response.getNumberOfSuggestDocs());
         assertFalse(response.hasError());
     }
+
+    @Test
+    public void test_indexFromQueryLogWithParallel() throws Exception {
+        SuggestSettings settings = suggester.settings();
+        settings.set(SuggestSettings.DefaultKeys.PARALLEL_PROCESSING, "true");
+        String field = settings.array().get(SuggestSettings.DefaultKeys.SUPPORTED_FIELDS)[0];
+
+        QueryLog[] queryLogs = new QueryLog[10];
+        for (int i = 0; i < 10; i++) {
+            queryLogs[i] = new QueryLog(field + ":検索" + i, null);
+        }
+
+        SuggestIndexResponse response = suggester.indexer().indexFromQueryLog(queryLogs);
+
+        assertNotNull(response);
+        assertEquals(10, response.getNumberOfInputDocs());
+        assertFalse(response.hasError());
+
+        settings.set(SuggestSettings.DefaultKeys.PARALLEL_PROCESSING, "false");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void test_indexFromDocumentWithParallel() throws Exception {
+        SuggestSettings settings = suggester.settings();
+        settings.set(SuggestSettings.DefaultKeys.PARALLEL_PROCESSING, "true");
+        String field = settings.array().get(SuggestSettings.DefaultKeys.SUPPORTED_FIELDS)[0];
+
+        Map<String, Object>[] documents = new Map[10];
+        for (int i = 0; i < 10; i++) {
+            documents[i] = new HashMap<>();
+            documents[i].put(field, "テストドキュメント" + i);
+        }
+
+        SuggestIndexResponse response = suggester.indexer().indexFromDocument(documents);
+
+        assertNotNull(response);
+        assertEquals(10, response.getNumberOfInputDocs());
+        assertFalse(response.hasError());
+
+        settings.set(SuggestSettings.DefaultKeys.PARALLEL_PROCESSING, "false");
+    }
+
+    @Test
+    public void test_deleteDocumentWordsWithMixedKinds() throws Exception {
+        SuggestItem[] items = new SuggestItem[3];
+
+        // Document only
+        String[][] readings1 = new String[1][];
+        readings1[0] = new String[] { "doc1" };
+        items[0] = new SuggestItem(new String[] { "ドキュメント1" }, readings1, new String[] { "content" }, 1, 0, -1,
+                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
+
+        // Query only
+        String[][] readings2 = new String[1][];
+        readings2[0] = new String[] { "query1" };
+        items[1] = new SuggestItem(new String[] { "クエリ1" }, readings2, new String[] { "content" }, 0, 1, -1,
+                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.QUERY);
+
+        // Both Document and Query (simulated by setting both frequencies)
+        String[][] readings3 = new String[1][];
+        readings3[0] = new String[] { "both" };
+        items[2] = new SuggestItem(new String[] { "両方" }, readings3, new String[] { "content" }, 1L, 1L, -1.0f,
+                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
+        items[2].setKinds(new SuggestItem.Kind[] { SuggestItem.Kind.DOCUMENT, SuggestItem.Kind.QUERY });
+
+        suggester.indexer().index(items);
+        suggester.refresh();
+
+        assertEquals(3, suggester.getAllWordsNum());
+
+        SuggestDeleteResponse deleteResponse = suggester.indexer().deleteDocumentWords();
+
+        assertNotNull(deleteResponse);
+        assertFalse(deleteResponse.hasError());
+
+        suggester.refresh();
+
+        // Document-only should be deleted, Query-only should remain, Both should remain but as Query only
+        assertEquals(2, suggester.getAllWordsNum());
+        assertEquals(0, suggester.getDocumentWordsNum());
+        assertEquals(2, suggester.getQueryWordsNum());
+    }
+
+    @Test
+    public void test_deleteQueryWordsWithMixedKinds() throws Exception {
+        SuggestItem[] items = new SuggestItem[3];
+
+        // Document only
+        String[][] readings1 = new String[1][];
+        readings1[0] = new String[] { "doc1" };
+        items[0] = new SuggestItem(new String[] { "ドキュメント1" }, readings1, new String[] { "content" }, 1, 0, -1,
+                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
+
+        // Query only
+        String[][] readings2 = new String[1][];
+        readings2[0] = new String[] { "query1" };
+        items[1] = new SuggestItem(new String[] { "クエリ1" }, readings2, new String[] { "content" }, 0, 1, -1,
+                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.QUERY);
+
+        // Both Document and Query
+        String[][] readings3 = new String[1][];
+        readings3[0] = new String[] { "both" };
+        items[2] = new SuggestItem(new String[] { "両方" }, readings3, new String[] { "content" }, 1L, 1L, -1.0f,
+                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
+        items[2].setKinds(new SuggestItem.Kind[] { SuggestItem.Kind.DOCUMENT, SuggestItem.Kind.QUERY });
+
+        suggester.indexer().index(items);
+        suggester.refresh();
+
+        assertEquals(3, suggester.getAllWordsNum());
+
+        SuggestDeleteResponse deleteResponse = suggester.indexer().deleteQueryWords();
+
+        assertNotNull(deleteResponse);
+        assertFalse(deleteResponse.hasError());
+
+        suggester.refresh();
+
+        // Query-only should be deleted, Document-only should remain, Both should remain but as Document only
+        assertEquals(2, suggester.getAllWordsNum());
+        assertEquals(2, suggester.getDocumentWordsNum());
+        assertEquals(0, suggester.getQueryWordsNum());
+    }
+
+    @Test
+    public void test_deleteDocumentWordsWithUserKind() throws Exception {
+        SuggestItem[] items = new SuggestItem[2];
+
+        // Document
+        String[][] readings1 = new String[1][];
+        readings1[0] = new String[] { "doc1" };
+        items[0] = new SuggestItem(new String[] { "ドキュメント1" }, readings1, new String[] { "content" }, 1, 0, -1,
+                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
+
+        // User
+        String[][] readings2 = new String[1][];
+        readings2[0] = new String[] { "user1" };
+        items[1] = new SuggestItem(new String[] { "ユーザー1" }, readings2, new String[] { "content" }, 1, 0, -1,
+                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.USER);
+
+        suggester.indexer().index(items);
+        suggester.refresh();
+
+        assertEquals(2, suggester.getAllWordsNum());
+
+        SuggestDeleteResponse deleteResponse = suggester.indexer().deleteDocumentWords();
+
+        assertNotNull(deleteResponse);
+        assertFalse(deleteResponse.hasError());
+
+        suggester.refresh();
+
+        // Only Document should be deleted, User should remain
+        assertEquals(1, suggester.getAllWordsNum());
+    }
+
+    @Test
+    public void test_deleteQueryWordsWithUserKind() throws Exception {
+        SuggestItem[] items = new SuggestItem[2];
+
+        // Query
+        String[][] readings1 = new String[1][];
+        readings1[0] = new String[] { "query1" };
+        items[0] = new SuggestItem(new String[] { "クエリ1" }, readings1, new String[] { "content" }, 0, 1, -1,
+                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.QUERY);
+
+        // User
+        String[][] readings2 = new String[1][];
+        readings2[0] = new String[] { "user1" };
+        items[1] = new SuggestItem(new String[] { "ユーザー1" }, readings2, new String[] { "content" }, 0, 1, -1,
+                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.USER);
+
+        suggester.indexer().index(items);
+        suggester.refresh();
+
+        assertEquals(2, suggester.getAllWordsNum());
+
+        SuggestDeleteResponse deleteResponse = suggester.indexer().deleteQueryWords();
+
+        assertNotNull(deleteResponse);
+        assertFalse(deleteResponse.hasError());
+
+        suggester.refresh();
+
+        // Only Query should be deleted, User should remain
+        assertEquals(1, suggester.getAllWordsNum());
+    }
 }
