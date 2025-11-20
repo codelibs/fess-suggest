@@ -484,4 +484,224 @@ public class SuggestUtilTest {
         assertNotNull(queryList);
         assertEquals(0, queryList.size());
     }
+
+    // Additional tests for createSuggestTextId boundary cases
+    @Test
+    public void testCreateSuggestTextIdBoundaryExactly445() {
+        // Create text that encodes to exactly 445 characters
+        // Base64 encoding increases size by ~4/3, so original size should be ~333 bytes
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 333; i++) {
+            sb.append("a");
+        }
+        String text = sb.toString();
+        String id = SuggestUtil.createSuggestTextId(text);
+        assertNotNull(id);
+        // Should be exactly 445 or less
+        assertTrue(id.length() <= 445);
+    }
+
+    @Test
+    public void testCreateSuggestTextIdBoundaryJustUnder445() {
+        // Create text that encodes to just under 445 characters
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 300; i++) {
+            sb.append("b");
+        }
+        String text = sb.toString();
+        String id = SuggestUtil.createSuggestTextId(text);
+        assertNotNull(id);
+        String expected = Base64.getEncoder().encodeToString(text.getBytes(CoreLibConstants.CHARSET_UTF_8));
+        assertEquals(expected, id); // Should not be truncated
+    }
+
+    @Test
+    public void testCreateSuggestTextIdWithUnicodeCharacters() {
+        // Test with various Unicode characters that may encode differently
+        String unicodeText = "日本語テスト🎌🗾こんにちは世界";
+        String id = SuggestUtil.createSuggestTextId(unicodeText);
+        assertNotNull(id);
+        assertTrue(id.length() <= 445);
+    }
+
+    @Test
+    public void testCreateSuggestTextIdConsistency() {
+        // Test that same input always produces same output
+        String text = "consistency test";
+        String id1 = SuggestUtil.createSuggestTextId(text);
+        String id2 = SuggestUtil.createSuggestTextId(text);
+        assertEquals(id1, id2);
+    }
+
+    // Additional tests for getAsList edge cases
+    @Test
+    public void testGetAsListWithSingleCharacterString() {
+        // Test with single character
+        List<String> result = SuggestUtil.getAsList("x");
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals("x", result.get(0));
+    }
+
+    @Test
+    public void testGetAsListWithEmptyString() {
+        // Test with empty string
+        List<String> result = SuggestUtil.getAsList("");
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals("", result.get(0));
+    }
+
+    @Test
+    public void testGetAsListWithWhitespaceString() {
+        // Test with whitespace string
+        List<String> result = SuggestUtil.getAsList("   ");
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals("   ", result.get(0));
+    }
+
+    @Test
+    public void testGetAsListWithListContainingNulls() {
+        // Test with list containing null elements
+        List<String> listWithNulls = new ArrayList<>();
+        listWithNulls.add("valid");
+        listWithNulls.add(null);
+        listWithNulls.add("another");
+
+        List<String> result = SuggestUtil.getAsList(listWithNulls);
+        assertNotNull(result);
+        assertEquals(3, result.size());
+        assertEquals("valid", result.get(0));
+        assertEquals(null, result.get(1));
+        assertEquals("another", result.get(2));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testGetAsListWithArray() {
+        // Test with array (should throw exception)
+        String[] array = {"one", "two"};
+        SuggestUtil.getAsList(array);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testGetAsListWithDouble() {
+        // Test with double (should throw exception)
+        SuggestUtil.getAsList(3.14);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testGetAsListWithBoolean() {
+        // Test with boolean (should throw exception)
+        SuggestUtil.getAsList(true);
+    }
+
+    // Additional tests for createBulkLine validation
+    @Test(expected = SuggesterException.class)
+    public void testCreateBulkLineWithNullId() {
+        // Test that null ID causes exception
+        SuggestItem item = new SuggestItem(new String[] { "text" }, new String[0][0], new String[0], 0, 0, 1.0f,
+                new String[0], new String[0], new String[0], SuggestItem.Kind.DOCUMENT);
+        // Explicitly set ID to null (constructor auto-generates ID)
+        item.setId(null);
+        item.setTimestamp(ZonedDateTime.now());
+        SuggestUtil.createBulkLine("test_index", "_doc", item);
+    }
+
+    @Test(expected = SuggesterException.class)
+    public void testCreateBulkLineWithNullText() {
+        // Test that null text causes exception
+        // Create item with valid text first, then set to null
+        SuggestItem item = new SuggestItem(new String[] { "text" }, new String[0][0], new String[0], 0, 0, 1.0f,
+                new String[0], new String[0], new String[0], SuggestItem.Kind.DOCUMENT);
+        // Set text to null after construction
+        item.setText(null);
+        item.setTimestamp(ZonedDateTime.now());
+        SuggestUtil.createBulkLine("test_index", "_doc", item);
+    }
+
+    @Test
+    public void testCreateBulkLineWithMultipleReadings() {
+        // Test with multiple reading levels
+        SuggestItem item = new SuggestItem(new String[] { "test" },
+                new String[][] { { "reading1a", "reading1b" }, { "reading2a", "reading2b" }, { "reading3" } },
+                new String[] { "field1" }, 5, 3, 1.5f, new String[] { "tag1" }, new String[] { "role1" },
+                new String[0], SuggestItem.Kind.QUERY);
+        item.setTimestamp(ZonedDateTime.now());
+
+        String bulkLine = SuggestUtil.createBulkLine("test_index", "_doc", item);
+        assertNotNull(bulkLine);
+        assertTrue(bulkLine.contains("reading1a"));
+        assertTrue(bulkLine.contains("reading2a"));
+        assertTrue(bulkLine.contains("reading3"));
+    }
+
+    @Test
+    public void testCreateBulkLineWithEmptyArrays() {
+        // Test with empty arrays for optional fields
+        SuggestItem item = new SuggestItem(new String[] { "text" }, new String[0][0], new String[0], 0, 0, 1.0f,
+                new String[0], new String[0], new String[0], SuggestItem.Kind.DOCUMENT);
+        item.setTimestamp(ZonedDateTime.now());
+
+        String bulkLine = SuggestUtil.createBulkLine("test_index", "_doc", item);
+        assertNotNull(bulkLine);
+        assertTrue(bulkLine.length() > 0);
+    }
+
+    // Additional tests for parseQuery edge cases
+    @Test
+    public void testParseQueryWithExactly5Terms() {
+        // Test query with exactly MAX_QUERY_TERM_NUM (5) terms - should succeed
+        String query = "one two three four five";
+        String field = "content";
+        String[] keywords = SuggestUtil.parseQuery(query, field);
+        assertNotNull(keywords);
+        assertEquals(5, keywords.length);
+    }
+
+    @Test
+    public void testParseQueryWithExactly48CharacterTerm() {
+        // Test query with term exactly at MAX_QUERY_TERM_LENGTH (48) - should succeed
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 48; i++) {
+            sb.append("a");
+        }
+        String query = sb.toString();
+        String field = "content";
+        String[] keywords = SuggestUtil.parseQuery(query, field);
+        assertNotNull(keywords);
+        assertEquals(1, keywords.length);
+        assertEquals(48, keywords[0].length());
+    }
+
+    @Test
+    public void testParseQueryWithExactly49CharacterTerm() {
+        // Test query with term just over MAX_QUERY_TERM_LENGTH (49) - should fail
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 49; i++) {
+            sb.append("a");
+        }
+        String query = sb.toString();
+        String field = "content";
+        String[] keywords = SuggestUtil.parseQuery(query, field);
+        assertNotNull(keywords);
+        assertEquals(0, keywords.length); // Should return empty array
+    }
+
+    // Additional tests for escapeWildcardQuery
+    @Test
+    public void testEscapeWildcardQueryWithMixedContent() {
+        // Test with realistic query containing wildcards and regular text
+        String query = "find*all?documents.pdf";
+        String escaped = SuggestUtil.escapeWildcardQuery(query);
+        assertEquals("find\\*all\\?documents.pdf", escaped);
+    }
+
+    @Test
+    public void testEscapeWildcardQueryWithJapanese() {
+        // Test with Japanese text containing wildcards
+        String query = "テスト*検索?クエリ";
+        String escaped = SuggestUtil.escapeWildcardQuery(query);
+        assertEquals("テスト\\*検索\\?クエリ", escaped);
+    }
 }
