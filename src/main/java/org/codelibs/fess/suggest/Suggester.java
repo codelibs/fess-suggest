@@ -257,6 +257,9 @@ public class Suggester {
                 aliasesRequestBuilder.removeAlias(prevIndex, getUpdateAlias(index));
             }
             aliasesRequestBuilder.execute().actionGet(suggestSettings.getIndicesTimeout());
+        } catch (final SuggesterException e) {
+            // Re-throw SuggesterException with original message
+            throw e;
         } catch (final Exception e) {
             if (logger.isDebugEnabled()) {
                 logger.debug("Failed to replace with new index.", e);
@@ -304,6 +307,9 @@ public class Suggester {
                     .addAlias(updateIndex, searchAlias)
                     .execute()
                     .actionGet(suggestSettings.getIndicesTimeout());
+        } catch (final SuggesterException e) {
+            // Re-throw SuggesterException with original message
+            throw e;
         } catch (final Exception e) {
             if (logger.isDebugEnabled()) {
                 logger.debug("Failed to switch index.", e);
