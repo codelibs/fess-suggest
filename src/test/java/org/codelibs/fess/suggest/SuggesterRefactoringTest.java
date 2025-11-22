@@ -191,11 +191,11 @@ public class SuggesterRefactoringTest {
             exceptionThrown = true;
             exceptionMessage = e.getMessage();
             // Check if the message contains the expected text
-            // It could be either "Unexpected update indices num" or "Unexpected search indices num"
+            // It could be either "Unexpected number of update indices" or "Unexpected number of search indices"
             // depending on which check fails first
             assertTrue("Exception message should mention unexpected indices: " + exceptionMessage,
-                    exceptionMessage.contains("Unexpected update indices num") ||
-                    exceptionMessage.contains("Unexpected search indices num"));
+                    exceptionMessage.contains("Unexpected number of update indices") ||
+                    exceptionMessage.contains("Unexpected number of search indices"));
         } finally {
             // Cleanup
             try {
