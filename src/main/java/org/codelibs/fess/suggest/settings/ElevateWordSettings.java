@@ -137,7 +137,7 @@ public class ElevateWordSettings {
      */
     public void add(final ElevateWord elevateWord) {
         if (logger.isDebugEnabled()) {
-            logger.debug("Add elevateword. {}  elevateword: {}", arraySettings.arraySettingsIndexName, elevateWord.getElevateWord());
+            logger.debug("Adding elevate word: index={}, word={}, boost={}", arraySettings.arraySettingsIndexName, elevateWord.getElevateWord(), elevateWord.getBoost());
         }
 
         final Map<String, Object> source = new HashMap<>();
@@ -160,7 +160,7 @@ public class ElevateWordSettings {
      */
     public void delete(final String elevateWord) {
         if (logger.isDebugEnabled()) {
-            logger.debug("Delete elevateword. {} elevateword: {}", arraySettings.arraySettingsIndexName, elevateWord);
+            logger.debug("Deleting elevate word: index={}, word={}", arraySettings.arraySettingsIndexName, elevateWord);
         }
         arraySettings.delete(ELEVATE_WORD_SETTINGS_KEY, elevateWord);
     }
@@ -169,8 +169,8 @@ public class ElevateWordSettings {
      * Delete all elevate words.
      */
     public void deleteAll() {
-        if (logger.isDebugEnabled()) {
-            logger.debug("Delete all elevateword. {}", arraySettings.arraySettingsIndexName);
+        if (logger.isInfoEnabled()) {
+            logger.info("Deleting all elevate words: index={}", arraySettings.arraySettingsIndexName);
         }
         arraySettings.delete(ELEVATE_WORD_SETTINGS_KEY);
     }

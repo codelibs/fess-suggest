@@ -406,7 +406,7 @@ public class SuggestSettings {
      */
     public void set(final String key, final Object value) {
         if (logger.isDebugEnabled()) {
-            logger.debug("Set suggest settings. {} key: {} value: {}", settingsIndexName, key, value);
+            logger.debug("Setting suggest settings: index={}, settingsId={}, key={}, value={}", settingsIndexName, settingsId, key, value);
         }
         try {
             client.prepareUpdate()
@@ -429,7 +429,7 @@ public class SuggestSettings {
      */
     public void set(final Map<String, Object> map) {
         if (logger.isDebugEnabled()) {
-            logger.debug("Set suggest settings. {} {}", settingsIndexName, map.toString());
+            logger.debug("Setting suggest settings (bulk): index={}, settingsId={}, settings={}", settingsIndexName, settingsId, map.toString());
         }
         try {
             final XContentBuilder builder = JsonXContent.contentBuilder().map(map);
