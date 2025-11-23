@@ -250,8 +250,8 @@ public class Suggester {
                     .execute()
                     .actionGet(suggestSettings.getIndicesTimeout());
             if (!createIndexResponse.isAcknowledged()) {
-                if (logger.isWarnEnabled()) {
-                    logger.warn("Failed to create next index (not acknowledged): index={}", indexName);
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Failed to create next index (not acknowledged): index={}", indexName);
                 }
                 throw new SuggesterException("Failed to create next index (not acknowledged): " + indexName);
             }
@@ -282,8 +282,8 @@ public class Suggester {
             final String updateAlias = getUpdateAlias(index);
             final List<String> updateIndices = getIndicesForAlias(updateAlias);
             if (updateIndices.size() != EXPECTED_INDEX_COUNT) {
-                if (logger.isWarnEnabled()) {
-                    logger.warn("Unexpected number of update indices: expected={}, actual={}, updateAlias={}, indices={}", EXPECTED_INDEX_COUNT, updateIndices.size(), updateAlias, updateIndices);
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Unexpected number of update indices: expected={}, actual={}, updateAlias={}, indices={}", EXPECTED_INDEX_COUNT, updateIndices.size(), updateAlias, updateIndices);
                 }
                 throw new SuggesterException("Unexpected number of update indices: expected=" + EXPECTED_INDEX_COUNT + ", actual=" + updateIndices.size());
             }
@@ -292,8 +292,8 @@ public class Suggester {
             final String searchAlias = getSearchAlias(index);
             final List<String> searchIndices = getIndicesForAlias(searchAlias);
             if (searchIndices.size() != EXPECTED_INDEX_COUNT) {
-                if (logger.isWarnEnabled()) {
-                    logger.warn("Unexpected number of search indices: expected={}, actual={}, searchAlias={}, indices={}", EXPECTED_INDEX_COUNT, searchIndices.size(), searchAlias, searchIndices);
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Unexpected number of search indices: expected={}, actual={}, searchAlias={}, indices={}", EXPECTED_INDEX_COUNT, searchIndices.size(), searchAlias, searchIndices);
                 }
                 throw new SuggesterException("Unexpected number of search indices: expected=" + EXPECTED_INDEX_COUNT + ", actual=" + searchIndices.size());
             }
