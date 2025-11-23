@@ -17,7 +17,7 @@
 
 ## Project Overview
 
-**Fess Suggest** is a Java library providing intelligent search suggestion functionality built on OpenSearch/Elasticsearch. The project delivers:
+**Fess Suggest** is a Java library providing intelligent search suggestion functionality built on OpenSearch. The project delivers:
 
 - Auto-completion and search suggestions
 - Popular word analytics and trending search tracking
@@ -28,7 +28,7 @@
 
 **Technology Stack:**
 - Java 21+
-- OpenSearch/Elasticsearch (provided dependency)
+- OpenSearch (provided dependency)
 - Apache Lucene (query parsing, text analysis)
 - ICU4J (Unicode text processing)
 - JUnit 4 (testing)
@@ -964,7 +964,6 @@ In test resources (`src/test/resources/log4j2.xml`):
 ### OpenSearch Version Compatibility
 
 - Designed for OpenSearch 2.x+
-- Also compatible with Elasticsearch (client abstraction layer)
 - Test with target OpenSearch version before deploying
 
 ### Character Encoding
