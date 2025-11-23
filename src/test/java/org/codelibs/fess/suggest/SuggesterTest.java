@@ -472,13 +472,17 @@ public class SuggesterTest {
         ElevateWord elevateWord =
                 new ElevateWord("test", 2.0f, Collections.singletonList("test"), Collections.singletonList("content"), null, null);
 
-        // Use explicit threshold instead of Thread.sleep()
-        ZonedDateTime threshold = ZonedDateTime.now().plusSeconds(1);
-
+        // Index old data first
         suggester.indexer().indexFromDocument(new Map[] { Collections.singletonMap(field, (Object) "この柿は美味しい。") });
         suggester.indexer().addElevateWord(elevateWord, true);
         suggester.refresh();
 
+        // Short sleep to ensure timestamp separation (reduced from 1000ms to 150ms for 85% performance gain)
+        Thread.sleep(150);
+        ZonedDateTime threshold = ZonedDateTime.now();
+        Thread.sleep(150);
+
+        // Index new data after threshold
         suggester.indexer().indexFromDocument(new Map[] { Collections.singletonMap(field, (Object) "検索エンジン") });
         suggester.refresh();
 
@@ -704,7 +708,8 @@ public class SuggesterTest {
         SuggestResponse response2 = suggester.suggest().setSuggestDetail(true).execute().getResponse();
         assertEquals(2, response2.getNum());
 
-        // No need for Thread.sleep() - createNextIndex() handles timing internally
+        // Sleep to ensure new index has different timestamp in name (format: yyyyMMddHHmmss requires different second)
+        Thread.sleep(1000);
         suggester.createNextIndex();
         SuggestItem[] items2 = getItemSet2();
         suggester.indexer().index(items2);
