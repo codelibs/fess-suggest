@@ -69,7 +69,7 @@ public class ESSourceReaderTest {
     @Before
     public void before() throws Exception {
         try {
-            runner.admin().indices().prepareDelete("_all").execute().actionGet();
+            runner.admin().indices().prepareDelete("ESSourceReaderTest*").execute().actionGet();
         } catch (IndexNotFoundException ignore) {
 
         }

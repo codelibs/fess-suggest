@@ -62,7 +62,7 @@ public class AnalyzerSettingsTest {
     @Before
     public void before() throws Exception {
         try {
-            runner.admin().indices().prepareDelete("_all").execute().actionGet();
+            runner.admin().indices().prepareDelete("AnalyzerSettingsTest*").execute().actionGet();
         } catch (IndexNotFoundException ignore) {
 
         }

@@ -52,8 +52,12 @@ public class PopularWordsRequestTest {
 
     @Before
     public void before() throws Exception {
-        runner.admin().indices().prepareDelete("_all").execute().actionGet();
-        runner.refresh();
+        // Delete only the test index instead of "_all" for faster cleanup
+        try {
+            runner.admin().indices().prepareDelete("PopularWordsRequestTest*").execute().actionGet();
+        } catch (Exception e) {
+            // Index might not exist, ignore
+        }
         suggester = Suggester.builder().build(runner.client(), "PopularWordsRequestTest");
         suggester.createIndexIfNothing();
     }

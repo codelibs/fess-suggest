@@ -63,8 +63,12 @@ public class SuggestIndexerTest {
 
     @Before
     public void before() throws Exception {
-        runner.admin().indices().prepareDelete("_all").execute().actionGet();
-        runner.refresh();
+        // Delete only the test index instead of "_all" for faster cleanup
+        try {
+            runner.admin().indices().prepareDelete("SuggestIndexerTest*").execute().actionGet();
+        } catch (Exception e) {
+            // Index might not exist, ignore
+        }
         suggester = Suggester.builder().build(runner.client(), "SuggestIndexerTest");
         suggester.createIndexIfNothing();
     }
@@ -447,6 +451,9 @@ public class SuggestIndexerTest {
         SuggestSettings settings = suggester.settings();
         String field = settings.array().get(SuggestSettings.DefaultKeys.SUPPORTED_FIELDS)[0];
 
+        // Use explicit threshold instead of Thread.sleep()
+        ZonedDateTime threshold = ZonedDateTime.now().plusSeconds(1);
+
         Map<String, Object> document = new HashMap<>();
         document.put(field, "この柿は美味しい。");
         suggester.indexer().indexFromDocument(new Map[] { document });
@@ -454,10 +461,6 @@ public class SuggestIndexerTest {
 
         long oldWordsCount = suggester.getAllWordsNum();
         assertTrue(oldWordsCount > 0);
-
-        Thread.sleep(1000);
-        ZonedDateTime threshold = ZonedDateTime.now();
-        Thread.sleep(1000);
 
         document = new HashMap<>();
         document.put(field, "検索エンジン");

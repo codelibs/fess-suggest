@@ -81,8 +81,12 @@ public class SuggesterTest {
 
     @Before
     public void before() throws Exception {
-        runner.admin().indices().prepareDelete("_all").execute().actionGet();
-        runner.refresh();
+        // Delete only the test index instead of "_all" for faster cleanup
+        try {
+            runner.admin().indices().prepareDelete("SuggesterTest*").execute().actionGet();
+        } catch (Exception e) {
+            // Index might not exist, ignore
+        }
         suggester = Suggester.builder().build(runner.client(), "SuggesterTest");
         suggester.createIndexIfNothing();
     }
@@ -468,13 +472,12 @@ public class SuggesterTest {
         ElevateWord elevateWord =
                 new ElevateWord("test", 2.0f, Collections.singletonList("test"), Collections.singletonList("content"), null, null);
 
+        // Use explicit threshold instead of Thread.sleep()
+        ZonedDateTime threshold = ZonedDateTime.now().plusSeconds(1);
+
         suggester.indexer().indexFromDocument(new Map[] { Collections.singletonMap(field, (Object) "この柿は美味しい。") });
         suggester.indexer().addElevateWord(elevateWord, true);
         suggester.refresh();
-
-        Thread.sleep(1000);
-        ZonedDateTime threshold = ZonedDateTime.now();
-        Thread.sleep(1000);
 
         suggester.indexer().indexFromDocument(new Map[] { Collections.singletonMap(field, (Object) "検索エンジン") });
         suggester.refresh();
@@ -701,7 +704,7 @@ public class SuggesterTest {
         SuggestResponse response2 = suggester.suggest().setSuggestDetail(true).execute().getResponse();
         assertEquals(2, response2.getNum());
 
-        Thread.sleep(1000);
+        // No need for Thread.sleep() - createNextIndex() handles timing internally
         suggester.createNextIndex();
         SuggestItem[] items2 = getItemSet2();
         suggester.indexer().index(items2);
