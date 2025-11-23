@@ -262,7 +262,7 @@ public class SuggestSettings {
                             .execute()
                             .actionGet(getIndicesTimeout());
                 } catch (final IOException e) {
-                    throw new SuggesterException(e);
+                    throw new SuggesterException("Failed to load index settings for settings index: " + settingsIndexName, e);
                 }
             }
 

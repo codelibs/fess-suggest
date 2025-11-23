@@ -48,7 +48,7 @@ public abstract class Request<T extends Response> {
         try {
             processRequest(client, deferred);
         } catch (final Exception e) {
-            throw new SuggesterException(e);
+            throw new SuggesterException("Failed to execute request: " + getClass().getSimpleName(), e);
         }
         return deferred.promise();
     }
