@@ -50,12 +50,7 @@ public class PopularWordsRequestBuilderTest {
 
     @Before
     public void before() throws Exception {
-        // Delete test indices and settings indices for complete cleanup
-        try {
-            runner.admin().indices().prepareDelete("PopularWordsRequestBuilderTest*", "fess_suggest*").execute().actionGet();
-        } catch (Exception e) {
-            // Index might not exist, ignore
-        }
+        runner.admin().indices().prepareDelete("_all").execute().actionGet();
         runner.refresh();
         suggester = Suggester.builder().build(runner.client(), "PopularWordsRequestBuilderTest");
         suggester.createIndexIfNothing();

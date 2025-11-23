@@ -54,11 +54,7 @@ public class ArraySettingsTest {
 
     @Before
     public void before() throws Exception {
-        try {
-            runner.admin().indices().prepareDelete("ArraySettingsTest*", "fess_suggest*").execute().actionGet();
-        } catch (IndexNotFoundException ignore) {
-
-        }
+        runner.admin().indices().prepareDelete("_all").execute().actionGet();
         runner.refresh();
         settings = Suggester.builder().build(runner.client(), id).settings();
     }

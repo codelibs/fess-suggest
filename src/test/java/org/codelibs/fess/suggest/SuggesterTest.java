@@ -81,12 +81,7 @@ public class SuggesterTest {
 
     @Before
     public void before() throws Exception {
-        // Delete test indices and settings indices for complete cleanup
-        try {
-            runner.admin().indices().prepareDelete("SuggesterTest*", "fess_suggest*").execute().actionGet();
-        } catch (Exception e) {
-            // Index might not exist, ignore
-        }
+        runner.admin().indices().prepareDelete("_all").execute().actionGet();
         runner.refresh();
         suggester = Suggester.builder().build(runner.client(), "SuggesterTest");
         suggester.createIndexIfNothing();
@@ -478,10 +473,10 @@ public class SuggesterTest {
         suggester.indexer().addElevateWord(elevateWord, true);
         suggester.refresh();
 
-        // Short sleep to ensure timestamp separation (reduced from 1000ms to 150ms for 85% performance gain)
-        Thread.sleep(150);
+        // Minimal sleep to ensure timestamp separation (reduced from 2000ms to 100ms total)
+        Thread.sleep(50);
         ZonedDateTime threshold = ZonedDateTime.now();
-        Thread.sleep(150);
+        Thread.sleep(50);
 
         // Index new data after threshold
         suggester.indexer().indexFromDocument(new Map[] { Collections.singletonMap(field, (Object) "検索エンジン") });
@@ -709,8 +704,10 @@ public class SuggesterTest {
         SuggestResponse response2 = suggester.suggest().setSuggestDetail(true).execute().getResponse();
         assertEquals(2, response2.getNum());
 
-        // Sleep to ensure new index has different timestamp in name (format: yyyyMMddHHmmss requires different second)
-        Thread.sleep(1000);
+        // Sleep only until next second to ensure unique index name (typically <100ms)
+        long currentMillis = System.currentTimeMillis();
+        long millisUntilNextSecond = 1000 - (currentMillis % 1000);
+        Thread.sleep(millisUntilNextSecond + 10); // +10ms buffer
         suggester.createNextIndex();
         SuggestItem[] items2 = getItemSet2();
         suggester.indexer().index(items2);

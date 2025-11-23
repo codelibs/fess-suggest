@@ -63,12 +63,7 @@ public class SuggestIndexerTest {
 
     @Before
     public void before() throws Exception {
-        // Delete test indices and settings indices for complete cleanup
-        try {
-            runner.admin().indices().prepareDelete("SuggestIndexerTest*", "fess_suggest*").execute().actionGet();
-        } catch (Exception e) {
-            // Index might not exist, ignore
-        }
+        runner.admin().indices().prepareDelete("_all").execute().actionGet();
         runner.refresh();
         suggester = Suggester.builder().build(runner.client(), "SuggestIndexerTest");
         suggester.createIndexIfNothing();
@@ -461,10 +456,10 @@ public class SuggestIndexerTest {
         long oldWordsCount = suggester.getAllWordsNum();
         assertTrue(oldWordsCount > 0);
 
-        // Short sleep to ensure timestamp separation (reduced from 1000ms to 150ms for 85% performance gain)
-        Thread.sleep(150);
+        // Minimal sleep to ensure timestamp separation (reduced from 2000ms to 100ms total)
+        Thread.sleep(50);
         ZonedDateTime threshold = ZonedDateTime.now();
-        Thread.sleep(150);
+        Thread.sleep(50);
 
         // Index new data after threshold
         document = new HashMap<>();
