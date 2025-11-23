@@ -58,6 +58,7 @@ public class PopularWordsRequestTest {
         } catch (Exception e) {
             // Index might not exist, ignore
         }
+        runner.refresh();
         suggester = Suggester.builder().build(runner.client(), "PopularWordsRequestTest");
         suggester.createIndexIfNothing();
     }

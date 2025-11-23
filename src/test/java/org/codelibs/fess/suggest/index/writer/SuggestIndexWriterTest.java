@@ -65,6 +65,7 @@ public class SuggestIndexWriterTest {
         } catch (Exception e) {
             // Index might not exist, ignore
         }
+        runner.refresh();
         suggester = Suggester.builder().build(runner.client(), "SuggestIndexWriterTest");
         suggester.createIndexIfNothing();
     }

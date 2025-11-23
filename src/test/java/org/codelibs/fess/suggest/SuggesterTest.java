@@ -87,6 +87,7 @@ public class SuggesterTest {
         } catch (Exception e) {
             // Index might not exist, ignore
         }
+        runner.refresh();
         suggester = Suggester.builder().build(runner.client(), "SuggesterTest");
         suggester.createIndexIfNothing();
     }

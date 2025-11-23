@@ -57,6 +57,7 @@ public class SuggestRequestBuilderTest {
         } catch (Exception e) {
             // Index might not exist, ignore
         }
+        runner.refresh();
         suggester = Suggester.builder().build(runner.client(), "SuggestRequestBuilderTest");
         suggester.createIndexIfNothing();
     }
