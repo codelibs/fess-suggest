@@ -72,7 +72,7 @@ public class DefaultContentsParserTest {
     @Before
     public void before() throws Exception {
         try {
-            runner.admin().indices().prepareDelete("DefaultContentsParserTest*").execute().actionGet();
+            runner.admin().indices().prepareDelete("DefaultContentsParserTest*", "fess_suggest*").execute().actionGet();
         } catch (Exception e) {
             // ignore
         }

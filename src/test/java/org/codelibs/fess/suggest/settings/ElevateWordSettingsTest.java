@@ -58,7 +58,7 @@ public class ElevateWordSettingsTest {
     @Before
     public void before() throws Exception {
         try {
-            runner.admin().indices().prepareDelete("ElevateWordSettingsTest*").execute().actionGet();
+            runner.admin().indices().prepareDelete("ElevateWordSettingsTest*", "fess_suggest*").execute().actionGet();
         } catch (IndexNotFoundException ignore) {
 
         }

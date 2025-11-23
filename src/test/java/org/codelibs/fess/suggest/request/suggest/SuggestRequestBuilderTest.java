@@ -51,9 +51,9 @@ public class SuggestRequestBuilderTest {
 
     @Before
     public void before() throws Exception {
-        // Delete only the test index instead of "_all" for faster cleanup
+        // Delete test indices and settings indices for complete cleanup
         try {
-            runner.admin().indices().prepareDelete("SuggestRequestBuilderTest*").execute().actionGet();
+            runner.admin().indices().prepareDelete("SuggestRequestBuilderTest*", "fess_suggest*").execute().actionGet();
         } catch (Exception e) {
             // Index might not exist, ignore
         }

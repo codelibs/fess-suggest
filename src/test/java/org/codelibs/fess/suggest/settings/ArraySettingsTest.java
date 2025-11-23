@@ -55,7 +55,7 @@ public class ArraySettingsTest {
     @Before
     public void before() throws Exception {
         try {
-            runner.admin().indices().prepareDelete("ArraySettingsTest*").execute().actionGet();
+            runner.admin().indices().prepareDelete("ArraySettingsTest*", "fess_suggest*").execute().actionGet();
         } catch (IndexNotFoundException ignore) {
 
         }

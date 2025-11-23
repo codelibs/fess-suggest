@@ -56,7 +56,7 @@ public class SuggestSettingsTest {
     @Before
     public void before() throws Exception {
         try {
-            runner.admin().indices().prepareDelete("SuggestSettingsTest*").execute().actionGet();
+            runner.admin().indices().prepareDelete("SuggestSettingsTest*", "fess_suggest*").execute().actionGet();
         } catch (IndexNotFoundException ignore) {
 
         }
