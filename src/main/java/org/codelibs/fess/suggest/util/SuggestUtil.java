@@ -221,7 +221,7 @@ public final class SuggestUtil {
             return ((ByteArrayOutputStream) out1).toString(CoreLibConstants.UTF_8) + '\n'
                     + ((ByteArrayOutputStream) out2).toString(CoreLibConstants.UTF_8);
         } catch (final IOException e) {
-            throw new SuggesterException(e);
+            throw new SuggesterException("Failed to serialize SuggestItem to bulk line format: itemId=" + item.getId(), e);
         }
     }
 
