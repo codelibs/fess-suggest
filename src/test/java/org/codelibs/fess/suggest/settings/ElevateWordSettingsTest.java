@@ -57,11 +57,7 @@ public class ElevateWordSettingsTest {
 
     @Before
     public void before() throws Exception {
-        try {
-            runner.admin().indices().prepareDelete("_all").execute().actionGet();
-        } catch (IndexNotFoundException ignore) {
-
-        }
+        runner.admin().indices().prepareDelete("_all").execute().actionGet();
         runner.refresh();
         settings = Suggester.builder().build(runner.client(), id).settings();
     }

@@ -70,8 +70,12 @@ public class SuggesterRefactoringTest {
 
     @Before
     public void before() throws Exception {
-        runner.admin().indices().prepareDelete("_all").execute().actionGet();
-        runner.refresh();
+        // Delete test indices and settings indices for complete cleanup
+        try {
+            runner.admin().indices().prepareDelete("SuggesterRefactoringTest*", "fess_suggest*").execute().actionGet();
+        } catch (Exception e) {
+            // Index might not exist, ignore
+        }
     }
 
     /**

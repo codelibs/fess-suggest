@@ -468,14 +468,17 @@ public class SuggesterTest {
         ElevateWord elevateWord =
                 new ElevateWord("test", 2.0f, Collections.singletonList("test"), Collections.singletonList("content"), null, null);
 
+        // Index old data first
         suggester.indexer().indexFromDocument(new Map[] { Collections.singletonMap(field, (Object) "この柿は美味しい。") });
         suggester.indexer().addElevateWord(elevateWord, true);
         suggester.refresh();
 
-        Thread.sleep(1000);
+        // Minimal sleep to ensure timestamp separation (reduced from 2000ms to 100ms total)
+        Thread.sleep(50);
         ZonedDateTime threshold = ZonedDateTime.now();
-        Thread.sleep(1000);
+        Thread.sleep(50);
 
+        // Index new data after threshold
         suggester.indexer().indexFromDocument(new Map[] { Collections.singletonMap(field, (Object) "検索エンジン") });
         suggester.refresh();
 
@@ -701,7 +704,10 @@ public class SuggesterTest {
         SuggestResponse response2 = suggester.suggest().setSuggestDetail(true).execute().getResponse();
         assertEquals(2, response2.getNum());
 
-        Thread.sleep(1000);
+        // Sleep only until next second to ensure unique index name (typically <100ms)
+        long currentMillis = System.currentTimeMillis();
+        long millisUntilNextSecond = 1000 - (currentMillis % 1000);
+        Thread.sleep(millisUntilNextSecond + 10); // +10ms buffer
         suggester.createNextIndex();
         SuggestItem[] items2 = getItemSet2();
         suggester.indexer().index(items2);

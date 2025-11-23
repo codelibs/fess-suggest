@@ -68,11 +68,7 @@ public class ESSourceReaderTest {
 
     @Before
     public void before() throws Exception {
-        try {
-            runner.admin().indices().prepareDelete("_all").execute().actionGet();
-        } catch (IndexNotFoundException ignore) {
-
-        }
+        runner.admin().indices().prepareDelete("_all").execute().actionGet();
         runner.refresh();
         suggester = Suggester.builder().build(runner.client(), "SuggesterTest");
         suggester.createIndexIfNothing();

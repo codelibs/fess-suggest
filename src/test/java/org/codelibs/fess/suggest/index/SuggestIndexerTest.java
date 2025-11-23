@@ -447,6 +447,7 @@ public class SuggestIndexerTest {
         SuggestSettings settings = suggester.settings();
         String field = settings.array().get(SuggestSettings.DefaultKeys.SUPPORTED_FIELDS)[0];
 
+        // Index old data first
         Map<String, Object> document = new HashMap<>();
         document.put(field, "この柿は美味しい。");
         suggester.indexer().indexFromDocument(new Map[] { document });
@@ -455,10 +456,12 @@ public class SuggestIndexerTest {
         long oldWordsCount = suggester.getAllWordsNum();
         assertTrue(oldWordsCount > 0);
 
-        Thread.sleep(1000);
+        // Minimal sleep to ensure timestamp separation (reduced from 2000ms to 100ms total)
+        Thread.sleep(50);
         ZonedDateTime threshold = ZonedDateTime.now();
-        Thread.sleep(1000);
+        Thread.sleep(50);
 
+        // Index new data after threshold
         document = new HashMap<>();
         document.put(field, "検索エンジン");
         suggester.indexer().indexFromDocument(new Map[] { document });
