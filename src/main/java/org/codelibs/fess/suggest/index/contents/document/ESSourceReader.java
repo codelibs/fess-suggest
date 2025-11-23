@@ -161,7 +161,7 @@ public class ESSourceReader implements DocumentReader {
      */
     public void setLimitOfDocumentSize(final long limitOfDocumentSize) {
         if (logger.isInfoEnabled()) {
-            logger.info("Set document limit: {}", limitOfDocumentSize);
+            logger.info("Setting document size limit: index={}, sizeLimit={}", indexName, limitOfDocumentSize);
         }
         this.limitOfDocumentSize = limitOfDocumentSize;
     }
@@ -187,20 +187,23 @@ public class ESSourceReader implements DocumentReader {
      * @param limitPercentage The limit percentage as a string (e.g., "50%").
      */
     public void setLimitDocNumPercentage(final String limitPercentage) {
-        if (logger.isInfoEnabled()) {
-            logger.info("Set document limitPercentage: {}", limitPercentage);
-        }
-
+        final int originalValue;
         if (limitPercentage.endsWith("%")) {
-            this.limitPercentage = Integer.parseInt(limitPercentage.substring(0, limitPercentage.length() - 1));
+            originalValue = Integer.parseInt(limitPercentage.substring(0, limitPercentage.length() - 1));
         } else {
-            this.limitPercentage = Integer.parseInt(limitPercentage);
+            originalValue = Integer.parseInt(limitPercentage);
         }
 
-        if (this.limitPercentage > 100) {
+        if (originalValue > 100) {
             this.limitPercentage = 100;
-        } else if (this.limitPercentage < 1) {
+        } else if (originalValue < 1) {
             this.limitPercentage = 1;
+        } else {
+            this.limitPercentage = originalValue;
+        }
+
+        if (logger.isInfoEnabled()) {
+            logger.info("Setting document limit percentage: index={}, requestedPercentage={}, actualPercentage={}%", indexName, limitPercentage, this.limitPercentage);
         }
     }
 

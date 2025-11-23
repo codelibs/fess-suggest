@@ -297,11 +297,11 @@ public class DefaultContentsParser implements ContentsParser {
             }
         } catch (OpenSearchStatusException | IllegalStateException e) {
             final String lastPrefix = isLast ? "last " : "";
+            final String typeDesc = useReading ? "reading " : "";
             if (logger.isDebugEnabled()) {
-                logger.warn("[{}][{}] Failed to analyze a {}{}text(size:{}).", field, lang, lastPrefix, analyzeType, buf.length(), e);
+                logger.warn("Failed to analyze {}{}text: field={}, lang={}, textSize={}", lastPrefix, typeDesc, field, lang, buf.length(), e);
             } else {
-                logger.warn("[{}][{}] Failed to analyze a {}{}text(size:{}). {}", field, lang, lastPrefix, analyzeType, buf.length(),
-                        e.getMessage());
+                logger.warn("Failed to analyze {}{}text: field={}, lang={}, textSize={}, error={}", lastPrefix, typeDesc, field, lang, buf.length(), e.getMessage());
             }
         }
     }

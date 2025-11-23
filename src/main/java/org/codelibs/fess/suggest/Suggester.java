@@ -148,7 +148,7 @@ public class Suggester {
         this.threadPool = Objects.requireNonNull(threadPool, "threadPool must not be null");
 
         if (logger.isDebugEnabled()) {
-            logger.debug("Create suggester instance for {}", index);
+            logger.debug("Created suggester instance: index={}", index);
         }
     }
 
@@ -173,6 +173,9 @@ public class Suggester {
      * @return The RefreshResponse.
      */
     public RefreshResponse refresh() {
+        if (logger.isDebugEnabled()) {
+            logger.debug("Refreshing indices: index={}", index);
+        }
         return client.admin().indices().prepareRefresh().execute().actionGet(suggestSettings.getIndexTimeout());
     }
 
@@ -180,6 +183,9 @@ public class Suggester {
      * Shuts down the thread pool.
      */
     public void shutdown() {
+        if (logger.isInfoEnabled()) {
+            logger.info("Shutting down suggester: index={}", index);
+        }
         threadPool.shutdownNow();
     }
 
@@ -197,7 +203,7 @@ public class Suggester {
                 final String settingsSource = getDefaultIndexSettings();
                 final String indexName = createIndexName(index);
                 if (logger.isInfoEnabled()) {
-                    logger.info("Create suggest index: {}", indexName);
+                    logger.info("Creating suggest index: index={}, searchAlias={}, updateAlias={}", indexName, getSearchAlias(index), getUpdateAlias(index));
                 }
 
                 client.admin()
@@ -216,9 +222,9 @@ public class Suggester {
             return created;
         } catch (final Exception e) {
             if (logger.isDebugEnabled()) {
-                logger.debug("Failed to create index. index: {}", index, e);
+                logger.debug("Failed to create suggest index: index={}", index, e);
             }
-            throw new SuggesterException("Failed to create index.", e);
+            throw new SuggesterException("Failed to create suggest index: " + index, e);
         }
     }
 
@@ -233,7 +239,7 @@ public class Suggester {
             final String settingsSource = getDefaultIndexSettings();
             final String indexName = createIndexName(index);
             if (logger.isInfoEnabled()) {
-                logger.info("Create next index: {}", indexName);
+                logger.info("Creating next index: index={}, updateAlias={}, previousIndices={}", indexName, getUpdateAlias(index), prevIndices);
             }
 
             final CreateIndexResponse createIndexResponse = client.admin()
@@ -245,9 +251,9 @@ public class Suggester {
                     .actionGet(suggestSettings.getIndicesTimeout());
             if (!createIndexResponse.isAcknowledged()) {
                 if (logger.isDebugEnabled()) {
-                    logger.debug("Could not create next index: {}", indexName);
+                    logger.debug("Failed to create next index (not acknowledged): index={}", indexName);
                 }
-                throw new SuggesterException("Could not create next index: " + indexName);
+                throw new SuggesterException("Failed to create next index (not acknowledged): " + indexName);
             }
             client.admin().cluster().prepareHealth().setWaitForYellowStatus().execute().actionGet(suggestSettings.getClusterTimeout());
 
@@ -262,9 +268,9 @@ public class Suggester {
             throw e;
         } catch (final Exception e) {
             if (logger.isDebugEnabled()) {
-                logger.debug("Failed to replace with new index.", e);
+                logger.debug("Failed to create and switch to next index: baseIndex={}", index, e);
             }
-            throw new SuggesterException("Failed to replace with new index.", e);
+            throw new SuggesterException("Failed to create and switch to next index: " + index, e);
         }
     }
 
@@ -277,9 +283,9 @@ public class Suggester {
             final List<String> updateIndices = getIndicesForAlias(updateAlias);
             if (updateIndices.size() != EXPECTED_INDEX_COUNT) {
                 if (logger.isDebugEnabled()) {
-                    logger.debug("Unexpected update indices num: {}", updateIndices.size());
+                    logger.debug("Unexpected number of update indices: expected={}, actual={}, updateAlias={}, indices={}", EXPECTED_INDEX_COUNT, updateIndices.size(), updateAlias, updateIndices);
                 }
-                throw new SuggesterException("Unexpected update indices num:" + updateIndices.size());
+                throw new SuggesterException("Unexpected number of update indices: expected=" + EXPECTED_INDEX_COUNT + ", actual=" + updateIndices.size());
             }
             final String updateIndex = updateIndices.get(0);
 
@@ -287,18 +293,21 @@ public class Suggester {
             final List<String> searchIndices = getIndicesForAlias(searchAlias);
             if (searchIndices.size() != EXPECTED_INDEX_COUNT) {
                 if (logger.isDebugEnabled()) {
-                    logger.debug("Unexpected search indices num: {}", searchIndices.size());
+                    logger.debug("Unexpected number of search indices: expected={}, actual={}, searchAlias={}, indices={}", EXPECTED_INDEX_COUNT, searchIndices.size(), searchAlias, searchIndices);
                 }
-                throw new SuggesterException("Unexpected search indices num:" + searchIndices.size());
+                throw new SuggesterException("Unexpected number of search indices: expected=" + EXPECTED_INDEX_COUNT + ", actual=" + searchIndices.size());
             }
             final String searchIndex = searchIndices.get(0);
 
             if (updateIndex.equals(searchIndex)) {
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Search and update indices are already the same: index={}", searchIndex);
+                }
                 return;
             }
 
             if (logger.isInfoEnabled()) {
-                logger.info("Switch suggest.search index. {} => {}", searchIndex, updateIndex);
+                logger.info("Switching search index: searchAlias={}, from={}, to={}", searchAlias, searchIndex, updateIndex);
             }
             client.admin()
                     .indices()
@@ -312,9 +321,9 @@ public class Suggester {
             throw e;
         } catch (final Exception e) {
             if (logger.isDebugEnabled()) {
-                logger.debug("Failed to switch index.", e);
+                logger.debug("Failed to switch search index: baseIndex={}", index, e);
             }
-            throw new SuggesterException("Failed to switch index.", e);
+            throw new SuggesterException("Failed to switch search index: " + index, e);
         }
     }
 
@@ -322,6 +331,9 @@ public class Suggester {
      * Removes disabled indices.
      */
     public void removeDisableIndices() {
+        if (logger.isInfoEnabled()) {
+            logger.info("Removing disabled indices: baseIndex={}", index);
+        }
         final GetIndexResponse response =
                 client.admin().indices().prepareGetIndex().addIndices("*").execute().actionGet(suggestSettings.getIndicesTimeout());
         Stream.of(response.getIndices()).filter(s -> {
@@ -335,7 +347,7 @@ public class Suggester {
             return list.isEmpty();
         }).forEach(s -> {
             if (logger.isInfoEnabled()) {
-                logger.info("Delete index: {}", s);
+                logger.info("Deleting disabled index (no aliases): index={}", s);
             }
             client.admin().indices().prepareDelete(s).execute().actionGet(suggestSettings.getIndicesTimeout());
         });

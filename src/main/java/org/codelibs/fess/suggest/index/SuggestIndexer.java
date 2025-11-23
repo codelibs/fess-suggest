@@ -205,6 +205,10 @@ public class SuggestIndexer {
     public SuggestIndexResponse index(final SuggestItem[] items) {
         final SuggestItem[] array = Stream.of(items).filter(item -> !item.isBadWord(badWords)).toArray(SuggestItem[]::new);
 
+        if (logger.isDebugEnabled()) {
+            logger.debug("Indexing suggest items: index={}, totalItems={}, validItems={}, filteredByBadWords={}", index, items.length, array.length, items.length - array.length);
+        }
+
         try {
             final long start = System.currentTimeMillis();
             final SuggestWriterResult result = suggestWriter.write(client, settings, index, array, true);
@@ -220,6 +224,9 @@ public class SuggestIndexer {
      * @return The SuggestDeleteResponse.
      */
     public SuggestDeleteResponse delete(final String id) {
+        if (logger.isDebugEnabled()) {
+            logger.debug("Deleting suggest item: index={}, id={}", index, id);
+        }
         final long start = System.currentTimeMillis();
         final SuggestWriterResult result = suggestWriter.delete(client, settings, index, id);
         return new SuggestDeleteResponse(result.getFailures(), System.currentTimeMillis() - start);
@@ -250,6 +257,9 @@ public class SuggestIndexer {
      * @return The SuggestDeleteResponse.
      */
     public SuggestDeleteResponse deleteAll() {
+        if (logger.isInfoEnabled()) {
+            logger.info("Deleting all suggest items: index={}", index);
+        }
         final SuggestDeleteResponse response = deleteByQuery(QueryBuilders.matchAllQuery());
         restoreElevateWord();
         return response;
@@ -260,6 +270,9 @@ public class SuggestIndexer {
      * @return The SuggestDeleteResponse.
      */
     public SuggestDeleteResponse deleteDocumentWords() {
+        if (logger.isInfoEnabled()) {
+            logger.info("Deleting document words: index={}", index);
+        }
         return deleteWordsByKind(FieldNames.DOC_FREQ, SuggestItem.Kind.DOCUMENT,
                 item -> item.setDocFreq(0),
                 SuggestItem.Kind.QUERY, SuggestItem.Kind.USER);
@@ -270,6 +283,9 @@ public class SuggestIndexer {
      * @return The SuggestDeleteResponse.
      */
     public SuggestDeleteResponse deleteQueryWords() {
+        if (logger.isInfoEnabled()) {
+            logger.info("Deleting query words: index={}", index);
+        }
         return deleteWordsByKind(FieldNames.QUERY_FREQ, SuggestItem.Kind.QUERY,
                 item -> item.setQueryFreq(0),
                 SuggestItem.Kind.DOCUMENT, SuggestItem.Kind.USER);
@@ -356,7 +372,7 @@ public class SuggestIndexer {
      */
     public SuggestIndexResponse indexFromQueryLog(final QueryLog[] queryLogs) {
         if (logger.isInfoEnabled()) {
-            logger.info("Index from querylog. num: {}", queryLogs.length);
+            logger.info("Indexing from query logs: count={}, index={}", queryLogs.length, index);
         }
         try {
             final long start = System.currentTimeMillis();
@@ -447,7 +463,7 @@ public class SuggestIndexer {
                 } catch (OpenSearchStatusException | IllegalStateException e) {
                     final String msg = e.getMessage();
                     if (StringUtil.isNotEmpty(msg) && msg.contains("index.analyze.max_token_count")) {
-                        logger.warn("Failed to parse document. ", e);
+                        logger.warn("Failed to parse document (token count exceeded): index={}, message={}", index, msg);
                         return Stream.empty();
                     }
                     throw e;
@@ -463,9 +479,9 @@ public class SuggestIndexer {
             return new SuggestIndexResponse(items.length, documents.length, response.getErrors(), indexTime - start);
         } catch (final Exception e) {
             if (logger.isDebugEnabled()) {
-                logger.debug("Failed to index from document", e);
+                logger.debug("Failed to index from documents: index={}, documentCount={}", index, documents.length, e);
             }
-            throw new SuggestIndexException("Failed to index from document", e);
+            throw new SuggestIndexException("Failed to index from documents: index=" + index + ", documentCount=" + documents.length, e);
         }
     }
 
@@ -501,7 +517,7 @@ public class SuggestIndexer {
     public Deferred<SuggestIndexResponse>.Promise indexFromDocument(final Supplier<DocumentReader> reader, final int docPerReq,
             final Runnable waitController) {
         if (logger.isInfoEnabled()) {
-            logger.info("Start index by DocumentReader. docPerReq: {}", docPerReq);
+            logger.info("Starting indexing from DocumentReader: index={}, docsPerRequest={}", index, docPerReq);
         }
         final Deferred<SuggestIndexResponse> deferred = new Deferred<>();
         threadPool.execute(() -> {
@@ -553,7 +569,7 @@ public class SuggestIndexer {
     public SuggestIndexResponse indexFromSearchWord(final String searchWord, final String[] fields, final String[] tags,
             final String[] roles, final int num, final String[] langs) {
         if (logger.isDebugEnabled()) {
-            logger.debug("Index from searchWord. word: {}", searchWord);
+            logger.debug("Indexing from search word: word={}, index={}, fields={}", searchWord, index, Arrays.toString(fields));
         }
 
         final long start = System.currentTimeMillis();
@@ -582,7 +598,8 @@ public class SuggestIndexer {
             }
             return new SuggestIndexResponse(1, 1, response.getErrors(), System.currentTimeMillis() - start);
         } catch (final Exception e) {
-            final String msg = "Failed to index from document: searchWord=" + searchWord//
+            final String msg = "Failed to index from search word: index=" + index//
+                    + ", searchWord=" + searchWord//
                     + ", fields=" + Arrays.toString(fields)//
                     + ", tags=" + Arrays.toString(tags)//
                     + ", roles=" + Arrays.toString(roles)//
@@ -658,6 +675,9 @@ public class SuggestIndexer {
      * @return The SuggestIndexResponse.
      */
     public SuggestIndexResponse restoreElevateWord() {
+        if (logger.isInfoEnabled()) {
+            logger.info("Restoring elevate words: index={}", index);
+        }
         final long start = System.currentTimeMillis();
         int numberOfSuggestDocs = 0;
         int numberOfInputDocs = 0;
@@ -679,6 +699,9 @@ public class SuggestIndexer {
      * @return The SuggestDeleteResponse.
      */
     public SuggestDeleteResponse deleteOldWords(final ZonedDateTime threshold) {
+        if (logger.isInfoEnabled()) {
+            logger.info("Deleting old words: index={}, threshold={}", index, threshold);
+        }
         final long start = System.currentTimeMillis();
         final String query = FieldNames.TIMESTAMP + ":[* TO " + threshold.toInstant().toEpochMilli() + "] NOT " + FieldNames.KINDS + ':'
                 + SuggestItem.Kind.USER;
