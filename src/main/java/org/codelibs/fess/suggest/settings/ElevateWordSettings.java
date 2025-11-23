@@ -137,7 +137,8 @@ public class ElevateWordSettings {
      */
     public void add(final ElevateWord elevateWord) {
         if (logger.isDebugEnabled()) {
-            logger.debug("Adding elevate word: index={}, word={}, boost={}", arraySettings.arraySettingsIndexName, elevateWord.getElevateWord(), elevateWord.getBoost());
+            logger.debug("Adding elevate word: index={}, word={}, boost={}", arraySettings.arraySettingsIndexName,
+                    elevateWord.getElevateWord(), elevateWord.getBoost());
         }
 
         final Map<String, Object> source = new HashMap<>();

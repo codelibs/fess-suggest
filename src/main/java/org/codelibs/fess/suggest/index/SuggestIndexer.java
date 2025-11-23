@@ -206,7 +206,8 @@ public class SuggestIndexer {
         final SuggestItem[] array = Stream.of(items).filter(item -> !item.isBadWord(badWords)).toArray(SuggestItem[]::new);
 
         if (logger.isDebugEnabled()) {
-            logger.debug("Indexing suggest items: index={}, totalItems={}, validItems={}, filteredByBadWords={}", index, items.length, array.length, items.length - array.length);
+            logger.debug("Indexing suggest items: index={}, totalItems={}, validItems={}, filteredByBadWords={}", index, items.length,
+                    array.length, items.length - array.length);
         }
 
         try {
@@ -273,9 +274,8 @@ public class SuggestIndexer {
         if (logger.isInfoEnabled()) {
             logger.info("Deleting document words: index={}", index);
         }
-        return deleteWordsByKind(FieldNames.DOC_FREQ, SuggestItem.Kind.DOCUMENT,
-                item -> item.setDocFreq(0),
-                SuggestItem.Kind.QUERY, SuggestItem.Kind.USER);
+        return deleteWordsByKind(FieldNames.DOC_FREQ, SuggestItem.Kind.DOCUMENT, item -> item.setDocFreq(0), SuggestItem.Kind.QUERY,
+                SuggestItem.Kind.USER);
     }
 
     /**
@@ -286,9 +286,8 @@ public class SuggestIndexer {
         if (logger.isInfoEnabled()) {
             logger.info("Deleting query words: index={}", index);
         }
-        return deleteWordsByKind(FieldNames.QUERY_FREQ, SuggestItem.Kind.QUERY,
-                item -> item.setQueryFreq(0),
-                SuggestItem.Kind.DOCUMENT, SuggestItem.Kind.USER);
+        return deleteWordsByKind(FieldNames.QUERY_FREQ, SuggestItem.Kind.QUERY, item -> item.setQueryFreq(0), SuggestItem.Kind.DOCUMENT,
+                SuggestItem.Kind.USER);
     }
 
     /**
@@ -304,8 +303,8 @@ public class SuggestIndexer {
         final long start = System.currentTimeMillis();
 
         // Build query to exclude certain kinds
-        final org.opensearch.index.query.BoolQueryBuilder boolQuery = QueryBuilders.boolQuery()
-                .must(QueryBuilders.rangeQuery(freqField).gte(1));
+        final org.opensearch.index.query.BoolQueryBuilder boolQuery =
+                QueryBuilders.boolQuery().must(QueryBuilders.rangeQuery(freqField).gte(1));
         for (final SuggestItem.Kind kind : excludeKinds) {
             boolQuery.mustNot(QueryBuilders.matchPhraseQuery(FieldNames.KINDS, kind.toString()));
         }
@@ -332,9 +331,7 @@ public class SuggestIndexer {
                 for (final SearchHit hit : hits) {
                     final SuggestItem item = SuggestItem.parseSource(hit.getSourceAsMap());
                     freqSetter.accept(item);
-                    item.setKinds(Stream.of(item.getKinds())
-                            .filter(kind -> kind != kindToRemove)
-                            .toArray(SuggestItem.Kind[]::new));
+                    item.setKinds(Stream.of(item.getKinds()).filter(kind -> kind != kindToRemove).toArray(SuggestItem.Kind[]::new));
                     updateItems.add(item);
                 }
                 final SuggestWriterResult result =

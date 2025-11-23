@@ -580,7 +580,7 @@ public class SuggestUtilTest {
     @Test(expected = IllegalArgumentException.class)
     public void testGetAsListWithArray() {
         // Test with array (should throw exception)
-        String[] array = {"one", "two"};
+        String[] array = { "one", "two" };
         SuggestUtil.getAsList(array);
     }
 
@@ -600,8 +600,8 @@ public class SuggestUtilTest {
     @Test(expected = SuggesterException.class)
     public void testCreateBulkLineWithNullId() {
         // Test that null ID causes exception
-        SuggestItem item = new SuggestItem(new String[] { "text" }, new String[0][0], new String[0], 0, 0, 1.0f,
-                new String[0], new String[0], new String[0], SuggestItem.Kind.DOCUMENT);
+        SuggestItem item = new SuggestItem(new String[] { "text" }, new String[0][0], new String[0], 0, 0, 1.0f, new String[0],
+                new String[0], new String[0], SuggestItem.Kind.DOCUMENT);
         // Explicitly set ID to null (constructor auto-generates ID)
         item.setId(null);
         item.setTimestamp(ZonedDateTime.now());
@@ -612,8 +612,8 @@ public class SuggestUtilTest {
     public void testCreateBulkLineWithNullText() {
         // Test that null text causes exception
         // Create item with valid text first, then set to null
-        SuggestItem item = new SuggestItem(new String[] { "text" }, new String[0][0], new String[0], 0, 0, 1.0f,
-                new String[0], new String[0], new String[0], SuggestItem.Kind.DOCUMENT);
+        SuggestItem item = new SuggestItem(new String[] { "text" }, new String[0][0], new String[0], 0, 0, 1.0f, new String[0],
+                new String[0], new String[0], SuggestItem.Kind.DOCUMENT);
         // Set text to null after construction
         item.setText(null);
         item.setTimestamp(ZonedDateTime.now());
@@ -624,9 +624,8 @@ public class SuggestUtilTest {
     public void testCreateBulkLineWithMultipleReadings() {
         // Test with multiple reading levels
         SuggestItem item = new SuggestItem(new String[] { "test" },
-                new String[][] { { "reading1a", "reading1b" }, { "reading2a", "reading2b" }, { "reading3" } },
-                new String[] { "field1" }, 5, 3, 1.5f, new String[] { "tag1" }, new String[] { "role1" },
-                new String[0], SuggestItem.Kind.QUERY);
+                new String[][] { { "reading1a", "reading1b" }, { "reading2a", "reading2b" }, { "reading3" } }, new String[] { "field1" }, 5,
+                3, 1.5f, new String[] { "tag1" }, new String[] { "role1" }, new String[0], SuggestItem.Kind.QUERY);
         item.setTimestamp(ZonedDateTime.now());
 
         String bulkLine = SuggestUtil.createBulkLine("test_index", "_doc", item);
@@ -639,8 +638,8 @@ public class SuggestUtilTest {
     @Test
     public void testCreateBulkLineWithEmptyArrays() {
         // Test with empty arrays for optional fields
-        SuggestItem item = new SuggestItem(new String[] { "text" }, new String[0][0], new String[0], 0, 0, 1.0f,
-                new String[0], new String[0], new String[0], SuggestItem.Kind.DOCUMENT);
+        SuggestItem item = new SuggestItem(new String[] { "text" }, new String[0][0], new String[0], 0, 0, 1.0f, new String[0],
+                new String[0], new String[0], SuggestItem.Kind.DOCUMENT);
         item.setTimestamp(ZonedDateTime.now());
 
         String bulkLine = SuggestUtil.createBulkLine("test_index", "_doc", item);

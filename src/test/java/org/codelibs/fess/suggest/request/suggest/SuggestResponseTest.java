@@ -159,8 +159,8 @@ public class SuggestResponseTest {
             words.add("word" + i);
             String[][] readings = new String[1][];
             readings[0] = new String[] { "word" + i };
-            items.add(new SuggestItem(new String[] { "word" + i }, readings, new String[] { "content" }, 1, 0, -1,
-                    new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT));
+            items.add(new SuggestItem(new String[] { "word" + i }, readings, new String[] { "content" }, 1, 0, -1, new String[] { "tag1" },
+                    new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT));
         }
 
         SuggestResponse response = new SuggestResponse("test-index", 500, words, 1000, items);

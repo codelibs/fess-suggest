@@ -85,12 +85,8 @@ public class SuggesterRefactoringTest {
         final String aliasName = "test-alias";
 
         // Create index with alias
-        final CreateIndexResponse response = client.admin()
-                .indices()
-                .prepareCreate(indexName)
-                .addAlias(new Alias(aliasName))
-                .execute()
-                .actionGet();
+        final CreateIndexResponse response =
+                client.admin().indices().prepareCreate(indexName).addAlias(new Alias(aliasName)).execute().actionGet();
         assertTrue("Index creation should be acknowledged", response.isAcknowledged());
 
         final Suggester suggester = Suggester.builder().build(client, "test");
@@ -194,8 +190,8 @@ public class SuggesterRefactoringTest {
             // It could be either "Unexpected number of update indices" or "Unexpected number of search indices"
             // depending on which check fails first
             assertTrue("Exception message should mention unexpected indices: " + exceptionMessage,
-                    exceptionMessage.contains("Unexpected number of update indices") ||
-                    exceptionMessage.contains("Unexpected number of search indices"));
+                    exceptionMessage.contains("Unexpected number of update indices")
+                            || exceptionMessage.contains("Unexpected number of search indices"));
         } finally {
             // Cleanup
             try {
@@ -219,11 +215,7 @@ public class SuggesterRefactoringTest {
         suggester.createIndexIfNothing();
 
         // Get the current indices
-        final GetAliasesResponse aliasResponse = client.admin()
-                .indices()
-                .prepareGetAliases(suggester.getIndex())
-                .execute()
-                .actionGet();
+        final GetAliasesResponse aliasResponse = client.admin().indices().prepareGetAliases(suggester.getIndex()).execute().actionGet();
 
         assertNotNull("Should have search alias", aliasResponse.getAliases());
 
@@ -231,11 +223,7 @@ public class SuggesterRefactoringTest {
         suggester.switchIndex();
 
         // Verify indices still exist and are functional
-        final GetAliasesResponse afterResponse = client.admin()
-                .indices()
-                .prepareGetAliases(suggester.getIndex())
-                .execute()
-                .actionGet();
+        final GetAliasesResponse afterResponse = client.admin().indices().prepareGetAliases(suggester.getIndex()).execute().actionGet();
 
         assertNotNull("Aliases should still exist after switch", afterResponse.getAliases());
 
@@ -269,11 +257,7 @@ public class SuggesterRefactoringTest {
         Thread.sleep(100);
 
         // Verify initial state - should have one index
-        GetAliasesResponse aliasResponse = client.admin()
-                .indices()
-                .prepareGetAliases(suggester.getIndex())
-                .execute()
-                .actionGet();
+        GetAliasesResponse aliasResponse = client.admin().indices().prepareGetAliases(suggester.getIndex()).execute().actionGet();
         assertTrue("Should have at least one index initially", aliasResponse.getAliases().size() >= 1);
 
         // Create next index - this is the main method we're testing
@@ -284,11 +268,7 @@ public class SuggesterRefactoringTest {
         // Verify that createNextIndex completed without exceptions
         // The update alias should now point to the new index
         final String updateAlias = suggester.getIndex() + ".update";
-        aliasResponse = client.admin()
-                .indices()
-                .prepareGetAliases(updateAlias)
-                .execute()
-                .actionGet();
+        aliasResponse = client.admin().indices().prepareGetAliases(updateAlias).execute().actionGet();
         assertNotNull("Update alias should exist after createNextIndex", aliasResponse.getAliases());
 
         // Switch to new index
@@ -296,11 +276,7 @@ public class SuggesterRefactoringTest {
         Thread.sleep(100);
 
         // Verify switch was successful - search alias should still exist
-        aliasResponse = client.admin()
-                .indices()
-                .prepareGetAliases(suggester.getIndex())
-                .execute()
-                .actionGet();
+        aliasResponse = client.admin().indices().prepareGetAliases(suggester.getIndex()).execute().actionGet();
         assertNotNull("Search alias should exist after switch", aliasResponse.getAliases());
         assertTrue("Search alias should point to at least one index", aliasResponse.getAliases().size() >= 1);
 
@@ -327,11 +303,7 @@ public class SuggesterRefactoringTest {
         assertTrue("Index should be created successfully", created);
 
         // Verify index exists
-        final GetAliasesResponse aliasResponse = client.admin()
-                .indices()
-                .prepareGetAliases(suggester.getIndex())
-                .execute()
-                .actionGet();
+        final GetAliasesResponse aliasResponse = client.admin().indices().prepareGetAliases(suggester.getIndex()).execute().actionGet();
 
         assertNotNull("Aliases should exist", aliasResponse.getAliases());
         assertEquals("Should have exactly one index", 1, aliasResponse.getAliases().size());

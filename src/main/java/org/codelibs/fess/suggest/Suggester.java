@@ -203,7 +203,8 @@ public class Suggester {
                 final String settingsSource = getDefaultIndexSettings();
                 final String indexName = createIndexName(index);
                 if (logger.isInfoEnabled()) {
-                    logger.info("Creating suggest index: index={}, searchAlias={}, updateAlias={}", indexName, getSearchAlias(index), getUpdateAlias(index));
+                    logger.info("Creating suggest index: index={}, searchAlias={}, updateAlias={}", indexName, getSearchAlias(index),
+                            getUpdateAlias(index));
                 }
 
                 client.admin()
@@ -239,7 +240,8 @@ public class Suggester {
             final String settingsSource = getDefaultIndexSettings();
             final String indexName = createIndexName(index);
             if (logger.isInfoEnabled()) {
-                logger.info("Creating next index: index={}, updateAlias={}, previousIndices={}", indexName, getUpdateAlias(index), prevIndices);
+                logger.info("Creating next index: index={}, updateAlias={}, previousIndices={}", indexName, getUpdateAlias(index),
+                        prevIndices);
             }
 
             final CreateIndexResponse createIndexResponse = client.admin()
@@ -283,9 +285,11 @@ public class Suggester {
             final List<String> updateIndices = getIndicesForAlias(updateAlias);
             if (updateIndices.size() != EXPECTED_INDEX_COUNT) {
                 if (logger.isDebugEnabled()) {
-                    logger.debug("Unexpected number of update indices: expected={}, actual={}, updateAlias={}, indices={}", EXPECTED_INDEX_COUNT, updateIndices.size(), updateAlias, updateIndices);
+                    logger.debug("Unexpected number of update indices: expected={}, actual={}, updateAlias={}, indices={}",
+                            EXPECTED_INDEX_COUNT, updateIndices.size(), updateAlias, updateIndices);
                 }
-                throw new SuggesterException("Unexpected number of update indices: expected=" + EXPECTED_INDEX_COUNT + ", actual=" + updateIndices.size());
+                throw new SuggesterException(
+                        "Unexpected number of update indices: expected=" + EXPECTED_INDEX_COUNT + ", actual=" + updateIndices.size());
             }
             final String updateIndex = updateIndices.get(0);
 
@@ -293,9 +297,11 @@ public class Suggester {
             final List<String> searchIndices = getIndicesForAlias(searchAlias);
             if (searchIndices.size() != EXPECTED_INDEX_COUNT) {
                 if (logger.isDebugEnabled()) {
-                    logger.debug("Unexpected number of search indices: expected={}, actual={}, searchAlias={}, indices={}", EXPECTED_INDEX_COUNT, searchIndices.size(), searchAlias, searchIndices);
+                    logger.debug("Unexpected number of search indices: expected={}, actual={}, searchAlias={}, indices={}",
+                            EXPECTED_INDEX_COUNT, searchIndices.size(), searchAlias, searchIndices);
                 }
-                throw new SuggesterException("Unexpected number of search indices: expected=" + EXPECTED_INDEX_COUNT + ", actual=" + searchIndices.size());
+                throw new SuggesterException(
+                        "Unexpected number of search indices: expected=" + EXPECTED_INDEX_COUNT + ", actual=" + searchIndices.size());
             }
             final String searchIndex = searchIndices.get(0);
 
@@ -459,8 +465,7 @@ public class Suggester {
     }
 
     private String getDefaultMappings() throws IOException {
-        try (final InputStream is = this.getClass().getClassLoader()
-                .getResourceAsStream("suggest_indices/suggest/mappings-default.json")) {
+        try (final InputStream is = this.getClass().getClassLoader().getResourceAsStream("suggest_indices/suggest/mappings-default.json")) {
             if (is == null) {
                 throw new IOException("Resource not found: suggest_indices/suggest/mappings-default.json");
             }
@@ -469,8 +474,7 @@ public class Suggester {
     }
 
     private String getDefaultIndexSettings() throws IOException {
-        try (final InputStream is = this.getClass().getClassLoader()
-                .getResourceAsStream("suggest_indices/suggest.json")) {
+        try (final InputStream is = this.getClass().getClassLoader().getResourceAsStream("suggest_indices/suggest.json")) {
             if (is == null) {
                 throw new IOException("Resource not found: suggest_indices/suggest.json");
             }
@@ -496,10 +500,7 @@ public class Suggester {
                     client.admin().indices().prepareGetAliases(alias).execute().actionGet(suggestSettings.getIndicesTimeout());
             getAliasesResponse.getAliases()
                     .entrySet()
-                    .forEach(x -> x.getValue()
-                            .stream()
-                            .filter(y -> alias.equals(y.alias()))
-                            .forEach(y -> indices.add(x.getKey())));
+                    .forEach(x -> x.getValue().stream().filter(y -> alias.equals(y.alias())).forEach(y -> indices.add(x.getKey())));
         }
         return indices;
     }
