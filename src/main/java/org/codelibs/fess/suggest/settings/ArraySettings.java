@@ -141,7 +141,8 @@ public class ArraySettings {
      */
     public void add(final String key, final Object value) {
         if (logger.isDebugEnabled()) {
-            logger.debug("Adding array settings: index={}, settingsId={}, key={}, value={}", arraySettingsIndexName, settingsId, key, value);
+            logger.debug("Adding array settings: index={}, settingsId={}, key={}, value={}", arraySettingsIndexName, settingsId, key,
+                    value);
         }
 
         final Map<String, Object> source = new HashMap<>();
@@ -167,7 +168,8 @@ public class ArraySettings {
      */
     public void delete(final String key, final String value) {
         if (logger.isDebugEnabled()) {
-            logger.debug("Deleting array settings: index={}, settingsId={}, key={}, value={}", arraySettingsIndexName, settingsId, key, value);
+            logger.debug("Deleting array settings: index={}, settingsId={}, key={}, value={}", arraySettingsIndexName, settingsId, key,
+                    value);
         }
         deleteFromArray(arraySettingsIndexName, settingsId, createId(key, value));
     }

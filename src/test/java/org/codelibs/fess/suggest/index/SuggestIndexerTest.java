@@ -50,8 +50,10 @@ public class SuggestIndexerTest {
         runner.onBuild((number, settingsBuilder) -> {
             settingsBuilder.put("http.cors.enabled", true);
             settingsBuilder.put("discovery.type", "single-node");
-        }).build(newConfigs().clusterName("SuggestIndexerTest").numOfNode(1)
-                .pluginTypes("org.codelibs.opensearch.extension.ExtensionPlugin"));
+        })
+                .build(newConfigs().clusterName("SuggestIndexerTest")
+                        .numOfNode(1)
+                        .pluginTypes("org.codelibs.opensearch.extension.ExtensionPlugin"));
         runner.ensureYellow();
     }
 
@@ -73,8 +75,8 @@ public class SuggestIndexerTest {
     public void test_indexSingleItem() throws Exception {
         String[][] readings = new String[1][];
         readings[0] = new String[] { "test" };
-        SuggestItem item = new SuggestItem(new String[] { "テスト" }, readings, new String[] { "content" }, 1, 0, -1,
-                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
+        SuggestItem item = new SuggestItem(new String[] { "テスト" }, readings, new String[] { "content" }, 1, 0, -1, new String[] { "tag1" },
+                new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
 
         SuggestIndexResponse response = suggester.indexer().index(item);
 
@@ -91,8 +93,8 @@ public class SuggestIndexerTest {
         for (int i = 0; i < 3; i++) {
             String[][] readings = new String[1][];
             readings[0] = new String[] { "test" + i };
-            items[i] = new SuggestItem(new String[] { "テスト" + i }, readings, new String[] { "content" }, 1, 0, -1,
-                    new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
+            items[i] = new SuggestItem(new String[] { "テスト" + i }, readings, new String[] { "content" }, 1, 0, -1, new String[] { "tag1" },
+                    new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
         }
 
         SuggestIndexResponse response = suggester.indexer().index(items);
@@ -107,8 +109,8 @@ public class SuggestIndexerTest {
     public void test_deleteById() throws Exception {
         String[][] readings = new String[1][];
         readings[0] = new String[] { "test" };
-        SuggestItem item = new SuggestItem(new String[] { "テスト" }, readings, new String[] { "content" }, 1, 0, -1,
-                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
+        SuggestItem item = new SuggestItem(new String[] { "テスト" }, readings, new String[] { "content" }, 1, 0, -1, new String[] { "tag1" },
+                new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
 
         suggester.indexer().index(item);
         suggester.refresh();
@@ -123,8 +125,8 @@ public class SuggestIndexerTest {
     public void test_deleteByQueryString() throws Exception {
         String[][] readings = new String[1][];
         readings[0] = new String[] { "test" };
-        SuggestItem item = new SuggestItem(new String[] { "テスト" }, readings, new String[] { "content" }, 1, 0, -1,
-                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
+        SuggestItem item = new SuggestItem(new String[] { "テスト" }, readings, new String[] { "content" }, 1, 0, -1, new String[] { "tag1" },
+                new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
 
         suggester.indexer().index(item);
         suggester.refresh();
@@ -139,8 +141,8 @@ public class SuggestIndexerTest {
     public void test_deleteByQueryBuilder() throws Exception {
         String[][] readings = new String[1][];
         readings[0] = new String[] { "test" };
-        SuggestItem item = new SuggestItem(new String[] { "テスト" }, readings, new String[] { "content" }, 1, 0, -1,
-                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
+        SuggestItem item = new SuggestItem(new String[] { "テスト" }, readings, new String[] { "content" }, 1, 0, -1, new String[] { "tag1" },
+                new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
 
         suggester.indexer().index(item);
         suggester.refresh();
@@ -157,8 +159,8 @@ public class SuggestIndexerTest {
         for (int i = 0; i < 3; i++) {
             String[][] readings = new String[1][];
             readings[0] = new String[] { "test" + i };
-            items[i] = new SuggestItem(new String[] { "テスト" + i }, readings, new String[] { "content" }, 1, 0, -1,
-                    new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
+            items[i] = new SuggestItem(new String[] { "テスト" + i }, readings, new String[] { "content" }, 1, 0, -1, new String[] { "tag1" },
+                    new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
         }
 
         suggester.indexer().index(items);
@@ -181,13 +183,13 @@ public class SuggestIndexerTest {
 
         String[][] readings1 = new String[1][];
         readings1[0] = new String[] { "doc" };
-        items[0] = new SuggestItem(new String[] { "ドキュメント" }, readings1, new String[] { "content" }, 1, 0, -1,
-                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
+        items[0] = new SuggestItem(new String[] { "ドキュメント" }, readings1, new String[] { "content" }, 1, 0, -1, new String[] { "tag1" },
+                new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
 
         String[][] readings2 = new String[1][];
         readings2[0] = new String[] { "query" };
-        items[1] = new SuggestItem(new String[] { "クエリ" }, readings2, new String[] { "content" }, 0, 1, -1,
-                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.QUERY);
+        items[1] = new SuggestItem(new String[] { "クエリ" }, readings2, new String[] { "content" }, 0, 1, -1, new String[] { "tag1" },
+                new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.QUERY);
 
         suggester.indexer().index(items);
         suggester.refresh();
@@ -213,13 +215,13 @@ public class SuggestIndexerTest {
 
         String[][] readings1 = new String[1][];
         readings1[0] = new String[] { "doc" };
-        items[0] = new SuggestItem(new String[] { "ドキュメント" }, readings1, new String[] { "content" }, 1, 0, -1,
-                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
+        items[0] = new SuggestItem(new String[] { "ドキュメント" }, readings1, new String[] { "content" }, 1, 0, -1, new String[] { "tag1" },
+                new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
 
         String[][] readings2 = new String[1][];
         readings2[0] = new String[] { "query" };
-        items[1] = new SuggestItem(new String[] { "クエリ" }, readings2, new String[] { "content" }, 0, 1, -1,
-                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.QUERY);
+        items[1] = new SuggestItem(new String[] { "クエリ" }, readings2, new String[] { "content" }, 0, 1, -1, new String[] { "tag1" },
+                new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.QUERY);
 
         suggester.indexer().index(items);
         suggester.refresh();
@@ -373,8 +375,8 @@ public class SuggestIndexerTest {
 
     @Test
     public void test_addElevateWord() throws Exception {
-        ElevateWord elevateWord = new ElevateWord("test", 2.0f, Collections.singletonList("test"),
-                Collections.singletonList("content"), null, null);
+        ElevateWord elevateWord =
+                new ElevateWord("test", 2.0f, Collections.singletonList("test"), Collections.singletonList("content"), null, null);
 
         SuggestIndexResponse response = suggester.indexer().addElevateWord(elevateWord, true);
 
@@ -390,8 +392,8 @@ public class SuggestIndexerTest {
 
     @Test
     public void test_addElevateWordWithoutApply() throws Exception {
-        ElevateWord elevateWord = new ElevateWord("test", 2.0f, Collections.singletonList("test"),
-                Collections.singletonList("content"), null, null);
+        ElevateWord elevateWord =
+                new ElevateWord("test", 2.0f, Collections.singletonList("test"), Collections.singletonList("content"), null, null);
 
         SuggestIndexResponse response = suggester.indexer().addElevateWord(elevateWord, false);
 
@@ -405,8 +407,8 @@ public class SuggestIndexerTest {
 
     @Test
     public void test_deleteElevateWord() throws Exception {
-        ElevateWord elevateWord = new ElevateWord("test", 2.0f, Collections.singletonList("test"),
-                Collections.singletonList("content"), null, null);
+        ElevateWord elevateWord =
+                new ElevateWord("test", 2.0f, Collections.singletonList("test"), Collections.singletonList("content"), null, null);
 
         suggester.indexer().addElevateWord(elevateWord, true);
         suggester.refresh();
@@ -425,10 +427,10 @@ public class SuggestIndexerTest {
 
     @Test
     public void test_restoreElevateWord() throws Exception {
-        ElevateWord elevateWord1 = new ElevateWord("test1", 2.0f, Collections.singletonList("test1"),
-                Collections.singletonList("content"), null, null);
-        ElevateWord elevateWord2 = new ElevateWord("test2", 3.0f, Collections.singletonList("test2"),
-                Collections.singletonList("content"), null, null);
+        ElevateWord elevateWord1 =
+                new ElevateWord("test1", 2.0f, Collections.singletonList("test1"), Collections.singletonList("content"), null, null);
+        ElevateWord elevateWord2 =
+                new ElevateWord("test2", 3.0f, Collections.singletonList("test2"), Collections.singletonList("content"), null, null);
 
         suggester.settings().elevateWord().add(elevateWord1);
         suggester.settings().elevateWord().add(elevateWord2);
@@ -502,8 +504,8 @@ public class SuggestIndexerTest {
 
         String[][] readings = new String[1][];
         readings[0] = new String[] { "bad" };
-        SuggestItem item = new SuggestItem(new String[] { "bad" }, readings, new String[] { "content" }, 1, 0, -1,
-                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
+        SuggestItem item = new SuggestItem(new String[] { "bad" }, readings, new String[] { "content" }, 1, 0, -1, new String[] { "tag1" },
+                new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
 
         SuggestIndexResponse response = suggester.indexer().index(item);
 
@@ -562,20 +564,20 @@ public class SuggestIndexerTest {
         // Document only
         String[][] readings1 = new String[1][];
         readings1[0] = new String[] { "doc1" };
-        items[0] = new SuggestItem(new String[] { "ドキュメント1" }, readings1, new String[] { "content" }, 1, 0, -1,
-                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
+        items[0] = new SuggestItem(new String[] { "ドキュメント1" }, readings1, new String[] { "content" }, 1, 0, -1, new String[] { "tag1" },
+                new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
 
         // Query only
         String[][] readings2 = new String[1][];
         readings2[0] = new String[] { "query1" };
-        items[1] = new SuggestItem(new String[] { "クエリ1" }, readings2, new String[] { "content" }, 0, 1, -1,
-                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.QUERY);
+        items[1] = new SuggestItem(new String[] { "クエリ1" }, readings2, new String[] { "content" }, 0, 1, -1, new String[] { "tag1" },
+                new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.QUERY);
 
         // Both Document and Query (simulated by setting both frequencies)
         String[][] readings3 = new String[1][];
         readings3[0] = new String[] { "both" };
-        items[2] = new SuggestItem(new String[] { "両方" }, readings3, new String[] { "content" }, 1L, 1L, -1.0f,
-                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
+        items[2] = new SuggestItem(new String[] { "両方" }, readings3, new String[] { "content" }, 1L, 1L, -1.0f, new String[] { "tag1" },
+                new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
         items[2].setKinds(new SuggestItem.Kind[] { SuggestItem.Kind.DOCUMENT, SuggestItem.Kind.QUERY });
 
         suggester.indexer().index(items);
@@ -603,20 +605,20 @@ public class SuggestIndexerTest {
         // Document only
         String[][] readings1 = new String[1][];
         readings1[0] = new String[] { "doc1" };
-        items[0] = new SuggestItem(new String[] { "ドキュメント1" }, readings1, new String[] { "content" }, 1, 0, -1,
-                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
+        items[0] = new SuggestItem(new String[] { "ドキュメント1" }, readings1, new String[] { "content" }, 1, 0, -1, new String[] { "tag1" },
+                new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
 
         // Query only
         String[][] readings2 = new String[1][];
         readings2[0] = new String[] { "query1" };
-        items[1] = new SuggestItem(new String[] { "クエリ1" }, readings2, new String[] { "content" }, 0, 1, -1,
-                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.QUERY);
+        items[1] = new SuggestItem(new String[] { "クエリ1" }, readings2, new String[] { "content" }, 0, 1, -1, new String[] { "tag1" },
+                new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.QUERY);
 
         // Both Document and Query
         String[][] readings3 = new String[1][];
         readings3[0] = new String[] { "both" };
-        items[2] = new SuggestItem(new String[] { "両方" }, readings3, new String[] { "content" }, 1L, 1L, -1.0f,
-                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
+        items[2] = new SuggestItem(new String[] { "両方" }, readings3, new String[] { "content" }, 1L, 1L, -1.0f, new String[] { "tag1" },
+                new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
         items[2].setKinds(new SuggestItem.Kind[] { SuggestItem.Kind.DOCUMENT, SuggestItem.Kind.QUERY });
 
         suggester.indexer().index(items);
@@ -644,14 +646,14 @@ public class SuggestIndexerTest {
         // Document
         String[][] readings1 = new String[1][];
         readings1[0] = new String[] { "doc1" };
-        items[0] = new SuggestItem(new String[] { "ドキュメント1" }, readings1, new String[] { "content" }, 1, 0, -1,
-                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
+        items[0] = new SuggestItem(new String[] { "ドキュメント1" }, readings1, new String[] { "content" }, 1, 0, -1, new String[] { "tag1" },
+                new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
 
         // User
         String[][] readings2 = new String[1][];
         readings2[0] = new String[] { "user1" };
-        items[1] = new SuggestItem(new String[] { "ユーザー1" }, readings2, new String[] { "content" }, 1, 0, -1,
-                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.USER);
+        items[1] = new SuggestItem(new String[] { "ユーザー1" }, readings2, new String[] { "content" }, 1, 0, -1, new String[] { "tag1" },
+                new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.USER);
 
         suggester.indexer().index(items);
         suggester.refresh();
@@ -676,14 +678,14 @@ public class SuggestIndexerTest {
         // Query
         String[][] readings1 = new String[1][];
         readings1[0] = new String[] { "query1" };
-        items[0] = new SuggestItem(new String[] { "クエリ1" }, readings1, new String[] { "content" }, 0, 1, -1,
-                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.QUERY);
+        items[0] = new SuggestItem(new String[] { "クエリ1" }, readings1, new String[] { "content" }, 0, 1, -1, new String[] { "tag1" },
+                new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.QUERY);
 
         // User
         String[][] readings2 = new String[1][];
         readings2[0] = new String[] { "user1" };
-        items[1] = new SuggestItem(new String[] { "ユーザー1" }, readings2, new String[] { "content" }, 0, 1, -1,
-                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.USER);
+        items[1] = new SuggestItem(new String[] { "ユーザー1" }, readings2, new String[] { "content" }, 0, 1, -1, new String[] { "tag1" },
+                new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.USER);
 
         suggester.indexer().index(items);
         suggester.refresh();

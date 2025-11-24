@@ -170,8 +170,8 @@ public class SuggesterBuilder {
         try {
             contentsReadingConverter.init();
         } catch (final IOException e) {
-            throw new SuggesterException("Failed to initialize contents reading converter: " + contentsReadingConverter.getClass().getName(),
-                    e);
+            throw new SuggesterException(
+                    "Failed to initialize contents reading converter: " + contentsReadingConverter.getClass().getName(), e);
         }
 
         if (normalizer == null) {

@@ -36,8 +36,10 @@ public class AnalyzerNormalizerTest {
         runner.onBuild((number, settingsBuilder) -> {
             settingsBuilder.put("http.cors.enabled", true);
             settingsBuilder.put("discovery.type", "single-node");
-        }).build(newConfigs().clusterName("AnalyzerNormalizerTest").numOfNode(1)
-                .pluginTypes("org.codelibs.opensearch.extension.ExtensionPlugin"));
+        })
+                .build(newConfigs().clusterName("AnalyzerNormalizerTest")
+                        .numOfNode(1)
+                        .pluginTypes("org.codelibs.opensearch.extension.ExtensionPlugin"));
         runner.ensureYellow();
     }
 

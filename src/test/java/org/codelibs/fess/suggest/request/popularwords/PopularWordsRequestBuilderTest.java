@@ -37,8 +37,10 @@ public class PopularWordsRequestBuilderTest {
         runner.onBuild((number, settingsBuilder) -> {
             settingsBuilder.put("http.cors.enabled", true);
             settingsBuilder.put("discovery.type", "single-node");
-        }).build(newConfigs().clusterName("PopularWordsRequestBuilderTest").numOfNode(1)
-                .pluginTypes("org.codelibs.opensearch.extension.ExtensionPlugin"));
+        })
+                .build(newConfigs().clusterName("PopularWordsRequestBuilderTest")
+                        .numOfNode(1)
+                        .pluginTypes("org.codelibs.opensearch.extension.ExtensionPlugin"));
         runner.ensureYellow();
     }
 
@@ -132,8 +134,15 @@ public class PopularWordsRequestBuilderTest {
     public void test_chainedBuilder() throws Exception {
         indexItems();
 
-        PopularWordsResponse response = suggester.popularWords().setSize(10).addTag("tag1").addRole(SuggestConstants.DEFAULT_ROLE)
-                .addField("content").setWindowSize(30).setQueryFreqThreshold(5).execute().getResponse();
+        PopularWordsResponse response = suggester.popularWords()
+                .setSize(10)
+                .addTag("tag1")
+                .addRole(SuggestConstants.DEFAULT_ROLE)
+                .addField("content")
+                .setWindowSize(30)
+                .setQueryFreqThreshold(5)
+                .execute()
+                .getResponse();
 
         assertNotNull(response);
     }

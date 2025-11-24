@@ -38,8 +38,10 @@ public class SuggestRequestBuilderTest {
         runner.onBuild((number, settingsBuilder) -> {
             settingsBuilder.put("http.cors.enabled", true);
             settingsBuilder.put("discovery.type", "single-node");
-        }).build(newConfigs().clusterName("SuggestRequestBuilderTest").numOfNode(1)
-                .pluginTypes("org.codelibs.opensearch.extension.ExtensionPlugin"));
+        })
+                .build(newConfigs().clusterName("SuggestRequestBuilderTest")
+                        .numOfNode(1)
+                        .pluginTypes("org.codelibs.opensearch.extension.ExtensionPlugin"));
         runner.ensureYellow();
     }
 
@@ -108,8 +110,7 @@ public class SuggestRequestBuilderTest {
     public void test_addRole() throws Exception {
         indexItems();
 
-        SuggestResponse response = suggester.suggest().setQuery("test").addRole(SuggestConstants.DEFAULT_ROLE).execute()
-                .getResponse();
+        SuggestResponse response = suggester.suggest().setQuery("test").addRole(SuggestConstants.DEFAULT_ROLE).execute().getResponse();
 
         assertNotNull(response);
         assertEquals(1, response.getNum());
@@ -165,8 +166,15 @@ public class SuggestRequestBuilderTest {
     public void test_chainedBuilder() throws Exception {
         indexItems();
 
-        SuggestResponse response = suggester.suggest().setQuery("test").setSize(10).addTag("tag1")
-                .addRole(SuggestConstants.DEFAULT_ROLE).addField("content").setSuggestDetail(true).execute().getResponse();
+        SuggestResponse response = suggester.suggest()
+                .setQuery("test")
+                .setSize(10)
+                .addTag("tag1")
+                .addRole(SuggestConstants.DEFAULT_ROLE)
+                .addField("content")
+                .setSuggestDetail(true)
+                .execute()
+                .getResponse();
 
         assertNotNull(response);
     }
