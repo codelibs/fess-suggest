@@ -45,8 +45,10 @@ public class SuggestIndexWriterTest {
         runner.onBuild((number, settingsBuilder) -> {
             settingsBuilder.put("http.cors.enabled", true);
             settingsBuilder.put("discovery.type", "single-node");
-        }).build(newConfigs().clusterName("SuggestIndexWriterTest").numOfNode(1)
-                .pluginTypes("org.codelibs.opensearch.extension.ExtensionPlugin"));
+        })
+                .build(newConfigs().clusterName("SuggestIndexWriterTest")
+                        .numOfNode(1)
+                        .pluginTypes("org.codelibs.opensearch.extension.ExtensionPlugin"));
         runner.ensureYellow();
         writer = new SuggestIndexWriter();
     }
@@ -69,19 +71,19 @@ public class SuggestIndexWriterTest {
     public void test_writeItems() throws Exception {
         String[][] readings = new String[1][];
         readings[0] = new String[] { "test" };
-        SuggestItem item = new SuggestItem(new String[] { "テスト" }, readings, new String[] { "content" }, 1, 0, -1,
-                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
+        SuggestItem item = new SuggestItem(new String[] { "テスト" }, readings, new String[] { "content" }, 1, 0, -1, new String[] { "tag1" },
+                new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
 
-        SuggestWriterResult result = writer.write(runner.client(), suggester.settings(), suggester.getIndex(),
-                new SuggestItem[] { item }, false);
+        SuggestWriterResult result =
+                writer.write(runner.client(), suggester.settings(), suggester.getIndex(), new SuggestItem[] { item }, false);
 
         assertNotNull(result);
         assertFalse(result.hasFailure());
 
         runner.refresh();
 
-        GetResponse getResponse = runner.client().prepareGet().setIndex(suggester.getIndex()).setId(item.getId())
-                .get(TimeValue.timeValueSeconds(30));
+        GetResponse getResponse =
+                runner.client().prepareGet().setIndex(suggester.getIndex()).setId(item.getId()).get(TimeValue.timeValueSeconds(30));
         assertTrue(getResponse.isExists());
     }
 
@@ -89,12 +91,12 @@ public class SuggestIndexWriterTest {
     public void test_writeItemsWithUpdate() throws Exception {
         String[][] readings = new String[1][];
         readings[0] = new String[] { "test" };
-        SuggestItem item = new SuggestItem(new String[] { "テスト" }, readings, new String[] { "content" }, 1, 0, -1,
-                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
+        SuggestItem item = new SuggestItem(new String[] { "テスト" }, readings, new String[] { "content" }, 1, 0, -1, new String[] { "tag1" },
+                new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
 
         // First write
-        SuggestWriterResult result1 = writer.write(runner.client(), suggester.settings(), suggester.getIndex(),
-                new SuggestItem[] { item }, false);
+        SuggestWriterResult result1 =
+                writer.write(runner.client(), suggester.settings(), suggester.getIndex(), new SuggestItem[] { item }, false);
         assertNotNull(result1);
         assertFalse(result1.hasFailure());
 
@@ -104,15 +106,15 @@ public class SuggestIndexWriterTest {
         SuggestItem updatedItem = new SuggestItem(new String[] { "テスト" }, readings, new String[] { "content" }, 2, 0, -1,
                 new String[] { "tag2" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
 
-        SuggestWriterResult result2 = writer.write(runner.client(), suggester.settings(), suggester.getIndex(),
-                new SuggestItem[] { updatedItem }, true);
+        SuggestWriterResult result2 =
+                writer.write(runner.client(), suggester.settings(), suggester.getIndex(), new SuggestItem[] { updatedItem }, true);
         assertNotNull(result2);
         assertFalse(result2.hasFailure());
 
         runner.refresh();
 
-        GetResponse getResponse = runner.client().prepareGet().setIndex(suggester.getIndex()).setId(item.getId())
-                .get(TimeValue.timeValueSeconds(30));
+        GetResponse getResponse =
+                runner.client().prepareGet().setIndex(suggester.getIndex()).setId(item.getId()).get(TimeValue.timeValueSeconds(30));
         assertTrue(getResponse.isExists());
     }
 
@@ -122,8 +124,8 @@ public class SuggestIndexWriterTest {
         for (int i = 0; i < 3; i++) {
             String[][] readings = new String[1][];
             readings[0] = new String[] { "test" + i };
-            items[i] = new SuggestItem(new String[] { "テスト" + i }, readings, new String[] { "content" }, 1, 0, -1,
-                    new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
+            items[i] = new SuggestItem(new String[] { "テスト" + i }, readings, new String[] { "content" }, 1, 0, -1, new String[] { "tag1" },
+                    new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
         }
 
         SuggestWriterResult result = writer.write(runner.client(), suggester.settings(), suggester.getIndex(), items, false);
@@ -134,16 +136,15 @@ public class SuggestIndexWriterTest {
         runner.refresh();
 
         for (SuggestItem item : items) {
-            GetResponse getResponse = runner.client().prepareGet().setIndex(suggester.getIndex()).setId(item.getId())
-                    .get(TimeValue.timeValueSeconds(30));
+            GetResponse getResponse =
+                    runner.client().prepareGet().setIndex(suggester.getIndex()).setId(item.getId()).get(TimeValue.timeValueSeconds(30));
             assertTrue(getResponse.isExists());
         }
     }
 
     @Test
     public void test_writeEmptyItems() throws Exception {
-        SuggestWriterResult result = writer.write(runner.client(), suggester.settings(), suggester.getIndex(),
-                new SuggestItem[0], false);
+        SuggestWriterResult result = writer.write(runner.client(), suggester.settings(), suggester.getIndex(), new SuggestItem[0], false);
 
         assertNotNull(result);
         assertFalse(result.hasFailure());
@@ -153,14 +154,14 @@ public class SuggestIndexWriterTest {
     public void test_delete() throws Exception {
         String[][] readings = new String[1][];
         readings[0] = new String[] { "test" };
-        SuggestItem item = new SuggestItem(new String[] { "テスト" }, readings, new String[] { "content" }, 1, 0, -1,
-                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
+        SuggestItem item = new SuggestItem(new String[] { "テスト" }, readings, new String[] { "content" }, 1, 0, -1, new String[] { "tag1" },
+                new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
 
         writer.write(runner.client(), suggester.settings(), suggester.getIndex(), new SuggestItem[] { item }, false);
         runner.refresh();
 
-        GetResponse getResponse1 = runner.client().prepareGet().setIndex(suggester.getIndex()).setId(item.getId())
-                .get(TimeValue.timeValueSeconds(30));
+        GetResponse getResponse1 =
+                runner.client().prepareGet().setIndex(suggester.getIndex()).setId(item.getId()).get(TimeValue.timeValueSeconds(30));
         assertTrue(getResponse1.isExists());
 
         SuggestWriterResult result = writer.delete(runner.client(), suggester.settings(), suggester.getIndex(), item.getId());
@@ -170,15 +171,14 @@ public class SuggestIndexWriterTest {
 
         runner.refresh();
 
-        GetResponse getResponse2 = runner.client().prepareGet().setIndex(suggester.getIndex()).setId(item.getId())
-                .get(TimeValue.timeValueSeconds(30));
+        GetResponse getResponse2 =
+                runner.client().prepareGet().setIndex(suggester.getIndex()).setId(item.getId()).get(TimeValue.timeValueSeconds(30));
         assertFalse(getResponse2.isExists());
     }
 
     @Test
     public void test_deleteNonExistent() throws Exception {
-        SuggestWriterResult result = writer.delete(runner.client(), suggester.settings(), suggester.getIndex(),
-                "non-existent-id");
+        SuggestWriterResult result = writer.delete(runner.client(), suggester.settings(), suggester.getIndex(), "non-existent-id");
 
         assertNotNull(result);
         assertFalse(result.hasFailure());
@@ -190,8 +190,8 @@ public class SuggestIndexWriterTest {
         for (int i = 0; i < 3; i++) {
             String[][] readings = new String[1][];
             readings[0] = new String[] { "test" + i };
-            items[i] = new SuggestItem(new String[] { "テスト" + i }, readings, new String[] { "content" }, 1, 0, -1,
-                    new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
+            items[i] = new SuggestItem(new String[] { "テスト" + i }, readings, new String[] { "content" }, 1, 0, -1, new String[] { "tag1" },
+                    new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
         }
 
         writer.write(runner.client(), suggester.settings(), suggester.getIndex(), items, false);
@@ -216,8 +216,8 @@ public class SuggestIndexWriterTest {
         for (int i = 0; i < 3; i++) {
             String[][] readings = new String[1][];
             readings[0] = new String[] { "test" + i };
-            items[i] = new SuggestItem(new String[] { "テスト" + i }, readings, new String[] { "content" }, 1, 0, -1,
-                    new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
+            items[i] = new SuggestItem(new String[] { "テスト" + i }, readings, new String[] { "content" }, 1, 0, -1, new String[] { "tag1" },
+                    new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
         }
 
         writer.write(runner.client(), suggester.settings(), suggester.getIndex(), items, false);
@@ -225,8 +225,8 @@ public class SuggestIndexWriterTest {
 
         assertEquals(3, suggester.getAllWordsNum());
 
-        SuggestWriterResult result = writer.deleteByQuery(runner.client(), suggester.settings(), suggester.getIndex(),
-                QueryBuilders.matchAllQuery());
+        SuggestWriterResult result =
+                writer.deleteByQuery(runner.client(), suggester.settings(), suggester.getIndex(), QueryBuilders.matchAllQuery());
 
         assertNotNull(result);
         assertFalse(result.hasFailure());
@@ -241,11 +241,11 @@ public class SuggestIndexWriterTest {
         String[][] readings = new String[1][];
         readings[0] = new String[] { "test" };
 
-        SuggestItem item1 = new SuggestItem(new String[] { "テスト" }, readings, new String[] { "content" }, 1, 0, -1,
-                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
+        SuggestItem item1 = new SuggestItem(new String[] { "テスト" }, readings, new String[] { "content" }, 1, 0, -1, new String[] { "tag1" },
+                new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
 
-        SuggestItem item2 = new SuggestItem(new String[] { "テスト" }, readings, new String[] { "content" }, 2, 0, -1,
-                new String[] { "tag2" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
+        SuggestItem item2 = new SuggestItem(new String[] { "テスト" }, readings, new String[] { "content" }, 2, 0, -1, new String[] { "tag2" },
+                new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
 
         SuggestItem[] mergedItems = writer.mergeItems(new SuggestItem[] { item1, item2 });
 
@@ -284,20 +284,20 @@ public class SuggestIndexWriterTest {
         // instead of a hardcoded timeout value
         String[][] readings = new String[1][];
         readings[0] = new String[] { "test" };
-        SuggestItem item = new SuggestItem(new String[] { "テスト" }, readings, new String[] { "content" }, 1, 0, -1,
-                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
+        SuggestItem item = new SuggestItem(new String[] { "テスト" }, readings, new String[] { "content" }, 1, 0, -1, new String[] { "tag1" },
+                new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
 
         // The timeout value should come from settings, not hardcoded
-        SuggestWriterResult result = writer.write(runner.client(), suggester.settings(), suggester.getIndex(),
-                new SuggestItem[] { item }, true);
+        SuggestWriterResult result =
+                writer.write(runner.client(), suggester.settings(), suggester.getIndex(), new SuggestItem[] { item }, true);
 
         assertNotNull(result);
         assertFalse(result.hasFailure());
 
         runner.refresh();
 
-        GetResponse getResponse = runner.client().prepareGet().setIndex(suggester.getIndex()).setId(item.getId())
-                .get(TimeValue.timeValueSeconds(30));
+        GetResponse getResponse =
+                runner.client().prepareGet().setIndex(suggester.getIndex()).setId(item.getId()).get(TimeValue.timeValueSeconds(30));
         assertTrue(getResponse.isExists());
     }
 
@@ -305,8 +305,8 @@ public class SuggestIndexWriterTest {
     public void test_writeWithUpdateAndExistingItem() throws Exception {
         String[][] readings = new String[1][];
         readings[0] = new String[] { "test" };
-        SuggestItem item = new SuggestItem(new String[] { "テスト" }, readings, new String[] { "content" }, 1, 0, -1,
-                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
+        SuggestItem item = new SuggestItem(new String[] { "テスト" }, readings, new String[] { "content" }, 1, 0, -1, new String[] { "tag1" },
+                new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
 
         // First write without update
         writer.write(runner.client(), suggester.settings(), suggester.getIndex(), new SuggestItem[] { item }, false);
@@ -316,8 +316,8 @@ public class SuggestIndexWriterTest {
         SuggestItem updatedItem = new SuggestItem(new String[] { "テスト" }, readings, new String[] { "content" }, 3, 0, -1,
                 new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
 
-        SuggestWriterResult result = writer.write(runner.client(), suggester.settings(), suggester.getIndex(),
-                new SuggestItem[] { updatedItem }, true);
+        SuggestWriterResult result =
+                writer.write(runner.client(), suggester.settings(), suggester.getIndex(), new SuggestItem[] { updatedItem }, true);
 
         assertNotNull(result);
         assertFalse(result.hasFailure());
@@ -325,8 +325,8 @@ public class SuggestIndexWriterTest {
         runner.refresh();
 
         // Verify the item was updated (should have merged frequencies)
-        GetResponse getResponse = runner.client().prepareGet().setIndex(suggester.getIndex()).setId(item.getId())
-                .get(TimeValue.timeValueSeconds(30));
+        GetResponse getResponse =
+                runner.client().prepareGet().setIndex(suggester.getIndex()).setId(item.getId()).get(TimeValue.timeValueSeconds(30));
         assertTrue(getResponse.isExists());
         // The actual frequency value would depend on merge logic
     }
@@ -339,8 +339,8 @@ public class SuggestIndexWriterTest {
                 new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
 
         // Write with update=true but item doesn't exist
-        SuggestWriterResult result = writer.write(runner.client(), suggester.settings(), suggester.getIndex(),
-                new SuggestItem[] { item }, true);
+        SuggestWriterResult result =
+                writer.write(runner.client(), suggester.settings(), suggester.getIndex(), new SuggestItem[] { item }, true);
 
         assertNotNull(result);
         assertFalse(result.hasFailure());
@@ -348,8 +348,8 @@ public class SuggestIndexWriterTest {
         runner.refresh();
 
         // Should create the item even though update=true
-        GetResponse getResponse = runner.client().prepareGet().setIndex(suggester.getIndex()).setId(item.getId())
-                .get(TimeValue.timeValueSeconds(30));
+        GetResponse getResponse =
+                runner.client().prepareGet().setIndex(suggester.getIndex()).setId(item.getId()).get(TimeValue.timeValueSeconds(30));
         assertTrue(getResponse.isExists());
     }
 
@@ -359,16 +359,16 @@ public class SuggestIndexWriterTest {
         readings[0] = new String[] { "test" };
 
         // Create 5 items with the same ID but different frequencies
-        SuggestItem item1 = new SuggestItem(new String[] { "テスト" }, readings, new String[] { "content" }, 1, 0, -1,
-                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
-        SuggestItem item2 = new SuggestItem(new String[] { "テスト" }, readings, new String[] { "content" }, 2, 0, -1,
-                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
-        SuggestItem item3 = new SuggestItem(new String[] { "テスト" }, readings, new String[] { "content" }, 3, 0, -1,
-                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
-        SuggestItem item4 = new SuggestItem(new String[] { "テスト" }, readings, new String[] { "content" }, 4, 0, -1,
-                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
-        SuggestItem item5 = new SuggestItem(new String[] { "テスト" }, readings, new String[] { "content" }, 5, 0, -1,
-                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
+        SuggestItem item1 = new SuggestItem(new String[] { "テスト" }, readings, new String[] { "content" }, 1, 0, -1, new String[] { "tag1" },
+                new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
+        SuggestItem item2 = new SuggestItem(new String[] { "テスト" }, readings, new String[] { "content" }, 2, 0, -1, new String[] { "tag1" },
+                new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
+        SuggestItem item3 = new SuggestItem(new String[] { "テスト" }, readings, new String[] { "content" }, 3, 0, -1, new String[] { "tag1" },
+                new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
+        SuggestItem item4 = new SuggestItem(new String[] { "テスト" }, readings, new String[] { "content" }, 4, 0, -1, new String[] { "tag1" },
+                new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
+        SuggestItem item5 = new SuggestItem(new String[] { "テスト" }, readings, new String[] { "content" }, 5, 0, -1, new String[] { "tag1" },
+                new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
 
         SuggestItem[] mergedItems = writer.mergeItems(new SuggestItem[] { item1, item2, item3, item4, item5 });
 

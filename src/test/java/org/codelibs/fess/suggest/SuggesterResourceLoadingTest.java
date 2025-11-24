@@ -43,8 +43,7 @@ public class SuggesterResourceLoadingTest {
     @Test
     public void testGetDefaultMappings_loadsCorrectly() throws Exception {
         // Load resource directly to verify it exists
-        try (InputStream is = getClass().getClassLoader()
-                .getResourceAsStream("suggest_indices/suggest/mappings-default.json")) {
+        try (InputStream is = getClass().getClassLoader().getResourceAsStream("suggest_indices/suggest/mappings-default.json")) {
             assertNotNull("Mapping resource should exist", is);
             final String content = new String(is.readAllBytes(), StandardCharsets.UTF_8);
             assertTrue("Mapping content should not be empty", content.length() > 0);
@@ -58,8 +57,7 @@ public class SuggesterResourceLoadingTest {
     @Test
     public void testGetDefaultIndexSettings_loadsCorrectly() throws Exception {
         // Load resource directly to verify it exists
-        try (InputStream is = getClass().getClassLoader()
-                .getResourceAsStream("suggest_indices/suggest.json")) {
+        try (InputStream is = getClass().getClassLoader().getResourceAsStream("suggest_indices/suggest.json")) {
             assertNotNull("Settings resource should exist", is);
             final String content = new String(is.readAllBytes(), StandardCharsets.UTF_8);
             assertTrue("Settings content should not be empty", content.length() > 0);
@@ -93,8 +91,7 @@ public class SuggesterResourceLoadingTest {
         // Test the pattern used in getDefaultMappings/getDefaultIndexSettings
         // with a non-existent resource
         try {
-            try (final InputStream is = getClass().getClassLoader()
-                    .getResourceAsStream("non/existent/resource.json")) {
+            try (final InputStream is = getClass().getClassLoader().getResourceAsStream("non/existent/resource.json")) {
                 if (is == null) {
                     throw new IOException("Resource not found: non/existent/resource.json");
                 }
@@ -116,8 +113,7 @@ public class SuggesterResourceLoadingTest {
     public void testResourceReading_readAllBytesCorrectness() throws Exception {
         // Read using the new method (readAllBytes)
         String contentNew;
-        try (InputStream is = getClass().getClassLoader()
-                .getResourceAsStream("suggest_indices/suggest/mappings-default.json")) {
+        try (InputStream is = getClass().getClassLoader().getResourceAsStream("suggest_indices/suggest/mappings-default.json")) {
             assertNotNull("Resource should exist", is);
             contentNew = new String(is.readAllBytes(), StandardCharsets.UTF_8);
         }
@@ -141,14 +137,12 @@ public class SuggesterResourceLoadingTest {
         String settings;
 
         // Load both resources
-        try (InputStream is1 = getClass().getClassLoader()
-                .getResourceAsStream("suggest_indices/suggest/mappings-default.json")) {
+        try (InputStream is1 = getClass().getClassLoader().getResourceAsStream("suggest_indices/suggest/mappings-default.json")) {
             assertNotNull("Mappings resource should exist", is1);
             mappings = new String(is1.readAllBytes(), StandardCharsets.UTF_8);
         }
 
-        try (InputStream is2 = getClass().getClassLoader()
-                .getResourceAsStream("suggest_indices/suggest.json")) {
+        try (InputStream is2 = getClass().getClassLoader().getResourceAsStream("suggest_indices/suggest.json")) {
             assertNotNull("Settings resource should exist", is2);
             settings = new String(is2.readAllBytes(), StandardCharsets.UTF_8);
         }
@@ -165,8 +159,7 @@ public class SuggesterResourceLoadingTest {
      */
     @Test
     public void testResourceLoading_utf8Encoding() throws Exception {
-        try (InputStream is = getClass().getClassLoader()
-                .getResourceAsStream("suggest_indices/suggest/mappings-default.json")) {
+        try (InputStream is = getClass().getClassLoader().getResourceAsStream("suggest_indices/suggest/mappings-default.json")) {
             assertNotNull("Resource should exist", is);
 
             // Read with UTF-8 encoding
@@ -190,8 +183,7 @@ public class SuggesterResourceLoadingTest {
     @Test
     public void testResourceLoading_exceptionHandling() {
         try {
-            try (InputStream is = getClass().getClassLoader()
-                    .getResourceAsStream("suggest_indices/suggest/mappings-default.json")) {
+            try (InputStream is = getClass().getClassLoader().getResourceAsStream("suggest_indices/suggest/mappings-default.json")) {
                 assertNotNull("Resource should exist", is);
 
                 // Simulate an exception during processing
@@ -216,8 +208,7 @@ public class SuggesterResourceLoadingTest {
     @Test
     public void testResourceContent_integrity() throws Exception {
         // Test mappings content
-        try (InputStream is = getClass().getClassLoader()
-                .getResourceAsStream("suggest_indices/suggest/mappings-default.json")) {
+        try (InputStream is = getClass().getClassLoader().getResourceAsStream("suggest_indices/suggest/mappings-default.json")) {
             assertNotNull("Mappings resource should exist", is);
             final String mappings = new String(is.readAllBytes(), StandardCharsets.UTF_8);
 
@@ -227,8 +218,7 @@ public class SuggesterResourceLoadingTest {
         }
 
         // Test settings content
-        try (InputStream is = getClass().getClassLoader()
-                .getResourceAsStream("suggest_indices/suggest.json")) {
+        try (InputStream is = getClass().getClassLoader().getResourceAsStream("suggest_indices/suggest.json")) {
             assertNotNull("Settings resource should exist", is);
             final String settings = new String(is.readAllBytes(), StandardCharsets.UTF_8);
 

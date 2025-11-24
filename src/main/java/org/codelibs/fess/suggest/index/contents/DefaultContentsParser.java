@@ -102,8 +102,8 @@ public class DefaultContentsParser implements ContentsParser {
             if (wordsList.isEmpty()) {
                 return null;
             }
-            return new SuggestItem(wordsList.toArray(String[]::new), readingList.toArray(String[][]::new),
-                    fields, 0, score, -1, tags, roles, langs, SuggestItem.Kind.QUERY);
+            return new SuggestItem(wordsList.toArray(String[]::new), readingList.toArray(String[][]::new), fields, 0, score, -1, tags,
+                    roles, langs, SuggestItem.Kind.QUERY);
         } catch (final IOException e) {
             throw new SuggesterException("Failed to create SuggestItem from search words.", e);
         }
@@ -256,8 +256,8 @@ public class DefaultContentsParser implements ContentsParser {
      * @param useReading Whether to use reading analysis
      * @return List of tokens
      */
-    private List<AnalyzeToken> analyzeTextInternal(final SuggestAnalyzer analyzer, final String field, final String text,
-            final String lang, final boolean useReading) {
+    private List<AnalyzeToken> analyzeTextInternal(final SuggestAnalyzer analyzer, final String field, final String text, final String lang,
+            final boolean useReading) {
         final List<AnalyzeToken> tokens = new ArrayList<>();
         final StringBuilder buf = new StringBuilder(maxAnalyzedContentLength);
         final String analyzeType = useReading ? "reading " : "";
@@ -289,8 +289,7 @@ public class DefaultContentsParser implements ContentsParser {
     private void processBuffer(final SuggestAnalyzer analyzer, final String field, final String lang, final boolean useReading,
             final List<AnalyzeToken> tokens, final StringBuilder buf, final String analyzeType, final boolean isLast) {
         try {
-            final List<AnalyzeToken> result = useReading
-                    ? analyzer.analyzeAndReading(buf.toString().trim(), field, lang)
+            final List<AnalyzeToken> result = useReading ? analyzer.analyzeAndReading(buf.toString().trim(), field, lang)
                     : analyzer.analyze(buf.toString().trim(), field, lang);
             if (result != null) {
                 tokens.addAll(result);
@@ -299,9 +298,11 @@ public class DefaultContentsParser implements ContentsParser {
             final String lastPrefix = isLast ? "last " : "";
             final String typeDesc = useReading ? "reading " : "";
             if (logger.isDebugEnabled()) {
-                logger.warn("Failed to analyze {}{}text: field={}, lang={}, textSize={}", lastPrefix, typeDesc, field, lang, buf.length(), e);
+                logger.warn("Failed to analyze {}{}text: field={}, lang={}, textSize={}", lastPrefix, typeDesc, field, lang, buf.length(),
+                        e);
             } else {
-                logger.warn("Failed to analyze {}{}text: field={}, lang={}, textSize={}, error={}", lastPrefix, typeDesc, field, lang, buf.length(), e.getMessage());
+                logger.warn("Failed to analyze {}{}text: field={}, lang={}, textSize={}, error={}", lastPrefix, typeDesc, field, lang,
+                        buf.length(), e.getMessage());
             }
         }
     }

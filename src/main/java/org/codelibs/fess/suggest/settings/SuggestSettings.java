@@ -429,7 +429,8 @@ public class SuggestSettings {
      */
     public void set(final Map<String, Object> map) {
         if (logger.isDebugEnabled()) {
-            logger.debug("Setting suggest settings (bulk): index={}, settingsId={}, settings={}", settingsIndexName, settingsId, map.toString());
+            logger.debug("Setting suggest settings (bulk): index={}, settingsId={}, settings={}", settingsIndexName, settingsId,
+                    map.toString());
         }
         try {
             final XContentBuilder builder = JsonXContent.contentBuilder().map(map);

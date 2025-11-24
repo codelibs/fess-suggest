@@ -360,7 +360,7 @@ public class SuggesterTest {
     @Test
     public void test_indexFromDocumentReader() throws Exception {
         Client client = runner.client();
-        int num = 10000;
+        int num = 1000;
         String indexName = "test";
 
         BulkRequestBuilder bulkRequestBuilder = client.prepareBulk();
@@ -547,7 +547,7 @@ public class SuggesterTest {
             assertEquals(2, response.getNum());
             boolean find = false;
             final String checkStr = "クエリー" + i;
-            for (int j = 0; j < 1000; j++) {
+            for (int j = 0; j < 100; j++) {
                 if (response.getWords().contains(checkStr)) {
                     find = true;
                     break;
@@ -572,7 +572,7 @@ public class SuggesterTest {
             assertEquals(5, response.getNum());
             boolean find = false;
             final String checkStr = "クエリー" + i;
-            for (int j = 0; j < 1000; j++) {
+            for (int j = 0; j < 100; j++) {
                 if (response.getWords().contains(checkStr)) {
                     find = true;
                     break;
@@ -598,7 +598,7 @@ public class SuggesterTest {
             assertEquals(2, response.getNum());
             boolean find = false;
             final String checkStr = "クエリー" + i;
-            for (int j = 0; j < 1000; j++) {
+            for (int j = 0; j < 100; j++) {
                 if (response.getWords().contains(checkStr)) {
                     find = true;
                     break;

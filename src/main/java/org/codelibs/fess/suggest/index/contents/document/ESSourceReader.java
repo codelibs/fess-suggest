@@ -203,7 +203,8 @@ public class ESSourceReader implements DocumentReader {
         }
 
         if (logger.isInfoEnabled()) {
-            logger.info("Setting document limit percentage: index={}, requestedPercentage={}, actualPercentage={}%", indexName, limitPercentage, this.limitPercentage);
+            logger.info("Setting document limit percentage: index={}, requestedPercentage={}, actualPercentage={}%", indexName,
+                    limitPercentage, this.limitPercentage);
         }
     }
 
