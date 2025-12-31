@@ -373,9 +373,9 @@ public class SuggestIndexer {
         }
         try {
             final long start = System.currentTimeMillis();
-            final Stream<QueryLog> stream = Stream.of(queryLogs);
+            Stream<QueryLog> stream = Stream.of(queryLogs);
             if (parallel) {
-                stream.parallel();
+                stream = stream.parallel();
             }
             final SuggestItem[] array = stream.flatMap(queryLog -> contentsParser
                     .parseQueryLog(queryLog, supportedFields, tagFieldNames, roleFieldName, readingConverter, normalizer)
@@ -447,9 +447,9 @@ public class SuggestIndexer {
     public SuggestIndexResponse indexFromDocument(final Map<String, Object>[] documents) {
         final long start = System.currentTimeMillis();
         try {
-            final Stream<Map<String, Object>> stream = Stream.of(documents);
+            Stream<Map<String, Object>> stream = Stream.of(documents);
             if (parallel) {
-                stream.parallel();
+                stream = stream.parallel();
             }
             final SuggestItem[] items = stream.flatMap(document -> {
                 try {

@@ -47,11 +47,17 @@ public class ReadingConverterChain implements ReadingConverter {
     public List<String> convert(final String text, final String field, final String... lang) throws IOException {
         // Use LinkedHashSet to maintain insertion order while eliminating duplicates
         final Set<String> resultSet = new LinkedHashSet<>();
-        resultSet.add(text);
+        if (text != null) {
+            resultSet.add(text);
+        }
 
         // Start with the original text as the first input
         List<String> currentInputs = new ArrayList<>();
-        currentInputs.add(text);
+        if (text != null) {
+            currentInputs.add(text);
+        }
+
+        final int maxReadingNum = getMaxReadingNum();
 
         // Apply each converter in sequence
         for (final ReadingConverter converter : converters) {
@@ -59,15 +65,22 @@ public class ReadingConverterChain implements ReadingConverter {
 
             // Process each input from the previous converter
             for (final String input : currentInputs) {
-                if (resultSet.size() >= getMaxReadingNum()) {
+                if (resultSet.size() >= maxReadingNum) {
                     break;
                 }
 
                 // Convert the input and collect results
                 final List<String> results = converter.convert(input, field, lang);
+                if (results == null) {
+                    continue;
+                }
                 for (final String result : results) {
+                    // Skip null results
+                    if (result == null) {
+                        continue;
+                    }
                     // Add to result set (automatically handles duplicates)
-                    if (resultSet.add(result) && resultSet.size() <= getMaxReadingNum()) {
+                    if (resultSet.add(result) && resultSet.size() <= maxReadingNum) {
                         nextInputs.add(result);
                     }
                 }
@@ -77,7 +90,12 @@ public class ReadingConverterChain implements ReadingConverter {
             currentInputs = nextInputs;
         }
 
-        return new ArrayList<>(resultSet);
+        // Ensure the result respects maxReadingNum limit
+        final List<String> resultList = new ArrayList<>(resultSet);
+        if (resultList.size() > maxReadingNum) {
+            return resultList.subList(0, maxReadingNum);
+        }
+        return resultList;
     }
 
     /**
