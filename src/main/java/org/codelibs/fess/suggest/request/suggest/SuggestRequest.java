@@ -18,8 +18,10 @@ package org.codelibs.fess.suggest.request.suggest;
 import java.io.IOException;
 import java.lang.Character.UnicodeBlock;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.codelibs.fess.suggest.concurrent.Deferred;
 import org.codelibs.fess.suggest.constants.FieldNames;
@@ -263,10 +265,13 @@ public class SuggestRequest extends Request<SuggestResponse> {
             filterList.add(buildFilterQuery(FieldNames.TAGS, tags));
         }
 
-        roles.add(SuggestConstants.DEFAULT_ROLE);
-        if (!roles.isEmpty()) {
-            filterList.add(buildFilterQuery(FieldNames.ROLES, roles));
+        // Create a new list to avoid modifying the original roles list
+        final List<String> rolesWithDefault = new ArrayList<>(roles.size() + 1);
+        rolesWithDefault.addAll(roles);
+        if (!rolesWithDefault.contains(SuggestConstants.DEFAULT_ROLE)) {
+            rolesWithDefault.add(SuggestConstants.DEFAULT_ROLE);
         }
+        filterList.add(buildFilterQuery(FieldNames.ROLES, rolesWithDefault));
 
         if (!fields.isEmpty()) {
             filterList.add(buildFilterQuery(FieldNames.FIELDS, fields));
@@ -417,6 +422,7 @@ public class SuggestRequest extends Request<SuggestResponse> {
     protected SuggestResponse createResponse(final SearchResponse searchResponse) {
         final SearchHit[] hits = searchResponse.getHits().getHits();
         final List<String> words = new ArrayList<>();
+        final Set<String> seenNormalizedWords = new HashSet<>();
         final List<String> firstWords = new ArrayList<>();
         final List<String> secondWords = new ArrayList<>();
         final List<SuggestItem> firstItems = new ArrayList<>();
@@ -437,8 +443,8 @@ public class SuggestRequest extends Request<SuggestResponse> {
             final Map<String, Object> source = hit.getSourceAsMap();
             final String text = source.get(FieldNames.TEXT).toString();
             if (skipDuplicateWords) {
-                final String duplicateCheckStr = text.replace(" ", "");
-                if (words.stream().map(word -> word.replace(" ", "")).anyMatch(word -> word.equals(duplicateCheckStr))) {
+                final String normalizedText = text.replace(" ", "");
+                if (!seenNormalizedWords.add(normalizedText)) {
                     // skip duplicate word.
                     continue;
                 }
