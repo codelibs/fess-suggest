@@ -393,7 +393,7 @@ public class SuggesterIndexLifecycleTest {
         // Verify only new index remains
         GetIndexResponse indices =
                 runner.admin().indices().prepareGetIndex().addIndices(BASE_INDEX + "*").execute().actionGet();
-        assertEquals("Should have only 1 index after cleanup", 1, indices.length);
+        assertEquals("Should have only 1 index after cleanup", 1, indices.getIndices().length);
 
         // Data should still be accessible
         assertEquals("Should still have 1 word", 1, suggester.getAllWordsNum());
