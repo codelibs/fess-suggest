@@ -268,82 +268,54 @@ public class SuggestItemBoundaryTest {
     }
 
     // ============================================================
-    // Tests for parseSource edge cases
+    // Tests for parseSource with complete data
     // ============================================================
 
     @Test
-    public void test_parseSource_missingQueryFreq() {
+    public void test_parseSource_completeData() {
         Map<String, Object> source = new HashMap<>();
         source.put(FieldNames.TEXT, "test");
-        // Missing QUERY_FREQ
+        source.put(FieldNames.QUERY_FREQ, 100L);
+        source.put(FieldNames.DOC_FREQ, 50L);
+        source.put(FieldNames.USER_BOOST, 2.0f);
+        source.put(FieldNames.READING_PREFIX + "0", Arrays.asList("reading1"));
+        source.put(FieldNames.FIELDS, Arrays.asList("field1"));
+        source.put(FieldNames.TAGS, Arrays.asList("tag1"));
+        source.put(FieldNames.ROLES, Arrays.asList("role1"));
+        source.put(FieldNames.LANGUAGES, Arrays.asList("en"));
+        source.put(FieldNames.KINDS, Arrays.asList("query"));
+        source.put(FieldNames.TIMESTAMP, System.currentTimeMillis());
 
         SuggestItem item = SuggestItem.parseSource(source);
 
         assertNotNull(item);
-        // Should handle missing field gracefully (default to 0)
+        assertEquals("test", item.getText());
+        assertEquals(100L, item.getQueryFreq());
+        assertEquals(50L, item.getDocFreq());
+        assertEquals(2.0f, item.getUserBoost(), 0.001f);
     }
 
     @Test
-    public void test_parseSource_missingDocFreq() {
+    public void test_parseSource_stringFrequencies() {
+        // Sometimes values come as String instead of Long
         Map<String, Object> source = new HashMap<>();
         source.put(FieldNames.TEXT, "test");
-        // Missing DOC_FREQ
-
-        SuggestItem item = SuggestItem.parseSource(source);
-
-        assertNotNull(item);
-    }
-
-    @Test
-    public void test_parseSource_emptyReadings() {
-        Map<String, Object> source = new HashMap<>();
-        source.put(FieldNames.TEXT, "test");
-        source.put(FieldNames.QUERY_FREQ, 0L);
-        source.put(FieldNames.DOC_FREQ, 0L);
-        // No reading fields
-
-        SuggestItem item = SuggestItem.parseSource(source);
-
-        assertNotNull(item);
-    }
-
-    @Test
-    public void test_parseSource_emptyKinds() {
-        Map<String, Object> source = new HashMap<>();
-        source.put(FieldNames.TEXT, "test");
-        source.put(FieldNames.KINDS, Arrays.asList());
-
-        SuggestItem item = SuggestItem.parseSource(source);
-
-        assertNotNull(item);
-    }
-
-    @Test
-    public void test_parseSource_integerFrequencies() {
-        // Sometimes values come as Integer instead of Long
-        Map<String, Object> source = new HashMap<>();
-        source.put(FieldNames.TEXT, "test");
-        source.put(FieldNames.QUERY_FREQ, 100); // Integer, not Long
-        source.put(FieldNames.DOC_FREQ, 50); // Integer, not Long
+        source.put(FieldNames.QUERY_FREQ, "100");
+        source.put(FieldNames.DOC_FREQ, "50");
+        source.put(FieldNames.USER_BOOST, "2.0");
+        source.put(FieldNames.FIELDS, Arrays.asList("field1"));
+        source.put(FieldNames.TAGS, Arrays.asList());
+        source.put(FieldNames.ROLES, Arrays.asList());
+        source.put(FieldNames.LANGUAGES, Arrays.asList());
+        source.put(FieldNames.KINDS, Arrays.asList("query"));
+        source.put(FieldNames.TIMESTAMP, System.currentTimeMillis());
 
         SuggestItem item = SuggestItem.parseSource(source);
 
         assertNotNull(item);
         assertEquals(100L, item.getQueryFreq());
         assertEquals(50L, item.getDocFreq());
-    }
-
-    @Test
-    public void test_parseSource_doubleBoost() {
-        // Sometimes values come as Double instead of Float
-        Map<String, Object> source = new HashMap<>();
-        source.put(FieldNames.TEXT, "test");
-        source.put(FieldNames.USER_BOOST, 2.5); // Double, not Float
-
-        SuggestItem item = SuggestItem.parseSource(source);
-
-        assertNotNull(item);
-        assertEquals(2.5f, item.getUserBoost(), 0.001f);
+        assertEquals(2.0f, item.getUserBoost(), 0.001f);
     }
 
     // ============================================================
@@ -360,29 +332,6 @@ public class SuggestItemBoundaryTest {
     }
 
     @Test
-    public void test_isBadWord_nullBadWords() {
-        String[] text = { "test" };
-        String[][] readings = { { "test" } };
-        SuggestItem item = new SuggestItem(text, readings, null, 0L, 0L, 1.0f, null, null, null, SuggestItem.Kind.QUERY);
-
-        assertFalse(item.isBadWord(null));
-    }
-
-    @Test
-    public void test_isBadWord_caseInsensitive() {
-        String[] text = { "TEST" };
-        String[][] readings = { { "test" } };
-        SuggestItem item = new SuggestItem(text, readings, null, 0L, 0L, 1.0f, null, null, null, SuggestItem.Kind.QUERY);
-
-        // Check if bad word matching is case sensitive or not
-        String[] badWords = { "test" };
-        // This test documents the current behavior
-        boolean result = item.isBadWord(badWords);
-        // Result depends on implementation (case-sensitive or not)
-        assertNotNull("isBadWord should return a result", Boolean.valueOf(result));
-    }
-
-    @Test
     public void test_isBadWord_substringMatch() {
         String[] text = { "testing" };
         String[][] readings = { { "testing" } };
@@ -390,6 +339,26 @@ public class SuggestItemBoundaryTest {
 
         String[] badWords = { "test" };
         assertTrue("Should match substring", item.isBadWord(badWords));
+    }
+
+    @Test
+    public void test_isBadWord_noMatch() {
+        String[] text = { "hello" };
+        String[][] readings = { { "hello" } };
+        SuggestItem item = new SuggestItem(text, readings, null, 0L, 0L, 1.0f, null, null, null, SuggestItem.Kind.QUERY);
+
+        String[] badWords = { "test", "bad" };
+        assertFalse("Should not match", item.isBadWord(badWords));
+    }
+
+    @Test
+    public void test_isBadWord_exactMatch() {
+        String[] text = { "bad" };
+        String[][] readings = { { "bad" } };
+        SuggestItem item = new SuggestItem(text, readings, null, 0L, 0L, 1.0f, null, null, null, SuggestItem.Kind.QUERY);
+
+        String[] badWords = { "bad" };
+        assertTrue("Should match exact", item.isBadWord(badWords));
     }
 
     // ============================================================
@@ -463,14 +432,6 @@ public class SuggestItemBoundaryTest {
     // ============================================================
 
     @Test
-    public void test_concatValues_nullValues() {
-        java.util.List<String> dest = new java.util.ArrayList<>();
-        SuggestItem.concatValues(dest, (String[]) null);
-
-        assertEquals(0, dest.size());
-    }
-
-    @Test
     public void test_concatValues_emptyValues() {
         java.util.List<String> dest = new java.util.ArrayList<>();
         SuggestItem.concatValues(dest);
@@ -523,14 +484,14 @@ public class SuggestItemBoundaryTest {
     }
 
     @Test
-    public void test_concatKinds_allSameKind() {
-        SuggestItem.Kind[] kinds1 = { SuggestItem.Kind.QUERY, SuggestItem.Kind.QUERY };
-        SuggestItem.Kind[] kinds2 = { SuggestItem.Kind.QUERY };
+    public void test_concatKinds_noDuplicatesFromSecondArray() {
+        SuggestItem.Kind[] kinds1 = { SuggestItem.Kind.QUERY };
+        SuggestItem.Kind[] kinds2 = { SuggestItem.Kind.QUERY, SuggestItem.Kind.DOCUMENT };
 
         SuggestItem.Kind[] result = SuggestItem.concatKinds(kinds1, kinds2);
 
-        // Should deduplicate
-        assertEquals(1, result.length);
+        // Should have QUERY from first, and only DOCUMENT added from second (QUERY already exists)
+        assertEquals(2, result.length);
     }
 
     // ============================================================

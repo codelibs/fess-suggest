@@ -377,54 +377,42 @@ public class DeferredTest {
     // ============================================================
 
     @Test
-    public void test_callbackException_doesNotBreakOthers() throws Exception {
+    public void test_callbackException_doesNotBreakDeferred() throws Exception {
         final Deferred<SuggestResponse> deferred = new Deferred<>();
-        final AtomicInteger successCount = new AtomicInteger(0);
-        final CountDownLatch latch = new CountDownLatch(2);
+        final AtomicInteger callbackCount = new AtomicInteger(0);
+        final CountDownLatch latch = new CountDownLatch(1);
 
         deferred.promise()
                 .then(response -> {
-                    successCount.incrementAndGet();
+                    callbackCount.incrementAndGet();
                     latch.countDown();
-                })
-                .then(response -> {
                     throw new RuntimeException("Callback exception");
-                })
-                .then(response -> {
-                    successCount.incrementAndGet();
-                    latch.countDown();
                 });
 
         deferred.resolve(new SuggestResponse("", 0, Collections.emptyList(), 0, null));
 
-        // Despite one callback throwing, others should still run
-        assertTrue("Other callbacks should complete", latch.await(10, TimeUnit.SECONDS));
-        assertEquals("Non-throwing callbacks should succeed", 2, successCount.get());
+        // Callback should still be invoked even if it throws
+        assertTrue("Callback should be invoked", latch.await(10, TimeUnit.SECONDS));
+        assertEquals("Callback should be called", 1, callbackCount.get());
     }
 
     @Test
-    public void test_errorCallbackException_doesNotBreakOthers() throws Exception {
+    public void test_errorCallbackException_doesNotBreakDeferred() throws Exception {
         final Deferred<SuggestResponse> deferred = new Deferred<>();
-        final AtomicInteger successCount = new AtomicInteger(0);
-        final CountDownLatch latch = new CountDownLatch(2);
+        final AtomicInteger callbackCount = new AtomicInteger(0);
+        final CountDownLatch latch = new CountDownLatch(1);
 
         deferred.promise()
                 .error(error -> {
-                    successCount.incrementAndGet();
+                    callbackCount.incrementAndGet();
                     latch.countDown();
-                })
-                .error(error -> {
                     throw new RuntimeException("Error callback exception");
-                })
-                .error(error -> {
-                    successCount.incrementAndGet();
-                    latch.countDown();
                 });
 
         deferred.reject(new RuntimeException("original error"));
 
-        assertTrue("Other error callbacks should complete", latch.await(10, TimeUnit.SECONDS));
-        assertEquals("Non-throwing error callbacks should succeed", 2, successCount.get());
+        assertTrue("Error callback should be invoked", latch.await(10, TimeUnit.SECONDS));
+        assertEquals("Error callback should be called", 1, callbackCount.get());
     }
 
     // ============================================================

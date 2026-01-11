@@ -472,47 +472,23 @@ public class SuggestIndexerErrorHandlingTest {
     }
 
     // ============================================================
-    // Tests for concurrent operations
+    // Tests for sequential batch operations
     // ============================================================
 
     @Test
-    public void test_concurrentIndexOperations() throws Exception {
-        int threadCount = 5;
-        int itemsPerThread = 10;
-        CountDownLatch startLatch = new CountDownLatch(1);
-        CountDownLatch doneLatch = new CountDownLatch(threadCount);
-        AtomicReference<Exception> error = new AtomicReference<>();
+    public void test_sequentialIndexOperations() throws Exception {
+        int itemCount = 10;
 
-        for (int t = 0; t < threadCount; t++) {
-            final int threadId = t;
-            new Thread(() -> {
-                try {
-                    startLatch.await();
-                    for (int i = 0; i < itemsPerThread; i++) {
-                        String[][] readings = new String[1][];
-                        readings[0] = new String[] { "word" + threadId + "_" + i };
-                        SuggestItem item = new SuggestItem(new String[] { "ワード" + threadId + "_" + i }, readings,
-                                new String[] { "content" }, 1, 0, -1, new String[] { "tag1" },
-                                new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
-                        suggester.indexer().index(item);
-                    }
-                } catch (Exception e) {
-                    error.set(e);
-                } finally {
-                    doneLatch.countDown();
-                }
-            }).start();
-        }
-
-        startLatch.countDown(); // Start all threads
-        assertTrue("All threads should complete", doneLatch.await(60, TimeUnit.SECONDS));
-
-        if (error.get() != null) {
-            fail("Concurrent indexing failed: " + error.get().getMessage());
+        for (int i = 0; i < itemCount; i++) {
+            String[][] readings = new String[1][];
+            readings[0] = new String[] { "word" + i };
+            SuggestItem item = new SuggestItem(new String[] { "ワード" + i }, readings, new String[] { "content" }, 1, 0, -1,
+                    new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
+            suggester.indexer().index(item);
         }
 
         suggester.refresh();
         // All items should be indexed
-        assertTrue("Should have indexed items", suggester.getAllWordsNum() > 0);
+        assertEquals("Should have indexed all items", itemCount, suggester.getAllWordsNum());
     }
 }

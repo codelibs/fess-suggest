@@ -156,8 +156,12 @@ public class SuggestRequestQueryBuildingTest {
 
             @Override
             public List<String> convert(String text, String field, String... langs) throws IOException {
-                // Return multiple readings for the text
-                return Arrays.asList(text, text + "_reading");
+                // Return multiple readings for the text - must return modifiable list
+                // because the code calls clear() on the returned list
+                List<String> result = new ArrayList<>();
+                result.add(text);
+                result.add(text + "_reading");
+                return result;
             }
         };
         request.setReadingConverter(converter);
@@ -301,10 +305,10 @@ public class SuggestRequestQueryBuildingTest {
         QueryBuilder result = request.buildFunctionScoreQuery("test", innerQuery);
 
         String queryString = result.toString();
-        // Should contain doc_freq, query_freq, and user_boost factors
-        assertTrue("Should contain doc_freq", queryString.contains("doc_freq"));
-        assertTrue("Should contain query_freq", queryString.contains("query_freq"));
-        assertTrue("Should contain user_boost", queryString.contains("user_boost"));
+        // Should contain docFreq, queryFreq, and userBoost factors (camelCase field names)
+        assertTrue("Should contain docFreq", queryString.contains("docFreq"));
+        assertTrue("Should contain queryFreq", queryString.contains("queryFreq"));
+        assertTrue("Should contain userBoost", queryString.contains("userBoost"));
     }
 
     @Test
