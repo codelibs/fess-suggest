@@ -46,8 +46,10 @@ public class SuggesterIndexLifecycleTest {
         runner.onBuild((number, settingsBuilder) -> {
             settingsBuilder.put("http.cors.enabled", true);
             settingsBuilder.put("discovery.type", "single-node");
-        }).build(newConfigs().clusterName("SuggesterIndexLifecycleTest").numOfNode(1)
-                .pluginTypes("org.codelibs.opensearch.extension.ExtensionPlugin"));
+        })
+                .build(newConfigs().clusterName("SuggesterIndexLifecycleTest")
+                        .numOfNode(1)
+                        .pluginTypes("org.codelibs.opensearch.extension.ExtensionPlugin"));
         runner.ensureYellow();
     }
 
@@ -117,8 +119,8 @@ public class SuggesterIndexLifecycleTest {
         // Index some data
         String[][] readings = new String[1][];
         readings[0] = new String[] { "test" };
-        SuggestItem item = new SuggestItem(new String[] { "テスト" }, readings, new String[] { "content" }, 1, 0, -1,
-                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
+        SuggestItem item = new SuggestItem(new String[] { "テスト" }, readings, new String[] { "content" }, 1, 0, -1, new String[] { "tag1" },
+                new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
         suggester.indexer().index(item);
         suggester.refresh();
 
@@ -137,8 +139,7 @@ public class SuggesterIndexLifecycleTest {
         suggester.createNextIndex();
 
         // Verify we now have two indices
-        GetIndexResponse response =
-                runner.admin().indices().prepareGetIndex().addIndices(INDEX_NAME + "*").execute().actionGet();
+        GetIndexResponse response = runner.admin().indices().prepareGetIndex().addIndices(INDEX_NAME + "*").execute().actionGet();
         assertEquals("Should have two indices", 2, response.getIndices().length);
     }
 
@@ -150,8 +151,8 @@ public class SuggesterIndexLifecycleTest {
         // Index data in initial index
         String[][] readings = new String[1][];
         readings[0] = new String[] { "initial" };
-        SuggestItem item = new SuggestItem(new String[] { "初期" }, readings, new String[] { "content" }, 1, 0, -1,
-                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
+        SuggestItem item = new SuggestItem(new String[] { "初期" }, readings, new String[] { "content" }, 1, 0, -1, new String[] { "tag1" },
+                new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
         suggester.indexer().index(item);
         suggester.refresh();
 
@@ -163,8 +164,8 @@ public class SuggesterIndexLifecycleTest {
         // Index different data in new index (via update alias)
         String[][] readings2 = new String[1][];
         readings2[0] = new String[] { "next" };
-        SuggestItem item2 = new SuggestItem(new String[] { "次" }, readings2, new String[] { "content" }, 1, 0, -1,
-                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
+        SuggestItem item2 = new SuggestItem(new String[] { "次" }, readings2, new String[] { "content" }, 1, 0, -1, new String[] { "tag1" },
+                new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
         suggester.indexer().index(item2);
         suggester.refresh();
 
@@ -189,16 +190,14 @@ public class SuggesterIndexLifecycleTest {
         suggester.switchIndex();
 
         // Before cleanup
-        GetIndexResponse beforeRemove =
-                runner.admin().indices().prepareGetIndex().addIndices(INDEX_NAME + "*").execute().actionGet();
+        GetIndexResponse beforeRemove = runner.admin().indices().prepareGetIndex().addIndices(INDEX_NAME + "*").execute().actionGet();
         assertTrue("Should have at least 2 indices before cleanup", beforeRemove.getIndices().length >= 2);
 
         // Remove orphaned indices
         suggester.removeDisableIndices();
 
         // After cleanup
-        GetIndexResponse afterRemove =
-                runner.admin().indices().prepareGetIndex().addIndices(INDEX_NAME + "*").execute().actionGet();
+        GetIndexResponse afterRemove = runner.admin().indices().prepareGetIndex().addIndices(INDEX_NAME + "*").execute().actionGet();
         assertEquals("Should have only 1 index after cleanup", 1, afterRemove.getIndices().length);
     }
 
@@ -210,8 +209,8 @@ public class SuggesterIndexLifecycleTest {
         // Index some data
         String[][] readings = new String[1][];
         readings[0] = new String[] { "test" };
-        SuggestItem item = new SuggestItem(new String[] { "テスト" }, readings, new String[] { "content" }, 1, 0, -1,
-                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
+        SuggestItem item = new SuggestItem(new String[] { "テスト" }, readings, new String[] { "content" }, 1, 0, -1, new String[] { "tag1" },
+                new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
         suggester.indexer().index(item);
         suggester.refresh();
 
@@ -234,8 +233,8 @@ public class SuggesterIndexLifecycleTest {
         // Index some data
         String[][] readings = new String[1][];
         readings[0] = new String[] { "initial" };
-        SuggestItem item = new SuggestItem(new String[] { "初期" }, readings, new String[] { "content" }, 1, 0, -1,
-                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
+        SuggestItem item = new SuggestItem(new String[] { "初期" }, readings, new String[] { "content" }, 1, 0, -1, new String[] { "tag1" },
+                new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
         suggester.indexer().index(item);
         suggester.refresh();
 
@@ -248,8 +247,8 @@ public class SuggesterIndexLifecycleTest {
         // Index different data in new index
         String[][] readings2 = new String[1][];
         readings2[0] = new String[] { "next" };
-        SuggestItem item2 = new SuggestItem(new String[] { "次" }, readings2, new String[] { "content" }, 1, 0, -1,
-                new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
+        SuggestItem item2 = new SuggestItem(new String[] { "次" }, readings2, new String[] { "content" }, 1, 0, -1, new String[] { "tag1" },
+                new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
         suggester.indexer().index(item2);
         suggester.refresh();
 
@@ -267,8 +266,7 @@ public class SuggesterIndexLifecycleTest {
         suggester.removeDisableIndices();
 
         // Verify only new index remains
-        GetIndexResponse indices =
-                runner.admin().indices().prepareGetIndex().addIndices(INDEX_NAME + "*").execute().actionGet();
+        GetIndexResponse indices = runner.admin().indices().prepareGetIndex().addIndices(INDEX_NAME + "*").execute().actionGet();
         assertEquals("Should have only 1 index after cleanup", 1, indices.getIndices().length);
 
         // Data should still be accessible

@@ -185,8 +185,8 @@ public class SuggestItemBoundaryTest {
         String[] text = { "test" };
         String[][] readings = { { "test" } };
 
-        SuggestItem item = new SuggestItem(text, readings, null, Long.MAX_VALUE, Long.MAX_VALUE, 1.0f, null, null, null,
-                SuggestItem.Kind.QUERY);
+        SuggestItem item =
+                new SuggestItem(text, readings, null, Long.MAX_VALUE, Long.MAX_VALUE, 1.0f, null, null, null, SuggestItem.Kind.QUERY);
 
         assertEquals(Long.MAX_VALUE, item.getDocFreq());
         assertEquals(Long.MAX_VALUE, item.getQueryFreq());

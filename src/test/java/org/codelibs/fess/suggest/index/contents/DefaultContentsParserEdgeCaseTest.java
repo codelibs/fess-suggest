@@ -60,8 +60,10 @@ public class DefaultContentsParserEdgeCaseTest {
         runner.onBuild((number, settingsBuilder) -> {
             settingsBuilder.put("http.cors.enabled", true);
             settingsBuilder.put("discovery.type", "single-node");
-        }).build(newConfigs().clusterName("DefaultContentsParserEdgeCaseTest").numOfNode(1)
-                .pluginTypes("org.codelibs.opensearch.extension.ExtensionPlugin"));
+        })
+                .build(newConfigs().clusterName("DefaultContentsParserEdgeCaseTest")
+                        .numOfNode(1)
+                        .pluginTypes("org.codelibs.opensearch.extension.ExtensionPlugin"));
         runner.ensureYellow();
     }
 
@@ -95,9 +97,8 @@ public class DefaultContentsParserEdgeCaseTest {
         String[] fields = new String[] { "content" };
 
         SuggestAnalyzer analyzer = suggester.settings().analyzer().new DefaultContentsAnalyzer();
-        SuggestItem item =
-                parser.parseSearchWords(words, null, fields, null, null, 1, createDefaultReadingConverter(), createDefaultNormalizer(),
-                        analyzer, null);
+        SuggestItem item = parser.parseSearchWords(words, null, fields, null, null, 1, createDefaultReadingConverter(),
+                createDefaultNormalizer(), analyzer, null);
 
         assertNull("Empty words array should return null", item);
     }
@@ -107,9 +108,8 @@ public class DefaultContentsParserEdgeCaseTest {
         String[] words = new String[] { "test" };
 
         SuggestAnalyzer analyzer = suggester.settings().analyzer().new DefaultContentsAnalyzer();
-        SuggestItem item =
-                parser.parseSearchWords(words, null, null, null, null, 1, createDefaultReadingConverter(), createDefaultNormalizer(),
-                        analyzer, null);
+        SuggestItem item = parser.parseSearchWords(words, null, null, null, null, 1, createDefaultReadingConverter(),
+                createDefaultNormalizer(), analyzer, null);
 
         // Should handle null fields gracefully
         assertNotNull(item);
@@ -121,9 +121,8 @@ public class DefaultContentsParserEdgeCaseTest {
         String[] fields = new String[0];
 
         SuggestAnalyzer analyzer = suggester.settings().analyzer().new DefaultContentsAnalyzer();
-        SuggestItem item =
-                parser.parseSearchWords(words, null, fields, null, null, 1, createDefaultReadingConverter(), createDefaultNormalizer(),
-                        analyzer, null);
+        SuggestItem item = parser.parseSearchWords(words, null, fields, null, null, 1, createDefaultReadingConverter(),
+                createDefaultNormalizer(), analyzer, null);
 
         // Should handle empty fields gracefully
         assertNotNull(item);
@@ -135,9 +134,8 @@ public class DefaultContentsParserEdgeCaseTest {
         String[] fields = new String[] { "content" };
 
         SuggestAnalyzer analyzer = suggester.settings().analyzer().new DefaultContentsAnalyzer();
-        SuggestItem item =
-                parser.parseSearchWords(words, null, fields, null, null, 1, createDefaultReadingConverter(), createDefaultNormalizer(),
-                        analyzer, null);
+        SuggestItem item = parser.parseSearchWords(words, null, fields, null, null, 1, createDefaultReadingConverter(),
+                createDefaultNormalizer(), analyzer, null);
 
         assertNotNull(item);
         assertEquals("test", item.getText());
@@ -151,9 +149,8 @@ public class DefaultContentsParserEdgeCaseTest {
         String[] fields = new String[] { "content" };
 
         SuggestAnalyzer analyzer = suggester.settings().analyzer().new DefaultContentsAnalyzer();
-        SuggestItem item =
-                parser.parseSearchWords(words, readings, fields, null, null, 1, createDefaultReadingConverter(), createDefaultNormalizer(),
-                        analyzer, null);
+        SuggestItem item = parser.parseSearchWords(words, readings, fields, null, null, 1, createDefaultReadingConverter(),
+                createDefaultNormalizer(), analyzer, null);
 
         assertNotNull(item);
     }
@@ -165,9 +162,8 @@ public class DefaultContentsParserEdgeCaseTest {
         String[] fields = new String[] { "content" };
 
         SuggestAnalyzer analyzer = suggester.settings().analyzer().new DefaultContentsAnalyzer();
-        SuggestItem item =
-                parser.parseSearchWords(words, readings, fields, null, null, 1, createDefaultReadingConverter(), createDefaultNormalizer(),
-                        analyzer, null);
+        SuggestItem item = parser.parseSearchWords(words, readings, fields, null, null, 1, createDefaultReadingConverter(),
+                createDefaultNormalizer(), analyzer, null);
 
         assertNotNull(item);
     }
@@ -179,9 +175,8 @@ public class DefaultContentsParserEdgeCaseTest {
         String[] fields = new String[] { "content" };
 
         SuggestAnalyzer analyzer = suggester.settings().analyzer().new DefaultContentsAnalyzer();
-        SuggestItem item =
-                parser.parseSearchWords(words, null, fields, null, null, 1, createDefaultReadingConverter(), createDefaultNormalizer(),
-                        analyzer, null);
+        SuggestItem item = parser.parseSearchWords(words, null, fields, null, null, 1, createDefaultReadingConverter(),
+                createDefaultNormalizer(), analyzer, null);
 
         // All words excluded should return null
         assertNull(item);
@@ -193,9 +188,8 @@ public class DefaultContentsParserEdgeCaseTest {
         String[] fields = new String[] { "content" };
 
         SuggestAnalyzer analyzer = suggester.settings().analyzer().new DefaultContentsAnalyzer();
-        SuggestItem item =
-                parser.parseSearchWords(words, null, fields, null, null, 1, createDefaultReadingConverter(), createDefaultNormalizer(),
-                        analyzer, null);
+        SuggestItem item = parser.parseSearchWords(words, null, fields, null, null, 1, createDefaultReadingConverter(),
+                createDefaultNormalizer(), analyzer, null);
 
         // Empty strings should be filtered, valid words should remain
         assertNotNull(item);
@@ -208,9 +202,8 @@ public class DefaultContentsParserEdgeCaseTest {
         String[] langs = new String[] { "en", "ja", "zh" };
 
         SuggestAnalyzer analyzer = suggester.settings().analyzer().new DefaultContentsAnalyzer();
-        SuggestItem item =
-                parser.parseSearchWords(words, null, fields, null, null, 1, createDefaultReadingConverter(), createDefaultNormalizer(),
-                        analyzer, langs);
+        SuggestItem item = parser.parseSearchWords(words, null, fields, null, null, 1, createDefaultReadingConverter(),
+                createDefaultNormalizer(), analyzer, langs);
 
         assertNotNull(item);
         assertTrue(item.getLanguages().length > 0);

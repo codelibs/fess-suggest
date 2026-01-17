@@ -188,19 +188,16 @@ public class DeferredTest {
         final AtomicInteger callbackCount = new AtomicInteger(0);
         final CountDownLatch latch = new CountDownLatch(3);
 
-        deferred.promise()
-                .then(response -> {
-                    callbackCount.incrementAndGet();
-                    latch.countDown();
-                })
-                .then(response -> {
-                    callbackCount.incrementAndGet();
-                    latch.countDown();
-                })
-                .then(response -> {
-                    callbackCount.incrementAndGet();
-                    latch.countDown();
-                });
+        deferred.promise().then(response -> {
+            callbackCount.incrementAndGet();
+            latch.countDown();
+        }).then(response -> {
+            callbackCount.incrementAndGet();
+            latch.countDown();
+        }).then(response -> {
+            callbackCount.incrementAndGet();
+            latch.countDown();
+        });
 
         deferred.resolve(new SuggestResponse("", 0, Collections.emptyList(), 0, null));
 
@@ -214,19 +211,16 @@ public class DeferredTest {
         final AtomicInteger callbackCount = new AtomicInteger(0);
         final CountDownLatch latch = new CountDownLatch(3);
 
-        deferred.promise()
-                .error(error -> {
-                    callbackCount.incrementAndGet();
-                    latch.countDown();
-                })
-                .error(error -> {
-                    callbackCount.incrementAndGet();
-                    latch.countDown();
-                })
-                .error(error -> {
-                    callbackCount.incrementAndGet();
-                    latch.countDown();
-                });
+        deferred.promise().error(error -> {
+            callbackCount.incrementAndGet();
+            latch.countDown();
+        }).error(error -> {
+            callbackCount.incrementAndGet();
+            latch.countDown();
+        }).error(error -> {
+            callbackCount.incrementAndGet();
+            latch.countDown();
+        });
 
         deferred.reject(new RuntimeException("test"));
 
@@ -241,14 +235,12 @@ public class DeferredTest {
         final AtomicInteger errorCount = new AtomicInteger(0);
         final CountDownLatch latch = new CountDownLatch(1);
 
-        deferred.promise()
-                .then(response -> {
-                    thenCount.incrementAndGet();
-                    latch.countDown();
-                })
-                .error(error -> {
-                    errorCount.incrementAndGet();
-                });
+        deferred.promise().then(response -> {
+            thenCount.incrementAndGet();
+            latch.countDown();
+        }).error(error -> {
+            errorCount.incrementAndGet();
+        });
 
         deferred.resolve(new SuggestResponse("", 0, Collections.emptyList(), 0, null));
 
@@ -265,14 +257,12 @@ public class DeferredTest {
         final AtomicInteger errorCount = new AtomicInteger(0);
         final CountDownLatch latch = new CountDownLatch(1);
 
-        deferred.promise()
-                .then(response -> {
-                    thenCount.incrementAndGet();
-                })
-                .error(error -> {
-                    errorCount.incrementAndGet();
-                    latch.countDown();
-                });
+        deferred.promise().then(response -> {
+            thenCount.incrementAndGet();
+        }).error(error -> {
+            errorCount.incrementAndGet();
+            latch.countDown();
+        });
 
         deferred.reject(new RuntimeException("test"));
 
@@ -340,9 +330,7 @@ public class DeferredTest {
         final AtomicInteger thenCount = new AtomicInteger(0);
         final AtomicInteger errorCount = new AtomicInteger(0);
 
-        deferred.promise()
-                .then(response -> thenCount.incrementAndGet())
-                .error(error -> errorCount.incrementAndGet());
+        deferred.promise().then(response -> thenCount.incrementAndGet()).error(error -> errorCount.incrementAndGet());
 
         deferred.reject(new RuntimeException("error"));
         deferred.resolve(new SuggestResponse("", 0, Collections.emptyList(), 0, null));
@@ -359,9 +347,7 @@ public class DeferredTest {
         final AtomicInteger thenCount = new AtomicInteger(0);
         final AtomicInteger errorCount = new AtomicInteger(0);
 
-        deferred.promise()
-                .then(response -> thenCount.incrementAndGet())
-                .error(error -> errorCount.incrementAndGet());
+        deferred.promise().then(response -> thenCount.incrementAndGet()).error(error -> errorCount.incrementAndGet());
 
         deferred.resolve(new SuggestResponse("", 0, Collections.emptyList(), 0, null));
         deferred.reject(new RuntimeException("error"));
@@ -382,12 +368,11 @@ public class DeferredTest {
         final AtomicInteger callbackCount = new AtomicInteger(0);
         final CountDownLatch latch = new CountDownLatch(1);
 
-        deferred.promise()
-                .then(response -> {
-                    callbackCount.incrementAndGet();
-                    latch.countDown();
-                    throw new RuntimeException("Callback exception");
-                });
+        deferred.promise().then(response -> {
+            callbackCount.incrementAndGet();
+            latch.countDown();
+            throw new RuntimeException("Callback exception");
+        });
 
         deferred.resolve(new SuggestResponse("", 0, Collections.emptyList(), 0, null));
 
@@ -402,12 +387,11 @@ public class DeferredTest {
         final AtomicInteger callbackCount = new AtomicInteger(0);
         final CountDownLatch latch = new CountDownLatch(1);
 
-        deferred.promise()
-                .error(error -> {
-                    callbackCount.incrementAndGet();
-                    latch.countDown();
-                    throw new RuntimeException("Error callback exception");
-                });
+        deferred.promise().error(error -> {
+            callbackCount.incrementAndGet();
+            latch.countDown();
+            throw new RuntimeException("Error callback exception");
+        });
 
         deferred.reject(new RuntimeException("original error"));
 
@@ -479,8 +463,7 @@ public class DeferredTest {
                 try {
                     startLatch.await();
                     deferred.resolve(new SuggestResponse("thread-" + index, 0, Collections.emptyList(), 0, null));
-                } catch (InterruptedException ignore) {
-                } finally {
+                } catch (InterruptedException ignore) {} finally {
                     doneLatch.countDown();
                 }
             }).start();
