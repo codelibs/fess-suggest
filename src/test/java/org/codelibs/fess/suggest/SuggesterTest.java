@@ -66,11 +66,10 @@ public class SuggesterTest {
         runner.onBuild((number, settingsBuilder) -> {
             settingsBuilder.put("http.cors.enabled", true);
             settingsBuilder.put("discovery.type", "single-node");
-        })
-                .build(newConfigs().clusterName("ArraySettingsTest")
-                        .numOfNode(1)
-                        .pluginTypes("org.codelibs.opensearch.extension.ExtensionPlugin"));
+        }).build(newConfigs().clusterName("SuggesterTest").numOfNode(1).pluginTypes("org.codelibs.opensearch.extension.ExtensionPlugin"));
         runner.ensureYellow();
+        suggester = Suggester.builder().build(runner.client(), "SuggesterTest");
+        suggester.createIndexIfNothing();
     }
 
     @AfterClass
@@ -81,10 +80,10 @@ public class SuggesterTest {
 
     @Before
     public void before() throws Exception {
-        runner.admin().indices().prepareDelete("_all").execute().actionGet();
-        runner.refresh();
-        suggester = Suggester.builder().build(runner.client(), "SuggesterTest");
-        suggester.createIndexIfNothing();
+        suggester.indexer().deleteAll();
+        suggester.settings().badword().deleteAll();
+        suggester.settings().elevateWord().deleteAll();
+        suggester.refresh();
     }
 
     @Test
@@ -704,10 +703,6 @@ public class SuggesterTest {
         SuggestResponse response2 = suggester.suggest().setSuggestDetail(true).execute().getResponse();
         assertEquals(2, response2.getNum());
 
-        // Sleep only until next second to ensure unique index name (typically <100ms)
-        long currentMillis = System.currentTimeMillis();
-        long millisUntilNextSecond = 1000 - (currentMillis % 1000);
-        Thread.sleep(millisUntilNextSecond + 10); // +10ms buffer
         suggester.createNextIndex();
         SuggestItem[] items2 = getItemSet2();
         suggester.indexer().index(items2);

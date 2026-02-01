@@ -15,49 +15,46 @@
  */
 package org.codelibs.fess.suggest.index;
 
-import java.lang.management.ManagementFactory;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.codelibs.core.lang.StringUtil;
 import org.codelibs.fess.suggest.analysis.SuggestAnalyzer;
 import org.codelibs.fess.suggest.concurrent.Deferred;
-import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.converter.ReadingConverter;
 import org.codelibs.fess.suggest.entity.ElevateWord;
 import org.codelibs.fess.suggest.entity.SuggestItem;
-import org.codelibs.fess.suggest.exception.SuggestIndexException;
 import org.codelibs.fess.suggest.index.contents.ContentsParser;
 import org.codelibs.fess.suggest.index.contents.DefaultContentsParser;
 import org.codelibs.fess.suggest.index.contents.document.DocumentReader;
 import org.codelibs.fess.suggest.index.contents.querylog.QueryLog;
 import org.codelibs.fess.suggest.index.contents.querylog.QueryLogReader;
+import org.codelibs.fess.suggest.index.operations.ContentIndexingOperations;
+import org.codelibs.fess.suggest.index.operations.DeletionOperations;
+import org.codelibs.fess.suggest.index.operations.IndexingOperations;
+import org.codelibs.fess.suggest.index.operations.WordManagementOperations;
 import org.codelibs.fess.suggest.index.writer.SuggestIndexWriter;
 import org.codelibs.fess.suggest.index.writer.SuggestWriter;
-import org.codelibs.fess.suggest.index.writer.SuggestWriterResult;
 import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
-import org.codelibs.fess.suggest.util.SuggestUtil;
-import org.opensearch.OpenSearchStatusException;
-import org.opensearch.action.search.SearchResponse;
-import org.opensearch.index.query.Operator;
 import org.opensearch.index.query.QueryBuilder;
-import org.opensearch.index.query.QueryBuilders;
-import org.opensearch.search.SearchHit;
 import org.opensearch.transport.client.Client;
 
 /**
  * The SuggestIndexer class is responsible for indexing and managing suggest items in an OpenSearch index.
  * It provides methods to index, delete, and manage suggest items, including handling bad words and elevate words.
+ *
+ * <p>This class acts as a facade, delegating to internal operation classes for the actual work:
+ * <ul>
+ * <li>{@code IndexingOperations} - Core indexing functionality with bad word filtering</li>
+ * <li>{@code DeletionOperations} - Deletion by ID, query, or kind</li>
+ * <li>{@code WordManagementOperations} - Bad word and elevate word management</li>
+ * <li>{@code ContentIndexingOperations} - Content-based indexing from query logs, documents, etc.</li>
+ * </ul>
  *
  * <p>Constructor:
  * <ul>
@@ -66,55 +63,55 @@ import org.opensearch.transport.client.Client;
  *
  * <p>Methods:
  * <ul>
- * <li>{@link #index(SuggestItem)} - Index a single suggest item.
- * <li>{@link #index(SuggestItem[])} - Index multiple suggest items.
- * <li>{@link #delete(String)} - Delete a suggest item by ID.
- * <li>{@link #deleteByQuery(String)} - Delete suggest items by query string.
- * <li>{@link #deleteByQuery(QueryBuilder)} - Delete suggest items by query builder.
- * <li>{@link #deleteAll()} - Delete all suggest items.
- * <li>{@link #deleteDocumentWords()} - Delete document words.
- * <li>{@link #deleteQueryWords()} - Delete query words.
- * <li>{@link #indexFromQueryLog(QueryLog)} - Index from a single query log.
- * <li>{@link #indexFromQueryLog(QueryLog[])} - Index from multiple query logs.
- * <li>{@link #indexFromQueryLog(QueryLogReader, int, long)} - Index from query log reader with specified document per request and request interval.
- * <li>{@link #indexFromDocument(Map[])} - Index from an array of documents.
- * <li>{@link #indexFromSearchWord(String, String[], String[], String[], int, String[])} - Index from search word.
- * <li>{@link #addBadWord(String, boolean)} - Add a bad word and optionally apply it.
- * <li>{@link #deleteBadWord(String)} - Delete a bad word.
- * <li>{@link #addElevateWord(ElevateWord, boolean)} - Add an elevate word and optionally apply it.
- * <li>{@link #deleteElevateWord(String, boolean)} - Delete an elevate word and optionally apply it.
- * <li>{@link #restoreElevateWord()} - Restore elevate words.
- * <li>{@link #deleteOldWords(ZonedDateTime)} - Delete old words based on a threshold date.
- * <li>{@link #setIndexName(String)} - Set the index name.
- * <li>{@link #setSupportedFields(String[])} - Set the supported fields.
- * <li>{@link #setTagFieldNames(String[])} - Set the tag field names.
- * <li>{@link #setRoleFieldName(String)} - Set the role field name.
- * <li>{@link #setReadingConverter(ReadingConverter)} - Set the reading converter.
- * <li>{@link #setNormalizer(Normalizer)} - Set the normalizer.
- * <li>{@link #setAnalyzer(SuggestAnalyzer)} - Set the analyzer.
- * <li>{@link #setContentsParser(ContentsParser)} - Set the contents parser.
- * <li>{@link #setSuggestWriter(SuggestWriter)} - Set the suggest writer.
+ * <li>{@link #index(SuggestItem)} - Index a single suggest item.</li>
+ * <li>{@link #index(SuggestItem[])} - Index multiple suggest items.</li>
+ * <li>{@link #delete(String)} - Delete a suggest item by ID.</li>
+ * <li>{@link #deleteByQuery(String)} - Delete suggest items by query string.</li>
+ * <li>{@link #deleteByQuery(QueryBuilder)} - Delete suggest items by query builder.</li>
+ * <li>{@link #deleteAll()} - Delete all suggest items.</li>
+ * <li>{@link #deleteDocumentWords()} - Delete document words.</li>
+ * <li>{@link #deleteQueryWords()} - Delete query words.</li>
+ * <li>{@link #indexFromQueryLog(QueryLog)} - Index from a single query log.</li>
+ * <li>{@link #indexFromQueryLog(QueryLog[])} - Index from multiple query logs.</li>
+ * <li>{@link #indexFromQueryLog(QueryLogReader, int, long)} - Index from query log reader with specified document per request and request interval.</li>
+ * <li>{@link #indexFromDocument(Map[])} - Index from an array of documents.</li>
+ * <li>{@link #indexFromSearchWord(String, String[], String[], String[], int, String[])} - Index from search word.</li>
+ * <li>{@link #addBadWord(String, boolean)} - Add a bad word and optionally apply it.</li>
+ * <li>{@link #deleteBadWord(String)} - Delete a bad word.</li>
+ * <li>{@link #addElevateWord(ElevateWord, boolean)} - Add an elevate word and optionally apply it.</li>
+ * <li>{@link #deleteElevateWord(String, boolean)} - Delete an elevate word and optionally apply it.</li>
+ * <li>{@link #restoreElevateWord()} - Restore elevate words.</li>
+ * <li>{@link #deleteOldWords(ZonedDateTime)} - Delete old words based on a threshold date.</li>
+ * <li>{@link #setIndexName(String)} - Set the index name.</li>
+ * <li>{@link #setSupportedFields(String[])} - Set the supported fields.</li>
+ * <li>{@link #setTagFieldNames(String[])} - Set the tag field names.</li>
+ * <li>{@link #setRoleFieldName(String)} - Set the role field name.</li>
+ * <li>{@link #setReadingConverter(ReadingConverter)} - Set the reading converter.</li>
+ * <li>{@link #setNormalizer(Normalizer)} - Set the normalizer.</li>
+ * <li>{@link #setAnalyzer(SuggestAnalyzer)} - Set the analyzer.</li>
+ * <li>{@link #setContentsParser(ContentsParser)} - Set the contents parser.</li>
+ * <li>{@link #setSuggestWriter(SuggestWriter)} - Set the suggest writer.</li>
  * </ul>
  *
  * <p>Fields:
  * <ul>
- * <li>{@link #logger} - Logger instance.
- * <li>{@link #client} - OpenSearch client.
- * <li>{@link #index} - Index name.
- * <li>{@link #settings} - Suggest settings.
- * <li>{@link #supportedFields} - Supported fields for suggestions.
- * <li>{@link #tagFieldNames} - Tag field names.
- * <li>{@link #roleFieldName} - Role field name.
- * <li>{@link #langFieldName} - Language field name.
- * <li>{@link #badWords} - List of bad words.
- * <li>{@link #parallel} - Flag for parallel processing.
- * <li>{@link #readingConverter} - Reading converter.
- * <li>{@link #contentsReadingConverter} - Contents reading converter.
- * <li>{@link #normalizer} - Normalizer.
- * <li>{@link #analyzer} - Suggest analyzer.
- * <li>{@link #contentsParser} - Contents parser.
- * <li>{@link #suggestWriter} - Suggest writer.
- * <li>{@link #threadPool} - Executor service for thread pool.
+ * <li>{@link #logger} - Logger instance.</li>
+ * <li>{@link #client} - OpenSearch client.</li>
+ * <li>{@link #index} - Index name.</li>
+ * <li>{@link #settings} - Suggest settings.</li>
+ * <li>{@link #supportedFields} - Supported fields for suggestions.</li>
+ * <li>{@link #tagFieldNames} - Tag field names.</li>
+ * <li>{@link #roleFieldName} - Role field name.</li>
+ * <li>{@link #langFieldName} - Language field name.</li>
+ * <li>{@link #badWords} - List of bad words.</li>
+ * <li>{@link #parallel} - Flag for parallel processing.</li>
+ * <li>{@link #readingConverter} - Reading converter.</li>
+ * <li>{@link #contentsReadingConverter} - Contents reading converter.</li>
+ * <li>{@link #normalizer} - Normalizer.</li>
+ * <li>{@link #analyzer} - Suggest analyzer.</li>
+ * <li>{@link #contentsParser} - Contents parser.</li>
+ * <li>{@link #suggestWriter} - Suggest writer.</li>
+ * <li>{@link #threadPool} - Executor service for thread pool.</li>
  * </ul>
  */
 public class SuggestIndexer {
@@ -153,6 +150,12 @@ public class SuggestIndexer {
     /** The thread pool. */
     protected ExecutorService threadPool;
 
+    // Internal operation classes
+    private IndexingOperations indexingOps;
+    private DeletionOperations deletionOps;
+    private WordManagementOperations wordMgmtOps;
+    private ContentIndexingOperations contentOps;
+
     /**
      * Constructor for SuggestIndexer.
      * @param client The OpenSearch client.
@@ -186,6 +189,27 @@ public class SuggestIndexer {
         suggestWriter = new SuggestIndexWriter();
 
         this.threadPool = threadPool;
+
+        initializeOperations();
+    }
+
+    /**
+     * Initializes the internal operation classes.
+     */
+    private void initializeOperations() {
+        indexingOps = new IndexingOperations(client, settings, suggestWriter);
+        deletionOps = new DeletionOperations(client, settings, suggestWriter);
+        wordMgmtOps = new WordManagementOperations(settings, normalizer, indexingOps, deletionOps, this::getBadWords);
+        contentOps = new ContentIndexingOperations(client, settings, threadPool, indexingOps, contentsParser, analyzer, readingConverter,
+                contentsReadingConverter, normalizer, parallel);
+    }
+
+    /**
+     * Gets the current bad words array.
+     * @return The bad words array.
+     */
+    private String[] getBadWords() {
+        return badWords;
     }
 
     /**
@@ -194,7 +218,7 @@ public class SuggestIndexer {
      * @return The SuggestIndexResponse.
      */
     public SuggestIndexResponse index(final SuggestItem item) {
-        return index(new SuggestItem[] { item });
+        return indexingOps.index(index, item, badWords);
     }
 
     /**
@@ -203,20 +227,7 @@ public class SuggestIndexer {
      * @return The SuggestIndexResponse.
      */
     public SuggestIndexResponse index(final SuggestItem[] items) {
-        final SuggestItem[] array = Stream.of(items).filter(item -> !item.isBadWord(badWords)).toArray(SuggestItem[]::new);
-
-        if (logger.isDebugEnabled()) {
-            logger.debug("Indexing suggest items: index={}, totalItems={}, validItems={}, filteredByBadWords={}", index, items.length,
-                    array.length, items.length - array.length);
-        }
-
-        try {
-            final long start = System.currentTimeMillis();
-            final SuggestWriterResult result = suggestWriter.write(client, settings, index, array, true);
-            return new SuggestIndexResponse(items.length, items.length, result.getFailures(), System.currentTimeMillis() - start);
-        } catch (final Exception e) {
-            throw new SuggestIndexException("Failed to write items[" + items.length + "] to " + index, e);
-        }
+        return indexingOps.index(index, items, badWords);
     }
 
     /**
@@ -225,12 +236,7 @@ public class SuggestIndexer {
      * @return The SuggestDeleteResponse.
      */
     public SuggestDeleteResponse delete(final String id) {
-        if (logger.isDebugEnabled()) {
-            logger.debug("Deleting suggest item: index={}, id={}", index, id);
-        }
-        final long start = System.currentTimeMillis();
-        final SuggestWriterResult result = suggestWriter.delete(client, settings, index, id);
-        return new SuggestDeleteResponse(result.getFailures(), System.currentTimeMillis() - start);
+        return deletionOps.delete(index, id);
     }
 
     /**
@@ -239,7 +245,7 @@ public class SuggestIndexer {
      * @return The SuggestDeleteResponse.
      */
     public SuggestDeleteResponse deleteByQuery(final String queryString) {
-        return deleteByQuery(QueryBuilders.queryStringQuery(queryString).defaultOperator(Operator.AND));
+        return deletionOps.deleteByQuery(index, queryString);
     }
 
     /**
@@ -248,9 +254,7 @@ public class SuggestIndexer {
      * @return The SuggestDeleteResponse.
      */
     public SuggestDeleteResponse deleteByQuery(final QueryBuilder queryBuilder) {
-        final long start = System.currentTimeMillis();
-        final SuggestWriterResult result = suggestWriter.deleteByQuery(client, settings, index, queryBuilder);
-        return new SuggestDeleteResponse(result.getFailures(), System.currentTimeMillis() - start);
+        return deletionOps.deleteByQuery(index, queryBuilder);
     }
 
     /**
@@ -258,10 +262,7 @@ public class SuggestIndexer {
      * @return The SuggestDeleteResponse.
      */
     public SuggestDeleteResponse deleteAll() {
-        if (logger.isInfoEnabled()) {
-            logger.info("Deleting all suggest items: index={}", index);
-        }
-        final SuggestDeleteResponse response = deleteByQuery(QueryBuilders.matchAllQuery());
+        final SuggestDeleteResponse response = deletionOps.deleteAll(index);
         restoreElevateWord();
         return response;
     }
@@ -271,11 +272,7 @@ public class SuggestIndexer {
      * @return The SuggestDeleteResponse.
      */
     public SuggestDeleteResponse deleteDocumentWords() {
-        if (logger.isInfoEnabled()) {
-            logger.info("Deleting document words: index={}", index);
-        }
-        return deleteWordsByKind(FieldNames.DOC_FREQ, SuggestItem.Kind.DOCUMENT, item -> item.setDocFreq(0), SuggestItem.Kind.QUERY,
-                SuggestItem.Kind.USER);
+        return deletionOps.deleteDocumentWords(index);
     }
 
     /**
@@ -283,74 +280,7 @@ public class SuggestIndexer {
      * @return The SuggestDeleteResponse.
      */
     public SuggestDeleteResponse deleteQueryWords() {
-        if (logger.isInfoEnabled()) {
-            logger.info("Deleting query words: index={}", index);
-        }
-        return deleteWordsByKind(FieldNames.QUERY_FREQ, SuggestItem.Kind.QUERY, item -> item.setQueryFreq(0), SuggestItem.Kind.DOCUMENT,
-                SuggestItem.Kind.USER);
-    }
-
-    /**
-     * Common method to delete words by kind.
-     * @param freqField The frequency field name.
-     * @param kindToRemove The kind to remove.
-     * @param freqSetter The consumer to set frequency to 0.
-     * @param excludeKinds The kinds to exclude from deletion.
-     * @return The SuggestDeleteResponse.
-     */
-    private SuggestDeleteResponse deleteWordsByKind(final String freqField, final SuggestItem.Kind kindToRemove,
-            final java.util.function.Consumer<SuggestItem> freqSetter, final SuggestItem.Kind... excludeKinds) {
-        final long start = System.currentTimeMillis();
-
-        // Build query to exclude certain kinds
-        final org.opensearch.index.query.BoolQueryBuilder boolQuery =
-                QueryBuilders.boolQuery().must(QueryBuilders.rangeQuery(freqField).gte(1));
-        for (final SuggestItem.Kind kind : excludeKinds) {
-            boolQuery.mustNot(QueryBuilders.matchPhraseQuery(FieldNames.KINDS, kind.toString()));
-        }
-
-        final SuggestDeleteResponse deleteResponse = deleteByQuery(boolQuery);
-        if (deleteResponse.hasError()) {
-            throw new SuggestIndexException(deleteResponse.getErrors().get(0));
-        }
-
-        final List<SuggestItem> updateItems = new ArrayList<>();
-        SearchResponse response = client.prepareSearch(index)
-                .setSize(500)
-                .setScroll(settings.getScrollTimeout())
-                .setQuery(QueryBuilders.rangeQuery(freqField).gte(1))
-                .execute()
-                .actionGet(settings.getSearchTimeout());
-        String scrollId = response.getScrollId();
-        try {
-            while (scrollId != null) {
-                final SearchHit[] hits = response.getHits().getHits();
-                if (hits.length == 0) {
-                    break;
-                }
-                for (final SearchHit hit : hits) {
-                    final SuggestItem item = SuggestItem.parseSource(hit.getSourceAsMap());
-                    freqSetter.accept(item);
-                    item.setKinds(Stream.of(item.getKinds()).filter(kind -> kind != kindToRemove).toArray(SuggestItem.Kind[]::new));
-                    updateItems.add(item);
-                }
-                final SuggestWriterResult result =
-                        suggestWriter.write(client, settings, index, updateItems.toArray(new SuggestItem[updateItems.size()]), false);
-                if (result.hasFailure()) {
-                    throw new SuggestIndexException(result.getFailures().get(0));
-                }
-
-                response = client.prepareSearchScroll(scrollId).execute().actionGet(settings.getSearchTimeout());
-                if (!scrollId.equals(response.getScrollId())) {
-                    SuggestUtil.deleteScrollContext(client, scrollId);
-                }
-                scrollId = response.getScrollId();
-            }
-        } finally {
-            SuggestUtil.deleteScrollContext(client, scrollId);
-        }
-
-        return new SuggestDeleteResponse(null, System.currentTimeMillis() - start);
+        return deletionOps.deleteQueryWords(index);
     }
 
     /**
@@ -359,7 +289,7 @@ public class SuggestIndexer {
      * @return The SuggestIndexResponse.
      */
     public SuggestIndexResponse indexFromQueryLog(final QueryLog queryLog) {
-        return indexFromQueryLog(new QueryLog[] { queryLog });
+        return contentOps.indexFromQueryLog(index, queryLog, supportedFields, tagFieldNames, roleFieldName, badWords);
     }
 
     /**
@@ -368,29 +298,7 @@ public class SuggestIndexer {
      * @return The SuggestIndexResponse.
      */
     public SuggestIndexResponse indexFromQueryLog(final QueryLog[] queryLogs) {
-        if (logger.isInfoEnabled()) {
-            logger.info("Indexing from query logs: count={}, index={}", queryLogs.length, index);
-        }
-        try {
-            final long start = System.currentTimeMillis();
-            Stream<QueryLog> stream = Stream.of(queryLogs);
-            if (parallel) {
-                stream = stream.parallel();
-            }
-            final SuggestItem[] array = stream.flatMap(queryLog -> contentsParser
-                    .parseQueryLog(queryLog, supportedFields, tagFieldNames, roleFieldName, readingConverter, normalizer)
-                    .stream()).toArray(SuggestItem[]::new);
-            final long parseTime = System.currentTimeMillis();
-            final SuggestIndexResponse response = index(array);
-            final long indexTime = System.currentTimeMillis();
-
-            if (logger.isInfoEnabled()) {
-                printProcessingInfo("queries", queryLogs.length, array, parseTime - start, indexTime - parseTime);
-            }
-            return new SuggestIndexResponse(array.length, queryLogs.length, response.getErrors(), System.currentTimeMillis() - start);
-        } catch (final Exception e) {
-            throw new SuggestIndexException("Failed to index from query_string.", e);
-        }
+        return contentOps.indexFromQueryLog(index, queryLogs, supportedFields, tagFieldNames, roleFieldName, badWords);
     }
 
     /**
@@ -402,41 +310,8 @@ public class SuggestIndexer {
      */
     public Deferred<SuggestIndexResponse>.Promise indexFromQueryLog(final QueryLogReader queryLogReader, final int docPerReq,
             final long requestInterval) {
-        final Deferred<SuggestIndexResponse> deferred = new Deferred<>();
-        threadPool.execute(() -> {
-            final long start = System.currentTimeMillis();
-            int numberOfSuggestDocs = 0;
-            int numberOfInputDocs = 0;
-            final List<Throwable> errors = new ArrayList<>();
-
-            final List<QueryLog> queryLogs = new ArrayList<>(docPerReq);
-            try {
-                QueryLog queryLog = queryLogReader.read();
-                while (queryLog != null) {
-                    if (Thread.currentThread().isInterrupted()) {
-                        break;
-                    }
-                    queryLogs.add(queryLog);
-                    queryLog = queryLogReader.read();
-                    if ((queryLog == null && !queryLogs.isEmpty()) || queryLogs.size() >= docPerReq) {
-                        final SuggestIndexResponse res = indexFromQueryLog(queryLogs.toArray(new QueryLog[queryLogs.size()]));
-                        errors.addAll(res.getErrors());
-                        numberOfSuggestDocs += res.getNumberOfSuggestDocs();
-                        numberOfInputDocs += res.getNumberOfInputDocs();
-                        queryLogs.clear();
-
-                        Thread.sleep(requestInterval);
-                    }
-                }
-                deferred.resolve(
-                        new SuggestIndexResponse(numberOfSuggestDocs, numberOfInputDocs, errors, System.currentTimeMillis() - start));
-            } catch (final Throwable t) {
-                deferred.reject(t);
-            } finally {
-                queryLogReader.close();
-            }
-        });
-        return deferred.promise();
+        return contentOps.indexFromQueryLog(index, queryLogReader, docPerReq, requestInterval, supportedFields, tagFieldNames,
+                roleFieldName, badWords);
     }
 
     /**
@@ -445,63 +320,7 @@ public class SuggestIndexer {
      * @return The SuggestIndexResponse.
      */
     public SuggestIndexResponse indexFromDocument(final Map<String, Object>[] documents) {
-        final long start = System.currentTimeMillis();
-        try {
-            Stream<Map<String, Object>> stream = Stream.of(documents);
-            if (parallel) {
-                stream = stream.parallel();
-            }
-            final SuggestItem[] items = stream.flatMap(document -> {
-                try {
-                    return contentsParser
-                            .parseDocument(document, supportedFields, tagFieldNames, roleFieldName, langFieldName, readingConverter,
-                                    contentsReadingConverter, normalizer, analyzer)
-                            .stream();
-                } catch (OpenSearchStatusException | IllegalStateException e) {
-                    final String msg = e.getMessage();
-                    if (StringUtil.isNotEmpty(msg) && msg.contains("index.analyze.max_token_count")) {
-                        logger.warn("Failed to parse document (token count exceeded): index={}, message={}", index, msg);
-                        return Stream.empty();
-                    }
-                    throw e;
-                }
-            }).toArray(SuggestItem[]::new);
-            final long parseTime = System.currentTimeMillis();
-            final SuggestIndexResponse response = index(items);
-            final long indexTime = System.currentTimeMillis();
-
-            if (logger.isInfoEnabled()) {
-                printProcessingInfo("documents", documents.length, items, parseTime - start, indexTime - parseTime);
-            }
-            return new SuggestIndexResponse(items.length, documents.length, response.getErrors(), indexTime - start);
-        } catch (final Exception e) {
-            if (logger.isDebugEnabled()) {
-                logger.debug("Failed to index from documents: index={}, documentCount={}", index, documents.length, e);
-            }
-            throw new SuggestIndexException("Failed to index from documents: index=" + index + ", documentCount=" + documents.length, e);
-        }
-    }
-
-    private void printProcessingInfo(final String type, final int size, final SuggestItem[] items, final long parseTime,
-            final long indexTime) {
-        final double cpuLoad;
-        if (ManagementFactory.getOperatingSystemMXBean() instanceof final com.sun.management.OperatingSystemMXBean operatingSystemMXBean) {
-            cpuLoad = operatingSystemMXBean.getProcessCpuLoad();
-        } else {
-            cpuLoad = -1;
-        }
-        final long maxMemory = Runtime.getRuntime().maxMemory();
-        final long freeMemory = Runtime.getRuntime().freeMemory();
-        final String msg = String.format(
-                "%d words from %d %s: {\"time\":{\"parse\":%d,\"index\":%d},\"cpu\":%f,\"mem\":{\"heap\":\"%dmb\",\"used\":\"%dmb\"}}",
-                items.length, size, type, parseTime, indexTime, cpuLoad, maxMemory / (1024 * 1024),
-                (maxMemory - freeMemory) / (1024 * 1024));
-        logger.info(msg);
-        if (logger.isDebugEnabled()) {
-            for (final SuggestItem item : items) {
-                logger.debug("[{}] {}", type, item.toJsonString());
-            }
-        }
+        return contentOps.indexFromDocument(index, documents, supportedFields, tagFieldNames, roleFieldName, langFieldName, badWords);
     }
 
     /**
@@ -513,44 +332,8 @@ public class SuggestIndexer {
      */
     public Deferred<SuggestIndexResponse>.Promise indexFromDocument(final Supplier<DocumentReader> reader, final int docPerReq,
             final Runnable waitController) {
-        if (logger.isInfoEnabled()) {
-            logger.info("Starting indexing from DocumentReader: index={}, docsPerRequest={}", index, docPerReq);
-        }
-        final Deferred<SuggestIndexResponse> deferred = new Deferred<>();
-        threadPool.execute(() -> {
-            final long start = System.currentTimeMillis();
-            int numberOfSuggestDocs = 0;
-            int numberOfInputDocs = 0;
-
-            final List<Throwable> errors = new ArrayList<>();
-            final List<Map<String, Object>> docs = new ArrayList<>(docPerReq);
-            try (final DocumentReader documentReader = reader.get()) {
-                Map<String, Object> doc = documentReader.read();
-                while (doc != null) {
-                    if (Thread.currentThread().isInterrupted()) {
-                        break;
-                    }
-                    docs.add(doc);
-                    doc = documentReader.read();
-                    if (doc == null || docs.size() >= docPerReq) {
-                        final SuggestIndexResponse res = indexFromDocument(docs.toArray(new Map[docs.size()]));
-                        errors.addAll(res.getErrors());
-                        numberOfSuggestDocs += res.getNumberOfSuggestDocs();
-                        numberOfInputDocs += res.getNumberOfInputDocs();
-                        client.admin().indices().prepareRefresh(index).execute().actionGet(settings.getIndicesTimeout());
-                        docs.clear();
-
-                        waitController.run();
-                    }
-                }
-
-                deferred.resolve(
-                        new SuggestIndexResponse(numberOfSuggestDocs, numberOfInputDocs, errors, System.currentTimeMillis() - start));
-            } catch (final Throwable t) {
-                deferred.reject(t);
-            }
-        });
-        return deferred.promise();
+        return contentOps.indexFromDocument(index, reader, docPerReq, waitController, supportedFields, tagFieldNames, roleFieldName,
+                langFieldName, badWords);
     }
 
     /**
@@ -565,48 +348,7 @@ public class SuggestIndexer {
      */
     public SuggestIndexResponse indexFromSearchWord(final String searchWord, final String[] fields, final String[] tags,
             final String[] roles, final int num, final String[] langs) {
-        if (logger.isDebugEnabled()) {
-            logger.debug("Indexing from search word: word={}, index={}, fields={}", searchWord, index, Arrays.toString(fields));
-        }
-
-        final long start = System.currentTimeMillis();
-        final StringBuilder buf = new StringBuilder(searchWord.length());
-        char prev = 0;
-        for (final char c : searchWord.toCharArray()) {
-            if (!Character.isWhitespace(c)) {
-                buf.append(c);
-            } else if (!Character.isWhitespace(prev)) {
-                buf.append(' ');
-            }
-            prev = c;
-        }
-        final String[] words = buf.toString().trim().split(" ");
-        try {
-            final SuggestItem item =
-                    contentsParser.parseSearchWords(words, null, fields, tags, roles, num, readingConverter, normalizer, analyzer, langs);
-            if (item == null) {
-                return new SuggestIndexResponse(0, 1, null, System.currentTimeMillis() - start);
-            }
-            final long parseTime = System.currentTimeMillis();
-            final SuggestIndexResponse response = index(item);
-            final long indexTime = System.currentTimeMillis();
-            if (logger.isInfoEnabled()) {
-                printProcessingInfo("queries", 1, new SuggestItem[] { item }, parseTime - start, indexTime - parseTime);
-            }
-            return new SuggestIndexResponse(1, 1, response.getErrors(), System.currentTimeMillis() - start);
-        } catch (final Exception e) {
-            final String msg = "Failed to index from search word: index=" + index//
-                    + ", searchWord=" + searchWord//
-                    + ", fields=" + Arrays.toString(fields)//
-                    + ", tags=" + Arrays.toString(tags)//
-                    + ", roles=" + Arrays.toString(roles)//
-                    + ", langs=" + Arrays.toString(langs)//
-                    + ", num=" + num;
-            if (logger.isDebugEnabled()) {
-                logger.debug(msg, e);
-            }
-            throw new SuggestIndexException(msg, e);
-        }
+        return contentOps.indexFromSearchWord(index, searchWord, fields, tags, roles, num, langs, badWords);
     }
 
     /**
@@ -616,13 +358,9 @@ public class SuggestIndexer {
      * @return The SuggestDeleteResponse.
      */
     public SuggestDeleteResponse addBadWord(final String badWord, final boolean apply) {
-        final String normalized = normalizer.normalize(badWord, "");
-        settings.badword().add(normalized);
+        final SuggestDeleteResponse response = wordMgmtOps.addBadWord(index, badWord, apply);
         badWords = settings.badword().get(true);
-        if (apply) {
-            return deleteByQuery(QueryBuilders.wildcardQuery(FieldNames.TEXT, "*" + normalized + "*"));
-        }
-        return new SuggestDeleteResponse(null, 0);
+        return response;
     }
 
     /**
@@ -630,7 +368,7 @@ public class SuggestIndexer {
      * @param badWord The bad word to delete.
      */
     public void deleteBadWord(final String badWord) {
-        settings.badword().delete(normalizer.normalize(badWord, ""));
+        wordMgmtOps.deleteBadWord(badWord);
     }
 
     /**
@@ -640,16 +378,7 @@ public class SuggestIndexer {
      * @return The SuggestIndexResponse.
      */
     public SuggestIndexResponse addElevateWord(final ElevateWord elevateWord, final boolean apply) {
-        final String normalizedWord = normalizer.normalize(elevateWord.getElevateWord(), "");
-        final List<String> normalizedReadings =
-                elevateWord.getReadings().stream().map(reading -> normalizer.normalize(reading, "")).collect(Collectors.toList());
-        final ElevateWord normalized = new ElevateWord(normalizedWord, elevateWord.getBoost(), normalizedReadings, elevateWord.getFields(),
-                elevateWord.getTags(), elevateWord.getRoles());
-        settings.elevateWord().add(normalized);
-        if (apply) {
-            return index(normalized.toSuggestItem());
-        }
-        return new SuggestIndexResponse(0, 0, null, 0);
+        return wordMgmtOps.addElevateWord(index, elevateWord, apply);
     }
 
     /**
@@ -659,12 +388,7 @@ public class SuggestIndexer {
      * @return The SuggestDeleteResponse.
      */
     public SuggestDeleteResponse deleteElevateWord(final String elevateWord, final boolean apply) {
-        final String normalized = normalizer.normalize(elevateWord, "");
-        settings.elevateWord().delete(normalized);
-        if (apply) {
-            return delete(SuggestUtil.createSuggestTextId(normalized));
-        }
-        return new SuggestDeleteResponse(null, 0);
+        return wordMgmtOps.deleteElevateWord(index, elevateWord, apply);
     }
 
     /**
@@ -672,22 +396,7 @@ public class SuggestIndexer {
      * @return The SuggestIndexResponse.
      */
     public SuggestIndexResponse restoreElevateWord() {
-        if (logger.isInfoEnabled()) {
-            logger.info("Restoring elevate words: index={}", index);
-        }
-        final long start = System.currentTimeMillis();
-        int numberOfSuggestDocs = 0;
-        int numberOfInputDocs = 0;
-
-        final ElevateWord[] elevateWords = settings.elevateWord().get();
-        final List<Throwable> errors = new ArrayList<>(elevateWords.length);
-        for (final ElevateWord elevateWord : elevateWords) {
-            final SuggestIndexResponse res = addElevateWord(elevateWord, true);
-            numberOfSuggestDocs += res.getNumberOfSuggestDocs();
-            numberOfInputDocs += res.getNumberOfInputDocs();
-            errors.addAll(res.getErrors());
-        }
-        return new SuggestIndexResponse(numberOfSuggestDocs, numberOfInputDocs, errors, System.currentTimeMillis() - start);
+        return wordMgmtOps.restoreElevateWord(index);
     }
 
     /**
@@ -696,14 +405,7 @@ public class SuggestIndexer {
      * @return The SuggestDeleteResponse.
      */
     public SuggestDeleteResponse deleteOldWords(final ZonedDateTime threshold) {
-        if (logger.isInfoEnabled()) {
-            logger.info("Deleting old words: index={}, threshold={}", index, threshold);
-        }
-        final long start = System.currentTimeMillis();
-        final String query = FieldNames.TIMESTAMP + ":[* TO " + threshold.toInstant().toEpochMilli() + "] NOT " + FieldNames.KINDS + ':'
-                + SuggestItem.Kind.USER;
-        deleteByQuery(query);
-        return new SuggestDeleteResponse(null, System.currentTimeMillis() - start);
+        return deletionOps.deleteOldWords(index, threshold);
     }
 
     /**
@@ -753,6 +455,7 @@ public class SuggestIndexer {
      */
     public SuggestIndexer setReadingConverter(final ReadingConverter readingConverter) {
         this.readingConverter = readingConverter;
+        initializeOperations();
         return this;
     }
 
@@ -763,6 +466,7 @@ public class SuggestIndexer {
      */
     public SuggestIndexer setNormalizer(final Normalizer normalizer) {
         this.normalizer = normalizer;
+        initializeOperations();
         return this;
     }
 
@@ -773,6 +477,7 @@ public class SuggestIndexer {
      */
     public SuggestIndexer setAnalyzer(final SuggestAnalyzer analyzer) {
         this.analyzer = analyzer;
+        initializeOperations();
         return this;
     }
 
@@ -783,6 +488,7 @@ public class SuggestIndexer {
      */
     public SuggestIndexer setContentsParser(final ContentsParser contentsParser) {
         this.contentsParser = contentsParser;
+        initializeOperations();
         return this;
     }
 
@@ -793,6 +499,7 @@ public class SuggestIndexer {
      */
     public SuggestIndexer setSuggestWriter(final SuggestWriter suggestWriter) {
         this.suggestWriter = suggestWriter;
+        initializeOperations();
         return this;
     }
 

@@ -73,11 +73,7 @@ public class DefaultContentsParserTest {
 
     @Before
     public void before() throws Exception {
-        try {
-            runner.admin().indices().prepareDelete("DefaultContentsParserTest*", "fess_suggest*").execute().actionGet();
-        } catch (Exception e) {
-            // ignore
-        }
+        runner.admin().indices().prepareDelete("_all").execute().actionGet();
         runner.refresh();
         suggester = Suggester.builder().build(runner.client(), "DefaultContentsParserTest");
         suggester.createIndexIfNothing();

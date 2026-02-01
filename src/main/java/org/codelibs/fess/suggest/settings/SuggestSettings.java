@@ -130,78 +130,20 @@ public class SuggestSettings {
     protected final String elevateWordIndexName;
 
     /** The timeout settings. */
-    protected TimeoutSettings timeoutSettings;
+    protected org.codelibs.fess.suggest.settings.TimeoutSettings timeoutSettings;
 
     /**
      * Timeout settings for various operations.
+     * @deprecated Use the top-level {@link org.codelibs.fess.suggest.settings.TimeoutSettings} class instead.
+     *             This nested class is kept for backward compatibility.
      */
-    public static class TimeoutSettings {
+    @Deprecated
+    public static class TimeoutSettings extends org.codelibs.fess.suggest.settings.TimeoutSettings {
         /**
          * Constructs a new {@link TimeoutSettings}.
          */
         public TimeoutSettings() {
-            // nothing
-        }
-
-        /** Search timeout. */
-        protected String searchTimeout = "15s";
-        /** Index timeout. */
-        protected String indexTimeout = "1m";
-        /** Bulk timeout. */
-        protected String bulkTimeout = "1m";
-        /** Indices timeout. */
-        protected String indicesTimeout = "1m";
-        /** Cluster timeout. */
-        protected String clusterTimeout = "1m";
-        /** Scroll timeout. */
-        protected String scrollTimeout = "1m";
-
-        /**
-         * Sets the search timeout.
-         * @param timeout The search timeout.
-         */
-        public void setSearchTimeout(final String timeout) {
-            this.searchTimeout = timeout;
-        }
-
-        /**
-         * Sets the index timeout.
-         * @param timeout The index timeout.
-         */
-        public void setIndexTimeout(final String timeout) {
-            this.indexTimeout = timeout;
-        }
-
-        /**
-         * Sets the bulk timeout.
-         * @param timeout The bulk timeout.
-         */
-        public void setBulkTimeout(final String timeout) {
-            this.bulkTimeout = timeout;
-        }
-
-        /**
-         * Sets the indices timeout.
-         * @param timeout The indices timeout.
-         */
-        public void setIndicesTimeout(final String timeout) {
-            this.indicesTimeout = timeout;
-        }
-
-        /**
-         * Sets the cluster timeout.
-         * @param timeout The cluster timeout.
-         */
-        public void setClusterTimeout(final String timeout) {
-            this.clusterTimeout = timeout;
-        }
-
-        /**
-         * Sets the scroll timeout.
-         * @param timeout The scroll timeout.
-         */
-        public void setScrollTimeout(final String timeout) {
-            this.scrollTimeout = timeout;
+            super();
         }
     }
 
@@ -214,7 +156,7 @@ public class SuggestSettings {
      * @param timeoutSettings The timeout settings.
      */
     public SuggestSettings(final Client client, final String settingsId, final Map<String, Object> initialSettings,
-            final String settingsIndexName, final TimeoutSettings timeoutSettings) {
+            final String settingsIndexName, final org.codelibs.fess.suggest.settings.TimeoutSettings timeoutSettings) {
         this.client = client;
         this.settingsId = settingsId;
         this.settingsIndexName = settingsIndexName;

@@ -94,7 +94,7 @@ public class SuggestItem {
 
     private String id;
 
-    private SuggestItem() {
+    SuggestItem() {
     }
 
     /**
@@ -378,25 +378,7 @@ public class SuggestItem {
      * @return The source map.
      */
     public Map<String, Object> getSource() {
-        final Map<String, Object> map = new HashMap<>();
-        map.put(FieldNames.TEXT, text);
-
-        for (int i = 0; i < readings.length; i++) {
-            final String[] values = readings[i] == null ? null : Arrays.stream(readings[i]).distinct().toArray(n -> new String[n]);
-            map.put(FieldNames.READING_PREFIX + i, values);
-        }
-
-        map.put(FieldNames.FIELDS, fields);
-        map.put(FieldNames.TAGS, tags);
-        map.put(FieldNames.ROLES, roles);
-        map.put(FieldNames.LANGUAGES, languages);
-        map.put(FieldNames.KINDS, Stream.of(kinds).map(Kind::toString).toArray());
-        map.put(FieldNames.QUERY_FREQ, queryFreq);
-        map.put(FieldNames.DOC_FREQ, docFreq);
-        map.put(FieldNames.USER_BOOST, userBoost);
-        map.put(FieldNames.SCORE, (queryFreq + docFreq) * userBoost);
-        map.put(FieldNames.TIMESTAMP, timestamp.toInstant().toEpochMilli());
-        return map;
+        return SuggestItemSerializer.toSource(this);
     }
 
     /**
@@ -405,53 +387,7 @@ public class SuggestItem {
      * @return A SuggestItem instance.
      */
     public static SuggestItem parseSource(final Map<String, Object> source) {
-        final String text = source.get(FieldNames.TEXT).toString();
-        final List<String[]> readings = new ArrayList<>();
-        for (int i = 0;; i++) {
-            final Object readingObj = source.get(FieldNames.READING_PREFIX + i);
-            if (!(readingObj instanceof List)) {
-                break;
-            }
-            @SuppressWarnings("unchecked")
-            final List<String> list = (List<String>) readingObj;
-            readings.add(list.toArray(new String[list.size()]));
-        }
-        final List<String> fields = SuggestUtil.getAsList(source.get(FieldNames.FIELDS));
-        final long docFreq = Long.parseLong(source.get(FieldNames.DOC_FREQ).toString());
-        final long queryFreq = Long.parseLong(source.get(FieldNames.QUERY_FREQ).toString());
-        final float userBoost = Float.parseFloat(source.get(FieldNames.USER_BOOST).toString());
-        final List<String> tags = SuggestUtil.getAsList(source.get(FieldNames.TAGS));
-        final List<String> roles = SuggestUtil.getAsList(source.get(FieldNames.ROLES));
-        final List<String> languages = SuggestUtil.getAsList(source.get(FieldNames.LANGUAGES));
-        final List<String> kinds = SuggestUtil.getAsList(source.get(FieldNames.KINDS));
-        final long timestamp = Long.parseLong(source.get(FieldNames.TIMESTAMP).toString());
-
-        final SuggestItem item = new SuggestItem();
-        item.text = text;
-        item.readings = readings.toArray(new String[readings.size()][]);
-        item.fields = fields.toArray(new String[fields.size()]);
-        item.docFreq = docFreq;
-        item.queryFreq = queryFreq;
-        item.userBoost = userBoost;
-        item.tags = tags.toArray(new String[tags.size()]);
-        item.roles = roles.toArray(new String[roles.size()]);
-        item.languages = languages.toArray(new String[languages.size()]);
-
-        item.kinds = new Kind[kinds.size()];
-        for (int i = 0; i < kinds.size(); i++) {
-            final String kind = kinds.get(i);
-            if (kind.equals(Kind.DOCUMENT.toString())) {
-                item.kinds[i] = Kind.DOCUMENT;
-            } else if (kind.equals(Kind.QUERY.toString())) {
-                item.kinds[i] = Kind.QUERY;
-            } else if (kind.equals(Kind.USER.toString())) {
-                item.kinds[i] = Kind.USER;
-            }
-        }
-
-        item.id = SuggestUtil.createSuggestTextId(item.text);
-        item.timestamp = ZonedDateTime.ofInstant(Instant.ofEpochMilli(timestamp), Clock.systemDefaultZone().getZone());
-        return item;
+        return SuggestItemSerializer.fromSource(source);
     }
 
     /**
@@ -460,96 +396,7 @@ public class SuggestItem {
      * @return The updated source map.
      */
     public Map<String, Object> getUpdatedSource(final Map<String, Object> existingSource) {
-        final Map<String, Object> map = new HashMap<>();
-        map.put(FieldNames.TEXT, text);
-
-        for (int i = 0; i < readings.length; i++) {
-            final Object readingObj = existingSource.get(FieldNames.READING_PREFIX + i);
-            if (readingObj instanceof List) {
-                @SuppressWarnings("unchecked")
-                final List<String> existingValues = (List<String>) readingObj;
-                concatValues(existingValues, readings[i]);
-                map.put(FieldNames.READING_PREFIX + i, existingValues.stream().distinct().toList());
-            } else {
-                final String[] values = readings[i] == null ? null : Arrays.stream(readings[i]).distinct().toArray(n -> new String[n]);
-                map.put(FieldNames.READING_PREFIX + i, values);
-            }
-        }
-
-        final Object fieldsObj = existingSource.get(FieldNames.FIELDS);
-        if (fieldsObj instanceof List) {
-            @SuppressWarnings("unchecked")
-            final List<String> existingValues = (List<String>) fieldsObj;
-            concatValues(existingValues, fields);
-            map.put(FieldNames.FIELDS, existingValues);
-        } else {
-            map.put(FieldNames.FIELDS, fields);
-        }
-
-        final Object tagsObj = existingSource.get(FieldNames.TAGS);
-        if (tagsObj instanceof List) {
-            @SuppressWarnings("unchecked")
-            final List<String> existingValues = (List<String>) tagsObj;
-            concatValues(existingValues, tags);
-            map.put(FieldNames.TAGS, existingValues);
-        } else {
-            map.put(FieldNames.TAGS, tags);
-        }
-
-        final Object rolesObj = existingSource.get(FieldNames.ROLES);
-        if (rolesObj instanceof List) {
-            @SuppressWarnings("unchecked")
-            final List<String> existingValues = (List<String>) rolesObj;
-            concatValues(existingValues, roles);
-            map.put(FieldNames.ROLES, existingValues);
-        } else {
-            map.put(FieldNames.ROLES, roles);
-        }
-
-        final Object langsObj = existingSource.get(FieldNames.LANGUAGES);
-        if (langsObj instanceof List) {
-            @SuppressWarnings("unchecked")
-            final List<String> existingValues = (List<String>) langsObj;
-            concatValues(existingValues, languages);
-            map.put(FieldNames.LANGUAGES, existingValues);
-        } else {
-            map.put(FieldNames.LANGUAGES, languages);
-        }
-
-        final Object kindsObj = existingSource.get(FieldNames.KINDS);
-        if (kindsObj instanceof List) {
-            @SuppressWarnings("unchecked")
-            final List<String> existingFields = (List<String>) kindsObj;
-            concatValues(existingFields, Stream.of(kinds).map(Kind::toString).toArray(count -> new String[count]));
-            map.put(FieldNames.KINDS, existingFields);
-        } else {
-            map.put(FieldNames.KINDS, Stream.of(kinds).map(Kind::toString).toArray());
-        }
-
-        final long updatedQueryFreq;
-        final Object queryFreqObj = existingSource.get(FieldNames.QUERY_FREQ);
-        if (queryFreqObj == null) {
-            updatedQueryFreq = queryFreq;
-        } else {
-            final Long existingValue = Long.parseLong(queryFreqObj.toString());
-            updatedQueryFreq = queryFreq + existingValue;
-        }
-        map.put(FieldNames.QUERY_FREQ, updatedQueryFreq);
-
-        final long updatedDocFreq;
-        final Object docFreqObj = existingSource.get(FieldNames.DOC_FREQ);
-        if (docFreqObj == null) {
-            updatedDocFreq = docFreq;
-        } else {
-            final Long existingValue = Long.parseLong(docFreqObj.toString());
-            updatedDocFreq = docFreq + existingValue;
-        }
-        map.put(FieldNames.DOC_FREQ, updatedDocFreq);
-
-        map.put(FieldNames.USER_BOOST, userBoost);
-        map.put(FieldNames.SCORE, (updatedQueryFreq + updatedDocFreq) * userBoost);
-        map.put(FieldNames.TIMESTAMP, timestamp.toInstant().toEpochMilli());
-        return map;
+        return SuggestItemSerializer.toUpdatedSource(this, existingSource);
     }
 
     /**
@@ -597,75 +444,7 @@ public class SuggestItem {
      * @return The merged suggest item.
      */
     public static SuggestItem merge(final SuggestItem item1, final SuggestItem item2) {
-        if (!item1.getId().equals(item2.getId())) {
-            throw new IllegalArgumentException("Item id is mismatch.");
-        }
-
-        final SuggestItem mergedItem = new SuggestItem();
-
-        mergedItem.id = item1.getId();
-        mergedItem.text = item1.getText();
-
-        mergedItem.readings = new String[mergedItem.text.split(SuggestConstants.TEXT_SEPARATOR).length][];
-        for (int i = 0; i < mergedItem.readings.length; i++) {
-            final List<String> list = new ArrayList<>();
-            if (item1.getReadings().length > i) {
-                Collections.addAll(list, item1.getReadings()[i]);
-            }
-            if (item2.getReadings().length > i) {
-                for (final String reading : item2.getReadings()[i]) {
-                    if (!list.contains(reading)) {
-                        list.add(reading);
-                    }
-                }
-            }
-            mergedItem.readings[i] = list.toArray(new String[list.size()]);
-        }
-
-        final List<String> fieldList = new ArrayList<>(item1.getFields().length + item2.getFields().length);
-        Collections.addAll(fieldList, item1.getFields());
-        for (final String field : item2.getFields()) {
-            if (!fieldList.contains(field)) {
-                fieldList.add(field);
-            }
-        }
-        mergedItem.fields = fieldList.toArray(new String[fieldList.size()]);
-
-        final List<String> tagList = new ArrayList<>(item1.getTags().length + item2.getTags().length);
-        Collections.addAll(tagList, item1.getTags());
-        for (final String tag : item2.getTags()) {
-            if (!tagList.contains(tag)) {
-                tagList.add(tag);
-            }
-        }
-        mergedItem.tags = tagList.toArray(new String[tagList.size()]);
-
-        final List<String> langList = new ArrayList<>(item1.getLanguages().length + item2.getLanguages().length);
-        Collections.addAll(langList, item1.getLanguages());
-        for (final String lang : item2.getLanguages()) {
-            if (!langList.contains(lang)) {
-                langList.add(lang);
-            }
-        }
-        mergedItem.languages = langList.toArray(new String[langList.size()]);
-
-        final List<String> roleList = new ArrayList<>(item1.getRoles().length + item2.getRoles().length);
-        Collections.addAll(roleList, item1.getRoles());
-        for (final String role : item2.getRoles()) {
-            if (!roleList.contains(role)) {
-                roleList.add(role);
-            }
-        }
-        mergedItem.roles = roleList.toArray(new String[roleList.size()]);
-
-        mergedItem.kinds = concatKinds(item1.kinds, item2.kinds);
-        mergedItem.timestamp = item2.timestamp;
-        mergedItem.queryFreq = item1.queryFreq + item2.queryFreq;
-        mergedItem.docFreq = item1.docFreq + item2.docFreq;
-        mergedItem.userBoost = item2.userBoost;
-        mergedItem.emptySource = item2.emptySource;
-
-        return mergedItem;
+        return SuggestItemMerger.merge(item1, item2);
     }
 
     /**
@@ -706,28 +485,6 @@ public class SuggestItem {
      * @return The JSON string representation of the suggest item.
      */
     public String toJsonString() {
-        final StringBuilder buf = new StringBuilder(100);
-        buf.append('{').append('"').append(FieldNames.TEXT).append("\":").append(convertJsonString(text));
-
-        for (int i = 0; i < readings.length; i++) {
-            final String[] values = readings[i] == null ? null : Arrays.stream(readings[i]).distinct().toArray(n -> new String[n]);
-            buf.append(',').append('"').append(FieldNames.READING_PREFIX + i).append("\":").append(convertJsonStrings(values));
-        }
-
-        buf.append(',').append('"').append(FieldNames.FIELDS).append("\":").append(convertJsonStrings(fields));
-        buf.append(',').append('"').append(FieldNames.TAGS).append("\":").append(convertJsonStrings(tags));
-        buf.append(',').append('"').append(FieldNames.ROLES).append("\":").append(convertJsonStrings(roles));
-        buf.append(',').append('"').append(FieldNames.LANGUAGES).append("\":").append(convertJsonStrings(languages));
-        buf.append(',')
-                .append('"')
-                .append(FieldNames.KINDS)
-                .append("\":")
-                .append(convertJsonStrings(Stream.of(kinds).map(Kind::toString).toArray(n -> new String[n])));
-        buf.append(',').append('"').append(FieldNames.QUERY_FREQ).append("\":").append(queryFreq);
-        buf.append(',').append('"').append(FieldNames.DOC_FREQ).append("\":").append(docFreq);
-        buf.append(',').append('"').append(FieldNames.USER_BOOST).append("\":").append(userBoost);
-        buf.append(',').append('"').append(FieldNames.SCORE).append("\":").append((queryFreq + docFreq) * userBoost);
-        buf.append(',').append('"').append(FieldNames.TIMESTAMP).append("\":").append(timestamp.toInstant().toEpochMilli());
-        return buf.append('}').toString();
+        return SuggestItemSerializer.toJson(this);
     }
 }

@@ -45,8 +45,7 @@ public class SuggestIndexResponse implements Response {
      * @param errors A list of Throwables representing errors.
      * @param took The time taken for the operation in milliseconds.
      */
-    protected SuggestIndexResponse(final int numberOfSuggestDocs, final int numberOfInputDocs, final List<Throwable> errors,
-            final long took) {
+    public SuggestIndexResponse(final int numberOfSuggestDocs, final int numberOfInputDocs, final List<Throwable> errors, final long took) {
         this.numberOfSuggestDocs = numberOfSuggestDocs;
         this.numberOfInputDocs = numberOfInputDocs;
         this.took = took;

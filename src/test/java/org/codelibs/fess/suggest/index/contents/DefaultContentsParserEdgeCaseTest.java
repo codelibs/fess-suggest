@@ -77,11 +77,7 @@ public class DefaultContentsParserEdgeCaseTest {
 
     @Before
     public void before() throws Exception {
-        try {
-            runner.admin().indices().prepareDelete("DefaultContentsParserEdgeCaseTest*", "fess_suggest*").execute().actionGet();
-        } catch (Exception e) {
-            // ignore
-        }
+        runner.admin().indices().prepareDelete("_all").execute().actionGet();
         runner.refresh();
         suggester = Suggester.builder().build(runner.client(), "DefaultContentsParserEdgeCaseTest");
         suggester.createIndexIfNothing();

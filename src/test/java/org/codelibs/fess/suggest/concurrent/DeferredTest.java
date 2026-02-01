@@ -38,7 +38,7 @@ public class DeferredTest {
 
         Thread th = new Thread(() -> {
             try {
-                Thread.sleep(1000);
+                Thread.sleep(100);
             } catch (InterruptedException ignore) {}
             deferred.resolve(new SuggestResponse("", 0, Collections.emptyList(), 0, null));
         });
@@ -46,7 +46,7 @@ public class DeferredTest {
 
         final CountDownLatch latch = new CountDownLatch(1);
         deferred.promise().then(response -> latch.countDown());
-        assertTrue(latch.await(10, TimeUnit.SECONDS));
+        assertTrue(latch.await(5, TimeUnit.SECONDS));
     }
 
     @Test
@@ -58,10 +58,10 @@ public class DeferredTest {
         });
         th.start();
 
-        Thread.sleep(1000);
+        Thread.sleep(100);
         final CountDownLatch latch = new CountDownLatch(1);
         deferred.promise().then(response -> latch.countDown());
-        assertTrue(latch.await(10, TimeUnit.SECONDS));
+        assertTrue(latch.await(5, TimeUnit.SECONDS));
     }
 
     @Test
@@ -70,7 +70,7 @@ public class DeferredTest {
 
         Thread th = new Thread(() -> {
             try {
-                Thread.sleep(1000);
+                Thread.sleep(100);
             } catch (InterruptedException ignore) {}
             deferred.reject(new Exception());
         });
@@ -78,7 +78,7 @@ public class DeferredTest {
 
         final CountDownLatch latch = new CountDownLatch(1);
         deferred.promise().error(error -> latch.countDown());
-        assertTrue(latch.await(10, TimeUnit.SECONDS));
+        assertTrue(latch.await(5, TimeUnit.SECONDS));
     }
 
     @Test
@@ -90,10 +90,10 @@ public class DeferredTest {
         });
         th.start();
 
-        Thread.sleep(1000);
+        Thread.sleep(100);
         final CountDownLatch latch = new CountDownLatch(1);
         deferred.promise().error(error -> latch.countDown());
-        assertTrue(latch.await(10, TimeUnit.SECONDS));
+        assertTrue(latch.await(5, TimeUnit.SECONDS));
     }
 
     @Test
@@ -102,13 +102,13 @@ public class DeferredTest {
 
         Thread th = new Thread(() -> {
             try {
-                Thread.sleep(1000);
+                Thread.sleep(100);
             } catch (InterruptedException ignore) {}
             deferred.resolve(new SuggestResponse("", 0, Collections.emptyList(), 0, null));
         });
         th.start();
 
-        SuggestResponse response = deferred.promise().getResponse(10, TimeUnit.SECONDS);
+        SuggestResponse response = deferred.promise().getResponse(5, TimeUnit.SECONDS);
         assertEquals(0, response.getNum());
     }
 
@@ -121,8 +121,8 @@ public class DeferredTest {
         });
         th.start();
 
-        Thread.sleep(1000);
-        SuggestResponse response = deferred.promise().getResponse(10, TimeUnit.SECONDS);
+        Thread.sleep(100);
+        SuggestResponse response = deferred.promise().getResponse(5, TimeUnit.SECONDS);
         assertEquals(0, response.getNum());
     }
 
@@ -132,14 +132,14 @@ public class DeferredTest {
 
         Thread th = new Thread(() -> {
             try {
-                Thread.sleep(1000);
+                Thread.sleep(100);
             } catch (InterruptedException ignore) {}
             deferred.reject(new SuggesterException("test"));
         });
         th.start();
 
         try {
-            deferred.promise().getResponse(10, TimeUnit.SECONDS);
+            deferred.promise().getResponse(5, TimeUnit.SECONDS);
             fail();
         } catch (SuggesterException e) {
             assertEquals("An error occurred during the deferred computation.", e.getMessage());
@@ -294,7 +294,7 @@ public class DeferredTest {
         // Third resolve (should be ignored)
         deferred.resolve(new SuggestResponse("third", 0, Collections.emptyList(), 0, null));
 
-        Thread.sleep(500);
+        Thread.sleep(100);
 
         assertEquals("Callback should only be invoked once", 1, callbackCount.get());
         assertEquals("Should receive first response", "first", receivedIndex.get());
@@ -318,7 +318,7 @@ public class DeferredTest {
         // Third reject (should be ignored)
         deferred.reject(new RuntimeException("third"));
 
-        Thread.sleep(500);
+        Thread.sleep(100);
 
         assertEquals("Error callback should only be invoked once", 1, callbackCount.get());
         assertEquals("Should receive first error", "first", receivedMessage.get());
@@ -335,7 +335,7 @@ public class DeferredTest {
         deferred.reject(new RuntimeException("error"));
         deferred.resolve(new SuggestResponse("", 0, Collections.emptyList(), 0, null));
 
-        Thread.sleep(500);
+        Thread.sleep(100);
 
         assertEquals("Then callback should not be invoked", 0, thenCount.get());
         assertEquals("Error callback should be invoked once", 1, errorCount.get());
@@ -352,7 +352,7 @@ public class DeferredTest {
         deferred.resolve(new SuggestResponse("", 0, Collections.emptyList(), 0, null));
         deferred.reject(new RuntimeException("error"));
 
-        Thread.sleep(500);
+        Thread.sleep(100);
 
         assertEquals("Then callback should be invoked once", 1, thenCount.get());
         assertEquals("Error callback should not be invoked", 0, errorCount.get());
@@ -472,7 +472,7 @@ public class DeferredTest {
         startLatch.countDown(); // Start all threads
         assertTrue("All threads should complete", doneLatch.await(10, TimeUnit.SECONDS));
 
-        Thread.sleep(500); // Wait for callback to execute
+        Thread.sleep(100); // Wait for callback to execute
 
         assertEquals("Only one resolve should succeed", 1, callbackCount.get());
     }

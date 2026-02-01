@@ -17,6 +17,7 @@ package org.codelibs.fess.suggest.settings;
 
 import static org.codelibs.opensearch.runner.OpenSearchRunner.newConfigs;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.util.List;
@@ -114,6 +115,60 @@ public class AnalyzerSettingsTest {
             assertTrue(analyzerNames.contains(settings.analyzer().getReadingTermAnalyzerName("", lang)));
             assertTrue(analyzerNames.contains(settings.analyzer().getNormalizeAnalyzerName("", lang)));
         }
+    }
+
+    @Test
+    public void test_getAnalyzerName_defaultWithEmptyField() {
+        // When field is empty or blank, should return default analyzer
+        assertEquals(AnalyzerSettings.READING_ANALYZER, settings.analyzer().getReadingAnalyzerName("", ""));
+        assertEquals(AnalyzerSettings.READING_TERM_ANALYZER, settings.analyzer().getReadingTermAnalyzerName("", ""));
+        assertEquals(AnalyzerSettings.NORMALIZE_ANALYZER, settings.analyzer().getNormalizeAnalyzerName("", ""));
+        assertEquals(AnalyzerSettings.CONTENTS_ANALYZER, settings.analyzer().getContentsAnalyzerName("", ""));
+        assertEquals(AnalyzerSettings.CONTENTS_READING_ANALYZER, settings.analyzer().getContentsReadingAnalyzerName("", ""));
+    }
+
+    @Test
+    public void test_getAnalyzerName_defaultWithNullField() {
+        // When field is null, should return default analyzer
+        assertEquals(AnalyzerSettings.READING_ANALYZER, settings.analyzer().getReadingAnalyzerName(null, ""));
+        assertEquals(AnalyzerSettings.READING_TERM_ANALYZER, settings.analyzer().getReadingTermAnalyzerName(null, ""));
+        assertEquals(AnalyzerSettings.NORMALIZE_ANALYZER, settings.analyzer().getNormalizeAnalyzerName(null, ""));
+        assertEquals(AnalyzerSettings.CONTENTS_ANALYZER, settings.analyzer().getContentsAnalyzerName(null, ""));
+        assertEquals(AnalyzerSettings.CONTENTS_READING_ANALYZER, settings.analyzer().getContentsReadingAnalyzerName(null, ""));
+    }
+
+    @Test
+    public void test_getAnalyzerName_withLanguage() {
+        // When language is supported, should return analyzer with language suffix
+        String readingAnalyzer = settings.analyzer().getReadingAnalyzerName("", "en");
+        assertTrue(readingAnalyzer.contains("_en") || readingAnalyzer.equals(AnalyzerSettings.READING_ANALYZER));
+
+        String normalizeAnalyzer = settings.analyzer().getNormalizeAnalyzerName("", "ja");
+        assertTrue(normalizeAnalyzer.contains("_ja") || normalizeAnalyzer.equals(AnalyzerSettings.NORMALIZE_ANALYZER));
+    }
+
+    @Test
+    public void test_getAnalyzerName_withUnsupportedLanguage() {
+        // When language is not supported, should return base analyzer without suffix
+        String readingAnalyzer = settings.analyzer().getReadingAnalyzerName("", "xyz");
+        assertEquals(AnalyzerSettings.READING_ANALYZER, readingAnalyzer);
+
+        String normalizeAnalyzer = settings.analyzer().getNormalizeAnalyzerName("", "unsupported");
+        assertEquals(AnalyzerSettings.NORMALIZE_ANALYZER, normalizeAnalyzer);
+    }
+
+    @Test
+    public void test_isSupportedLanguage() {
+        // Test supported languages
+        assertTrue(AnalyzerSettings.isSupportedLanguage("en"));
+        assertTrue(AnalyzerSettings.isSupportedLanguage("ja"));
+        assertTrue(AnalyzerSettings.isSupportedLanguage("zh-cn"));
+        assertTrue(AnalyzerSettings.isSupportedLanguage("zh-tw"));
+
+        // Test unsupported languages
+        assertFalse(AnalyzerSettings.isSupportedLanguage("xyz"));
+        assertFalse(AnalyzerSettings.isSupportedLanguage(""));
+        assertFalse(AnalyzerSettings.isSupportedLanguage(null));
     }
 
 }
