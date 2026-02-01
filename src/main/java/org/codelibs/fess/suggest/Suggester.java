@@ -461,7 +461,7 @@ public class Suggester {
     }
 
     private String createIndexName(final String index) {
-        return index + '.' + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+        return index + '.' + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"));
     }
 
     private String getDefaultMappings() throws IOException {

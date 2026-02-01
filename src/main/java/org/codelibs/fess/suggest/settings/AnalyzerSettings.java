@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
@@ -149,26 +150,39 @@ public class AnalyzerSettings {
     }
 
     /**
+     * Returns the analyzer name for a given field and language using the specified mapping extractor.
+     * @param field The field name.
+     * @param lang The language.
+     * @param mappingExtractor Function to extract the analyzer from FieldAnalyzerMapping.
+     * @param defaultAnalyzer The default analyzer name to use.
+     * @return The resolved analyzer name.
+     */
+    private String getAnalyzerName(final String field, final String lang, final Function<FieldAnalyzerMapping, String> mappingExtractor,
+            final String defaultAnalyzer) {
+        final Map<String, FieldAnalyzerMapping> fieldAnalyzerMapping = fieldAnalyzerMappingMap.get(analyzerSettingsIndexName);
+        final Set<String> analyzerNames = analyzerMap.get(analyzerSettingsIndexName);
+        final String analyzerName;
+        if (StringUtil.isNotBlank(field) && fieldAnalyzerMapping.containsKey(field)) {
+            final String mappedAnalyzer = mappingExtractor.apply(fieldAnalyzerMapping.get(field));
+            analyzerName = mappedAnalyzer != null ? mappedAnalyzer : defaultAnalyzer;
+        } else {
+            analyzerName = defaultAnalyzer;
+        }
+        final String analyzerNameWithLang = isSupportedLanguage(lang) ? analyzerName + '_' + lang : analyzerName;
+        if (analyzerNames.contains(analyzerNameWithLang)) {
+            return analyzerNameWithLang;
+        }
+        return analyzerName;
+    }
+
+    /**
      * Returns the name of the reading analyzer for a given field and language.
      * @param field The field name.
      * @param lang The language.
      * @return The reading analyzer name.
      */
     public String getReadingAnalyzerName(final String field, final String lang) {
-        final Map<String, FieldAnalyzerMapping> fieldAnalyzerMapping = fieldAnalyzerMappingMap.get(analyzerSettingsIndexName);
-        final Set<String> analyzerNames = analyzerMap.get(analyzerSettingsIndexName);
-        final String analyzerName;
-        if (StringUtil.isNotBlank(field) && fieldAnalyzerMapping.containsKey(field)
-                && fieldAnalyzerMapping.get(field).readingAnalyzer != null) {
-            analyzerName = fieldAnalyzerMapping.get(field).readingAnalyzer;
-        } else {
-            analyzerName = READING_ANALYZER;
-        }
-        final String analyzerNameWithlang = isSupportedLanguage(lang) ? analyzerName + '_' + lang : analyzerName;
-        if (analyzerNames.contains(analyzerNameWithlang)) {
-            return analyzerNameWithlang;
-        }
-        return analyzerName;
+        return getAnalyzerName(field, lang, m -> m.readingAnalyzer, READING_ANALYZER);
     }
 
     /**
@@ -178,20 +192,7 @@ public class AnalyzerSettings {
      * @return The reading term analyzer name.
      */
     public String getReadingTermAnalyzerName(final String field, final String lang) {
-        final Map<String, FieldAnalyzerMapping> fieldAnalyzerMapping = fieldAnalyzerMappingMap.get(analyzerSettingsIndexName);
-        final Set<String> analyzerNames = analyzerMap.get(analyzerSettingsIndexName);
-        final String analyzerName;
-        if (StringUtil.isNotBlank(field) && fieldAnalyzerMapping.containsKey(field)
-                && fieldAnalyzerMapping.get(field).readingTermAnalyzer != null) {
-            analyzerName = fieldAnalyzerMapping.get(field).readingTermAnalyzer;
-        } else {
-            analyzerName = READING_TERM_ANALYZER;
-        }
-        final String analyzerNameWithlang = isSupportedLanguage(lang) ? analyzerName + '_' + lang : analyzerName;
-        if (analyzerNames.contains(analyzerNameWithlang)) {
-            return analyzerNameWithlang;
-        }
-        return analyzerName;
+        return getAnalyzerName(field, lang, m -> m.readingTermAnalyzer, READING_TERM_ANALYZER);
     }
 
     /**
@@ -201,20 +202,7 @@ public class AnalyzerSettings {
      * @return The normalize analyzer name.
      */
     public String getNormalizeAnalyzerName(final String field, final String lang) {
-        final Map<String, FieldAnalyzerMapping> fieldAnalyzerMapping = fieldAnalyzerMappingMap.get(analyzerSettingsIndexName);
-        final Set<String> analyzerNames = analyzerMap.get(analyzerSettingsIndexName);
-        final String analyzerName;
-        if (StringUtil.isNotBlank(field) && fieldAnalyzerMapping.containsKey(field)
-                && fieldAnalyzerMapping.get(field).normalizeAnalyzer != null) {
-            analyzerName = fieldAnalyzerMapping.get(field).normalizeAnalyzer;
-        } else {
-            analyzerName = NORMALIZE_ANALYZER;
-        }
-        final String analyzerNameWithlang = isSupportedLanguage(lang) ? analyzerName + '_' + lang : analyzerName;
-        if (analyzerNames.contains(analyzerNameWithlang)) {
-            return analyzerNameWithlang;
-        }
-        return analyzerName;
+        return getAnalyzerName(field, lang, m -> m.normalizeAnalyzer, NORMALIZE_ANALYZER);
     }
 
     /**
@@ -224,20 +212,7 @@ public class AnalyzerSettings {
      * @return The contents analyzer name.
      */
     public String getContentsAnalyzerName(final String field, final String lang) {
-        final Map<String, FieldAnalyzerMapping> fieldAnalyzerMapping = fieldAnalyzerMappingMap.get(analyzerSettingsIndexName);
-        final Set<String> analyzerNames = analyzerMap.get(analyzerSettingsIndexName);
-        final String analyzerName;
-        if (StringUtil.isNotBlank(field) && fieldAnalyzerMapping.containsKey(field)
-                && fieldAnalyzerMapping.get(field).contentsAnalyzer != null) {
-            analyzerName = fieldAnalyzerMapping.get(field).contentsAnalyzer;
-        } else {
-            analyzerName = CONTENTS_ANALYZER;
-        }
-        final String analyzerNameWithlang = isSupportedLanguage(lang) ? analyzerName + '_' + lang : analyzerName;
-        if (analyzerNames.contains(analyzerNameWithlang)) {
-            return analyzerNameWithlang;
-        }
-        return analyzerName;
+        return getAnalyzerName(field, lang, m -> m.contentsAnalyzer, CONTENTS_ANALYZER);
     }
 
     /**
@@ -247,20 +222,7 @@ public class AnalyzerSettings {
      * @return The contents reading analyzer name.
      */
     public String getContentsReadingAnalyzerName(final String field, final String lang) {
-        final Map<String, FieldAnalyzerMapping> fieldAnalyzerMapping = fieldAnalyzerMappingMap.get(analyzerSettingsIndexName);
-        final Set<String> analyzerNames = analyzerMap.get(analyzerSettingsIndexName);
-        final String analyzerName;
-        if (StringUtil.isNotBlank(field) && fieldAnalyzerMapping.containsKey(field)
-                && fieldAnalyzerMapping.get(field).contentsReadingAnalyzer != null) {
-            analyzerName = fieldAnalyzerMapping.get(field).contentsReadingAnalyzer;
-        } else {
-            analyzerName = CONTENTS_READING_ANALYZER;
-        }
-        final String analyzerNameWithlang = isSupportedLanguage(lang) ? analyzerName + '_' + lang : analyzerName;
-        if (analyzerNames.contains(analyzerNameWithlang)) {
-            return analyzerNameWithlang;
-        }
-        return analyzerName;
+        return getAnalyzerName(field, lang, m -> m.contentsReadingAnalyzer, CONTENTS_READING_ANALYZER);
     }
 
     /**

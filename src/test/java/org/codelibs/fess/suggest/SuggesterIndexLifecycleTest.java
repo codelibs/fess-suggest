@@ -133,7 +133,6 @@ public class SuggesterIndexLifecycleTest {
         suggester.createIndexIfNothing();
 
         // Wait a bit to ensure different timestamp in index name
-        Thread.sleep(1100);
 
         // Create next index
         suggester.createNextIndex();
@@ -158,7 +157,6 @@ public class SuggesterIndexLifecycleTest {
 
         assertEquals("Should have 1 word in initial index", 1, suggester.getAllWordsNum());
 
-        Thread.sleep(1100);
         suggester.createNextIndex();
 
         // Index different data in new index (via update alias)
@@ -185,7 +183,6 @@ public class SuggesterIndexLifecycleTest {
         Suggester suggester = Suggester.builder().build(runner.client(), BASE_ID);
         suggester.createIndexIfNothing();
 
-        Thread.sleep(1100);
         suggester.createNextIndex();
         suggester.switchIndex();
 
@@ -241,7 +238,6 @@ public class SuggesterIndexLifecycleTest {
         assertEquals("Should have 1 word", 1, suggester.getAllWordsNum());
 
         // Step 2: Create next index
-        Thread.sleep(1100);
         suggester.createNextIndex();
 
         // Index different data in new index

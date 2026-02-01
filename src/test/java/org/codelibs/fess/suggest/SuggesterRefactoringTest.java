@@ -70,12 +70,7 @@ public class SuggesterRefactoringTest {
 
     @Before
     public void before() throws Exception {
-        // Delete test indices and settings indices for complete cleanup
-        try {
-            runner.admin().indices().prepareDelete("SuggesterRefactoringTest*", "fess_suggest*").execute().actionGet();
-        } catch (Exception e) {
-            // Index might not exist, ignore
-        }
+        runner.admin().indices().prepareDelete("_all").execute().actionGet();
     }
 
     /**
@@ -172,7 +167,7 @@ public class SuggesterRefactoringTest {
     public void testSwitchIndex_unexpectedUpdateIndicesCount() throws Exception {
         final Suggester suggester = Suggester.builder().build(client, "switch-test");
         suggester.createIndexIfNothing();
-        Thread.sleep(100);
+        Thread.sleep(50);
 
         // Create additional update index (making 2 total)
         final String updateAlias = suggester.getIndex() + ".update";
@@ -180,7 +175,7 @@ public class SuggesterRefactoringTest {
 
         client.admin().indices().prepareCreate(extraIndexName).execute().actionGet();
         client.admin().indices().prepareAliases().addAlias(extraIndexName, updateAlias).execute().actionGet();
-        Thread.sleep(100);
+        Thread.sleep(50);
 
         boolean exceptionThrown = false;
         String exceptionMessage = null;
@@ -258,16 +253,15 @@ public class SuggesterRefactoringTest {
     public void testIndexLifecycle_withRefactoredMethods() throws Exception {
         final Suggester suggester = Suggester.builder().build(client, "lifecycle-test");
         suggester.createIndexIfNothing();
-        Thread.sleep(100);
+        Thread.sleep(50);
 
         // Verify initial state - should have one index
         GetAliasesResponse aliasResponse = client.admin().indices().prepareGetAliases(suggester.getIndex()).execute().actionGet();
         assertTrue("Should have at least one index initially", aliasResponse.getAliases().size() >= 1);
 
         // Create next index - this is the main method we're testing
-        Thread.sleep(1000); // Wait before creating next index (following existing test pattern)
         suggester.createNextIndex();
-        Thread.sleep(100);
+        Thread.sleep(50);
 
         // Verify that createNextIndex completed without exceptions
         // The update alias should now point to the new index
@@ -277,7 +271,7 @@ public class SuggesterRefactoringTest {
 
         // Switch to new index
         suggester.switchIndex();
-        Thread.sleep(100);
+        Thread.sleep(50);
 
         // Verify switch was successful - search alias should still exist
         aliasResponse = client.admin().indices().prepareGetAliases(suggester.getIndex()).execute().actionGet();

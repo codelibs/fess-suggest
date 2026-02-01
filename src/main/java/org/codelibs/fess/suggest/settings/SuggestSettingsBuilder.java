@@ -19,7 +19,6 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
-import org.codelibs.fess.suggest.settings.SuggestSettings.TimeoutSettings;
 import org.opensearch.transport.client.Client;
 
 /**
