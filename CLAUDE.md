@@ -25,6 +25,9 @@
 org.codelibs.fess.suggest/
 ├── Suggester.java              # Main entry point (Facade)
 ├── SuggesterBuilder.java       # Builder for Suggester
+├── analysis/                   # Suggest analyzer
+├── constants/                  # Field names, constants
+├── exception/                  # Custom exceptions
 ├── index/
 │   ├── SuggestIndexer.java    # Indexing operations
 │   ├── contents/              # Content parsers
@@ -137,6 +140,10 @@ mvn clean jacoco:prepare-agent test jacoco:report  # Generate coverage report
 
 - `src/main/resources/suggest_indices/suggest.json` - Index settings
 - `src/main/resources/suggest_indices/suggest/mappings-default.json` - Field mappings
+- `src/main/resources/suggest_indices/analyzer/mapping-default.json` - Analyzer mapping
+- `src/main/resources/suggest_indices/suggest_analyzer.json` - Analyzer settings
+- `src/main/resources/suggest_indices/suggest_settings.json` - Suggest settings
+- `src/main/resources/suggest_indices/suggest_settings_array.json` - Array settings
 - `src/main/resources/suggest_settings/` - Default configurations
 
 ---
@@ -195,57 +202,9 @@ public static void afterClass() {
 - **Line Length**: 140 characters max
 - **License Headers**: Required (use `mvn license:format`)
 
-### Naming Conventions
+### Naming & Style
 
-| Type | Convention | Example |
-|------|-----------|---------|
-| Classes/Interfaces | PascalCase | `SuggestIndexer`, `ReadingConverter` |
-| Methods | camelCase | `createIndexIfNothing()` |
-| Constants | UPPER_SNAKE_CASE | `DEFAULT_MAX_READING_NUM` |
-| Packages | lowercase | `org.codelibs.fess.suggest` |
-
-### JavaDoc Requirements
-
-All public classes and methods require JavaDoc with `@param`, `@return`, and `@throws` tags.
-
-### Best Practices
-
-**Null Safety:**
-```java
-public Suggester(final Client client, final SuggestSettings settings) {
-    this.client = Objects.requireNonNull(client, "client must not be null");
-    this.settings = Objects.requireNonNull(settings, "settings must not be null");
-}
-```
-
-**Logging with Context:**
-```java
-if (logger.isInfoEnabled()) {
-    logger.info("Creating suggest index: index={}, searchAlias={}, updateAlias={}",
-                indexName, getSearchAlias(index), getUpdateAlias(index));
-}
-```
-
-**Exception Handling:**
-```java
-try {
-    converter.init();
-} catch (Exception e) {
-    throw new SuggesterException("Failed to initialize converter: "
-                                + converter.getClass().getName(), e);
-}
-```
-
-**Resource Management:**
-```java
-try (InputStream is = getClass().getClassLoader()
-        .getResourceAsStream("suggest_indices/suggest.json")) {
-    if (is == null) {
-        throw new IOException("Resource not found");
-    }
-    return new String(is.readAllBytes(), StandardCharsets.UTF_8);
-}
-```
+Standard Java conventions (PascalCase classes, camelCase methods, UPPER_SNAKE_CASE constants). Add JavaDoc with `@param`, `@return`, `@throws` for new public APIs.
 
 ---
 
