@@ -21,13 +21,16 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Locale;
+
 import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.opensearch.runner.OpenSearchRunner;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestName;
 import org.opensearch.action.admin.indices.get.GetIndexResponse;
 
 /**
@@ -36,9 +39,9 @@ import org.opensearch.action.admin.indices.get.GetIndexResponse;
  */
 public class SuggesterIndexLifecycleTest {
     static OpenSearchRunner runner;
-    static final String BASE_ID = "lifecycle-test";
-    // The actual index/alias name is {id}.suggest
-    static final String INDEX_NAME = BASE_ID + ".suggest";
+
+    @Rule
+    public final TestName testName = new TestName();
 
     @BeforeClass
     public static void beforeClass() throws Exception {
@@ -59,10 +62,16 @@ public class SuggesterIndexLifecycleTest {
         runner.clean();
     }
 
-    @Before
-    public void before() throws Exception {
-        runner.admin().indices().prepareDelete("_all").execute().actionGet();
-        runner.refresh();
+    private Suggester createSuggester() {
+        return Suggester.builder().build(runner.client(), getBaseId());
+    }
+
+    private String getBaseId() {
+        return ("lifecycle-" + testName.getMethodName()).toLowerCase(Locale.ROOT);
+    }
+
+    private String getIndexName() {
+        return getBaseId() + ".suggest";
     }
 
     // ============================================================
@@ -71,7 +80,7 @@ public class SuggesterIndexLifecycleTest {
 
     @Test
     public void test_createIndexIfNothing_createsNewIndex() throws Exception {
-        Suggester suggester = Suggester.builder().build(runner.client(), BASE_ID);
+        Suggester suggester = createSuggester();
 
         boolean created = suggester.createIndexIfNothing();
 
@@ -84,7 +93,7 @@ public class SuggesterIndexLifecycleTest {
 
     @Test
     public void test_createIndexIfNothing_noOpWhenIndexExists() throws Exception {
-        Suggester suggester = Suggester.builder().build(runner.client(), BASE_ID);
+        Suggester suggester = createSuggester();
 
         boolean firstCreate = suggester.createIndexIfNothing();
         assertTrue("First call should create index", firstCreate);
@@ -95,7 +104,7 @@ public class SuggesterIndexLifecycleTest {
 
     @Test
     public void test_createIndexIfNothing_multipleCallsAreSafe() throws Exception {
-        Suggester suggester = Suggester.builder().build(runner.client(), BASE_ID);
+        Suggester suggester = createSuggester();
 
         // Multiple consecutive calls should be safe
         suggester.createIndexIfNothing();
@@ -113,7 +122,7 @@ public class SuggesterIndexLifecycleTest {
 
     @Test
     public void test_dataPersistedAfterCreateIndex() throws Exception {
-        Suggester suggester = Suggester.builder().build(runner.client(), BASE_ID);
+        Suggester suggester = createSuggester();
         suggester.createIndexIfNothing();
 
         // Index some data
@@ -129,7 +138,7 @@ public class SuggesterIndexLifecycleTest {
 
     @Test
     public void test_createNextIndex_createsSecondIndex() throws Exception {
-        Suggester suggester = Suggester.builder().build(runner.client(), BASE_ID);
+        Suggester suggester = createSuggester();
         suggester.createIndexIfNothing();
 
         // Wait a bit to ensure different timestamp in index name
@@ -138,13 +147,13 @@ public class SuggesterIndexLifecycleTest {
         suggester.createNextIndex();
 
         // Verify we now have two indices
-        GetIndexResponse response = runner.admin().indices().prepareGetIndex().addIndices(INDEX_NAME + "*").execute().actionGet();
+        GetIndexResponse response = runner.admin().indices().prepareGetIndex().addIndices(getIndexName() + "*").execute().actionGet();
         assertEquals("Should have two indices", 2, response.getIndices().length);
     }
 
     @Test
     public void test_switchIndex_works() throws Exception {
-        Suggester suggester = Suggester.builder().build(runner.client(), BASE_ID);
+        Suggester suggester = createSuggester();
         suggester.createIndexIfNothing();
 
         // Index data in initial index
@@ -180,27 +189,27 @@ public class SuggesterIndexLifecycleTest {
 
     @Test
     public void test_removeDisableIndices_cleansUpOrphanedIndex() throws Exception {
-        Suggester suggester = Suggester.builder().build(runner.client(), BASE_ID);
+        Suggester suggester = createSuggester();
         suggester.createIndexIfNothing();
 
         suggester.createNextIndex();
         suggester.switchIndex();
 
         // Before cleanup
-        GetIndexResponse beforeRemove = runner.admin().indices().prepareGetIndex().addIndices(INDEX_NAME + "*").execute().actionGet();
+        GetIndexResponse beforeRemove = runner.admin().indices().prepareGetIndex().addIndices(getIndexName() + "*").execute().actionGet();
         assertTrue("Should have at least 2 indices before cleanup", beforeRemove.getIndices().length >= 2);
 
         // Remove orphaned indices
         suggester.removeDisableIndices();
 
         // After cleanup
-        GetIndexResponse afterRemove = runner.admin().indices().prepareGetIndex().addIndices(INDEX_NAME + "*").execute().actionGet();
+        GetIndexResponse afterRemove = runner.admin().indices().prepareGetIndex().addIndices(getIndexName() + "*").execute().actionGet();
         assertEquals("Should have only 1 index after cleanup", 1, afterRemove.getIndices().length);
     }
 
     @Test
     public void test_removeDisableIndices_preservesActiveIndices() throws Exception {
-        Suggester suggester = Suggester.builder().build(runner.client(), BASE_ID);
+        Suggester suggester = createSuggester();
         suggester.createIndexIfNothing();
 
         // Index some data
@@ -222,7 +231,7 @@ public class SuggesterIndexLifecycleTest {
 
     @Test
     public void test_fullLifecycle() throws Exception {
-        Suggester suggester = Suggester.builder().build(runner.client(), BASE_ID);
+        Suggester suggester = createSuggester();
 
         // Step 1: Create initial index
         assertTrue("Should create initial index", suggester.createIndexIfNothing());
@@ -262,7 +271,7 @@ public class SuggesterIndexLifecycleTest {
         suggester.removeDisableIndices();
 
         // Verify only new index remains
-        GetIndexResponse indices = runner.admin().indices().prepareGetIndex().addIndices(INDEX_NAME + "*").execute().actionGet();
+        GetIndexResponse indices = runner.admin().indices().prepareGetIndex().addIndices(getIndexName() + "*").execute().actionGet();
         assertEquals("Should have only 1 index after cleanup", 1, indices.getIndices().length);
 
         // Data should still be accessible
@@ -275,15 +284,15 @@ public class SuggesterIndexLifecycleTest {
 
     @Test
     public void test_getIndex() throws Exception {
-        Suggester suggester = Suggester.builder().build(runner.client(), BASE_ID);
+        Suggester suggester = createSuggester();
 
         // The index name should be {id}.suggest
-        assertEquals("Should return correct index name", INDEX_NAME, suggester.getIndex());
+        assertEquals("Should return correct index name", getIndexName(), suggester.getIndex());
     }
 
     @Test
     public void test_getAllWordsNum_onEmptyIndex() throws Exception {
-        Suggester suggester = Suggester.builder().build(runner.client(), BASE_ID);
+        Suggester suggester = createSuggester();
         suggester.createIndexIfNothing();
 
         assertEquals("Empty index should have 0 words", 0, suggester.getAllWordsNum());
@@ -291,7 +300,7 @@ public class SuggesterIndexLifecycleTest {
 
     @Test
     public void test_getDocumentWordsNum_onEmptyIndex() throws Exception {
-        Suggester suggester = Suggester.builder().build(runner.client(), BASE_ID);
+        Suggester suggester = createSuggester();
         suggester.createIndexIfNothing();
 
         assertEquals("Empty index should have 0 document words", 0, suggester.getDocumentWordsNum());
@@ -299,7 +308,7 @@ public class SuggesterIndexLifecycleTest {
 
     @Test
     public void test_getQueryWordsNum_onEmptyIndex() throws Exception {
-        Suggester suggester = Suggester.builder().build(runner.client(), BASE_ID);
+        Suggester suggester = createSuggester();
         suggester.createIndexIfNothing();
 
         assertEquals("Empty index should have 0 query words", 0, suggester.getQueryWordsNum());
@@ -307,35 +316,35 @@ public class SuggesterIndexLifecycleTest {
 
     @Test
     public void test_settings_returnsNonNull() throws Exception {
-        Suggester suggester = Suggester.builder().build(runner.client(), BASE_ID);
+        Suggester suggester = createSuggester();
 
         assertNotNull("Settings should not be null", suggester.settings());
     }
 
     @Test
     public void test_getReadingConverter_returnsNonNull() throws Exception {
-        Suggester suggester = Suggester.builder().build(runner.client(), BASE_ID);
+        Suggester suggester = createSuggester();
 
         assertNotNull("ReadingConverter should not be null", suggester.getReadingConverter());
     }
 
     @Test
     public void test_getNormalizer_returnsNonNull() throws Exception {
-        Suggester suggester = Suggester.builder().build(runner.client(), BASE_ID);
+        Suggester suggester = createSuggester();
 
         assertNotNull("Normalizer should not be null", suggester.getNormalizer());
     }
 
     @Test
     public void test_indexer_returnsNonNull() throws Exception {
-        Suggester suggester = Suggester.builder().build(runner.client(), BASE_ID);
+        Suggester suggester = createSuggester();
 
         assertNotNull("Indexer should not be null", suggester.indexer());
     }
 
     @Test
     public void test_refresh_onEmptyIndex() throws Exception {
-        Suggester suggester = Suggester.builder().build(runner.client(), BASE_ID);
+        Suggester suggester = createSuggester();
         suggester.createIndexIfNothing();
 
         // Should not throw
@@ -344,7 +353,7 @@ public class SuggesterIndexLifecycleTest {
 
     @Test
     public void test_shutdown() throws Exception {
-        Suggester suggester = Suggester.builder().build(runner.client(), BASE_ID);
+        Suggester suggester = createSuggester();
 
         // Should not throw
         suggester.shutdown();

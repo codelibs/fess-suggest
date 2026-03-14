@@ -24,6 +24,7 @@ import static org.junit.Assert.assertTrue;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import org.codelibs.fess.suggest.Suggester;
@@ -37,12 +38,17 @@ import org.codelibs.opensearch.runner.OpenSearchRunner;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestName;
 import org.opensearch.index.query.QueryBuilders;
 
 public class SuggestIndexerTest {
     static Suggester suggester;
     static OpenSearchRunner runner;
+
+    @Rule
+    public final TestName testName = new TestName();
 
     @BeforeClass
     public static void beforeClass() throws Exception {
@@ -65,10 +71,12 @@ public class SuggestIndexerTest {
 
     @Before
     public void before() throws Exception {
-        runner.admin().indices().prepareDelete("_all").execute().actionGet();
-        runner.refresh();
-        suggester = Suggester.builder().build(runner.client(), "SuggestIndexerTest");
+        suggester = Suggester.builder().build(runner.client(), getTestId());
         suggester.createIndexIfNothing();
+    }
+
+    private String getTestId() {
+        return ("suggest-indexer-test-" + testName.getMethodName()).toLowerCase(Locale.ROOT);
     }
 
     @Test
@@ -446,27 +454,21 @@ public class SuggestIndexerTest {
     @Test
     @SuppressWarnings("unchecked")
     public void test_deleteOldWords() throws Exception {
-        SuggestSettings settings = suggester.settings();
-        String field = settings.array().get(SuggestSettings.DefaultKeys.SUPPORTED_FIELDS)[0];
-
-        // Index old data first
-        Map<String, Object> document = new HashMap<>();
-        document.put(field, "この柿は美味しい。");
-        suggester.indexer().indexFromDocument(new Map[] { document });
+        SuggestItem oldItem = new SuggestItem(new String[] { "この柿は美味しい。" }, new String[][] { { "kaki" } }, new String[] { "content" }, 1, 0,
+                -1, new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
+        oldItem.setTimestamp(ZonedDateTime.now().minusMinutes(1));
+        suggester.indexer().index(oldItem);
         suggester.refresh();
 
         long oldWordsCount = suggester.getAllWordsNum();
         assertTrue(oldWordsCount > 0);
 
-        // Minimal sleep to ensure timestamp separation (reduced from 2000ms to 100ms total)
-        Thread.sleep(50);
         ZonedDateTime threshold = ZonedDateTime.now();
-        Thread.sleep(50);
 
-        // Index new data after threshold
-        document = new HashMap<>();
-        document.put(field, "検索エンジン");
-        suggester.indexer().indexFromDocument(new Map[] { document });
+        SuggestItem newItem = new SuggestItem(new String[] { "検索エンジン" }, new String[][] { { "engine" } }, new String[] { "content" }, 1, 0,
+                -1, new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
+        newItem.setTimestamp(ZonedDateTime.now().plusMinutes(1));
+        suggester.indexer().index(newItem);
         suggester.refresh();
 
         long totalWordsCount = suggester.getAllWordsNum();

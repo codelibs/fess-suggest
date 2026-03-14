@@ -20,6 +20,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -115,24 +117,14 @@ public class DefaultContentsParser implements ContentsParser {
         final String queryString = queryLog.getQueryString();
         final String filterQueryString = queryLog.getFilterQueryString();
 
-        final List<String> tagList = new ArrayList<>();
-        for (final String tagFieldName : tagFieldNames) {
-            tagList.addAll(Arrays.asList(SuggestUtil.parseQuery(queryString, tagFieldName)));
+        final String[] tags = extractTags(tagFieldNames, tagFieldName -> {
+            final List<String> results = new ArrayList<>(Arrays.asList(SuggestUtil.parseQuery(queryString, tagFieldName)));
             if (filterQueryString != null) {
-                tagList.addAll(Arrays.asList(SuggestUtil.parseQuery(filterQueryString, tagFieldName)));
+                results.addAll(Arrays.asList(SuggestUtil.parseQuery(filterQueryString, tagFieldName)));
             }
-        }
-        final String[] tags = tagList.toArray(new String[tagList.size()]);
-        final String[] roles1 = SuggestUtil.parseQuery(queryString, roleFieldName);
-        final String[] roles2 = filterQueryString == null ? new String[0] : SuggestUtil.parseQuery(filterQueryString, roleFieldName);
-        final String[] roles = new String[roles1.length + roles2.length];
-
-        if (roles1.length > 0) {
-            System.arraycopy(roles1, 0, roles, 0, roles1.length);
-        }
-        if (roles2.length > 0) {
-            System.arraycopy(roles2, 0, roles, roles1.length, roles2.length);
-        }
+            return results.toArray(new String[0]);
+        });
+        final String[] roles = extractRolesFromQueryLog(queryString, filterQueryString, roleFieldName);
 
         final List<SuggestItem> items = new ArrayList<>(fields.length);
         try {
@@ -163,11 +155,7 @@ public class DefaultContentsParser implements ContentsParser {
             final String roleFieldName, final String langFieldName, final ReadingConverter readingConverter,
             final ReadingConverter contentsReadingConverter, final Normalizer normalizer, final SuggestAnalyzer analyzer) {
         List<SuggestItem> items = null;
-        final List<String> tagList = new ArrayList<>();
-        for (final String tagFieldName : tagFieldNames) {
-            tagList.addAll(Arrays.asList(getFieldValues(document, tagFieldName)));
-        }
-        final String[] tags = tagList.toArray(new String[tagList.size()]);
+        final String[] tags = extractTags(tagFieldNames, tagFieldName -> getFieldValues(document, tagFieldName));
         final String[] roles = getFieldValues(document, roleFieldName);
 
         for (final String field : fields) {
@@ -220,6 +208,20 @@ public class DefaultContentsParser implements ContentsParser {
         }
 
         return items == null ? new ArrayList<>() : items;
+    }
+
+    private String[] extractTags(final String[] tagFieldNames, final Function<String, String[]> tagExtractor) {
+        final List<String> tagList = new ArrayList<>();
+        for (final String tagFieldName : tagFieldNames) {
+            tagList.addAll(Arrays.asList(tagExtractor.apply(tagFieldName)));
+        }
+        return tagList.toArray(new String[tagList.size()]);
+    }
+
+    private String[] extractRolesFromQueryLog(final String queryString, final String filterQueryString, final String roleFieldName) {
+        final String[] roles1 = SuggestUtil.parseQuery(queryString, roleFieldName);
+        final String[] roles2 = filterQueryString == null ? new String[0] : SuggestUtil.parseQuery(filterQueryString, roleFieldName);
+        return Stream.concat(Arrays.stream(roles1), Arrays.stream(roles2)).toArray(String[]::new);
     }
 
     /**

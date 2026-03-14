@@ -35,6 +35,8 @@ import org.opensearch.common.unit.TimeValue;
 import org.opensearch.index.query.QueryBuilders;
 
 public class SuggestIndexWriterTest {
+    private static final String TEST_ID = "SuggestIndexWriterTest";
+
     static Suggester suggester;
     static OpenSearchRunner runner;
     static SuggestIndexWriter writer;
@@ -50,6 +52,8 @@ public class SuggestIndexWriterTest {
                         .numOfNode(1)
                         .pluginTypes("org.codelibs.opensearch.extension.ExtensionPlugin"));
         runner.ensureYellow();
+        suggester = Suggester.builder().build(runner.client(), TEST_ID);
+        suggester.createIndexIfNothing();
         writer = new SuggestIndexWriter();
     }
 
@@ -61,10 +65,10 @@ public class SuggestIndexWriterTest {
 
     @Before
     public void before() throws Exception {
-        runner.admin().indices().prepareDelete("_all").execute().actionGet();
-        runner.refresh();
-        suggester = Suggester.builder().build(runner.client(), "SuggestIndexWriterTest");
-        suggester.createIndexIfNothing();
+        suggester.indexer().deleteAll();
+        suggester.settings().badword().deleteAll();
+        suggester.settings().elevateWord().deleteAll();
+        suggester.refresh();
     }
 
     @Test

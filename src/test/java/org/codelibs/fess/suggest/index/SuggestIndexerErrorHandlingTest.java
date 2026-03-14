@@ -47,6 +47,10 @@ import org.junit.Test;
  * Tests for error handling scenarios in SuggestIndexer.
  */
 public class SuggestIndexerErrorHandlingTest {
+    private static final String TEST_ID = "SuggestIndexerErrorHandlingTest";
+
+    private static final long ASYNC_TIMEOUT_SECONDS = 5L;
+
     static Suggester suggester;
     static OpenSearchRunner runner;
 
@@ -61,6 +65,8 @@ public class SuggestIndexerErrorHandlingTest {
                         .numOfNode(1)
                         .pluginTypes("org.codelibs.opensearch.extension.ExtensionPlugin"));
         runner.ensureYellow();
+        suggester = Suggester.builder().build(runner.client(), TEST_ID);
+        suggester.createIndexIfNothing();
     }
 
     @AfterClass
@@ -71,10 +77,10 @@ public class SuggestIndexerErrorHandlingTest {
 
     @Before
     public void before() throws Exception {
-        runner.admin().indices().prepareDelete("_all").execute().actionGet();
-        runner.refresh();
-        suggester = Suggester.builder().build(runner.client(), "SuggestIndexerErrorHandlingTest");
-        suggester.createIndexIfNothing();
+        suggester.indexer().deleteAll();
+        suggester.settings().badword().deleteAll();
+        suggester.settings().elevateWord().deleteAll();
+        suggester.refresh();
     }
 
     // ============================================================
@@ -224,7 +230,7 @@ public class SuggestIndexerErrorHandlingTest {
             latch.countDown();
         });
 
-        assertTrue("Should complete within timeout", latch.await(30, TimeUnit.SECONDS));
+        assertTrue("Should complete within timeout", latch.await(ASYNC_TIMEOUT_SECONDS, TimeUnit.SECONDS));
         assertNotNull("Should have response", responseRef.get());
         assertEquals(0, responseRef.get().getNumberOfInputDocs());
     }
@@ -254,7 +260,7 @@ public class SuggestIndexerErrorHandlingTest {
             latch.countDown();
         });
 
-        assertTrue("Should complete within timeout", latch.await(30, TimeUnit.SECONDS));
+        assertTrue("Should complete within timeout", latch.await(ASYNC_TIMEOUT_SECONDS, TimeUnit.SECONDS));
         assertNotNull("Should have error", errorRef.get());
         assertTrue("Error should be RuntimeException", errorRef.get() instanceof RuntimeException);
     }
@@ -279,7 +285,7 @@ public class SuggestIndexerErrorHandlingTest {
         Deferred<SuggestIndexResponse>.Promise promise = suggester.indexer().indexFromQueryLog(reader, 10, 0);
         promise.then(response -> latch.countDown()).error(error -> latch.countDown());
 
-        assertTrue("Should complete within timeout", latch.await(30, TimeUnit.SECONDS));
+        assertTrue("Should complete within timeout", latch.await(ASYNC_TIMEOUT_SECONDS, TimeUnit.SECONDS));
         assertTrue("Close should be called", closeCalled.get());
     }
 

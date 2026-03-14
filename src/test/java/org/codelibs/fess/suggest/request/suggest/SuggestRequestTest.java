@@ -18,24 +18,26 @@ package org.codelibs.fess.suggest.request.suggest;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.util.ArrayList;
+
 import org.junit.Test;
 
 public class SuggestRequestTest {
     @Test
     public void test_isHiraganaQuery() throws Exception {
-        SuggestRequest request = new SuggestRequest();
-        assertTrue(request.isHiraganaQuery("あ"));
-        assertTrue(request.isHiraganaQuery("あおぞら"));
-        assertTrue(request.isHiraganaQuery("けんさく"));
-        assertTrue(request.isHiraganaQuery("あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよをわん"));
-        assertTrue(request.isHiraganaQuery("がぎぐげござじずぜぞだぢづでどばびぶべぼ"));
-        assertTrue(request.isHiraganaQuery("ぁぃぅぇぉっゃゅょ"));
+        SuggestQueryBuilder queryBuilder = new SuggestQueryBuilder(null, null, new ArrayList<>(), 2.0f);
+        assertTrue(queryBuilder.isHiraganaQuery("あ"));
+        assertTrue(queryBuilder.isHiraganaQuery("あおぞら"));
+        assertTrue(queryBuilder.isHiraganaQuery("けんさく"));
+        assertTrue(queryBuilder.isHiraganaQuery("あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよをわん"));
+        assertTrue(queryBuilder.isHiraganaQuery("がぎぐげござじずぜぞだぢづでどばびぶべぼ"));
+        assertTrue(queryBuilder.isHiraganaQuery("ぁぃぅぇぉっゃゅょ"));
 
-        assertFalse(request.isHiraganaQuery("こ犬"));
-        assertFalse(request.isHiraganaQuery("abc"));
-        assertFalse(request.isHiraganaQuery("カキク"));
-        assertFalse(request.isHiraganaQuery("あカ"));
-        assertFalse(request.isHiraganaQuery("アか"));
-        assertFalse(request.isHiraganaQuery("abcあ"));
+        assertFalse(queryBuilder.isHiraganaQuery("こ犬"));
+        assertFalse(queryBuilder.isHiraganaQuery("abc"));
+        assertFalse(queryBuilder.isHiraganaQuery("カキク"));
+        assertFalse(queryBuilder.isHiraganaQuery("あカ"));
+        assertFalse(queryBuilder.isHiraganaQuery("アか"));
+        assertFalse(queryBuilder.isHiraganaQuery("abcあ"));
     }
 }
