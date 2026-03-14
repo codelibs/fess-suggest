@@ -15,35 +15,22 @@
  */
 package org.codelibs.fess.suggest.request.suggest;
 
-import java.io.IOException;
-import java.lang.Character.UnicodeBlock;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import org.codelibs.fess.suggest.concurrent.Deferred;
 import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.converter.ReadingConverter;
-import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.request.Request;
 import org.opensearch.action.search.SearchRequestBuilder;
 import org.opensearch.action.search.SearchResponse;
-import org.opensearch.common.lucene.search.function.CombineFunction;
-import org.opensearch.common.lucene.search.function.FieldValueFactorFunction;
-import org.opensearch.common.lucene.search.function.FunctionScoreQuery;
 import org.opensearch.core.action.ActionListener;
-import org.opensearch.core.common.Strings;
 import org.opensearch.index.query.BoolQueryBuilder;
 import org.opensearch.index.query.QueryBuilder;
 import org.opensearch.index.query.QueryBuilders;
-import org.opensearch.index.query.functionscore.FunctionScoreQueryBuilder;
-import org.opensearch.index.query.functionscore.ScoreFunctionBuilders;
-import org.opensearch.search.SearchHit;
 import org.opensearch.search.sort.SortOrder;
 import org.opensearch.transport.client.Client;
 
@@ -242,6 +229,102 @@ public class SuggestRequest extends Request<SuggestResponse> {
         return null;
     }
 
+    // ============================================================
+    // Deprecated delegate methods for backward compatibility
+    // ============================================================
+
+    /**
+     * Builds the query for suggestions.
+     * @param q The query string.
+     * @param fieldList The fields to search in.
+     * @return The QueryBuilder instance.
+     * @deprecated Use {@link SuggestQueryBuilder#buildQuery(String, List)} instead.
+     */
+    @Deprecated
+    protected QueryBuilder buildQuery(final String q, final List<String> fieldList) {
+        return new SuggestQueryBuilder(readingConverter, normalizer, languages, prefixMatchWeight).buildQuery(q, fieldList);
+    }
+
+    /**
+     * Builds a filter query.
+     * @param fieldName The field name.
+     * @param words The words to filter by.
+     * @return The QueryBuilder instance.
+     * @deprecated Use {@link SuggestQueryBuilder#buildFilterQuery(String, List)} instead.
+     */
+    @Deprecated
+    protected QueryBuilder buildFilterQuery(final String fieldName, final List<String> words) {
+        return new SuggestQueryBuilder(readingConverter, normalizer, languages, prefixMatchWeight).buildFilterQuery(fieldName, words);
+    }
+
+    /**
+     * Builds a function score query.
+     * @param q The query string.
+     * @param queryBuilder The query builder.
+     * @return The QueryBuilder instance.
+     * @deprecated Use {@link SuggestQueryBuilder#buildFunctionScoreQuery(String, QueryBuilder)} instead.
+     */
+    @Deprecated
+    protected QueryBuilder buildFunctionScoreQuery(final String q, final QueryBuilder queryBuilder) {
+        return createOverridableQueryBuilder().buildFunctionScoreQuery(q, queryBuilder);
+    }
+
+    /**
+     * Creates a SuggestResponse from the OpenSearch SearchResponse.
+     * @param searchResponse The OpenSearch SearchResponse.
+     * @return A SuggestResponse instance.
+     * @deprecated Use {@link SuggestResponseCreator#createResponse(SearchResponse)} instead.
+     */
+    @Deprecated
+    protected SuggestResponse createResponse(final SearchResponse searchResponse) {
+        final SuggestQueryBuilder qb = createOverridableQueryBuilder();
+        return new SuggestResponseCreator(query, size, suggestDetail, skipDuplicateWords, matchWordFirst, qb) {
+            @Override
+            protected boolean isFirstWordMatching(final boolean swq, final boolean hq, final String t) {
+                return SuggestRequest.this.isFirstWordMatching(swq, hq, t);
+            }
+        }.createResponse(searchResponse);
+    }
+
+    /**
+     * Checks if the first word matches.
+     * @param singleWordQuery True if it is a single word query.
+     * @param hiraganaQuery True if it is a hiragana query.
+     * @param text The text to check.
+     * @return True if the first word matches, false otherwise.
+     * @deprecated Use {@link SuggestResponseCreator#isFirstWordMatching(boolean, boolean, String)} instead.
+     */
+    @Deprecated
+    protected boolean isFirstWordMatching(final boolean singleWordQuery, final boolean hiraganaQuery, final String text) {
+        final SuggestQueryBuilder qb = createOverridableQueryBuilder();
+        return new SuggestResponseCreator(query, size, suggestDetail, skipDuplicateWords, matchWordFirst, qb)
+                .isFirstWordMatching(singleWordQuery, hiraganaQuery, text);
+    }
+
+    /**
+     * Checks if the query is a hiragana query.
+     * @param q The query string.
+     * @return True if it is a hiragana query, false otherwise.
+     * @deprecated Use {@link SuggestQueryBuilder#isHiraganaQuery(String)} instead.
+     */
+    @Deprecated
+    protected boolean isHiraganaQuery(final String q) {
+        return new SuggestQueryBuilder(readingConverter, normalizer, languages, prefixMatchWeight).isHiraganaQuery(q);
+    }
+
+    /**
+     * Creates a SuggestQueryBuilder that routes isHiraganaQuery calls back through this instance's
+     * overridable method, preserving subclass override behavior.
+     */
+    private SuggestQueryBuilder createOverridableQueryBuilder() {
+        return new SuggestQueryBuilder(readingConverter, normalizer, languages, prefixMatchWeight) {
+            @Override
+            boolean isHiraganaQuery(final String q) {
+                return SuggestRequest.this.isHiraganaQuery(q);
+            }
+        };
+    }
+
     @Override
     protected void processRequest(final Client client, final Deferred<SuggestResponse> deferred) {
         final SearchRequestBuilder builder = client.prepareSearch(index);
@@ -256,7 +339,7 @@ public class SuggestRequest extends Request<SuggestResponse> {
         final QueryBuilder q = buildQuery(query, fields);
 
         // set function score
-        final QueryBuilder queryBuilder = buildFunctionScoreQuery(query, q);
+        final QueryBuilder functionScoreQuery = buildFunctionScoreQuery(query, q);
         builder.addSort("_score", SortOrder.DESC);
 
         // set filter query.
@@ -283,11 +366,11 @@ public class SuggestRequest extends Request<SuggestResponse> {
 
         if (filterList.size() > 0) {
             final BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
-            boolQueryBuilder.must(queryBuilder);
+            boolQueryBuilder.must(functionScoreQuery);
             filterList.forEach(boolQueryBuilder::filter);
             builder.setQuery(boolQueryBuilder);
         } else {
-            builder.setQuery(queryBuilder);
+            builder.setQuery(functionScoreQuery);
         }
 
         builder.execute(new ActionListener<SearchResponse>() {
@@ -305,197 +388,5 @@ public class SuggestRequest extends Request<SuggestResponse> {
                 deferred.reject(new SuggesterException(e.getMessage(), e));
             }
         });
-    }
-
-    private boolean isSingleWordQuery(final String query) {
-        return !Strings.isNullOrEmpty(query) && !query.contains(" ") && !query.contains("　");
-    }
-
-    /**
-     * Builds the query for suggestions.
-     * @param q The query string.
-     * @param fields The fields to search in.
-     * @return The QueryBuilder instance.
-     */
-    protected QueryBuilder buildQuery(final String q, final List<String> fields) {
-        try {
-            final QueryBuilder queryBuilder;
-            if (Strings.isNullOrEmpty(q)) {
-                queryBuilder = QueryBuilders.matchAllQuery();
-            } else {
-                final boolean prefixQuery = !q.endsWith(" ") && !q.endsWith("　");
-                List<String> readingList = new ArrayList<>();
-
-                final String[] langsArray = languages.toArray(new String[languages.size()]);
-
-                final BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
-                final String[] queries = q.replace("　", " ").replaceAll(" +", " ").trim().split(" ");
-                for (int i = 0; i < queries.length; i++) {
-                    final String fieldName = FieldNames.READING_PREFIX + i;
-
-                    final String query;
-                    if (normalizer == null) {
-                        query = queries[i];
-                    } else {
-                        query = normalizer.normalize(queries[i], "", langsArray);
-                    }
-
-                    if (readingConverter == null) {
-                        readingList.add(query);
-                    } else {
-                        readingList = readingConverter.convert(query, "", langsArray);
-                    }
-
-                    final BoolQueryBuilder readingQueryBuilder = QueryBuilders.boolQuery().minimumShouldMatch(1);
-                    final int readingNum = readingList.size();
-                    for (int readingCount = 0; readingCount < readingNum; readingCount++) {
-                        final String reading = readingList.get(readingCount);
-                        if (i + 1 == queries.length && prefixQuery) {
-                            readingQueryBuilder.should(QueryBuilders.prefixQuery(fieldName, reading));
-                        } else {
-                            readingQueryBuilder.should(QueryBuilders.termQuery(fieldName, reading));
-                        }
-                    }
-                    readingList.clear();
-                    boolQueryBuilder.must(readingQueryBuilder);
-                }
-                queryBuilder = boolQueryBuilder;
-            }
-
-            return queryBuilder;
-        } catch (final IOException e) {
-            throw new SuggesterException("Failed to create queryString.", e);
-        }
-    }
-
-    /**
-     * Builds a filter query.
-     * @param fieldName The field name.
-     * @param words The words to filter by.
-     * @return The QueryBuilder instance.
-     */
-    protected QueryBuilder buildFilterQuery(final String fieldName, final List<String> words) {
-        final BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery().minimumShouldMatch(1);
-        words.stream().forEach(word -> boolQueryBuilder.should(QueryBuilders.termQuery(fieldName, word)));
-        return boolQueryBuilder;
-    }
-
-    /**
-     * Builds a function score query.
-     * @param query The query string.
-     * @param queryBuilder The query builder.
-     * @return The QueryBuilder instance.
-     */
-    protected QueryBuilder buildFunctionScoreQuery(final String query, final QueryBuilder queryBuilder) {
-
-        final List<FunctionScoreQueryBuilder.FilterFunctionBuilder> flist = new ArrayList<>();
-
-        if (isSingleWordQuery(query) && !isHiraganaQuery(query)) {
-            flist.add(new FunctionScoreQueryBuilder.FilterFunctionBuilder(QueryBuilders.prefixQuery(FieldNames.TEXT, query),
-                    ScoreFunctionBuilders.weightFactorFunction(prefixMatchWeight)));
-        }
-
-        flist.add(new FunctionScoreQueryBuilder.FilterFunctionBuilder(ScoreFunctionBuilders.fieldValueFactorFunction(FieldNames.DOC_FREQ)
-                .missing(0.1f)
-                .modifier(FieldValueFactorFunction.Modifier.LOG2P)
-                .setWeight(1.0F)));
-        flist.add(new FunctionScoreQueryBuilder.FilterFunctionBuilder(ScoreFunctionBuilders.fieldValueFactorFunction(FieldNames.QUERY_FREQ)
-                .missing(0.1f)
-                .modifier(FieldValueFactorFunction.Modifier.LOG2P)
-                .setWeight(1.0F)));
-        flist.add(new FunctionScoreQueryBuilder.FilterFunctionBuilder(
-                ScoreFunctionBuilders.fieldValueFactorFunction(FieldNames.USER_BOOST).missing(1f).setWeight(1.0F)));
-        final FunctionScoreQueryBuilder functionScoreQueryBuilder = QueryBuilders.functionScoreQuery(queryBuilder,
-                flist.toArray(new FunctionScoreQueryBuilder.FilterFunctionBuilder[flist.size()]));
-
-        functionScoreQueryBuilder.boostMode(CombineFunction.REPLACE);
-        functionScoreQueryBuilder.scoreMode(FunctionScoreQuery.ScoreMode.MULTIPLY);
-
-        return functionScoreQueryBuilder;
-    }
-
-    /**
-     * Creates a SuggestResponse from the OpenSearch SearchResponse.
-     * @param searchResponse The OpenSearch SearchResponse.
-     * @return A SuggestResponse instance.
-     */
-    protected SuggestResponse createResponse(final SearchResponse searchResponse) {
-        final SearchHit[] hits = searchResponse.getHits().getHits();
-        final List<String> words = new ArrayList<>();
-        final Set<String> seenNormalizedWords = new HashSet<>();
-        final List<String> firstWords = new ArrayList<>();
-        final List<String> secondWords = new ArrayList<>();
-        final List<SuggestItem> firstItems = new ArrayList<>();
-        final List<SuggestItem> secondItems = new ArrayList<>();
-
-        final String index;
-        if (hits.length > 0) {
-            index = hits[0].getIndex();
-        } else {
-            index = SuggestConstants.EMPTY_STRING;
-        }
-
-        final boolean singleWordQuery = isSingleWordQuery(query);
-        final boolean hiraganaQuery = isHiraganaQuery(query);
-        for (int i = 0; i < hits.length && words.size() < size; i++) {
-            final SearchHit hit = hits[i];
-
-            final Map<String, Object> source = hit.getSourceAsMap();
-            final String text = source.get(FieldNames.TEXT).toString();
-            if (skipDuplicateWords) {
-                final String normalizedText = text.replace(" ", "");
-                if (!seenNormalizedWords.add(normalizedText)) {
-                    // skip duplicate word.
-                    continue;
-                }
-            }
-
-            words.add(text);
-            final boolean isFirstWords = isFirstWordMatching(singleWordQuery, hiraganaQuery, text);
-            if (isFirstWords) {
-                firstWords.add(text);
-            } else {
-                secondWords.add(text);
-            }
-
-            if (suggestDetail) {
-                final SuggestItem item = SuggestItem.parseSource(source);
-                if (isFirstWords) {
-                    firstItems.add(item);
-                } else {
-                    secondItems.add(item);
-                }
-            }
-        }
-        firstWords.addAll(secondWords);
-        firstItems.addAll(secondItems);
-        return new SuggestResponse(index, searchResponse.getTook().getMillis(), firstWords, searchResponse.getHits().getTotalHits().value(),
-                firstItems);
-    }
-
-    /**
-     * Checks if the first word matches.
-     * @param singleWordQuery True if it is a single word query.
-     * @param hiraganaQuery True if it is a hiragana query.
-     * @param text The text to check.
-     * @return True if the first word matches, false otherwise.
-     */
-    protected boolean isFirstWordMatching(final boolean singleWordQuery, final boolean hiraganaQuery, final String text) {
-        if (matchWordFirst && !hiraganaQuery && singleWordQuery && text.contains(query)) {
-            if (query.length() == 1) {
-                return UnicodeBlock.of(query.charAt(0)) != UnicodeBlock.HIRAGANA;
-            }
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Checks if the query is a hiragana query.
-     * @param query The query string.
-     * @return True if it is a hiragana query, false otherwise.
-     */
-    protected boolean isHiraganaQuery(final String query) {
-        return query.matches("^[\\u3040-\\u309F]+$");
     }
 }

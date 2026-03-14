@@ -33,6 +33,7 @@ import org.codelibs.fess.suggest.index.contents.DefaultContentsParser;
 import org.codelibs.fess.suggest.index.contents.document.DocumentReader;
 import org.codelibs.fess.suggest.index.contents.querylog.QueryLog;
 import org.codelibs.fess.suggest.index.contents.querylog.QueryLogReader;
+import org.codelibs.fess.suggest.index.operations.ContentIndexingContext;
 import org.codelibs.fess.suggest.index.operations.ContentIndexingOperations;
 import org.codelibs.fess.suggest.index.operations.DeletionOperations;
 import org.codelibs.fess.suggest.index.operations.IndexingOperations;
@@ -156,6 +157,9 @@ public class SuggestIndexer {
     private WordManagementOperations wordMgmtOps;
     private ContentIndexingOperations contentOps;
 
+    /** Flag indicating that operations need to be re-initialized. Not thread-safe: setters are configuration-time only. */
+    private volatile boolean operationsStale = false;
+
     /**
      * Constructor for SuggestIndexer.
      * @param client The OpenSearch client.
@@ -202,6 +206,25 @@ public class SuggestIndexer {
         wordMgmtOps = new WordManagementOperations(settings, normalizer, indexingOps, deletionOps, this::getBadWords);
         contentOps = new ContentIndexingOperations(client, settings, threadPool, indexingOps, contentsParser, analyzer, readingConverter,
                 contentsReadingConverter, normalizer, parallel);
+        operationsStale = false;
+    }
+
+    /**
+     * Ensures operations are initialized and up-to-date.
+     * Called before any operation method to lazily re-initialize if a setter has been called.
+     */
+    private void ensureOperations() {
+        if (operationsStale) {
+            initializeOperations();
+        }
+    }
+
+    /**
+     * Creates a ContentIndexingContext from the current state of this indexer.
+     * @return A new ContentIndexingContext.
+     */
+    private ContentIndexingContext createContext() {
+        return new ContentIndexingContext(index, supportedFields, tagFieldNames, roleFieldName, langFieldName, badWords);
     }
 
     /**
@@ -218,6 +241,7 @@ public class SuggestIndexer {
      * @return The SuggestIndexResponse.
      */
     public SuggestIndexResponse index(final SuggestItem item) {
+        ensureOperations();
         return indexingOps.index(index, item, badWords);
     }
 
@@ -227,6 +251,7 @@ public class SuggestIndexer {
      * @return The SuggestIndexResponse.
      */
     public SuggestIndexResponse index(final SuggestItem[] items) {
+        ensureOperations();
         return indexingOps.index(index, items, badWords);
     }
 
@@ -236,6 +261,7 @@ public class SuggestIndexer {
      * @return The SuggestDeleteResponse.
      */
     public SuggestDeleteResponse delete(final String id) {
+        ensureOperations();
         return deletionOps.delete(index, id);
     }
 
@@ -245,6 +271,7 @@ public class SuggestIndexer {
      * @return The SuggestDeleteResponse.
      */
     public SuggestDeleteResponse deleteByQuery(final String queryString) {
+        ensureOperations();
         return deletionOps.deleteByQuery(index, queryString);
     }
 
@@ -254,6 +281,7 @@ public class SuggestIndexer {
      * @return The SuggestDeleteResponse.
      */
     public SuggestDeleteResponse deleteByQuery(final QueryBuilder queryBuilder) {
+        ensureOperations();
         return deletionOps.deleteByQuery(index, queryBuilder);
     }
 
@@ -262,6 +290,7 @@ public class SuggestIndexer {
      * @return The SuggestDeleteResponse.
      */
     public SuggestDeleteResponse deleteAll() {
+        ensureOperations();
         final SuggestDeleteResponse response = deletionOps.deleteAll(index);
         restoreElevateWord();
         return response;
@@ -272,6 +301,7 @@ public class SuggestIndexer {
      * @return The SuggestDeleteResponse.
      */
     public SuggestDeleteResponse deleteDocumentWords() {
+        ensureOperations();
         return deletionOps.deleteDocumentWords(index);
     }
 
@@ -280,6 +310,7 @@ public class SuggestIndexer {
      * @return The SuggestDeleteResponse.
      */
     public SuggestDeleteResponse deleteQueryWords() {
+        ensureOperations();
         return deletionOps.deleteQueryWords(index);
     }
 
@@ -289,7 +320,8 @@ public class SuggestIndexer {
      * @return The SuggestIndexResponse.
      */
     public SuggestIndexResponse indexFromQueryLog(final QueryLog queryLog) {
-        return contentOps.indexFromQueryLog(index, queryLog, supportedFields, tagFieldNames, roleFieldName, badWords);
+        ensureOperations();
+        return contentOps.indexFromQueryLog(createContext(), queryLog);
     }
 
     /**
@@ -298,7 +330,8 @@ public class SuggestIndexer {
      * @return The SuggestIndexResponse.
      */
     public SuggestIndexResponse indexFromQueryLog(final QueryLog[] queryLogs) {
-        return contentOps.indexFromQueryLog(index, queryLogs, supportedFields, tagFieldNames, roleFieldName, badWords);
+        ensureOperations();
+        return contentOps.indexFromQueryLog(createContext(), queryLogs);
     }
 
     /**
@@ -310,8 +343,8 @@ public class SuggestIndexer {
      */
     public Deferred<SuggestIndexResponse>.Promise indexFromQueryLog(final QueryLogReader queryLogReader, final int docPerReq,
             final long requestInterval) {
-        return contentOps.indexFromQueryLog(index, queryLogReader, docPerReq, requestInterval, supportedFields, tagFieldNames,
-                roleFieldName, badWords);
+        ensureOperations();
+        return contentOps.indexFromQueryLog(createContext(), queryLogReader, docPerReq, requestInterval);
     }
 
     /**
@@ -320,7 +353,8 @@ public class SuggestIndexer {
      * @return The SuggestIndexResponse.
      */
     public SuggestIndexResponse indexFromDocument(final Map<String, Object>[] documents) {
-        return contentOps.indexFromDocument(index, documents, supportedFields, tagFieldNames, roleFieldName, langFieldName, badWords);
+        ensureOperations();
+        return contentOps.indexFromDocument(createContext(), documents);
     }
 
     /**
@@ -332,8 +366,8 @@ public class SuggestIndexer {
      */
     public Deferred<SuggestIndexResponse>.Promise indexFromDocument(final Supplier<DocumentReader> reader, final int docPerReq,
             final Runnable waitController) {
-        return contentOps.indexFromDocument(index, reader, docPerReq, waitController, supportedFields, tagFieldNames, roleFieldName,
-                langFieldName, badWords);
+        ensureOperations();
+        return contentOps.indexFromDocument(createContext(), reader, docPerReq, waitController);
     }
 
     /**
@@ -348,6 +382,7 @@ public class SuggestIndexer {
      */
     public SuggestIndexResponse indexFromSearchWord(final String searchWord, final String[] fields, final String[] tags,
             final String[] roles, final int num, final String[] langs) {
+        ensureOperations();
         return contentOps.indexFromSearchWord(index, searchWord, fields, tags, roles, num, langs, badWords);
     }
 
@@ -358,6 +393,7 @@ public class SuggestIndexer {
      * @return The SuggestDeleteResponse.
      */
     public SuggestDeleteResponse addBadWord(final String badWord, final boolean apply) {
+        ensureOperations();
         final SuggestDeleteResponse response = wordMgmtOps.addBadWord(index, badWord, apply);
         badWords = settings.badword().get(true);
         return response;
@@ -368,6 +404,7 @@ public class SuggestIndexer {
      * @param badWord The bad word to delete.
      */
     public void deleteBadWord(final String badWord) {
+        ensureOperations();
         wordMgmtOps.deleteBadWord(badWord);
     }
 
@@ -378,6 +415,7 @@ public class SuggestIndexer {
      * @return The SuggestIndexResponse.
      */
     public SuggestIndexResponse addElevateWord(final ElevateWord elevateWord, final boolean apply) {
+        ensureOperations();
         return wordMgmtOps.addElevateWord(index, elevateWord, apply);
     }
 
@@ -388,6 +426,7 @@ public class SuggestIndexer {
      * @return The SuggestDeleteResponse.
      */
     public SuggestDeleteResponse deleteElevateWord(final String elevateWord, final boolean apply) {
+        ensureOperations();
         return wordMgmtOps.deleteElevateWord(index, elevateWord, apply);
     }
 
@@ -396,6 +435,7 @@ public class SuggestIndexer {
      * @return The SuggestIndexResponse.
      */
     public SuggestIndexResponse restoreElevateWord() {
+        ensureOperations();
         return wordMgmtOps.restoreElevateWord(index);
     }
 
@@ -405,6 +445,7 @@ public class SuggestIndexer {
      * @return The SuggestDeleteResponse.
      */
     public SuggestDeleteResponse deleteOldWords(final ZonedDateTime threshold) {
+        ensureOperations();
         return deletionOps.deleteOldWords(index, threshold);
     }
 
@@ -455,7 +496,7 @@ public class SuggestIndexer {
      */
     public SuggestIndexer setReadingConverter(final ReadingConverter readingConverter) {
         this.readingConverter = readingConverter;
-        initializeOperations();
+        operationsStale = true;
         return this;
     }
 
@@ -466,7 +507,7 @@ public class SuggestIndexer {
      */
     public SuggestIndexer setNormalizer(final Normalizer normalizer) {
         this.normalizer = normalizer;
-        initializeOperations();
+        operationsStale = true;
         return this;
     }
 
@@ -477,7 +518,7 @@ public class SuggestIndexer {
      */
     public SuggestIndexer setAnalyzer(final SuggestAnalyzer analyzer) {
         this.analyzer = analyzer;
-        initializeOperations();
+        operationsStale = true;
         return this;
     }
 
@@ -488,7 +529,7 @@ public class SuggestIndexer {
      */
     public SuggestIndexer setContentsParser(final ContentsParser contentsParser) {
         this.contentsParser = contentsParser;
-        initializeOperations();
+        operationsStale = true;
         return this;
     }
 
@@ -499,7 +540,7 @@ public class SuggestIndexer {
      */
     public SuggestIndexer setSuggestWriter(final SuggestWriter suggestWriter) {
         this.suggestWriter = suggestWriter;
-        initializeOperations();
+        operationsStale = true;
         return this;
     }
 

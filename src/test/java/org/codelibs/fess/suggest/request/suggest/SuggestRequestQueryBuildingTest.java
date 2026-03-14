@@ -433,41 +433,70 @@ public class SuggestRequestQueryBuildingTest {
     }
 
     // ============================================================
-    // Helper class to expose protected methods for testing
+    // Helper class to expose methods for testing
     // ============================================================
 
     /**
-     * Testable subclass that exposes protected methods.
+     * Testable wrapper that delegates to SuggestQueryBuilder and SuggestResponseCreator.
      */
     private static class TestableSuggestRequest extends SuggestRequest {
         private String testQuery = "test";
+        private ReadingConverter testReadingConverter;
+        private Normalizer testNormalizer;
+        private float testPrefixMatchWeight = 2.0f;
+        private boolean testMatchWordFirst = true;
 
         @Override
+        public void setReadingConverter(ReadingConverter readingConverter) {
+            super.setReadingConverter(readingConverter);
+            this.testReadingConverter = readingConverter;
+        }
+
+        @Override
+        public void setNormalizer(Normalizer normalizer) {
+            super.setNormalizer(normalizer);
+            this.testNormalizer = normalizer;
+        }
+
+        @Override
+        public void setPrefixMatchWeight(float prefixMatchWeight) {
+            super.setPrefixMatchWeight(prefixMatchWeight);
+            this.testPrefixMatchWeight = prefixMatchWeight;
+        }
+
+        @Override
+        public void setMatchWordFirst(boolean matchWordFirst) {
+            super.setMatchWordFirst(matchWordFirst);
+            this.testMatchWordFirst = matchWordFirst;
+        }
+
+        private SuggestQueryBuilder createQueryBuilder() {
+            return new SuggestQueryBuilder(testReadingConverter, testNormalizer, new ArrayList<>(), testPrefixMatchWeight);
+        }
+
         public QueryBuilder buildQuery(String q, List<String> fields) {
-            return super.buildQuery(q, fields);
+            return createQueryBuilder().buildQuery(q, fields);
         }
 
-        @Override
         public QueryBuilder buildFilterQuery(String fieldName, List<String> words) {
-            return super.buildFilterQuery(fieldName, words);
+            return createQueryBuilder().buildFilterQuery(fieldName, words);
         }
 
-        @Override
         public QueryBuilder buildFunctionScoreQuery(String query, QueryBuilder queryBuilder) {
-            return super.buildFunctionScoreQuery(query, queryBuilder);
+            return createQueryBuilder().buildFunctionScoreQuery(query, queryBuilder);
         }
 
-        @Override
         public boolean isFirstWordMatching(boolean singleWordQuery, boolean hiraganaQuery, String text) {
-            // For the parent implementation, we need to set query to make it work properly
-            setQuery(testQuery);
-            return super.isFirstWordMatching(singleWordQuery, hiraganaQuery, text);
+            SuggestQueryBuilder qb = createQueryBuilder();
+            SuggestResponseCreator rc = new SuggestResponseCreator(testQuery, 10, true, true, testMatchWordFirst, qb);
+            return rc.isFirstWordMatching(singleWordQuery, hiraganaQuery, text);
         }
 
         public boolean testIsFirstWordMatching(boolean singleWordQuery, boolean hiraganaQuery, String text, String query) {
             this.testQuery = query;
-            setQuery(query);
-            return super.isFirstWordMatching(singleWordQuery, hiraganaQuery, text);
+            SuggestQueryBuilder qb = createQueryBuilder();
+            SuggestResponseCreator rc = new SuggestResponseCreator(query, 10, true, true, testMatchWordFirst, qb);
+            return rc.isFirstWordMatching(singleWordQuery, hiraganaQuery, text);
         }
     }
 }

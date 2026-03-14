@@ -96,6 +96,17 @@ public class ContentIndexingOperations {
     /**
      * Indexes a single query log.
      *
+     * @param ctx The content indexing context
+     * @param queryLog The query log to index
+     * @return The SuggestIndexResponse
+     */
+    public SuggestIndexResponse indexFromQueryLog(final ContentIndexingContext ctx, final QueryLog queryLog) {
+        return indexFromQueryLog(ctx, new QueryLog[] { queryLog });
+    }
+
+    /**
+     * Indexes a single query log.
+     *
      * @param index The index name
      * @param queryLog The query log to index
      * @param supportedFields The supported fields
@@ -106,7 +117,43 @@ public class ContentIndexingOperations {
      */
     public SuggestIndexResponse indexFromQueryLog(final String index, final QueryLog queryLog, final String[] supportedFields,
             final String[] tagFieldNames, final String roleFieldName, final String[] badWords) {
-        return indexFromQueryLog(index, new QueryLog[] { queryLog }, supportedFields, tagFieldNames, roleFieldName, badWords);
+        return indexFromQueryLog(new ContentIndexingContext(index, supportedFields, tagFieldNames, roleFieldName, null, badWords),
+                queryLog);
+    }
+
+    /**
+     * Indexes multiple query logs.
+     *
+     * @param ctx The content indexing context
+     * @param queryLogs The query logs to index
+     * @return The SuggestIndexResponse
+     */
+    public SuggestIndexResponse indexFromQueryLog(final ContentIndexingContext ctx, final QueryLog[] queryLogs) {
+        if (logger.isInfoEnabled()) {
+            logger.info("Indexing from query logs: count={}, index={}", queryLogs.length, ctx.getIndex());
+        }
+        try {
+            final long start = System.currentTimeMillis();
+            Stream<QueryLog> stream = Stream.of(queryLogs);
+            if (parallel) {
+                stream = stream.parallel();
+            }
+            final SuggestItem[] array =
+                    stream.flatMap(queryLog -> contentsParser
+                            .parseQueryLog(queryLog, ctx.getSupportedFields(), ctx.getTagFieldNames(), ctx.getRoleFieldName(),
+                                    readingConverter, normalizer)
+                            .stream()).toArray(SuggestItem[]::new);
+            final long parseTime = System.currentTimeMillis();
+            final SuggestIndexResponse response = indexingOps.index(ctx.getIndex(), array, ctx.getBadWords());
+            final long indexTime = System.currentTimeMillis();
+
+            if (logger.isInfoEnabled()) {
+                printProcessingInfo("queries", queryLogs.length, array, parseTime - start, indexTime - parseTime);
+            }
+            return new SuggestIndexResponse(array.length, queryLogs.length, response.getErrors(), System.currentTimeMillis() - start);
+        } catch (final Exception e) {
+            throw new SuggestIndexException("Failed to index from query_string.", e);
+        }
     }
 
     /**
@@ -122,47 +169,21 @@ public class ContentIndexingOperations {
      */
     public SuggestIndexResponse indexFromQueryLog(final String index, final QueryLog[] queryLogs, final String[] supportedFields,
             final String[] tagFieldNames, final String roleFieldName, final String[] badWords) {
-        if (logger.isInfoEnabled()) {
-            logger.info("Indexing from query logs: count={}, index={}", queryLogs.length, index);
-        }
-        try {
-            final long start = System.currentTimeMillis();
-            Stream<QueryLog> stream = Stream.of(queryLogs);
-            if (parallel) {
-                stream = stream.parallel();
-            }
-            final SuggestItem[] array = stream.flatMap(queryLog -> contentsParser
-                    .parseQueryLog(queryLog, supportedFields, tagFieldNames, roleFieldName, readingConverter, normalizer)
-                    .stream()).toArray(SuggestItem[]::new);
-            final long parseTime = System.currentTimeMillis();
-            final SuggestIndexResponse response = indexingOps.index(index, array, badWords);
-            final long indexTime = System.currentTimeMillis();
-
-            if (logger.isInfoEnabled()) {
-                printProcessingInfo("queries", queryLogs.length, array, parseTime - start, indexTime - parseTime);
-            }
-            return new SuggestIndexResponse(array.length, queryLogs.length, response.getErrors(), System.currentTimeMillis() - start);
-        } catch (final Exception e) {
-            throw new SuggestIndexException("Failed to index from query_string.", e);
-        }
+        return indexFromQueryLog(new ContentIndexingContext(index, supportedFields, tagFieldNames, roleFieldName, null, badWords),
+                queryLogs);
     }
 
     /**
      * Indexes documents from a query log reader asynchronously.
      *
-     * @param index The index name
+     * @param ctx The content indexing context
      * @param queryLogReader The query log reader
      * @param docPerReq The number of documents to process per request
      * @param requestInterval The interval between requests
-     * @param supportedFields The supported fields
-     * @param tagFieldNames The tag field names
-     * @param roleFieldName The role field name
-     * @param badWords The bad words array
      * @return A Promise that will be resolved with the SuggestIndexResponse
      */
-    public Deferred<SuggestIndexResponse>.Promise indexFromQueryLog(final String index, final QueryLogReader queryLogReader,
-            final int docPerReq, final long requestInterval, final String[] supportedFields, final String[] tagFieldNames,
-            final String roleFieldName, final String[] badWords) {
+    public Deferred<SuggestIndexResponse>.Promise indexFromQueryLog(final ContentIndexingContext ctx, final QueryLogReader queryLogReader,
+            final int docPerReq, final long requestInterval) {
         final Deferred<SuggestIndexResponse> deferred = new Deferred<>();
         threadPool.execute(() -> {
             final long start = System.currentTimeMillis();
@@ -180,8 +201,7 @@ public class ContentIndexingOperations {
                     queryLogs.add(queryLog);
                     queryLog = queryLogReader.read();
                     if ((queryLog == null && !queryLogs.isEmpty()) || queryLogs.size() >= docPerReq) {
-                        final SuggestIndexResponse res = indexFromQueryLog(index, queryLogs.toArray(new QueryLog[queryLogs.size()]),
-                                supportedFields, tagFieldNames, roleFieldName, badWords);
+                        final SuggestIndexResponse res = indexFromQueryLog(ctx, queryLogs.toArray(new QueryLog[queryLogs.size()]));
                         errors.addAll(res.getErrors());
                         numberOfSuggestDocs += res.getNumberOfSuggestDocs();
                         numberOfInputDocs += res.getNumberOfInputDocs();
@@ -202,19 +222,34 @@ public class ContentIndexingOperations {
     }
 
     /**
-     * Indexes documents from an array of maps.
+     * Indexes documents from a query log reader asynchronously.
      *
      * @param index The index name
-     * @param documents The documents to index
+     * @param queryLogReader The query log reader
+     * @param docPerReq The number of documents to process per request
+     * @param requestInterval The interval between requests
      * @param supportedFields The supported fields
      * @param tagFieldNames The tag field names
      * @param roleFieldName The role field name
-     * @param langFieldName The language field name
      * @param badWords The bad words array
+     * @return A Promise that will be resolved with the SuggestIndexResponse
+     */
+    public Deferred<SuggestIndexResponse>.Promise indexFromQueryLog(final String index, final QueryLogReader queryLogReader,
+            final int docPerReq, final long requestInterval, final String[] supportedFields, final String[] tagFieldNames,
+            final String roleFieldName, final String[] badWords) {
+        return indexFromQueryLog(new ContentIndexingContext(index, supportedFields, tagFieldNames, roleFieldName, null, badWords),
+                queryLogReader, docPerReq, requestInterval);
+    }
+
+    /**
+     * Indexes documents from an array of maps.
+     *
+     * @param ctx The content indexing context
+     * @param documents The documents to index
      * @return The SuggestIndexResponse
      */
-    public SuggestIndexResponse indexFromDocument(final String index, final Map<String, Object>[] documents, final String[] supportedFields,
-            final String[] tagFieldNames, final String roleFieldName, final String langFieldName, final String[] badWords) {
+    public SuggestIndexResponse indexFromDocument(final ContentIndexingContext ctx, final Map<String, Object>[] documents) {
+        final String index = ctx.getIndex();
         final long start = System.currentTimeMillis();
         try {
             Stream<Map<String, Object>> stream = Stream.of(documents);
@@ -224,8 +259,8 @@ public class ContentIndexingOperations {
             final SuggestItem[] items = stream.flatMap(document -> {
                 try {
                     return contentsParser
-                            .parseDocument(document, supportedFields, tagFieldNames, roleFieldName, langFieldName, readingConverter,
-                                    contentsReadingConverter, normalizer, analyzer)
+                            .parseDocument(document, ctx.getSupportedFields(), ctx.getTagFieldNames(), ctx.getRoleFieldName(),
+                                    ctx.getLangFieldName(), readingConverter, contentsReadingConverter, normalizer, analyzer)
                             .stream();
                 } catch (OpenSearchStatusException | IllegalStateException e) {
                     final String msg = e.getMessage();
@@ -237,7 +272,7 @@ public class ContentIndexingOperations {
                 }
             }).toArray(SuggestItem[]::new);
             final long parseTime = System.currentTimeMillis();
-            final SuggestIndexResponse response = indexingOps.index(index, items, badWords);
+            final SuggestIndexResponse response = indexingOps.index(index, items, ctx.getBadWords());
             final long indexTime = System.currentTimeMillis();
 
             if (logger.isInfoEnabled()) {
@@ -253,22 +288,35 @@ public class ContentIndexingOperations {
     }
 
     /**
-     * Indexes documents from a DocumentReader asynchronously.
+     * Indexes documents from an array of maps.
      *
      * @param index The index name
-     * @param reader The supplier for DocumentReader
-     * @param docPerReq The number of documents to process per request
-     * @param waitController The runnable to control waiting between requests
+     * @param documents The documents to index
      * @param supportedFields The supported fields
      * @param tagFieldNames The tag field names
      * @param roleFieldName The role field name
      * @param langFieldName The language field name
      * @param badWords The bad words array
+     * @return The SuggestIndexResponse
+     */
+    public SuggestIndexResponse indexFromDocument(final String index, final Map<String, Object>[] documents, final String[] supportedFields,
+            final String[] tagFieldNames, final String roleFieldName, final String langFieldName, final String[] badWords) {
+        return indexFromDocument(new ContentIndexingContext(index, supportedFields, tagFieldNames, roleFieldName, langFieldName, badWords),
+                documents);
+    }
+
+    /**
+     * Indexes documents from a DocumentReader asynchronously.
+     *
+     * @param ctx The content indexing context
+     * @param reader The supplier for DocumentReader
+     * @param docPerReq The number of documents to process per request
+     * @param waitController The runnable to control waiting between requests
      * @return A Promise that will be resolved with the SuggestIndexResponse
      */
-    public Deferred<SuggestIndexResponse>.Promise indexFromDocument(final String index, final Supplier<DocumentReader> reader,
-            final int docPerReq, final Runnable waitController, final String[] supportedFields, final String[] tagFieldNames,
-            final String roleFieldName, final String langFieldName, final String[] badWords) {
+    public Deferred<SuggestIndexResponse>.Promise indexFromDocument(final ContentIndexingContext ctx, final Supplier<DocumentReader> reader,
+            final int docPerReq, final Runnable waitController) {
+        final String index = ctx.getIndex();
         if (logger.isInfoEnabled()) {
             logger.info("Starting indexing from DocumentReader: index={}, docsPerRequest={}", index, docPerReq);
         }
@@ -290,8 +338,7 @@ public class ContentIndexingOperations {
                     doc = documentReader.read();
                     if (doc == null || docs.size() >= docPerReq) {
                         @SuppressWarnings("unchecked")
-                        final SuggestIndexResponse res = indexFromDocument(index, docs.toArray(new Map[docs.size()]), supportedFields,
-                                tagFieldNames, roleFieldName, langFieldName, badWords);
+                        final SuggestIndexResponse res = indexFromDocument(ctx, docs.toArray(new Map[docs.size()]));
                         errors.addAll(res.getErrors());
                         numberOfSuggestDocs += res.getNumberOfSuggestDocs();
                         numberOfInputDocs += res.getNumberOfInputDocs();
@@ -309,6 +356,27 @@ public class ContentIndexingOperations {
             }
         });
         return deferred.promise();
+    }
+
+    /**
+     * Indexes documents from a DocumentReader asynchronously.
+     *
+     * @param index The index name
+     * @param reader The supplier for DocumentReader
+     * @param docPerReq The number of documents to process per request
+     * @param waitController The runnable to control waiting between requests
+     * @param supportedFields The supported fields
+     * @param tagFieldNames The tag field names
+     * @param roleFieldName The role field name
+     * @param langFieldName The language field name
+     * @param badWords The bad words array
+     * @return A Promise that will be resolved with the SuggestIndexResponse
+     */
+    public Deferred<SuggestIndexResponse>.Promise indexFromDocument(final String index, final Supplier<DocumentReader> reader,
+            final int docPerReq, final Runnable waitController, final String[] supportedFields, final String[] tagFieldNames,
+            final String roleFieldName, final String langFieldName, final String[] badWords) {
+        return indexFromDocument(new ContentIndexingContext(index, supportedFields, tagFieldNames, roleFieldName, langFieldName, badWords),
+                reader, docPerReq, waitController);
     }
 
     /**

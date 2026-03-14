@@ -38,7 +38,6 @@ import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.normalizer.NormalizerChain;
 import org.codelibs.opensearch.runner.OpenSearchRunner;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -49,10 +48,13 @@ import org.junit.Test;
 public class DefaultContentsParserEdgeCaseTest {
     static Suggester suggester;
     static OpenSearchRunner runner;
-    DefaultContentsParser parser = new DefaultContentsParser();
-    String[] supportedFields = new String[] { "content", "title" };
-    String[] tagFieldNames = new String[] { "label", "virtual_host" };
-    String roleFieldName = "role";
+    static SuggestAnalyzer analyzer;
+    static ReadingConverter defaultReadingConverter;
+    static Normalizer defaultNormalizer;
+    static final DefaultContentsParser parser = new DefaultContentsParser();
+    static final String[] supportedFields = new String[] { "content", "title" };
+    static final String[] tagFieldNames = new String[] { "label", "virtual_host" };
+    static final String roleFieldName = "role";
 
     @BeforeClass
     public static void beforeClass() throws Exception {
@@ -65,6 +67,10 @@ public class DefaultContentsParserEdgeCaseTest {
                         .numOfNode(1)
                         .pluginTypes("org.codelibs.opensearch.extension.ExtensionPlugin"));
         runner.ensureYellow();
+        suggester = Suggester.builder().build(runner.client(), "DefaultContentsParserEdgeCaseTest");
+        analyzer = suggester.settings().analyzer().new DefaultContentsAnalyzer();
+        defaultReadingConverter = createDefaultReadingConverter();
+        defaultNormalizer = createDefaultNormalizer();
     }
 
     @AfterClass
@@ -73,14 +79,6 @@ public class DefaultContentsParserEdgeCaseTest {
             runner.close();
             runner.clean();
         }
-    }
-
-    @Before
-    public void before() throws Exception {
-        runner.admin().indices().prepareDelete("_all").execute().actionGet();
-        runner.refresh();
-        suggester = Suggester.builder().build(runner.client(), "DefaultContentsParserEdgeCaseTest");
-        suggester.createIndexIfNothing();
     }
 
     // ============================================================
@@ -92,9 +90,8 @@ public class DefaultContentsParserEdgeCaseTest {
         String[] words = new String[0];
         String[] fields = new String[] { "content" };
 
-        SuggestAnalyzer analyzer = suggester.settings().analyzer().new DefaultContentsAnalyzer();
-        SuggestItem item = parser.parseSearchWords(words, null, fields, null, null, 1, createDefaultReadingConverter(),
-                createDefaultNormalizer(), analyzer, null);
+        SuggestItem item =
+                parser.parseSearchWords(words, null, fields, null, null, 1, defaultReadingConverter, defaultNormalizer, analyzer, null);
 
         assertNull("Empty words array should return null", item);
     }
@@ -103,9 +100,8 @@ public class DefaultContentsParserEdgeCaseTest {
     public void test_parseSearchWords_nullFields() throws Exception {
         String[] words = new String[] { "test" };
 
-        SuggestAnalyzer analyzer = suggester.settings().analyzer().new DefaultContentsAnalyzer();
-        SuggestItem item = parser.parseSearchWords(words, null, null, null, null, 1, createDefaultReadingConverter(),
-                createDefaultNormalizer(), analyzer, null);
+        SuggestItem item =
+                parser.parseSearchWords(words, null, null, null, null, 1, defaultReadingConverter, defaultNormalizer, analyzer, null);
 
         // Should handle null fields gracefully
         assertNotNull(item);
@@ -116,9 +112,8 @@ public class DefaultContentsParserEdgeCaseTest {
         String[] words = new String[] { "test" };
         String[] fields = new String[0];
 
-        SuggestAnalyzer analyzer = suggester.settings().analyzer().new DefaultContentsAnalyzer();
-        SuggestItem item = parser.parseSearchWords(words, null, fields, null, null, 1, createDefaultReadingConverter(),
-                createDefaultNormalizer(), analyzer, null);
+        SuggestItem item =
+                parser.parseSearchWords(words, null, fields, null, null, 1, defaultReadingConverter, defaultNormalizer, analyzer, null);
 
         // Should handle empty fields gracefully
         assertNotNull(item);
@@ -129,9 +124,8 @@ public class DefaultContentsParserEdgeCaseTest {
         String[] words = new String[] { "test" };
         String[] fields = new String[] { "content" };
 
-        SuggestAnalyzer analyzer = suggester.settings().analyzer().new DefaultContentsAnalyzer();
-        SuggestItem item = parser.parseSearchWords(words, null, fields, null, null, 1, createDefaultReadingConverter(),
-                createDefaultNormalizer(), analyzer, null);
+        SuggestItem item =
+                parser.parseSearchWords(words, null, fields, null, null, 1, defaultReadingConverter, defaultNormalizer, analyzer, null);
 
         assertNotNull(item);
         assertEquals("test", item.getText());
@@ -144,9 +138,8 @@ public class DefaultContentsParserEdgeCaseTest {
         String[][] readings = new String[][] { new String[] { "reading1" } };
         String[] fields = new String[] { "content" };
 
-        SuggestAnalyzer analyzer = suggester.settings().analyzer().new DefaultContentsAnalyzer();
-        SuggestItem item = parser.parseSearchWords(words, readings, fields, null, null, 1, createDefaultReadingConverter(),
-                createDefaultNormalizer(), analyzer, null);
+        SuggestItem item =
+                parser.parseSearchWords(words, readings, fields, null, null, 1, defaultReadingConverter, defaultNormalizer, analyzer, null);
 
         assertNotNull(item);
     }
@@ -157,9 +150,8 @@ public class DefaultContentsParserEdgeCaseTest {
         String[][] readings = new String[][] { new String[0] }; // Empty readings for word
         String[] fields = new String[] { "content" };
 
-        SuggestAnalyzer analyzer = suggester.settings().analyzer().new DefaultContentsAnalyzer();
-        SuggestItem item = parser.parseSearchWords(words, readings, fields, null, null, 1, createDefaultReadingConverter(),
-                createDefaultNormalizer(), analyzer, null);
+        SuggestItem item =
+                parser.parseSearchWords(words, readings, fields, null, null, 1, defaultReadingConverter, defaultNormalizer, analyzer, null);
 
         assertNotNull(item);
     }
@@ -170,9 +162,8 @@ public class DefaultContentsParserEdgeCaseTest {
         String[] words = new String[] { "　", "   ", "" };
         String[] fields = new String[] { "content" };
 
-        SuggestAnalyzer analyzer = suggester.settings().analyzer().new DefaultContentsAnalyzer();
-        SuggestItem item = parser.parseSearchWords(words, null, fields, null, null, 1, createDefaultReadingConverter(),
-                createDefaultNormalizer(), analyzer, null);
+        SuggestItem item =
+                parser.parseSearchWords(words, null, fields, null, null, 1, defaultReadingConverter, defaultNormalizer, analyzer, null);
 
         // All words excluded should return null
         assertNull(item);
@@ -183,9 +174,8 @@ public class DefaultContentsParserEdgeCaseTest {
         String[] words = new String[] { "", "test", "" };
         String[] fields = new String[] { "content" };
 
-        SuggestAnalyzer analyzer = suggester.settings().analyzer().new DefaultContentsAnalyzer();
-        SuggestItem item = parser.parseSearchWords(words, null, fields, null, null, 1, createDefaultReadingConverter(),
-                createDefaultNormalizer(), analyzer, null);
+        SuggestItem item =
+                parser.parseSearchWords(words, null, fields, null, null, 1, defaultReadingConverter, defaultNormalizer, analyzer, null);
 
         // Empty strings should be filtered, valid words should remain
         assertNotNull(item);
@@ -197,9 +187,8 @@ public class DefaultContentsParserEdgeCaseTest {
         String[] fields = new String[] { "content" };
         String[] langs = new String[] { "en", "ja", "zh" };
 
-        SuggestAnalyzer analyzer = suggester.settings().analyzer().new DefaultContentsAnalyzer();
-        SuggestItem item = parser.parseSearchWords(words, null, fields, null, null, 1, createDefaultReadingConverter(),
-                createDefaultNormalizer(), analyzer, langs);
+        SuggestItem item =
+                parser.parseSearchWords(words, null, fields, null, null, 1, defaultReadingConverter, defaultNormalizer, analyzer, langs);
 
         assertNotNull(item);
         assertTrue(item.getLanguages().length > 0);
@@ -212,8 +201,8 @@ public class DefaultContentsParserEdgeCaseTest {
     @Test
     public void test_parseQueryLog_emptyQueryString() throws Exception {
         QueryLog queryLog = new QueryLog("", null);
-        List<SuggestItem> items = parser.parseQueryLog(queryLog, supportedFields, tagFieldNames, roleFieldName,
-                createDefaultReadingConverter(), createDefaultNormalizer());
+        List<SuggestItem> items =
+                parser.parseQueryLog(queryLog, supportedFields, tagFieldNames, roleFieldName, defaultReadingConverter, defaultNormalizer);
 
         assertEquals("Empty query should return empty list", 0, items.size());
     }
@@ -221,8 +210,8 @@ public class DefaultContentsParserEdgeCaseTest {
     @Test
     public void test_parseQueryLog_queryWithNoSupportedFields() throws Exception {
         QueryLog queryLog = new QueryLog("unsupported_field:test", null);
-        List<SuggestItem> items = parser.parseQueryLog(queryLog, supportedFields, tagFieldNames, roleFieldName,
-                createDefaultReadingConverter(), createDefaultNormalizer());
+        List<SuggestItem> items =
+                parser.parseQueryLog(queryLog, supportedFields, tagFieldNames, roleFieldName, defaultReadingConverter, defaultNormalizer);
 
         // Query for unsupported field should return empty
         assertEquals(0, items.size());
@@ -231,8 +220,8 @@ public class DefaultContentsParserEdgeCaseTest {
     @Test
     public void test_parseQueryLog_withNullFilterQuery() throws Exception {
         QueryLog queryLog = new QueryLog("content:test", null);
-        List<SuggestItem> items = parser.parseQueryLog(queryLog, supportedFields, tagFieldNames, roleFieldName,
-                createDefaultReadingConverter(), createDefaultNormalizer());
+        List<SuggestItem> items =
+                parser.parseQueryLog(queryLog, supportedFields, tagFieldNames, roleFieldName, defaultReadingConverter, defaultNormalizer);
 
         assertTrue("Should parse query with null filter", items.size() > 0);
     }
@@ -240,8 +229,8 @@ public class DefaultContentsParserEdgeCaseTest {
     @Test
     public void test_parseQueryLog_withEmptyFilterQuery() throws Exception {
         QueryLog queryLog = new QueryLog("content:test", "");
-        List<SuggestItem> items = parser.parseQueryLog(queryLog, supportedFields, tagFieldNames, roleFieldName,
-                createDefaultReadingConverter(), createDefaultNormalizer());
+        List<SuggestItem> items =
+                parser.parseQueryLog(queryLog, supportedFields, tagFieldNames, roleFieldName, defaultReadingConverter, defaultNormalizer);
 
         assertTrue("Should parse query with empty filter", items.size() > 0);
     }
@@ -249,8 +238,8 @@ public class DefaultContentsParserEdgeCaseTest {
     @Test
     public void test_parseQueryLog_withMultipleTags() throws Exception {
         QueryLog queryLog = new QueryLog("content:test AND label:tag1 AND label:tag2 AND virtual_host:host1", null);
-        List<SuggestItem> items = parser.parseQueryLog(queryLog, supportedFields, tagFieldNames, roleFieldName,
-                createDefaultReadingConverter(), createDefaultNormalizer());
+        List<SuggestItem> items =
+                parser.parseQueryLog(queryLog, supportedFields, tagFieldNames, roleFieldName, defaultReadingConverter, defaultNormalizer);
 
         assertTrue(items.size() > 0);
         SuggestItem item = items.get(0);
@@ -260,8 +249,8 @@ public class DefaultContentsParserEdgeCaseTest {
     @Test
     public void test_parseQueryLog_withMultipleRoles() throws Exception {
         QueryLog queryLog = new QueryLog("content:test AND role:admin AND role:user", null);
-        List<SuggestItem> items = parser.parseQueryLog(queryLog, supportedFields, tagFieldNames, roleFieldName,
-                createDefaultReadingConverter(), createDefaultNormalizer());
+        List<SuggestItem> items =
+                parser.parseQueryLog(queryLog, supportedFields, tagFieldNames, roleFieldName, defaultReadingConverter, defaultNormalizer);
 
         assertTrue(items.size() > 0);
         SuggestItem item = items.get(0);
@@ -271,8 +260,8 @@ public class DefaultContentsParserEdgeCaseTest {
     @Test
     public void test_parseQueryLog_rolesFromBothQueryAndFilter() throws Exception {
         QueryLog queryLog = new QueryLog("content:test AND role:role1", "role:role2");
-        List<SuggestItem> items = parser.parseQueryLog(queryLog, supportedFields, tagFieldNames, roleFieldName,
-                createDefaultReadingConverter(), createDefaultNormalizer());
+        List<SuggestItem> items =
+                parser.parseQueryLog(queryLog, supportedFields, tagFieldNames, roleFieldName, defaultReadingConverter, defaultNormalizer);
 
         assertTrue(items.size() > 0);
         SuggestItem item = items.get(0);
@@ -282,8 +271,8 @@ public class DefaultContentsParserEdgeCaseTest {
     @Test
     public void test_parseQueryLog_multipleFieldsMatched() throws Exception {
         QueryLog queryLog = new QueryLog("content:test1 AND title:test2", null);
-        List<SuggestItem> items = parser.parseQueryLog(queryLog, supportedFields, tagFieldNames, roleFieldName,
-                createDefaultReadingConverter(), createDefaultNormalizer());
+        List<SuggestItem> items =
+                parser.parseQueryLog(queryLog, supportedFields, tagFieldNames, roleFieldName, defaultReadingConverter, defaultNormalizer);
 
         // Should create items for each field that matches
         assertEquals("Should have items for both fields", 2, items.size());
@@ -292,8 +281,8 @@ public class DefaultContentsParserEdgeCaseTest {
     @Test
     public void test_parseQueryLog_emptyTagFieldNames() throws Exception {
         QueryLog queryLog = new QueryLog("content:test", null);
-        List<SuggestItem> items = parser.parseQueryLog(queryLog, supportedFields, new String[0], roleFieldName,
-                createDefaultReadingConverter(), createDefaultNormalizer());
+        List<SuggestItem> items =
+                parser.parseQueryLog(queryLog, supportedFields, new String[0], roleFieldName, defaultReadingConverter, defaultNormalizer);
 
         assertTrue(items.size() > 0);
         assertEquals("Should have no tags with empty tag field names", 0, items.get(0).getTags().length);
@@ -307,9 +296,8 @@ public class DefaultContentsParserEdgeCaseTest {
     public void test_parseDocument_emptyDocument() throws Exception {
         Map<String, Object> document = new HashMap<>();
 
-        SuggestAnalyzer analyzer = suggester.settings().analyzer().new DefaultContentsAnalyzer();
         List<SuggestItem> items = parser.parseDocument(document, supportedFields, tagFieldNames, roleFieldName, "lang",
-                createDefaultReadingConverter(), createDefaultReadingConverter(), createDefaultNormalizer(), analyzer);
+                defaultReadingConverter, defaultReadingConverter, defaultNormalizer, analyzer);
 
         assertEquals("Empty document should return empty list", 0, items.size());
     }
@@ -319,9 +307,8 @@ public class DefaultContentsParserEdgeCaseTest {
         Map<String, Object> document = new HashMap<>();
         document.put("content", null);
 
-        SuggestAnalyzer analyzer = suggester.settings().analyzer().new DefaultContentsAnalyzer();
         List<SuggestItem> items = parser.parseDocument(document, supportedFields, tagFieldNames, roleFieldName, "lang",
-                createDefaultReadingConverter(), createDefaultReadingConverter(), createDefaultNormalizer(), analyzer);
+                defaultReadingConverter, defaultReadingConverter, defaultNormalizer, analyzer);
 
         assertEquals("Null field value should be skipped", 0, items.size());
     }
@@ -331,9 +318,8 @@ public class DefaultContentsParserEdgeCaseTest {
         Map<String, Object> document = new HashMap<>();
         document.put("content", "");
 
-        SuggestAnalyzer analyzer = suggester.settings().analyzer().new DefaultContentsAnalyzer();
         List<SuggestItem> items = parser.parseDocument(document, supportedFields, tagFieldNames, roleFieldName, "lang",
-                createDefaultReadingConverter(), createDefaultReadingConverter(), createDefaultNormalizer(), analyzer);
+                defaultReadingConverter, defaultReadingConverter, defaultNormalizer, analyzer);
 
         // Empty string should produce empty or no items
         assertTrue("Empty content should not produce items", items.size() == 0);
@@ -344,9 +330,8 @@ public class DefaultContentsParserEdgeCaseTest {
         Map<String, Object> document = new HashMap<>();
         document.put("content", "   \t\n   ");
 
-        SuggestAnalyzer analyzer = suggester.settings().analyzer().new DefaultContentsAnalyzer();
         List<SuggestItem> items = parser.parseDocument(document, supportedFields, tagFieldNames, roleFieldName, "lang",
-                createDefaultReadingConverter(), createDefaultReadingConverter(), createDefaultNormalizer(), analyzer);
+                defaultReadingConverter, defaultReadingConverter, defaultNormalizer, analyzer);
 
         // Whitespace-only content should produce empty or filtered items
         // Items with blank words should be filtered
@@ -361,9 +346,8 @@ public class DefaultContentsParserEdgeCaseTest {
         document.put("content", "テスト");
         document.put("lang", "ja");
 
-        SuggestAnalyzer analyzer = suggester.settings().analyzer().new DefaultContentsAnalyzer();
         List<SuggestItem> items = parser.parseDocument(document, supportedFields, tagFieldNames, roleFieldName, "lang",
-                createDefaultReadingConverter(), createDefaultReadingConverter(), createDefaultNormalizer(), analyzer);
+                defaultReadingConverter, defaultReadingConverter, defaultNormalizer, analyzer);
 
         assertTrue(items.size() > 0);
         SuggestItem item = items.get(0);
@@ -377,9 +361,8 @@ public class DefaultContentsParserEdgeCaseTest {
         document.put("content", "test");
         // No lang field
 
-        SuggestAnalyzer analyzer = suggester.settings().analyzer().new DefaultContentsAnalyzer();
         List<SuggestItem> items = parser.parseDocument(document, supportedFields, tagFieldNames, roleFieldName, "lang",
-                createDefaultReadingConverter(), createDefaultReadingConverter(), createDefaultNormalizer(), analyzer);
+                defaultReadingConverter, defaultReadingConverter, defaultNormalizer, analyzer);
 
         assertTrue(items.size() > 0);
         // Languages should be empty array when no lang field
@@ -392,9 +375,8 @@ public class DefaultContentsParserEdgeCaseTest {
         document.put("content", "test");
         document.put("label", new String[] { "tag1", "tag2" });
 
-        SuggestAnalyzer analyzer = suggester.settings().analyzer().new DefaultContentsAnalyzer();
         List<SuggestItem> items = parser.parseDocument(document, supportedFields, tagFieldNames, roleFieldName, "lang",
-                createDefaultReadingConverter(), createDefaultReadingConverter(), createDefaultNormalizer(), analyzer);
+                defaultReadingConverter, defaultReadingConverter, defaultNormalizer, analyzer);
 
         assertTrue(items.size() > 0);
         assertTrue("Should have tags from array", items.get(0).getTags().length >= 2);
@@ -409,9 +391,8 @@ public class DefaultContentsParserEdgeCaseTest {
         tags.add("tag2");
         document.put("label", tags);
 
-        SuggestAnalyzer analyzer = suggester.settings().analyzer().new DefaultContentsAnalyzer();
         List<SuggestItem> items = parser.parseDocument(document, supportedFields, tagFieldNames, roleFieldName, "lang",
-                createDefaultReadingConverter(), createDefaultReadingConverter(), createDefaultNormalizer(), analyzer);
+                defaultReadingConverter, defaultReadingConverter, defaultNormalizer, analyzer);
 
         assertTrue(items.size() > 0);
         assertTrue("Should have tags from list", items.get(0).getTags().length >= 2);
@@ -422,9 +403,8 @@ public class DefaultContentsParserEdgeCaseTest {
         Map<String, Object> document = new HashMap<>();
         document.put("content", 12345); // Integer instead of String
 
-        SuggestAnalyzer analyzer = suggester.settings().analyzer().new DefaultContentsAnalyzer();
         List<SuggestItem> items = parser.parseDocument(document, supportedFields, tagFieldNames, roleFieldName, "lang",
-                createDefaultReadingConverter(), createDefaultReadingConverter(), createDefaultNormalizer(), analyzer);
+                defaultReadingConverter, defaultReadingConverter, defaultNormalizer, analyzer);
 
         // Should convert to string and process
         // May or may not produce items depending on analyzer
@@ -437,9 +417,8 @@ public class DefaultContentsParserEdgeCaseTest {
         document.put("content", "コンテンツテスト");
         document.put("title", "タイトルテスト");
 
-        SuggestAnalyzer analyzer = suggester.settings().analyzer().new DefaultContentsAnalyzer();
         List<SuggestItem> items = parser.parseDocument(document, supportedFields, tagFieldNames, roleFieldName, "lang",
-                createDefaultReadingConverter(), createDefaultReadingConverter(), createDefaultNormalizer(), analyzer);
+                defaultReadingConverter, defaultReadingConverter, defaultNormalizer, analyzer);
 
         assertTrue("Should have items from multiple fields", items.size() > 0);
 
@@ -503,14 +482,14 @@ public class DefaultContentsParserEdgeCaseTest {
     // Helper methods
     // ============================================================
 
-    protected ReadingConverter createDefaultReadingConverter() throws IOException {
+    protected static ReadingConverter createDefaultReadingConverter() throws IOException {
         ReadingConverterChain chain = new ReadingConverterChain();
         chain.addConverter(new KatakanaToAlphabetConverter());
         chain.init();
         return chain;
     }
 
-    protected Normalizer createDefaultNormalizer() {
+    protected static Normalizer createDefaultNormalizer() {
         return new NormalizerChain();
     }
 }

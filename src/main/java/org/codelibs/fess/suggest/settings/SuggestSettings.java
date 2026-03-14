@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 
 import org.apache.logging.log4j.LogManager;
@@ -131,6 +132,11 @@ public class SuggestSettings {
 
     /** The timeout settings. */
     protected org.codelibs.fess.suggest.settings.TimeoutSettings timeoutSettings;
+
+    private ArraySettings arraySettings;
+    private BadWordSettings badWordSettings;
+    private ElevateWordSettings elevateWordSettings;
+    private AnalyzerSettings analyzerSettings;
 
     /**
      * Timeout settings for various operations.
@@ -246,6 +252,11 @@ public class SuggestSettings {
         return map.get(key);
     }
 
+    private <T> T getAs(final String key, final T defaultValue, final Function<String, T> parser) {
+        final Object obj = get(key);
+        return obj == null ? defaultValue : parser.apply(obj.toString());
+    }
+
     /**
      * Retrieves a setting value as a String.
      * @param key The key of the setting.
@@ -253,16 +264,7 @@ public class SuggestSettings {
      * @return The setting value as a String.
      */
     public String getAsString(final String key, final String defaultValue) {
-        final Object obj = get(key);
-
-        final String value;
-        if (obj == null) {
-            value = defaultValue;
-        } else {
-            value = obj.toString();
-        }
-
-        return value;
+        return getAs(key, defaultValue, s -> s);
     }
 
     /**
@@ -272,16 +274,7 @@ public class SuggestSettings {
      * @return The setting value as an int.
      */
     public int getAsInt(final String key, final int defaultValue) {
-        final Object obj = get(key);
-
-        final int value;
-        if (obj == null) {
-            value = defaultValue;
-        } else {
-            value = Integer.parseInt(obj.toString());
-        }
-
-        return value;
+        return getAs(key, defaultValue, Integer::parseInt);
     }
 
     /**
@@ -291,16 +284,7 @@ public class SuggestSettings {
      * @return The setting value as a long.
      */
     public long getAsLong(final String key, final long defaultValue) {
-        final Object obj = get(key);
-
-        final long value;
-        if (obj == null) {
-            value = defaultValue;
-        } else {
-            value = Long.parseLong(obj.toString());
-        }
-
-        return value;
+        return getAs(key, defaultValue, Long::parseLong);
     }
 
     /**
@@ -310,16 +294,7 @@ public class SuggestSettings {
      * @return The setting value as a float.
      */
     public float getAsFloat(final String key, final float defaultValue) {
-        final Object obj = get(key);
-
-        final float value;
-        if (obj == null) {
-            value = defaultValue;
-        } else {
-            value = Float.parseFloat(obj.toString());
-        }
-
-        return value;
+        return getAs(key, defaultValue, Float::parseFloat);
     }
 
     /**
@@ -329,16 +304,7 @@ public class SuggestSettings {
      * @return The setting value as a boolean.
      */
     public boolean getAsBoolean(final String key, final boolean defaultValue) {
-        final Object obj = get(key);
-
-        final boolean value;
-        if (obj == null) {
-            value = defaultValue;
-        } else {
-            value = Boolean.parseBoolean(obj.toString());
-        }
-
-        return value;
+        return getAs(key, defaultValue, Boolean::parseBoolean);
     }
 
     /**
@@ -396,7 +362,10 @@ public class SuggestSettings {
      * @return An ArraySettings instance.
      */
     public ArraySettings array() {
-        return new ArraySettings(this, client, settingsIndexName, settingsId);
+        if (arraySettings == null) {
+            arraySettings = new ArraySettings(this, client, settingsIndexName, settingsId);
+        }
+        return arraySettings;
     }
 
     /**
@@ -404,7 +373,10 @@ public class SuggestSettings {
      * @return An AnalyzerSettings instance.
      */
     public AnalyzerSettings analyzer() {
-        return new AnalyzerSettings(client, this, settingsIndexName);
+        if (analyzerSettings == null) {
+            analyzerSettings = new AnalyzerSettings(client, this, settingsIndexName);
+        }
+        return analyzerSettings;
     }
 
     /**
@@ -412,7 +384,10 @@ public class SuggestSettings {
      * @return A BadWordSettings instance.
      */
     public BadWordSettings badword() {
-        return new BadWordSettings(this, client, settingsIndexName, settingsId);
+        if (badWordSettings == null) {
+            badWordSettings = new BadWordSettings(this, client, settingsIndexName, settingsId);
+        }
+        return badWordSettings;
     }
 
     /**
@@ -420,7 +395,10 @@ public class SuggestSettings {
      * @return An ElevateWordSettings instance.
      */
     public ElevateWordSettings elevateWord() {
-        return new ElevateWordSettings(this, client, settingsIndexName, settingsId);
+        if (elevateWordSettings == null) {
+            elevateWordSettings = new ElevateWordSettings(this, client, settingsIndexName, settingsId);
+        }
+        return elevateWordSettings;
     }
 
     /**
