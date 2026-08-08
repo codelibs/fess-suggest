@@ -2,7 +2,7 @@
 
 [![Java CI with Maven](https://github.com/codelibs/fess-suggest/actions/workflows/maven.yml/badge.svg)](https://github.com/codelibs/fess-suggest/actions/workflows/maven.yml)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.codelibs.fess/fess-suggest/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.codelibs.fess/fess-suggest)
+[![Maven Repository](https://img.shields.io/badge/Maven-maven.codelibs.org-blue)](https://maven.codelibs.org/release/org/codelibs/fess/fess-suggest/)
 
 A powerful Java library that provides intelligent search suggestion functionality built on top of OpenSearch/Elasticsearch. It offers auto-completion, query suggestions, and popular word analytics for search applications.
 
@@ -36,7 +36,20 @@ A powerful Java library that provides intelligent search suggestion functionalit
 
 ### Installation
 
-Add the dependency to your `pom.xml`:
+Releases are published to the CodeLibs Maven repository rather than Maven Central, so declare it
+in your `pom.xml` first:
+
+```xml
+<repositories>
+    <repository>
+        <id>codelibs.org</id>
+        <name>CodeLibs Repository</name>
+        <url>https://maven.codelibs.org/release/</url>
+    </repository>
+</repositories>
+```
+
+Then add the dependency:
 
 ```xml
 <dependency>
