@@ -27,20 +27,23 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
+import org.codelibs.fess.suggest.util.PitOperationHelper;
 import org.codelibs.fess.suggest.util.SuggestUtil;
 import org.opensearch.action.search.SearchRequestBuilder;
 import org.opensearch.action.search.SearchResponse;
 import org.opensearch.index.query.QueryBuilder;
 import org.opensearch.index.query.QueryBuilders;
 import org.opensearch.search.SearchHit;
+import org.opensearch.search.builder.PointInTimeBuilder;
 import org.opensearch.search.sort.SortBuilder;
+import org.opensearch.search.sort.SortBuilders;
 import org.opensearch.transport.client.Client;
 
 /**
  * <p>
- * {@link ESSourceReader} reads documents from Elasticsearch using the scroll API.
- * It implements the {@link DocumentReader} interface to provide a way to iterate over documents
- * in a large index without loading all of them into memory at once.
+ * {@link ESSourceReader} reads documents from OpenSearch using a Point in Time (PIT) context and
+ * {@code search_after}. It implements the {@link DocumentReader} interface to provide a way to
+ * iterate over documents in a large index without loading all of them into memory at once.
  * </p>
  *
  * <p>
@@ -50,8 +53,9 @@ import org.opensearch.transport.client.Client;
  * </p>
  *
  * <p>
- * The reader uses a queue to buffer documents read from Elasticsearch, and it retries failed requests
- * up to a maximum number of times.
+ * The reader uses a queue to buffer documents read from OpenSearch, and it retries failed requests
+ * up to a maximum number of times. A retry resumes from the last read document instead of restarting
+ * from the beginning.
  * </p>
  *
  * <p>
@@ -59,12 +63,12 @@ import org.opensearch.transport.client.Client;
  * </p>
  * <pre>
  * {@code
- * Client client = // Obtain Elasticsearch client
+ * Client client = // Obtain OpenSearch client
  * SuggestSettings settings = // Obtain SuggestSettings
  * String indexName = "your_index_name";
  *
  * ESSourceReader reader = new ESSourceReader(client, settings, indexName);
- * reader.setScrollSize(1000); // Set the scroll size
+ * reader.setScrollSize(1000); // Set the page size
  * reader.setLimitOfDocumentSize(1024 * 1024); // Limit document size to 1MB
  * reader.setQuery(QueryBuilders.termQuery("field", "value")); // Set a query
  *
@@ -95,7 +99,7 @@ public class ESSourceReader implements DocumentReader {
     /** Supported fields. */
     protected final String[] supportedFields;
 
-    /** Scroll size. */
+    /** Number of hits per page. */
     protected int scrollSize = 1;
     /** Maximum retry count. */
     protected int maxRetryCount = 5;
@@ -110,8 +114,10 @@ public class ESSourceReader implements DocumentReader {
     /** Sort list. */
     protected List<SortBuilder<?>> sortList = new ArrayList<>();
 
-    /** Scroll ID. */
-    protected String scrollId = null;
+    /** Point in time ID. */
+    protected String pitId = null;
+    /** Sort values of the last read hit, used to resume the scan. */
+    protected Object[] searchAfter = null;
 
     /** Document count. */
     protected final AtomicLong docCount = new AtomicLong(0);
@@ -142,14 +148,15 @@ public class ESSourceReader implements DocumentReader {
     }
 
     @Override
-    public void close() {
+    public synchronized void close() {
         isFinished.set(true);
         queue.clear();
+        releasePit();
     }
 
     /**
-     * Sets the scroll size.
-     * @param scrollSize The scroll size.
+     * Sets the number of hits read per request.
+     * @param scrollSize The number of hits per page.
      */
     public void setScrollSize(final int scrollSize) {
         this.scrollSize = scrollSize;
@@ -229,31 +236,13 @@ public class ESSourceReader implements DocumentReader {
 
         for (int i = 0; i < maxRetryCount; i++) {
             try {
-                final SearchResponse response;
-                if (scrollId == null) {
-                    final SearchRequestBuilder builder = client.prepareSearch()
-                            .setIndices(indexName)
-                            .setScroll(settings.getScrollTimeout())
-                            .setQuery(queryBuilder)
-                            .setSize(scrollSize);
-                    for (final SortBuilder<?> sortBuilder : sortList) {
-                        builder.addSort(sortBuilder);
-                    }
-                    response = builder.execute().actionGet(settings.getSearchTimeout());
-                } else {
-                    response = client.prepareSearchScroll(scrollId)
-                            .setScroll(settings.getScrollTimeout())
-                            .execute()
-                            .actionGet(settings.getSearchTimeout());
-                    if (!scrollId.equals(response.getScrollId())) {
-                        SuggestUtil.deleteScrollContext(client, scrollId);
-                    }
-                }
-                scrollId = response.getScrollId();
+                final SearchResponse response = executeSearch();
                 final SearchHit[] hits = response.getHits().getHits();
-                if (scrollId == null || hits.length == 0) {
-                    SuggestUtil.deleteScrollContext(client, scrollId);
+                if (hits.length == 0) {
+                    releasePit();
                     isFinished.set(true);
+                } else {
+                    searchAfter = hits[hits.length - 1].getSortValues();
                 }
 
                 for (final SearchHit hit : hits) {
@@ -278,7 +267,9 @@ public class ESSourceReader implements DocumentReader {
                 break;
             } catch (final Exception e) {
                 exception = new SuggesterException(e);
-                scrollId = null;
+                // The PIT context may be broken, but searchAfter is kept so that the retry resumes
+                // from the last read document instead of restarting from the beginning.
+                releasePit();
             }
         }
 
@@ -286,6 +277,40 @@ public class ESSourceReader implements DocumentReader {
 
         if (exception != null) {
             throw exception;
+        }
+    }
+
+    /**
+     * Executes a search for the next page. A PIT context is created on the first call and reused
+     * afterwards, and the scan is continued with {@code search_after}.
+     * @return The search response.
+     */
+    protected SearchResponse executeSearch() {
+        final SearchRequestBuilder builder = client.prepareSearch().setQuery(queryBuilder).setSize(scrollSize);
+        for (final SortBuilder<?> sortBuilder : sortList) {
+            builder.addSort(sortBuilder);
+        }
+        // _shard_doc must be the last sort so that the caller's sort order is preserved.
+        builder.addSort(SortBuilders.shardDocSort());
+
+        if (pitId == null) {
+            pitId = PitOperationHelper.createPit(client, settings, builder.request(), indexName);
+        }
+        builder.setPointInTime(new PointInTimeBuilder(pitId).setKeepAlive(PitOperationHelper.getKeepAlive(settings)));
+        if (searchAfter != null) {
+            builder.searchAfter(searchAfter);
+        }
+        return builder.execute().actionGet(settings.getSearchTimeout());
+    }
+
+    /**
+     * Releases the PIT context if it exists. The position of the scan is kept, so that the next
+     * request creates a new context and continues from the last read document.
+     */
+    protected void releasePit() {
+        if (pitId != null) {
+            SuggestUtil.deletePitContext(client, pitId);
+            pitId = null;
         }
     }
 

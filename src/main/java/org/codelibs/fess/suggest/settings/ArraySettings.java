@@ -23,6 +23,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -33,16 +34,15 @@ import org.codelibs.core.CoreLibConstants;
 import org.codelibs.core.lang.StringUtil;
 import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.exception.SuggestSettingsException;
+import org.codelibs.fess.suggest.util.PitOperationHelper;
 import org.codelibs.fess.suggest.util.SuggestUtil;
 import org.opensearch.action.admin.indices.create.CreateIndexResponse;
-import org.opensearch.action.search.SearchResponse;
 import org.opensearch.common.xcontent.XContentFactory;
 import org.opensearch.common.xcontent.XContentType;
 import org.opensearch.common.xcontent.json.JsonXContent;
 import org.opensearch.core.xcontent.XContentBuilder;
 import org.opensearch.index.IndexNotFoundException;
 import org.opensearch.index.query.QueryBuilders;
-import org.opensearch.search.SearchHit;
 import org.opensearch.transport.client.Client;
 
 /**
@@ -204,40 +204,11 @@ public class ArraySettings {
     protected Map<String, Object>[] getFromArrayIndex(final String index, final String type, final String key) {
         final String actualIndex = index + "." + type.toLowerCase(Locale.ENGLISH);
         try {
-            SearchResponse response = client.prepareSearch()
-                    .setIndices(actualIndex)
-                    .setScroll(settings.getScrollTimeout())
-                    .setQuery(QueryBuilders.termQuery(FieldNames.ARRAY_KEY, key))
-                    .setSize(DEFAULT_SEARCH_SIZE)
-                    .execute()
-                    .actionGet(settings.getSearchTimeout());
-            String scrollId = response.getScrollId();
+            final List<Map<String, Object>> sourceList =
+                    PitOperationHelper.search(client, settings, actualIndex, QueryBuilders.termQuery(FieldNames.ARRAY_KEY, key),
+                            DEFAULT_SEARCH_SIZE, (hit, accumulator) -> accumulator.add(hit.getSourceAsMap()));
 
-            final Map<String, Object>[] array = new Map[(int) response.getHits().getTotalHits().value()];
-
-            int count = 0;
-            try {
-                while (scrollId != null) {
-                    final SearchHit[] hits = response.getHits().getHits();
-                    if (hits.length == 0) {
-                        break;
-                    }
-                    for (final SearchHit hit : hits) {
-                        array[count] = hit.getSourceAsMap();
-                        count++;
-                    }
-                    response = client.prepareSearchScroll(scrollId)
-                            .setScroll(settings.getScrollTimeout())
-                            .execute()
-                            .actionGet(settings.getSearchTimeout());
-                    if (!scrollId.equals(response.getScrollId())) {
-                        SuggestUtil.deleteScrollContext(client, scrollId);
-                    }
-                    scrollId = response.getScrollId();
-                }
-            } finally {
-                SuggestUtil.deleteScrollContext(client, scrollId);
-            }
+            final Map<String, Object>[] array = sourceList.toArray(new Map[sourceList.size()]);
 
             Arrays.sort(array, (o1, o2) -> {
                 if (o1 == null && o2 == null) {

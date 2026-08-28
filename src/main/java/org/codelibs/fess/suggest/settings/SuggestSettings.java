@@ -410,8 +410,8 @@ public class SuggestSettings {
     }
 
     /**
-     * Returns the scroll timeout.
-     * @return The scroll timeout.
+     * Returns the keep alive of a point-in-time context.
+     * @return The keep alive of a point-in-time context.
      */
     public String getScrollTimeout() {
         return timeoutSettings.scrollTimeout;

@@ -34,16 +34,14 @@ import org.codelibs.core.lang.StringUtil;
 import org.codelibs.fess.suggest.analysis.SuggestAnalyzer;
 import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.exception.SuggestSettingsException;
-import org.codelibs.fess.suggest.util.SuggestUtil;
+import org.codelibs.fess.suggest.util.PitOperationHelper;
 import org.opensearch.action.admin.indices.analyze.AnalyzeAction;
 import org.opensearch.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken;
 import org.opensearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.opensearch.action.admin.indices.settings.get.GetSettingsResponse;
-import org.opensearch.action.search.SearchResponse;
 import org.opensearch.common.settings.Settings;
 import org.opensearch.common.xcontent.XContentType;
 import org.opensearch.index.query.QueryBuilders;
-import org.opensearch.search.SearchHit;
 import org.opensearch.transport.client.Client;
 
 /**
@@ -93,6 +91,9 @@ public class AnalyzerSettings {
 
     /** Document type name. */
     public static final String DOC_TYPE_NAME = "_doc";
+
+    /** Page size used to walk over the field analyzer mappings. */
+    protected static final int FIELD_ANALYZER_MAPPING_PAGE_SIZE = 500;
 
     /** OpenSearch client. */
     protected final Client client;
@@ -424,19 +425,9 @@ public class AnalyzerSettings {
      */
     protected Map<String, FieldAnalyzerMapping> getFieldAnalyzerMapping() {
         final Map<String, FieldAnalyzerMapping> mappingMap = new HashMap<>();
-        SearchResponse response = client.prepareSearch(analyzerSettingsIndexName)
-                .setQuery(QueryBuilders.termQuery(FieldNames.ANALYZER_SETTINGS_TYPE, FIELD_ANALYZER_MAPPING))
-                .setScroll(settings.getScrollTimeout())
-                .execute()
-                .actionGet(settings.getSearchTimeout());
-        String scrollId = response.getScrollId();
-        try {
-            while (scrollId != null) {
-                final SearchHit[] hits = response.getHits().getHits();
-                if (hits.length == 0) {
-                    break;
-                }
-                for (final SearchHit hit : hits) {
+        PitOperationHelper.searchWithCallback(client, settings, analyzerSettingsIndexName,
+                QueryBuilders.termQuery(FieldNames.ANALYZER_SETTINGS_TYPE, FIELD_ANALYZER_MAPPING), FIELD_ANALYZER_MAPPING_PAGE_SIZE,
+                hit -> {
                     final Map<String, Object> source = hit.getSourceAsMap();
                     final String fieldReadingAnalyzer = source.get(FieldNames.ANALYZER_SETTINGS_READING_ANALYZER) == null ? null
                             : source.get(FieldNames.ANALYZER_SETTINGS_READING_ANALYZER).toString();
@@ -453,19 +444,7 @@ public class AnalyzerSettings {
                     mappingMap.put(source.get(FieldNames.ANALYZER_SETTINGS_FIELD_NAME).toString(),
                             new FieldAnalyzerMapping(fieldReadingAnalyzer, fieldReadingTermAnalyzer, fieldNormalizeAnalyzer,
                                     fieldContentsAnalyzer, fieldContentsReadingAnalyzer));
-                }
-                response = client.prepareSearchScroll(scrollId)
-                        .setScroll(settings.getScrollTimeout())
-                        .execute()
-                        .actionGet(settings.getSearchTimeout());
-                if (!scrollId.equals(response.getScrollId())) {
-                    SuggestUtil.deleteScrollContext(client, scrollId);
-                }
-                scrollId = response.getScrollId();
-            }
-        } finally {
-            SuggestUtil.deleteScrollContext(client, scrollId);
-        }
+                });
         return mappingMap;
     }
 

@@ -63,8 +63,8 @@ public class SuggestSettingsBuilder {
     }
 
     /**
-     * Sets the scroll timeout.
-     * @param timeout The scroll timeout.
+     * Sets the keep alive of a point-in-time context.
+     * @param timeout The keep alive of a point-in-time context.
      * @return This builder instance.
      */
     public SuggestSettingsBuilder scrollTimeout(final String timeout) {

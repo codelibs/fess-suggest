@@ -35,13 +35,13 @@ import org.opensearch.index.query.QueryBuilders;
 import org.opensearch.transport.client.Client;
 
 /**
- * Integration tests for ScrollOperationHelper.
+ * Integration tests for PitOperationHelper.
  */
-public class ScrollOperationHelperTest {
+public class PitOperationHelperTest {
 
     private static OpenSearchRunner runner;
     private static Client client;
-    private static final String INDEX_NAME = "scroll-test-index";
+    private static final String INDEX_NAME = "pit-test-index";
     private Suggester suggester;
 
     @BeforeClass
@@ -51,7 +51,7 @@ public class ScrollOperationHelperTest {
             settingsBuilder.put("http.cors.enabled", true);
             settingsBuilder.put("discovery.type", "single-node");
         })
-                .build(newConfigs().clusterName("ScrollOperationHelperTest")
+                .build(newConfigs().clusterName("PitOperationHelperTest")
                         .numOfNode(1)
                         .pluginTypes("org.codelibs.opensearch.extension.ExtensionPlugin"));
         runner.ensureYellow();
@@ -68,52 +68,50 @@ public class ScrollOperationHelperTest {
     public void before() throws Exception {
         runner.admin().indices().prepareDelete("_all").execute().actionGet();
         runner.refresh();
-        suggester = Suggester.builder().build(client, "ScrollTest");
+        suggester = Suggester.builder().build(client, "PitTest");
         suggester.createIndexIfNothing();
     }
 
     @Test
-    public void testScrollSearch_emptyResults() {
+    public void testSearch_emptyResults() {
         // Create index without any documents
         createTestIndex();
 
-        List<String> results = ScrollOperationHelper.scrollSearch(client, suggester.settings(), INDEX_NAME, QueryBuilders.matchAllQuery(),
-                10, (hit, accumulator) -> accumulator.add(hit.getId()));
+        List<String> results = PitOperationHelper.search(client, suggester.settings(), INDEX_NAME, QueryBuilders.matchAllQuery(), 10,
+                (hit, accumulator) -> accumulator.add(hit.getId()));
 
         assertNotNull(results);
         assertTrue(results.isEmpty());
     }
 
     @Test
-    public void testScrollSearch_singlePage() {
+    public void testSearch_singlePage() {
         createTestIndex();
         indexDocuments(5);
         runner.refresh();
 
-        List<String> results =
-                ScrollOperationHelper.scrollSearch(client, suggester.settings(), INDEX_NAME, QueryBuilders.matchAllQuery(), 10, // page size larger than document count
-                        (hit, accumulator) -> accumulator.add(hit.getId()));
+        List<String> results = PitOperationHelper.search(client, suggester.settings(), INDEX_NAME, QueryBuilders.matchAllQuery(), 10, // page size larger than document count
+                (hit, accumulator) -> accumulator.add(hit.getId()));
 
         assertNotNull(results);
         assertEquals(5, results.size());
     }
 
     @Test
-    public void testScrollSearch_multiplePages() {
+    public void testSearch_multiplePages() {
         createTestIndex();
         indexDocuments(25);
         runner.refresh();
 
-        List<String> results =
-                ScrollOperationHelper.scrollSearch(client, suggester.settings(), INDEX_NAME, QueryBuilders.matchAllQuery(), 10, // page size smaller than document count
-                        (hit, accumulator) -> accumulator.add(hit.getId()));
+        List<String> results = PitOperationHelper.search(client, suggester.settings(), INDEX_NAME, QueryBuilders.matchAllQuery(), 10, // page size smaller than document count
+                (hit, accumulator) -> accumulator.add(hit.getId()));
 
         assertNotNull(results);
         assertEquals(25, results.size());
     }
 
     @Test
-    public void testScrollSearch_withQuery() {
+    public void testSearch_withQuery() {
         createTestIndex();
 
         // Index documents with different numeric values for easy filtering
@@ -126,15 +124,15 @@ public class ScrollOperationHelperTest {
         runner.refresh();
 
         // Use range query for reliable filtering on numeric field
-        List<String> results = ScrollOperationHelper.scrollSearch(client, suggester.settings(), INDEX_NAME,
-                QueryBuilders.rangeQuery("value").lt(5), 10, (hit, accumulator) -> accumulator.add(hit.getId()));
+        List<String> results = PitOperationHelper.search(client, suggester.settings(), INDEX_NAME, QueryBuilders.rangeQuery("value").lt(5),
+                10, (hit, accumulator) -> accumulator.add(hit.getId()));
 
         assertNotNull(results);
         assertEquals(5, results.size());
     }
 
     @Test
-    public void testScrollSearch_extractsSourceData() {
+    public void testSearch_extractsSourceData() {
         createTestIndex();
 
         // Index documents with specific data
@@ -146,7 +144,7 @@ public class ScrollOperationHelperTest {
         }
         runner.refresh();
 
-        List<Map<String, Object>> results = ScrollOperationHelper.scrollSearch(client, suggester.settings(), INDEX_NAME,
+        List<Map<String, Object>> results = PitOperationHelper.search(client, suggester.settings(), INDEX_NAME,
                 QueryBuilders.matchAllQuery(), 10, (hit, accumulator) -> accumulator.add(hit.getSourceAsMap()));
 
         assertNotNull(results);
@@ -160,15 +158,15 @@ public class ScrollOperationHelperTest {
     }
 
     @Test
-    public void testScrollSearch_customAccumulator() {
+    public void testSearch_customAccumulator() {
         createTestIndex();
         indexDocuments(5);
         runner.refresh();
 
         // Use custom accumulator to sum values
         List<Integer> values = new ArrayList<>();
-        List<Integer> results = ScrollOperationHelper.scrollSearch(client, suggester.settings(), INDEX_NAME, QueryBuilders.matchAllQuery(),
-                10, (hit, accumulator) -> {
+        List<Integer> results = PitOperationHelper.search(client, suggester.settings(), INDEX_NAME, QueryBuilders.matchAllQuery(), 10,
+                (hit, accumulator) -> {
                     Map<String, Object> source = hit.getSourceAsMap();
                     if (source.containsKey("value")) {
                         accumulator.add(((Number) source.get("value")).intValue());

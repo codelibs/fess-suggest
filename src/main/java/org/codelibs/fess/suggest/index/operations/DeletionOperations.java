@@ -30,8 +30,7 @@ import org.codelibs.fess.suggest.index.SuggestDeleteResponse;
 import org.codelibs.fess.suggest.index.writer.SuggestWriter;
 import org.codelibs.fess.suggest.index.writer.SuggestWriterResult;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
-import org.codelibs.fess.suggest.util.SuggestUtil;
-import org.opensearch.action.search.SearchResponse;
+import org.codelibs.fess.suggest.util.PitOperationHelper;
 import org.opensearch.index.query.BoolQueryBuilder;
 import org.opensearch.index.query.Operator;
 import org.opensearch.index.query.QueryBuilder;
@@ -49,8 +48,8 @@ public class DeletionOperations {
 
     private static final Logger logger = LogManager.getLogger(DeletionOperations.class);
 
-    /** Default page size for scroll operations. */
-    private static final int SCROLL_PAGE_SIZE = 500;
+    /** Default page size for point-in-time search operations. */
+    private static final int SEARCH_PAGE_SIZE = 500;
 
     private final Client client;
     private final SuggestSettings settings;
@@ -176,41 +175,21 @@ public class DeletionOperations {
         }
 
         final List<SuggestItem> updateItems = new ArrayList<>();
-        SearchResponse response = client.prepareSearch(index)
-                .setSize(SCROLL_PAGE_SIZE)
-                .setScroll(settings.getScrollTimeout())
-                .setQuery(QueryBuilders.rangeQuery(freqField).gte(1))
-                .execute()
-                .actionGet(settings.getSearchTimeout());
-        String scrollId = response.getScrollId();
-        try {
-            while (scrollId != null) {
-                final SearchHit[] hits = response.getHits().getHits();
-                if (hits.length == 0) {
-                    break;
-                }
-                for (final SearchHit hit : hits) {
-                    final SuggestItem item = SuggestItem.parseSource(hit.getSourceAsMap());
-                    freqSetter.accept(item);
-                    item.setKinds(Stream.of(item.getKinds()).filter(kind -> kind != kindToRemove).toArray(SuggestItem.Kind[]::new));
-                    updateItems.add(item);
-                }
-                final SuggestWriterResult result =
-                        suggestWriter.write(client, settings, index, updateItems.toArray(new SuggestItem[updateItems.size()]), false);
-                if (result.hasFailure()) {
-                    throw new SuggestIndexException(result.getFailures().get(0));
-                }
-                updateItems.clear();
-
-                response = client.prepareSearchScroll(scrollId).execute().actionGet(settings.getSearchTimeout());
-                if (!scrollId.equals(response.getScrollId())) {
-                    SuggestUtil.deleteScrollContext(client, scrollId);
-                }
-                scrollId = response.getScrollId();
-            }
-        } finally {
-            SuggestUtil.deleteScrollContext(client, scrollId);
-        }
+        PitOperationHelper.searchWithBatchCallback(client, settings, index, QueryBuilders.rangeQuery(freqField).gte(1), SEARCH_PAGE_SIZE,
+                hits -> {
+                    for (final SearchHit hit : hits) {
+                        final SuggestItem item = SuggestItem.parseSource(hit.getSourceAsMap());
+                        freqSetter.accept(item);
+                        item.setKinds(Stream.of(item.getKinds()).filter(kind -> kind != kindToRemove).toArray(SuggestItem.Kind[]::new));
+                        updateItems.add(item);
+                    }
+                    final SuggestWriterResult result =
+                            suggestWriter.write(client, settings, index, updateItems.toArray(new SuggestItem[updateItems.size()]), false);
+                    if (result.hasFailure()) {
+                        throw new SuggestIndexException(result.getFailures().get(0));
+                    }
+                    updateItems.clear();
+                });
 
         return new SuggestDeleteResponse(null, System.currentTimeMillis() - start);
     }
