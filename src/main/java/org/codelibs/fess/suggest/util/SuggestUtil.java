@@ -27,6 +27,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser;
 import org.apache.lucene.queryparser.flexible.standard.config.StandardQueryConfigHandler;
 import org.apache.lucene.search.BooleanClause;
@@ -48,7 +50,7 @@ import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.opensearch.action.bulk.BulkRequestBuilder;
 import org.opensearch.action.bulk.BulkResponse;
 import org.opensearch.action.delete.DeleteRequest;
-import org.opensearch.action.search.SearchResponse;
+import org.opensearch.action.search.DeletePitRequest;
 import org.opensearch.common.xcontent.json.JsonXContent;
 import org.opensearch.core.action.ActionListener;
 import org.opensearch.core.xcontent.XContentBuilder;
@@ -60,8 +62,13 @@ import org.opensearch.transport.client.Client;
  * Utility class for suggest feature.
  */
 public final class SuggestUtil {
+    private static final Logger logger = LogManager.getLogger(SuggestUtil.class);
+
     private static final int MAX_QUERY_TERM_NUM = 5;
     private static final int MAX_QUERY_TERM_LENGTH = 48;
+
+    /** Page size used to walk over the documents to delete. */
+    private static final int DELETE_PAGE_SIZE = 500;
 
     private static final Base64.Encoder encoder = Base64.getEncoder();
 
@@ -332,39 +339,15 @@ public final class SuggestUtil {
     public static boolean deleteByQuery(final Client client, final SuggestSettings settings, final String index,
             final QueryBuilder queryBuilder) {
         try {
-            SearchResponse response = client.prepareSearch(index)
-                    .setQuery(queryBuilder)
-                    .setSize(500)
-                    .setScroll(settings.getScrollTimeout())
-                    .execute()
-                    .actionGet(settings.getSearchTimeout());
-            String scrollId = response.getScrollId();
-            try {
-                while (scrollId != null) {
-                    final SearchHit[] hits = response.getHits().getHits();
-                    if (hits.length == 0) {
-                        break;
-                    }
+            PitOperationHelper.searchWithBatchCallback(client, settings, index, queryBuilder, DELETE_PAGE_SIZE, hits -> {
+                final BulkRequestBuilder bulkRequestBuilder = client.prepareBulk();
+                Stream.of(hits).map(SearchHit::getId).forEach(id -> bulkRequestBuilder.add(new DeleteRequest(index, id)));
 
-                    final BulkRequestBuilder bulkRequestBuilder = client.prepareBulk();
-                    Stream.of(hits).map(SearchHit::getId).forEach(id -> bulkRequestBuilder.add(new DeleteRequest(index, id)));
-
-                    final BulkResponse bulkResponse = bulkRequestBuilder.execute().actionGet(settings.getBulkTimeout());
-                    if (bulkResponse.hasFailures()) {
-                        throw new SuggesterException(bulkResponse.buildFailureMessage());
-                    }
-                    response = client.prepareSearchScroll(scrollId)
-                            .setScroll(settings.getScrollTimeout())
-                            .execute()
-                            .actionGet(settings.getSearchTimeout());
-                    if (!scrollId.equals(response.getScrollId())) {
-                        SuggestUtil.deleteScrollContext(client, scrollId);
-                    }
-                    scrollId = response.getScrollId();
+                final BulkResponse bulkResponse = bulkRequestBuilder.execute().actionGet(settings.getBulkTimeout());
+                if (bulkResponse.hasFailures()) {
+                    throw new SuggesterException(bulkResponse.buildFailureMessage());
                 }
-            } finally {
-                SuggestUtil.deleteScrollContext(client, scrollId);
-            }
+            });
             client.admin().indices().prepareRefresh(index).execute().actionGet(settings.getIndicesTimeout());
         } catch (final Exception e) {
             throw new SuggesterException("Failed to exec delete by query.", e);
@@ -374,14 +357,25 @@ public final class SuggestUtil {
     }
 
     /**
-     * Deletes the scroll context associated with the given scroll ID.
+     * Releases the point-in-time context associated with the given PIT ID.
+     * A failure is logged and not rethrown, so that it never hides the outcome of the operation
+     * the context was created for.
      *
-     * @param client the OpenSearch client used to clear the scroll context
-     * @param scrollId the ID of the scroll context to be deleted; if null, no action is taken
+     * @param client the OpenSearch client used to release the point-in-time context
+     * @param pitId the ID of the point-in-time context to be released; if null, no action is taken
      */
-    public static void deleteScrollContext(final Client client, final String scrollId) {
-        if (scrollId != null) {
-            client.prepareClearScroll().addScrollId(scrollId).execute(ActionListener.wrap(res -> {}, e -> {}));
+    public static void deletePitContext(final Client client, final String pitId) {
+        if (pitId == null) {
+            return;
+        }
+        try {
+            client.deletePits(new DeletePitRequest(pitId), ActionListener.wrap(res -> {
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Released the point-in-time context: {}", res.getDeletePitResults());
+                }
+            }, e -> logger.warn("Failed to release the point-in-time context.", e)));
+        } catch (final Exception e) {
+            logger.warn("Failed to release the point-in-time context.", e);
         }
     }
 

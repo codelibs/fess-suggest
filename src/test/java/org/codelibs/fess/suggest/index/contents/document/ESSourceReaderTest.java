@@ -37,7 +37,7 @@ import org.junit.Test;
 import org.opensearch.action.bulk.BulkRequestBuilder;
 import org.opensearch.action.index.IndexAction;
 import org.opensearch.action.index.IndexRequestBuilder;
-import org.opensearch.index.IndexNotFoundException;
+import org.opensearch.action.search.SearchResponse;
 import org.opensearch.search.sort.SortBuilders;
 import org.opensearch.search.sort.SortOrder;
 import org.opensearch.transport.client.Client;
@@ -224,6 +224,45 @@ public class ESSourceReaderTest {
             count++;
         }
         assertEquals(num, count);
+    }
+
+    @Test
+    public void test_retryResumesFromLastPosition() throws Exception {
+        String indexName = "test-index";
+        Client client = runner.client();
+        SuggestSettings settings = suggester.settings();
+        int num = 100;
+        int pageSize = 10;
+
+        addDocument(indexName, client, num);
+
+        // Fail once in the middle of the scan. The reader must resume from the last read document,
+        // so every document is read exactly once.
+        final AtomicInteger searchCount = new AtomicInteger(0);
+        final int failingCall = 3;
+        ESSourceReader reader = new ESSourceReader(client, settings, indexName) {
+            @Override
+            protected SearchResponse executeSearch() {
+                if (searchCount.incrementAndGet() == failingCall) {
+                    throw new RuntimeException("Simulated search failure.");
+                }
+                return super.executeSearch();
+            }
+        };
+        reader.setScrollSize(pageSize);
+
+        int count = 0;
+        Set<String> valueSet = Collections.synchronizedSet(new HashSet<>());
+        Map<String, Object> source;
+        while ((source = reader.read()) != null) {
+            valueSet.add(source.get("field1").toString());
+            count++;
+        }
+        reader.close();
+
+        assertTrue("The simulated failure did not happen.", searchCount.get() > failingCall);
+        assertEquals(num, count);
+        assertEquals(num, valueSet.size());
     }
 
     private void addDocument(String indexName, Client client, int num) {

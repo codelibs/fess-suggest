@@ -17,7 +17,8 @@ package org.codelibs.fess.suggest.settings;
 
 /**
  * Timeout settings for various operations in the suggest system.
- * This class provides configuration for search, index, bulk, indices, cluster, and scroll timeouts.
+ * This class provides configuration for search, index, bulk, indices, cluster timeouts and the
+ * keep alive of the point-in-time contexts used to walk over documents.
  */
 public class TimeoutSettings {
     /** Search timeout. */
@@ -30,7 +31,7 @@ public class TimeoutSettings {
     protected String indicesTimeout = "1m";
     /** Cluster timeout. */
     protected String clusterTimeout = "1m";
-    /** Scroll timeout. */
+    /** Keep alive of a point-in-time context. */
     protected String scrollTimeout = "1m";
 
     /**
@@ -121,16 +122,16 @@ public class TimeoutSettings {
     }
 
     /**
-     * Gets the scroll timeout.
-     * @return The scroll timeout.
+     * Gets the keep alive of a point-in-time context.
+     * @return The keep alive of a point-in-time context.
      */
     public String getScrollTimeout() {
         return scrollTimeout;
     }
 
     /**
-     * Sets the scroll timeout.
-     * @param timeout The scroll timeout.
+     * Sets the keep alive of a point-in-time context.
+     * @param timeout The keep alive of a point-in-time context.
      */
     public void setScrollTimeout(final String timeout) {
         this.scrollTimeout = timeout;
