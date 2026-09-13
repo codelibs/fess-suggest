@@ -15,7 +15,6 @@
  */
 package org.codelibs.fess.suggest.index.contents;
 
-import static org.codelibs.opensearch.runner.OpenSearchRunner.newConfigs;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -35,16 +34,18 @@ import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.fess.suggest.index.contents.querylog.QueryLog;
 import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.normalizer.NormalizerChain;
+import org.codelibs.fess.suggest.SuggestTestServer;
 import org.codelibs.opensearch.runner.OpenSearchRunner;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.opensearch.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken;
+import org.codelibs.fesen.opensearch.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken;
 
 public class DefaultContentsParserTest {
     static Suggester suggester;
     static OpenSearchRunner runner;
+    static SuggestTestServer server;
     DefaultContentsParser defaultContentsParser = new DefaultContentsParser();
     String[] supportedFields = new String[] { "content", "title" };
     String[] tagFieldNames = new String[] { "label", "virtual_host" };
@@ -52,22 +53,15 @@ public class DefaultContentsParserTest {
 
     @BeforeClass
     public static void beforeClass() throws Exception {
-        runner = new OpenSearchRunner();
-        runner.onBuild((number, settingsBuilder) -> {
-            settingsBuilder.put("http.cors.enabled", true);
-            settingsBuilder.put("discovery.type", "single-node");
-        })
-                .build(newConfigs().clusterName("DefaultContentsParserTest")
-                        .numOfNode(1)
-                        .pluginTypes("org.codelibs.opensearch.extension.ExtensionPlugin"));
+        server = SuggestTestServer.start("DefaultContentsParserTest");
+        runner = server.runner();
         runner.ensureYellow();
     }
 
     @AfterClass
     public static void afterClass() throws Exception {
-        if (runner != null) {
-            runner.close();
-            runner.clean();
+        if (server != null) {
+            server.close();
         }
     }
 
@@ -75,7 +69,7 @@ public class DefaultContentsParserTest {
     public void before() throws Exception {
         runner.admin().indices().prepareDelete("_all").execute().actionGet();
         runner.refresh();
-        suggester = Suggester.builder().build(runner.client(), "DefaultContentsParserTest");
+        suggester = Suggester.builder().build(server.client(), "DefaultContentsParserTest");
         suggester.createIndexIfNothing();
     }
 

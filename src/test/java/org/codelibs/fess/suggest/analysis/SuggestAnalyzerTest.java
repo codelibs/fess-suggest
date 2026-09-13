@@ -25,7 +25,7 @@ import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.opensearch.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken;
+import org.codelibs.fesen.opensearch.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken;
 
 public class SuggestAnalyzerTest {
 

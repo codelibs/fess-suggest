@@ -15,7 +15,6 @@
  */
 package org.codelibs.fess.suggest.index;
 
-import static org.codelibs.opensearch.runner.OpenSearchRunner.newConfigs;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -34,6 +33,7 @@ import org.codelibs.fess.suggest.entity.ElevateWord;
 import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.fess.suggest.index.contents.querylog.QueryLog;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
+import org.codelibs.fess.suggest.SuggestTestServer;
 import org.codelibs.opensearch.runner.OpenSearchRunner;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -41,37 +41,31 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
-import org.opensearch.index.query.QueryBuilders;
+import org.codelibs.fesen.opensearch.index.query.QueryBuilders;
 
 public class SuggestIndexerTest {
     static Suggester suggester;
     static OpenSearchRunner runner;
+    static SuggestTestServer server;
 
     @Rule
     public final TestName testName = new TestName();
 
     @BeforeClass
     public static void beforeClass() throws Exception {
-        runner = new OpenSearchRunner();
-        runner.onBuild((number, settingsBuilder) -> {
-            settingsBuilder.put("http.cors.enabled", true);
-            settingsBuilder.put("discovery.type", "single-node");
-        })
-                .build(newConfigs().clusterName("SuggestIndexerTest")
-                        .numOfNode(1)
-                        .pluginTypes("org.codelibs.opensearch.extension.ExtensionPlugin"));
+        server = SuggestTestServer.start("SuggestIndexerTest");
+        runner = server.runner();
         runner.ensureYellow();
     }
 
     @AfterClass
     public static void afterClass() throws Exception {
-        runner.close();
-        runner.clean();
+        server.close();
     }
 
     @Before
     public void before() throws Exception {
-        suggester = Suggester.builder().build(runner.client(), getTestId());
+        suggester = Suggester.builder().build(server.client(), getTestId());
         suggester.createIndexIfNothing();
     }
 

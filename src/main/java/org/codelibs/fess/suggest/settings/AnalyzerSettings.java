@@ -35,14 +35,14 @@ import org.codelibs.fess.suggest.analysis.SuggestAnalyzer;
 import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.exception.SuggestSettingsException;
 import org.codelibs.fess.suggest.util.PitOperationHelper;
-import org.opensearch.action.admin.indices.analyze.AnalyzeAction;
-import org.opensearch.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken;
-import org.opensearch.action.admin.indices.exists.indices.IndicesExistsResponse;
-import org.opensearch.action.admin.indices.settings.get.GetSettingsResponse;
-import org.opensearch.common.settings.Settings;
-import org.opensearch.common.xcontent.XContentType;
-import org.opensearch.index.query.QueryBuilders;
-import org.opensearch.transport.client.Client;
+import org.codelibs.fesen.opensearch.action.admin.indices.analyze.AnalyzeAction;
+import org.codelibs.fesen.opensearch.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken;
+import org.codelibs.fesen.opensearch.action.admin.indices.exists.indices.IndicesExistsResponse;
+import org.codelibs.fesen.opensearch.action.admin.indices.settings.get.GetSettingsResponse;
+import org.codelibs.fesen.opensearch.common.settings.Settings;
+import org.codelibs.fesen.opensearch.common.xcontent.XContentType;
+import org.codelibs.fesen.opensearch.index.query.QueryBuilders;
+import org.codelibs.fesen.opensearch.transport.client.Client;
 
 /**
  * The AnalyzerSettings class is responsible for managing and configuring analyzers for different fields and languages.

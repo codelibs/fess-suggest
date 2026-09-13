@@ -15,7 +15,7 @@
  */
 package org.codelibs.fess.suggest.index.contents.querylog;
 
-import org.opensearch.common.Nullable;
+import org.codelibs.fesen.opensearch.common.Nullable;
 
 /**
  * The QueryLog class represents a log entry containing a query string and an optional filter query string.

@@ -15,7 +15,6 @@
  */
 package org.codelibs.fess.suggest.index.contents.document;
 
-import static org.codelibs.opensearch.runner.OpenSearchRunner.newConfigs;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -29,55 +28,50 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.codelibs.fess.suggest.Suggester;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
+import org.codelibs.fess.suggest.SuggestTestServer;
 import org.codelibs.opensearch.runner.OpenSearchRunner;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.opensearch.action.bulk.BulkRequestBuilder;
-import org.opensearch.action.index.IndexAction;
-import org.opensearch.action.index.IndexRequestBuilder;
-import org.opensearch.action.search.SearchResponse;
-import org.opensearch.search.sort.SortBuilders;
-import org.opensearch.search.sort.SortOrder;
-import org.opensearch.transport.client.Client;
+import org.codelibs.fesen.opensearch.action.bulk.BulkRequestBuilder;
+import org.codelibs.fesen.opensearch.action.index.IndexAction;
+import org.codelibs.fesen.opensearch.action.index.IndexRequestBuilder;
+import org.codelibs.fesen.opensearch.action.search.SearchResponse;
+import org.codelibs.fesen.opensearch.search.sort.SortBuilders;
+import org.codelibs.fesen.opensearch.search.sort.SortOrder;
+import org.codelibs.fesen.opensearch.transport.client.Client;
 
 public class ESSourceReaderTest {
     static Suggester suggester;
 
     static OpenSearchRunner runner;
+    static SuggestTestServer server;
 
     @BeforeClass
     public static void beforeClass() throws Exception {
-        runner = new OpenSearchRunner();
-        runner.onBuild((number, settingsBuilder) -> {
-            settingsBuilder.put("http.cors.enabled", true);
-            settingsBuilder.put("discovery.type", "single-node");
-        })
-                .build(newConfigs().clusterName("ESSourceReaderTest")
-                        .numOfNode(1)
-                        .pluginTypes("org.codelibs.opensearch.extension.ExtensionPlugin"));
+        server = SuggestTestServer.start("ESSourceReaderTest");
+        runner = server.runner();
         runner.ensureYellow();
     }
 
     @AfterClass
     public static void afterClass() throws Exception {
-        runner.close();
-        runner.clean();
+        server.close();
     }
 
     @Before
     public void before() throws Exception {
         runner.admin().indices().prepareDelete("_all").execute().actionGet();
         runner.refresh();
-        suggester = Suggester.builder().build(runner.client(), "SuggesterTest");
+        suggester = Suggester.builder().build(server.client(), "SuggesterTest");
         suggester.createIndexIfNothing();
     }
 
     @Test
     public void test_Read() throws Exception {
         String indexName = "test-index";
-        Client client = runner.client();
+        Client client = server.client();
         SuggestSettings settings = suggester.settings();
         int num = 10000;
 
@@ -100,7 +94,7 @@ public class ESSourceReaderTest {
     @Test
     public void test_ReadWithLimit() throws Exception {
         String indexName = "test-index";
-        Client client = runner.client();
+        Client client = server.client();
         SuggestSettings settings = suggester.settings();
         int num = 10000;
 
@@ -126,7 +120,7 @@ public class ESSourceReaderTest {
         System.out.println("Thread num:" + threadNum);
 
         String indexName = "test-index";
-        Client client = runner.client();
+        Client client = server.client();
         SuggestSettings settings = suggester.settings();
         int num = 9999;
 
@@ -192,7 +186,7 @@ public class ESSourceReaderTest {
     @Test
     public void test_sort() throws Exception {
         String indexName = "test-index";
-        Client client = runner.client();
+        Client client = server.client();
         SuggestSettings settings = suggester.settings();
         int num = 10000;
 
@@ -229,7 +223,7 @@ public class ESSourceReaderTest {
     @Test
     public void test_retryResumesFromLastPosition() throws Exception {
         String indexName = "test-index";
-        Client client = runner.client();
+        Client client = server.client();
         SuggestSettings settings = suggester.settings();
         int num = 100;
         int pageSize = 10;

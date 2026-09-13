@@ -15,7 +15,6 @@
  */
 package org.codelibs.fess.suggest;
 
-import static org.codelibs.opensearch.runner.OpenSearchRunner.newConfigs;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -39,31 +38,25 @@ import org.opensearch.action.admin.indices.get.GetIndexResponse;
  */
 public class SuggesterIndexLifecycleTest {
     static OpenSearchRunner runner;
+    static SuggestTestServer server;
 
     @Rule
     public final TestName testName = new TestName();
 
     @BeforeClass
     public static void beforeClass() throws Exception {
-        runner = new OpenSearchRunner();
-        runner.onBuild((number, settingsBuilder) -> {
-            settingsBuilder.put("http.cors.enabled", true);
-            settingsBuilder.put("discovery.type", "single-node");
-        })
-                .build(newConfigs().clusterName("SuggesterIndexLifecycleTest")
-                        .numOfNode(1)
-                        .pluginTypes("org.codelibs.opensearch.extension.ExtensionPlugin"));
+        server = SuggestTestServer.start("SuggesterIndexLifecycleTest");
+        runner = server.runner();
         runner.ensureYellow();
     }
 
     @AfterClass
     public static void afterClass() throws Exception {
-        runner.close();
-        runner.clean();
+        server.close();
     }
 
     private Suggester createSuggester() {
-        return Suggester.builder().build(runner.client(), getBaseId());
+        return Suggester.builder().build(server.client(), getBaseId());
     }
 
     private String getBaseId() {

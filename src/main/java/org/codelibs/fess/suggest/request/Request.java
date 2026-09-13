@@ -17,8 +17,8 @@ package org.codelibs.fess.suggest.request;
 
 import org.codelibs.fess.suggest.concurrent.Deferred;
 import org.codelibs.fess.suggest.exception.SuggesterException;
-import org.opensearch.core.common.Strings;
-import org.opensearch.transport.client.Client;
+import org.codelibs.fesen.opensearch.core.common.Strings;
+import org.codelibs.fesen.opensearch.transport.client.Client;
 
 /**
  * Abstract class representing a request that can be executed to produce a response.

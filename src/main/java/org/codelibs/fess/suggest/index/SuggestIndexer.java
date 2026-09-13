@@ -42,8 +42,8 @@ import org.codelibs.fess.suggest.index.writer.SuggestIndexWriter;
 import org.codelibs.fess.suggest.index.writer.SuggestWriter;
 import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
-import org.opensearch.index.query.QueryBuilder;
-import org.opensearch.transport.client.Client;
+import org.codelibs.fesen.opensearch.index.query.QueryBuilder;
+import org.codelibs.fesen.opensearch.transport.client.Client;
 
 /**
  * The SuggestIndexer class is responsible for indexing and managing suggest items in an OpenSearch index.

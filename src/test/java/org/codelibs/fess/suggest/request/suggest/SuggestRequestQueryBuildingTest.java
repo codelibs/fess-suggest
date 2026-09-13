@@ -30,12 +30,12 @@ import org.codelibs.fess.suggest.converter.ReadingConverter;
 import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.junit.Before;
 import org.junit.Test;
-import org.opensearch.index.query.BoolQueryBuilder;
-import org.opensearch.index.query.MatchAllQueryBuilder;
-import org.opensearch.index.query.PrefixQueryBuilder;
-import org.opensearch.index.query.QueryBuilder;
-import org.opensearch.index.query.TermQueryBuilder;
-import org.opensearch.index.query.functionscore.FunctionScoreQueryBuilder;
+import org.codelibs.fesen.opensearch.index.query.BoolQueryBuilder;
+import org.codelibs.fesen.opensearch.index.query.MatchAllQueryBuilder;
+import org.codelibs.fesen.opensearch.index.query.PrefixQueryBuilder;
+import org.codelibs.fesen.opensearch.index.query.QueryBuilder;
+import org.codelibs.fesen.opensearch.index.query.TermQueryBuilder;
+import org.codelibs.fesen.opensearch.index.query.functionscore.FunctionScoreQueryBuilder;
 
 /**
  * Tests for SuggestRequest query building methods.

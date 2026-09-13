@@ -19,7 +19,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
-import org.opensearch.transport.client.Client;
+import org.codelibs.fesen.opensearch.transport.client.Client;
 
 /**
  * Builder class for constructing SuggestSettings instances.

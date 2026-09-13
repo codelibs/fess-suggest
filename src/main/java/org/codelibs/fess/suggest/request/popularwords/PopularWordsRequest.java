@@ -25,18 +25,19 @@ import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.codelibs.fess.suggest.request.Request;
-import org.opensearch.action.search.SearchRequestBuilder;
-import org.opensearch.action.search.SearchResponse;
-import org.opensearch.common.lucene.search.function.CombineFunction;
-import org.opensearch.core.action.ActionListener;
-import org.opensearch.index.query.BoolQueryBuilder;
-import org.opensearch.index.query.QueryBuilder;
-import org.opensearch.index.query.QueryBuilders;
-import org.opensearch.index.query.functionscore.FunctionScoreQueryBuilder;
-import org.opensearch.index.query.functionscore.ScoreFunctionBuilders;
-import org.opensearch.search.SearchHit;
-import org.opensearch.search.rescore.QueryRescorerBuilder;
-import org.opensearch.transport.client.Client;
+import org.codelibs.fesen.opensearch.action.search.SearchRequestBuilder;
+import org.codelibs.fesen.opensearch.action.search.SearchResponse;
+import org.codelibs.fesen.opensearch.common.lucene.search.function.CombineFunction;
+import org.codelibs.fesen.opensearch.core.action.ActionListener;
+import org.codelibs.fesen.opensearch.index.query.BoolQueryBuilder;
+import org.codelibs.fesen.opensearch.index.query.QueryBuilder;
+import org.codelibs.fesen.opensearch.index.query.QueryBuilders;
+import org.codelibs.fesen.opensearch.index.query.functionscore.FieldValueFactorFunctionBuilder;
+import org.codelibs.fesen.opensearch.index.query.functionscore.FunctionScoreQueryBuilder;
+import org.codelibs.fesen.opensearch.index.query.functionscore.RandomScoreFunctionBuilder;
+import org.codelibs.fesen.opensearch.search.SearchHit;
+import org.codelibs.fesen.opensearch.search.rescore.QueryRescorerBuilder;
+import org.codelibs.fesen.opensearch.transport.client.Client;
 
 /**
  * Represents a request for popular words. This class extends {@link Request} and is parameterized
@@ -229,8 +230,8 @@ public class PopularWordsRequest extends Request<PopularWordsResponse> {
         if (!excludeWords.isEmpty()) {
             queryBuilder.mustNot(QueryBuilders.termsQuery(FieldNames.TEXT, excludeWords));
         }
-        final FunctionScoreQueryBuilder functionScoreQueryBuilder = QueryBuilders.functionScoreQuery(queryBuilder,
-                ScoreFunctionBuilders.fieldValueFactorFunction(FieldNames.QUERY_FREQ).missing(0));
+        final FunctionScoreQueryBuilder functionScoreQueryBuilder =
+                QueryBuilders.functionScoreQuery(queryBuilder, new FieldValueFactorFunctionBuilder(FieldNames.QUERY_FREQ).missing(0));
         functionScoreQueryBuilder.boostMode(CombineFunction.REPLACE);
         return functionScoreQueryBuilder;
     }
@@ -240,9 +241,9 @@ public class PopularWordsRequest extends Request<PopularWordsResponse> {
      * @return The QueryRescorerBuilder instance.
      */
     protected QueryRescorerBuilder buildRescore() {
-        return new QueryRescorerBuilder(
-                QueryBuilders.functionScoreQuery(ScoreFunctionBuilders.randomFunction().seed(seed).setField("_seq_no"))).setQueryWeight(0)
-                        .setRescoreQueryWeight(1);
+        return new QueryRescorerBuilder(QueryBuilders.functionScoreQuery(new RandomScoreFunctionBuilder().seed(seed).setField("_seq_no")))
+                .setQueryWeight(0)
+                .setRescoreQueryWeight(1);
     }
 
     /**

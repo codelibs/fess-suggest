@@ -25,8 +25,8 @@ import java.util.Set;
 import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.entity.SuggestItem;
-import org.opensearch.action.search.SearchResponse;
-import org.opensearch.search.SearchHit;
+import org.codelibs.fesen.opensearch.action.search.SearchResponse;
+import org.codelibs.fesen.opensearch.search.SearchHit;
 
 /**
  * Creates SuggestResponse instances from OpenSearch search results.

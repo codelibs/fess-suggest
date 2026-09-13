@@ -19,15 +19,15 @@ import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.fess.suggest.exception.SuggestIndexException;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.codelibs.fess.suggest.util.SuggestUtil;
-import org.opensearch.action.bulk.BulkItemResponse;
-import org.opensearch.action.bulk.BulkRequestBuilder;
-import org.opensearch.action.bulk.BulkResponse;
-import org.opensearch.action.get.GetResponse;
-import org.opensearch.action.index.IndexAction;
-import org.opensearch.action.index.IndexRequest;
-import org.opensearch.action.index.IndexRequestBuilder;
-import org.opensearch.index.query.QueryBuilder;
-import org.opensearch.transport.client.Client;
+import org.codelibs.fesen.opensearch.action.bulk.BulkItemResponse;
+import org.codelibs.fesen.opensearch.action.bulk.BulkRequestBuilder;
+import org.codelibs.fesen.opensearch.action.bulk.BulkResponse;
+import org.codelibs.fesen.opensearch.action.get.GetResponse;
+import org.codelibs.fesen.opensearch.action.index.IndexAction;
+import org.codelibs.fesen.opensearch.action.index.IndexRequest;
+import org.codelibs.fesen.opensearch.action.index.IndexRequestBuilder;
+import org.codelibs.fesen.opensearch.index.query.QueryBuilder;
+import org.codelibs.fesen.opensearch.transport.client.Client;
 
 /**
  * SuggestIndexWriter is an implementation of the SuggestWriter interface that provides methods to write, delete,

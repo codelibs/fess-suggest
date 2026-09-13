@@ -31,12 +31,12 @@ import org.codelibs.fess.suggest.index.writer.SuggestWriter;
 import org.codelibs.fess.suggest.index.writer.SuggestWriterResult;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.codelibs.fess.suggest.util.PitOperationHelper;
-import org.opensearch.index.query.BoolQueryBuilder;
-import org.opensearch.index.query.Operator;
-import org.opensearch.index.query.QueryBuilder;
-import org.opensearch.index.query.QueryBuilders;
-import org.opensearch.search.SearchHit;
-import org.opensearch.transport.client.Client;
+import org.codelibs.fesen.opensearch.index.query.BoolQueryBuilder;
+import org.codelibs.fesen.opensearch.index.query.Operator;
+import org.codelibs.fesen.opensearch.index.query.QueryBuilder;
+import org.codelibs.fesen.opensearch.index.query.QueryBuilders;
+import org.codelibs.fesen.opensearch.search.SearchHit;
+import org.codelibs.fesen.opensearch.transport.client.Client;
 
 /**
  * Internal operations class for deletion functionality.

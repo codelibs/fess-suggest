@@ -47,16 +47,16 @@ import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.normalizer.NormalizerChain;
 import org.codelibs.fess.suggest.settings.AnalyzerSettings;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
-import org.opensearch.action.bulk.BulkRequestBuilder;
-import org.opensearch.action.bulk.BulkResponse;
-import org.opensearch.action.delete.DeleteRequest;
-import org.opensearch.action.search.DeletePitRequest;
-import org.opensearch.common.xcontent.json.JsonXContent;
-import org.opensearch.core.action.ActionListener;
-import org.opensearch.core.xcontent.XContentBuilder;
-import org.opensearch.index.query.QueryBuilder;
-import org.opensearch.search.SearchHit;
-import org.opensearch.transport.client.Client;
+import org.codelibs.fesen.opensearch.action.bulk.BulkRequestBuilder;
+import org.codelibs.fesen.opensearch.action.bulk.BulkResponse;
+import org.codelibs.fesen.opensearch.action.delete.DeleteRequest;
+import org.codelibs.fesen.opensearch.action.search.DeletePitRequest;
+import org.codelibs.fesen.opensearch.common.xcontent.json.JsonXContent;
+import org.codelibs.fesen.opensearch.core.action.ActionListener;
+import org.codelibs.fesen.opensearch.core.xcontent.XContentBuilder;
+import org.codelibs.fesen.opensearch.index.query.QueryBuilder;
+import org.codelibs.fesen.opensearch.search.SearchHit;
+import org.codelibs.fesen.opensearch.transport.client.Client;
 
 /**
  * Utility class for suggest feature.

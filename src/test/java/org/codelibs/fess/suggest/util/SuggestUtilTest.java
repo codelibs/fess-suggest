@@ -15,7 +15,6 @@
  */
 package org.codelibs.fess.suggest.util;
 
-import static org.codelibs.opensearch.runner.OpenSearchRunner.newConfigs;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -40,30 +39,29 @@ import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.settings.AnalyzerSettings;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
+import org.codelibs.fess.suggest.SuggestTestServer;
 import org.codelibs.opensearch.runner.OpenSearchRunner;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.opensearch.index.query.QueryBuilders;
-import org.opensearch.transport.client.Client;
+import org.codelibs.fesen.opensearch.index.query.QueryBuilders;
+import org.codelibs.fesen.opensearch.transport.client.Client;
 
 public class SuggestUtilTest {
 
     private static OpenSearchRunner runner;
+    private static SuggestTestServer server;
     private static Client client;
     private static SuggestSettings settings;
     private static final String TEST_INDEX = "test_suggest_util";
 
     @BeforeClass
     public static void beforeClass() throws Exception {
-        runner = new OpenSearchRunner();
-        runner.onBuild((number, settingsBuilder) -> {
-            settingsBuilder.put("http.cors.enabled", true);
-            settingsBuilder.put("discovery.type", "single-node");
-        }).build(newConfigs().clusterName("SuggestUtilTest").numOfNode(1).pluginTypes("org.codelibs.opensearch.extension.ExtensionPlugin"));
+        server = SuggestTestServer.start("SuggestUtilTest");
+        runner = server.runner();
         runner.ensureYellow();
-        client = runner.client();
+        client = server.client();
 
         // Initialize suggest settings
         Suggester suggester = Suggester.builder().build(client, "test");
@@ -75,8 +73,7 @@ public class SuggestUtilTest {
 
     @AfterClass
     public static void afterClass() throws Exception {
-        runner.close();
-        runner.clean();
+        server.close();
     }
 
     @Before

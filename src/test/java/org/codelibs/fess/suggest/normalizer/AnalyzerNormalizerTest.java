@@ -15,11 +15,11 @@
  */
 package org.codelibs.fess.suggest.normalizer;
 
-import static org.codelibs.opensearch.runner.OpenSearchRunner.newConfigs;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import org.codelibs.fess.suggest.Suggester;
+import org.codelibs.fess.suggest.SuggestTestServer;
 import org.codelibs.opensearch.runner.OpenSearchRunner;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -29,43 +29,37 @@ import org.junit.Test;
 public class AnalyzerNormalizerTest {
     static Suggester suggester;
     static OpenSearchRunner runner;
+    static SuggestTestServer server;
 
     @BeforeClass
     public static void beforeClass() throws Exception {
-        runner = new OpenSearchRunner();
-        runner.onBuild((number, settingsBuilder) -> {
-            settingsBuilder.put("http.cors.enabled", true);
-            settingsBuilder.put("discovery.type", "single-node");
-        })
-                .build(newConfigs().clusterName("AnalyzerNormalizerTest")
-                        .numOfNode(1)
-                        .pluginTypes("org.codelibs.opensearch.extension.ExtensionPlugin"));
+        server = SuggestTestServer.start("AnalyzerNormalizerTest");
+        runner = server.runner();
         runner.ensureYellow();
     }
 
     @AfterClass
     public static void afterClass() throws Exception {
-        runner.close();
-        runner.clean();
+        server.close();
     }
 
     @Before
     public void before() throws Exception {
         runner.admin().indices().prepareDelete("_all").execute().actionGet();
         runner.refresh();
-        suggester = Suggester.builder().build(runner.client(), "AnalyzerNormalizerTest");
+        suggester = Suggester.builder().build(server.client(), "AnalyzerNormalizerTest");
         suggester.createIndexIfNothing();
     }
 
     @Test
     public void test_constructor() throws Exception {
-        AnalyzerNormalizer normalizer = new AnalyzerNormalizer(runner.client(), suggester.settings());
+        AnalyzerNormalizer normalizer = new AnalyzerNormalizer(server.client(), suggester.settings());
         assertNotNull(normalizer);
     }
 
     @Test
     public void test_normalizeWithDefaultLanguage() throws Exception {
-        AnalyzerNormalizer normalizer = new AnalyzerNormalizer(runner.client(), suggester.settings());
+        AnalyzerNormalizer normalizer = new AnalyzerNormalizer(server.client(), suggester.settings());
 
         String result = normalizer.normalize("test", "content");
 
@@ -74,7 +68,7 @@ public class AnalyzerNormalizerTest {
 
     @Test
     public void test_normalizeWithLanguage() throws Exception {
-        AnalyzerNormalizer normalizer = new AnalyzerNormalizer(runner.client(), suggester.settings());
+        AnalyzerNormalizer normalizer = new AnalyzerNormalizer(server.client(), suggester.settings());
 
         String result = normalizer.normalize("test", "content", "en");
 
@@ -83,7 +77,7 @@ public class AnalyzerNormalizerTest {
 
     @Test
     public void test_normalizeWithMultipleLanguages() throws Exception {
-        AnalyzerNormalizer normalizer = new AnalyzerNormalizer(runner.client(), suggester.settings());
+        AnalyzerNormalizer normalizer = new AnalyzerNormalizer(server.client(), suggester.settings());
 
         String result = normalizer.normalize("test", "content", "en", "ja");
 
@@ -92,7 +86,7 @@ public class AnalyzerNormalizerTest {
 
     @Test
     public void test_normalizeEmptyString() throws Exception {
-        AnalyzerNormalizer normalizer = new AnalyzerNormalizer(runner.client(), suggester.settings());
+        AnalyzerNormalizer normalizer = new AnalyzerNormalizer(server.client(), suggester.settings());
 
         String result = normalizer.normalize("", "content");
 
@@ -101,7 +95,7 @@ public class AnalyzerNormalizerTest {
 
     @Test
     public void test_normalizeJapaneseText() throws Exception {
-        AnalyzerNormalizer normalizer = new AnalyzerNormalizer(runner.client(), suggester.settings());
+        AnalyzerNormalizer normalizer = new AnalyzerNormalizer(server.client(), suggester.settings());
 
         String result = normalizer.normalize("検索", "content", "ja");
 
@@ -110,7 +104,7 @@ public class AnalyzerNormalizerTest {
 
     @Test
     public void test_normalizeEnglishText() throws Exception {
-        AnalyzerNormalizer normalizer = new AnalyzerNormalizer(runner.client(), suggester.settings());
+        AnalyzerNormalizer normalizer = new AnalyzerNormalizer(server.client(), suggester.settings());
 
         String result = normalizer.normalize("search", "content", "en");
 

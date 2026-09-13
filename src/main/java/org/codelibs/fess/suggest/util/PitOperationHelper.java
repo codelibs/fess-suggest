@@ -20,17 +20,17 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import org.codelibs.fess.suggest.settings.SuggestSettings;
-import org.opensearch.action.search.CreatePitAction;
-import org.opensearch.action.search.CreatePitRequest;
-import org.opensearch.action.search.SearchRequest;
-import org.opensearch.action.search.SearchRequestBuilder;
-import org.opensearch.action.search.SearchResponse;
-import org.opensearch.common.unit.TimeValue;
-import org.opensearch.index.query.QueryBuilder;
-import org.opensearch.search.SearchHit;
-import org.opensearch.search.builder.PointInTimeBuilder;
-import org.opensearch.search.sort.SortBuilders;
-import org.opensearch.transport.client.Client;
+import org.codelibs.fesen.opensearch.action.search.CreatePitAction;
+import org.codelibs.fesen.opensearch.action.search.CreatePitRequest;
+import org.codelibs.fesen.opensearch.action.search.SearchRequest;
+import org.codelibs.fesen.opensearch.action.search.SearchRequestBuilder;
+import org.codelibs.fesen.opensearch.action.search.SearchResponse;
+import org.codelibs.fesen.opensearch.common.unit.TimeValue;
+import org.codelibs.fesen.opensearch.index.query.QueryBuilder;
+import org.codelibs.fesen.opensearch.search.SearchHit;
+import org.codelibs.fesen.opensearch.search.builder.PointInTimeBuilder;
+import org.codelibs.fesen.opensearch.search.sort.SortBuilders;
+import org.codelibs.fesen.opensearch.transport.client.Client;
 
 /**
  * Helper class for Point in Time (PIT) based search operations in OpenSearch.

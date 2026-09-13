@@ -33,8 +33,8 @@ import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.codelibs.fess.suggest.index.contents.querylog.QueryLog;
 import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.util.SuggestUtil;
-import org.opensearch.OpenSearchStatusException;
-import org.opensearch.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken;
+import org.codelibs.fesen.opensearch.OpenSearchStatusException;
+import org.codelibs.fesen.opensearch.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken;
 
 /**
  * DefaultContentsParser is an implementation of the ContentsParser interface.
