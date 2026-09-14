@@ -31,13 +31,13 @@ import org.apache.logging.log4j.Logger;
 import org.codelibs.core.lang.StringUtil;
 import org.codelibs.fess.suggest.exception.SuggestSettingsException;
 import org.codelibs.fess.suggest.exception.SuggesterException;
-import org.opensearch.action.get.GetResponse;
-import org.opensearch.common.collect.Tuple;
-import org.opensearch.common.xcontent.XContentType;
-import org.opensearch.common.xcontent.json.JsonXContent;
-import org.opensearch.core.xcontent.XContentBuilder;
-import org.opensearch.index.IndexNotFoundException;
-import org.opensearch.transport.client.Client;
+import org.codelibs.fesen.opensearch.action.get.GetResponse;
+import org.codelibs.fesen.opensearch.common.collect.Tuple;
+import org.codelibs.fesen.opensearch.common.xcontent.XContentType;
+import org.codelibs.fesen.opensearch.common.xcontent.json.JsonXContent;
+import org.codelibs.fesen.opensearch.core.xcontent.XContentBuilder;
+import org.codelibs.fesen.opensearch.index.IndexNotFoundException;
+import org.codelibs.fesen.opensearch.transport.client.Client;
 
 /**
  * The SuggestSettings class is responsible for managing the settings related to suggestions.

@@ -15,12 +15,12 @@
  */
 package org.codelibs.fess.suggest.request.popularwords;
 
-import static org.codelibs.opensearch.runner.OpenSearchRunner.newConfigs;
 import static org.junit.Assert.assertNotNull;
 
 import org.codelibs.fess.suggest.Suggester;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.entity.SuggestItem;
+import org.codelibs.fess.suggest.SuggestTestServer;
 import org.codelibs.opensearch.runner.OpenSearchRunner;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -30,31 +30,25 @@ import org.junit.Test;
 public class PopularWordsRequestBuilderTest {
     static Suggester suggester;
     static OpenSearchRunner runner;
+    static SuggestTestServer server;
 
     @BeforeClass
     public static void beforeClass() throws Exception {
-        runner = new OpenSearchRunner();
-        runner.onBuild((number, settingsBuilder) -> {
-            settingsBuilder.put("http.cors.enabled", true);
-            settingsBuilder.put("discovery.type", "single-node");
-        })
-                .build(newConfigs().clusterName("PopularWordsRequestBuilderTest")
-                        .numOfNode(1)
-                        .pluginTypes("org.codelibs.opensearch.extension.ExtensionPlugin"));
+        server = SuggestTestServer.start("PopularWordsRequestBuilderTest");
+        runner = server.runner();
         runner.ensureYellow();
     }
 
     @AfterClass
     public static void afterClass() throws Exception {
-        runner.close();
-        runner.clean();
+        server.close();
     }
 
     @Before
     public void before() throws Exception {
         runner.admin().indices().prepareDelete("_all").execute().actionGet();
         runner.refresh();
-        suggester = Suggester.builder().build(runner.client(), "PopularWordsRequestBuilderTest");
+        suggester = Suggester.builder().build(server.client(), "PopularWordsRequestBuilderTest");
         suggester.createIndexIfNothing();
     }
 

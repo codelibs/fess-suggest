@@ -30,7 +30,7 @@ import org.codelibs.fess.suggest.index.SuggestIndexResponse;
 import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.codelibs.fess.suggest.util.SuggestUtil;
-import org.opensearch.index.query.QueryBuilders;
+import org.codelibs.fesen.opensearch.index.query.QueryBuilders;
 
 /**
  * Internal operations class for bad word and elevate word management.

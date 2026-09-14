@@ -19,9 +19,9 @@ import java.util.List;
 
 import org.codelibs.fess.suggest.settings.AnalyzerSettings;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
-import org.opensearch.action.admin.indices.analyze.AnalyzeAction;
-import org.opensearch.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken;
-import org.opensearch.transport.client.Client;
+import org.codelibs.fesen.opensearch.action.admin.indices.analyze.AnalyzeAction;
+import org.codelibs.fesen.opensearch.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken;
+import org.codelibs.fesen.opensearch.transport.client.Client;
 
 /**
  * AnalyzerNormalizer is a class that implements the Normalizer interface.

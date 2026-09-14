@@ -36,14 +36,14 @@ import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.exception.SuggestSettingsException;
 import org.codelibs.fess.suggest.util.PitOperationHelper;
 import org.codelibs.fess.suggest.util.SuggestUtil;
-import org.opensearch.action.admin.indices.create.CreateIndexResponse;
-import org.opensearch.common.xcontent.XContentFactory;
-import org.opensearch.common.xcontent.XContentType;
-import org.opensearch.common.xcontent.json.JsonXContent;
-import org.opensearch.core.xcontent.XContentBuilder;
-import org.opensearch.index.IndexNotFoundException;
-import org.opensearch.index.query.QueryBuilders;
-import org.opensearch.transport.client.Client;
+import org.codelibs.fesen.opensearch.action.admin.indices.create.CreateIndexResponse;
+import org.codelibs.fesen.opensearch.common.xcontent.XContentFactory;
+import org.codelibs.fesen.opensearch.common.xcontent.XContentType;
+import org.codelibs.fesen.opensearch.common.xcontent.json.JsonXContent;
+import org.codelibs.fesen.opensearch.core.xcontent.XContentBuilder;
+import org.codelibs.fesen.opensearch.index.IndexNotFoundException;
+import org.codelibs.fesen.opensearch.index.query.QueryBuilders;
+import org.codelibs.fesen.opensearch.transport.client.Client;
 
 /**
  * The ArraySettings class provides methods to manage settings stored in an array format within an OpenSearch index.

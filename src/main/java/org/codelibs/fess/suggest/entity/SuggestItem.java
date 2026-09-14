@@ -32,7 +32,7 @@ import org.codelibs.core.lang.StringUtil;
 import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.util.SuggestUtil;
-import org.opensearch.common.Nullable;
+import org.codelibs.fesen.opensearch.common.Nullable;
 
 /**
  * The SuggestItem class represents an item used for suggestions in the Fess search engine.

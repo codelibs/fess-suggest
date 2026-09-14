@@ -23,15 +23,16 @@ import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.converter.ReadingConverter;
 import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.codelibs.fess.suggest.normalizer.Normalizer;
-import org.opensearch.common.lucene.search.function.CombineFunction;
-import org.opensearch.common.lucene.search.function.FieldValueFactorFunction;
-import org.opensearch.common.lucene.search.function.FunctionScoreQuery;
-import org.opensearch.core.common.Strings;
-import org.opensearch.index.query.BoolQueryBuilder;
-import org.opensearch.index.query.QueryBuilder;
-import org.opensearch.index.query.QueryBuilders;
-import org.opensearch.index.query.functionscore.FunctionScoreQueryBuilder;
-import org.opensearch.index.query.functionscore.ScoreFunctionBuilders;
+import org.codelibs.fesen.opensearch.common.lucene.search.function.CombineFunction;
+import org.codelibs.fesen.opensearch.common.lucene.search.function.FieldValueFactorFunction;
+import org.codelibs.fesen.opensearch.common.lucene.search.function.FunctionScoreQuery;
+import org.codelibs.fesen.opensearch.core.common.Strings;
+import org.codelibs.fesen.opensearch.index.query.BoolQueryBuilder;
+import org.codelibs.fesen.opensearch.index.query.QueryBuilder;
+import org.codelibs.fesen.opensearch.index.query.QueryBuilders;
+import org.codelibs.fesen.opensearch.index.query.functionscore.FieldValueFactorFunctionBuilder;
+import org.codelibs.fesen.opensearch.index.query.functionscore.FunctionScoreQueryBuilder;
+import org.codelibs.fesen.opensearch.index.query.functionscore.WeightBuilder;
 
 /**
  * Builds OpenSearch queries for suggestion requests.
@@ -144,19 +145,18 @@ public class SuggestQueryBuilder {
 
         if (isSingleWordQuery(query) && !isHiraganaQuery(query)) {
             flist.add(new FunctionScoreQueryBuilder.FilterFunctionBuilder(QueryBuilders.prefixQuery(FieldNames.TEXT, query),
-                    ScoreFunctionBuilders.weightFactorFunction(prefixMatchWeight)));
+                    new WeightBuilder().setWeight(prefixMatchWeight)));
         }
 
-        flist.add(new FunctionScoreQueryBuilder.FilterFunctionBuilder(ScoreFunctionBuilders.fieldValueFactorFunction(FieldNames.DOC_FREQ)
-                .missing(0.1f)
+        flist.add(new FunctionScoreQueryBuilder.FilterFunctionBuilder(new FieldValueFactorFunctionBuilder(FieldNames.DOC_FREQ).missing(0.1f)
                 .modifier(FieldValueFactorFunction.Modifier.LOG2P)
                 .setWeight(1.0F)));
-        flist.add(new FunctionScoreQueryBuilder.FilterFunctionBuilder(ScoreFunctionBuilders.fieldValueFactorFunction(FieldNames.QUERY_FREQ)
-                .missing(0.1f)
-                .modifier(FieldValueFactorFunction.Modifier.LOG2P)
-                .setWeight(1.0F)));
+        flist.add(
+                new FunctionScoreQueryBuilder.FilterFunctionBuilder(new FieldValueFactorFunctionBuilder(FieldNames.QUERY_FREQ).missing(0.1f)
+                        .modifier(FieldValueFactorFunction.Modifier.LOG2P)
+                        .setWeight(1.0F)));
         flist.add(new FunctionScoreQueryBuilder.FilterFunctionBuilder(
-                ScoreFunctionBuilders.fieldValueFactorFunction(FieldNames.USER_BOOST).missing(1f).setWeight(1.0F)));
+                new FieldValueFactorFunctionBuilder(FieldNames.USER_BOOST).missing(1f).setWeight(1.0F)));
         final FunctionScoreQueryBuilder functionScoreQueryBuilder = QueryBuilders.functionScoreQuery(queryBuilder,
                 flist.toArray(new FunctionScoreQueryBuilder.FilterFunctionBuilder[flist.size()]));
 

@@ -25,14 +25,14 @@ import org.codelibs.fess.suggest.converter.ReadingConverter;
 import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.request.Request;
-import org.opensearch.action.search.SearchRequestBuilder;
-import org.opensearch.action.search.SearchResponse;
-import org.opensearch.core.action.ActionListener;
-import org.opensearch.index.query.BoolQueryBuilder;
-import org.opensearch.index.query.QueryBuilder;
-import org.opensearch.index.query.QueryBuilders;
-import org.opensearch.search.sort.SortOrder;
-import org.opensearch.transport.client.Client;
+import org.codelibs.fesen.opensearch.action.search.SearchRequestBuilder;
+import org.codelibs.fesen.opensearch.action.search.SearchResponse;
+import org.codelibs.fesen.opensearch.core.action.ActionListener;
+import org.codelibs.fesen.opensearch.index.query.BoolQueryBuilder;
+import org.codelibs.fesen.opensearch.index.query.QueryBuilder;
+import org.codelibs.fesen.opensearch.index.query.QueryBuilders;
+import org.codelibs.fesen.opensearch.search.sort.SortOrder;
+import org.codelibs.fesen.opensearch.transport.client.Client;
 
 /**
  * SuggestRequest is a class that handles the request for suggestions.

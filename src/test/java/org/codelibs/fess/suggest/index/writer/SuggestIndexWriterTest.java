@@ -15,7 +15,6 @@
  */
 package org.codelibs.fess.suggest.index.writer;
 
-import static org.codelibs.opensearch.runner.OpenSearchRunner.newConfigs;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -25,42 +24,37 @@ import org.codelibs.fess.suggest.Suggester;
 import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.constants.SuggestConstants;
 import org.codelibs.fess.suggest.entity.SuggestItem;
+import org.codelibs.fess.suggest.SuggestTestServer;
 import org.codelibs.opensearch.runner.OpenSearchRunner;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.opensearch.action.get.GetResponse;
-import org.opensearch.common.unit.TimeValue;
-import org.opensearch.index.query.QueryBuilders;
+import org.codelibs.fesen.opensearch.action.get.GetResponse;
+import org.codelibs.fesen.opensearch.common.unit.TimeValue;
+import org.codelibs.fesen.opensearch.index.query.QueryBuilders;
 
 public class SuggestIndexWriterTest {
     private static final String TEST_ID = "SuggestIndexWriterTest";
 
     static Suggester suggester;
     static OpenSearchRunner runner;
+    static SuggestTestServer server;
     static SuggestIndexWriter writer;
 
     @BeforeClass
     public static void beforeClass() throws Exception {
-        runner = new OpenSearchRunner();
-        runner.onBuild((number, settingsBuilder) -> {
-            settingsBuilder.put("http.cors.enabled", true);
-            settingsBuilder.put("discovery.type", "single-node");
-        })
-                .build(newConfigs().clusterName("SuggestIndexWriterTest")
-                        .numOfNode(1)
-                        .pluginTypes("org.codelibs.opensearch.extension.ExtensionPlugin"));
+        server = SuggestTestServer.start("SuggestIndexWriterTest");
+        runner = server.runner();
         runner.ensureYellow();
-        suggester = Suggester.builder().build(runner.client(), TEST_ID);
+        suggester = Suggester.builder().build(server.client(), TEST_ID);
         suggester.createIndexIfNothing();
         writer = new SuggestIndexWriter();
     }
 
     @AfterClass
     public static void afterClass() throws Exception {
-        runner.close();
-        runner.clean();
+        server.close();
     }
 
     @Before
@@ -79,7 +73,7 @@ public class SuggestIndexWriterTest {
                 new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
 
         SuggestWriterResult result =
-                writer.write(runner.client(), suggester.settings(), suggester.getIndex(), new SuggestItem[] { item }, false);
+                writer.write(server.client(), suggester.settings(), suggester.getIndex(), new SuggestItem[] { item }, false);
 
         assertNotNull(result);
         assertFalse(result.hasFailure());
@@ -87,7 +81,7 @@ public class SuggestIndexWriterTest {
         runner.refresh();
 
         GetResponse getResponse =
-                runner.client().prepareGet().setIndex(suggester.getIndex()).setId(item.getId()).get(TimeValue.timeValueSeconds(30));
+                server.client().prepareGet().setIndex(suggester.getIndex()).setId(item.getId()).get(TimeValue.timeValueSeconds(30));
         assertTrue(getResponse.isExists());
     }
 
@@ -100,7 +94,7 @@ public class SuggestIndexWriterTest {
 
         // First write
         SuggestWriterResult result1 =
-                writer.write(runner.client(), suggester.settings(), suggester.getIndex(), new SuggestItem[] { item }, false);
+                writer.write(server.client(), suggester.settings(), suggester.getIndex(), new SuggestItem[] { item }, false);
         assertNotNull(result1);
         assertFalse(result1.hasFailure());
 
@@ -111,14 +105,14 @@ public class SuggestIndexWriterTest {
                 new String[] { "tag2" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
 
         SuggestWriterResult result2 =
-                writer.write(runner.client(), suggester.settings(), suggester.getIndex(), new SuggestItem[] { updatedItem }, true);
+                writer.write(server.client(), suggester.settings(), suggester.getIndex(), new SuggestItem[] { updatedItem }, true);
         assertNotNull(result2);
         assertFalse(result2.hasFailure());
 
         runner.refresh();
 
         GetResponse getResponse =
-                runner.client().prepareGet().setIndex(suggester.getIndex()).setId(item.getId()).get(TimeValue.timeValueSeconds(30));
+                server.client().prepareGet().setIndex(suggester.getIndex()).setId(item.getId()).get(TimeValue.timeValueSeconds(30));
         assertTrue(getResponse.isExists());
     }
 
@@ -132,7 +126,7 @@ public class SuggestIndexWriterTest {
                     new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
         }
 
-        SuggestWriterResult result = writer.write(runner.client(), suggester.settings(), suggester.getIndex(), items, false);
+        SuggestWriterResult result = writer.write(server.client(), suggester.settings(), suggester.getIndex(), items, false);
 
         assertNotNull(result);
         assertFalse(result.hasFailure());
@@ -141,14 +135,14 @@ public class SuggestIndexWriterTest {
 
         for (SuggestItem item : items) {
             GetResponse getResponse =
-                    runner.client().prepareGet().setIndex(suggester.getIndex()).setId(item.getId()).get(TimeValue.timeValueSeconds(30));
+                    server.client().prepareGet().setIndex(suggester.getIndex()).setId(item.getId()).get(TimeValue.timeValueSeconds(30));
             assertTrue(getResponse.isExists());
         }
     }
 
     @Test
     public void test_writeEmptyItems() throws Exception {
-        SuggestWriterResult result = writer.write(runner.client(), suggester.settings(), suggester.getIndex(), new SuggestItem[0], false);
+        SuggestWriterResult result = writer.write(server.client(), suggester.settings(), suggester.getIndex(), new SuggestItem[0], false);
 
         assertNotNull(result);
         assertFalse(result.hasFailure());
@@ -161,14 +155,14 @@ public class SuggestIndexWriterTest {
         SuggestItem item = new SuggestItem(new String[] { "テスト" }, readings, new String[] { "content" }, 1, 0, -1, new String[] { "tag1" },
                 new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
 
-        writer.write(runner.client(), suggester.settings(), suggester.getIndex(), new SuggestItem[] { item }, false);
+        writer.write(server.client(), suggester.settings(), suggester.getIndex(), new SuggestItem[] { item }, false);
         runner.refresh();
 
         GetResponse getResponse1 =
-                runner.client().prepareGet().setIndex(suggester.getIndex()).setId(item.getId()).get(TimeValue.timeValueSeconds(30));
+                server.client().prepareGet().setIndex(suggester.getIndex()).setId(item.getId()).get(TimeValue.timeValueSeconds(30));
         assertTrue(getResponse1.isExists());
 
-        SuggestWriterResult result = writer.delete(runner.client(), suggester.settings(), suggester.getIndex(), item.getId());
+        SuggestWriterResult result = writer.delete(server.client(), suggester.settings(), suggester.getIndex(), item.getId());
 
         assertNotNull(result);
         assertFalse(result.hasFailure());
@@ -176,13 +170,13 @@ public class SuggestIndexWriterTest {
         runner.refresh();
 
         GetResponse getResponse2 =
-                runner.client().prepareGet().setIndex(suggester.getIndex()).setId(item.getId()).get(TimeValue.timeValueSeconds(30));
+                server.client().prepareGet().setIndex(suggester.getIndex()).setId(item.getId()).get(TimeValue.timeValueSeconds(30));
         assertFalse(getResponse2.isExists());
     }
 
     @Test
     public void test_deleteNonExistent() throws Exception {
-        SuggestWriterResult result = writer.delete(runner.client(), suggester.settings(), suggester.getIndex(), "non-existent-id");
+        SuggestWriterResult result = writer.delete(server.client(), suggester.settings(), suggester.getIndex(), "non-existent-id");
 
         assertNotNull(result);
         assertFalse(result.hasFailure());
@@ -198,12 +192,12 @@ public class SuggestIndexWriterTest {
                     new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
         }
 
-        writer.write(runner.client(), suggester.settings(), suggester.getIndex(), items, false);
+        writer.write(server.client(), suggester.settings(), suggester.getIndex(), items, false);
         runner.refresh();
 
         assertEquals(3, suggester.getAllWordsNum());
 
-        SuggestWriterResult result = writer.deleteByQuery(runner.client(), suggester.settings(), suggester.getIndex(),
+        SuggestWriterResult result = writer.deleteByQuery(server.client(), suggester.settings(), suggester.getIndex(),
                 QueryBuilders.matchQuery(FieldNames.TEXT, "テスト0"));
 
         assertNotNull(result);
@@ -224,13 +218,13 @@ public class SuggestIndexWriterTest {
                     new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
         }
 
-        writer.write(runner.client(), suggester.settings(), suggester.getIndex(), items, false);
+        writer.write(server.client(), suggester.settings(), suggester.getIndex(), items, false);
         runner.refresh();
 
         assertEquals(3, suggester.getAllWordsNum());
 
         SuggestWriterResult result =
-                writer.deleteByQuery(runner.client(), suggester.settings(), suggester.getIndex(), QueryBuilders.matchAllQuery());
+                writer.deleteByQuery(server.client(), suggester.settings(), suggester.getIndex(), QueryBuilders.matchAllQuery());
 
         assertNotNull(result);
         assertFalse(result.hasFailure());
@@ -293,7 +287,7 @@ public class SuggestIndexWriterTest {
 
         // The timeout value should come from settings, not hardcoded
         SuggestWriterResult result =
-                writer.write(runner.client(), suggester.settings(), suggester.getIndex(), new SuggestItem[] { item }, true);
+                writer.write(server.client(), suggester.settings(), suggester.getIndex(), new SuggestItem[] { item }, true);
 
         assertNotNull(result);
         assertFalse(result.hasFailure());
@@ -301,7 +295,7 @@ public class SuggestIndexWriterTest {
         runner.refresh();
 
         GetResponse getResponse =
-                runner.client().prepareGet().setIndex(suggester.getIndex()).setId(item.getId()).get(TimeValue.timeValueSeconds(30));
+                server.client().prepareGet().setIndex(suggester.getIndex()).setId(item.getId()).get(TimeValue.timeValueSeconds(30));
         assertTrue(getResponse.isExists());
     }
 
@@ -313,7 +307,7 @@ public class SuggestIndexWriterTest {
                 new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
 
         // First write without update
-        writer.write(runner.client(), suggester.settings(), suggester.getIndex(), new SuggestItem[] { item }, false);
+        writer.write(server.client(), suggester.settings(), suggester.getIndex(), new SuggestItem[] { item }, false);
         runner.refresh();
 
         // Second write with update=true
@@ -321,7 +315,7 @@ public class SuggestIndexWriterTest {
                 new String[] { "tag1" }, new String[] { SuggestConstants.DEFAULT_ROLE }, null, SuggestItem.Kind.DOCUMENT);
 
         SuggestWriterResult result =
-                writer.write(runner.client(), suggester.settings(), suggester.getIndex(), new SuggestItem[] { updatedItem }, true);
+                writer.write(server.client(), suggester.settings(), suggester.getIndex(), new SuggestItem[] { updatedItem }, true);
 
         assertNotNull(result);
         assertFalse(result.hasFailure());
@@ -330,7 +324,7 @@ public class SuggestIndexWriterTest {
 
         // Verify the item was updated (should have merged frequencies)
         GetResponse getResponse =
-                runner.client().prepareGet().setIndex(suggester.getIndex()).setId(item.getId()).get(TimeValue.timeValueSeconds(30));
+                server.client().prepareGet().setIndex(suggester.getIndex()).setId(item.getId()).get(TimeValue.timeValueSeconds(30));
         assertTrue(getResponse.isExists());
         // The actual frequency value would depend on merge logic
     }
@@ -344,7 +338,7 @@ public class SuggestIndexWriterTest {
 
         // Write with update=true but item doesn't exist
         SuggestWriterResult result =
-                writer.write(runner.client(), suggester.settings(), suggester.getIndex(), new SuggestItem[] { item }, true);
+                writer.write(server.client(), suggester.settings(), suggester.getIndex(), new SuggestItem[] { item }, true);
 
         assertNotNull(result);
         assertFalse(result.hasFailure());
@@ -353,7 +347,7 @@ public class SuggestIndexWriterTest {
 
         // Should create the item even though update=true
         GetResponse getResponse =
-                runner.client().prepareGet().setIndex(suggester.getIndex()).setId(item.getId()).get(TimeValue.timeValueSeconds(30));
+                server.client().prepareGet().setIndex(suggester.getIndex()).setId(item.getId()).get(TimeValue.timeValueSeconds(30));
         assertTrue(getResponse.isExists());
     }
 

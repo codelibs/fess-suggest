@@ -15,11 +15,11 @@
  */
 package org.codelibs.fess.suggest.normalizer;
 
-import static org.codelibs.opensearch.runner.OpenSearchRunner.newConfigs;
 import static org.junit.Assert.assertEquals;
 
 import org.codelibs.fess.suggest.Suggester;
 import org.codelibs.fess.suggest.util.SuggestUtil;
+import org.codelibs.fess.suggest.SuggestTestServer;
 import org.codelibs.opensearch.runner.OpenSearchRunner;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -29,31 +29,25 @@ public class DefaultNormalizerTest {
     static Suggester suggester;
 
     static OpenSearchRunner runner;
+    static SuggestTestServer server;
 
     @BeforeClass
     public static void beforeClass() throws Exception {
-        runner = new OpenSearchRunner();
-        runner.onBuild((number, settingsBuilder) -> {
-            settingsBuilder.put("http.cors.enabled", true);
-            settingsBuilder.put("discovery.type", "single-node");
-        })
-                .build(newConfigs().clusterName("DefaultNormalizerTest")
-                        .numOfNode(1)
-                        .pluginTypes("org.codelibs.opensearch.extension.ExtensionPlugin"));
+        server = SuggestTestServer.start("DefaultNormalizerTest");
+        runner = server.runner();
         runner.ensureYellow();
 
-        suggester = Suggester.builder().build(runner.client(), "SuggesterTest");
+        suggester = Suggester.builder().build(server.client(), "SuggesterTest");
     }
 
     @AfterClass
     public static void afterClass() throws Exception {
-        runner.close();
-        runner.clean();
+        server.close();
     }
 
     @Test
     public void test_normalize() throws Exception {
-        Normalizer normalizer = SuggestUtil.createDefaultNormalizer(runner.client(), suggester.settings());
+        Normalizer normalizer = SuggestUtil.createDefaultNormalizer(server.client(), suggester.settings());
         assertEquals("12345,.*[]「」abcケンサクabcdけんさくガギグゲゴ", normalizer.normalize("１２３４５,.*[]「」ＡBCｹﾝｻｸabcdけんさくｶﾞｷﾞｸﾞｹﾞｺﾞ", null));
     }
 }

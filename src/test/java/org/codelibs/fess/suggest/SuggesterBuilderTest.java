@@ -15,8 +15,6 @@
  */
 package org.codelibs.fess.suggest;
 
-import static org.codelibs.opensearch.runner.OpenSearchRunner.newConfigs;
-
 import java.io.IOException;
 import java.util.List;
 
@@ -24,35 +22,29 @@ import org.codelibs.fess.suggest.converter.ReadingConverter;
 import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.codelibs.opensearch.runner.OpenSearchRunner;
-import org.opensearch.core.common.Strings;
+import org.codelibs.fesen.opensearch.core.common.Strings;
 
 import junit.framework.TestCase;
 
 public class SuggesterBuilderTest extends TestCase {
     OpenSearchRunner runner;
+    SuggestTestServer server;
 
     @Override
     public void setUp() throws Exception {
-        runner = new OpenSearchRunner();
-        runner.onBuild((number, settingsBuilder) -> {
-            settingsBuilder.put("http.cors.enabled", true);
-            settingsBuilder.put("discovery.type", "single-node");
-        })
-                .build(newConfigs().clusterName("ArraySettingsTest")
-                        .numOfNode(1)
-                        .pluginTypes("org.codelibs.opensearch.extension.ExtensionPlugin"));
+        server = SuggestTestServer.start("ArraySettingsTest");
+        runner = server.runner();
         runner.ensureYellow();
     }
 
     @Override
     protected void tearDown() throws Exception {
-        runner.close();
-        runner.clean();
+        server.close();
     }
 
     public void test_buildWithDefault() throws Exception {
         final String id = "BuildTest";
-        final Suggester suggester = Suggester.builder().build(runner.client(), id);
+        final Suggester suggester = Suggester.builder().build(server.client(), id);
 
         assertNotNull(suggester);
         assertNotNull(suggester.client);
@@ -86,9 +78,9 @@ public class SuggesterBuilderTest extends TestCase {
                 .settings(SuggestSettings.builder().setSettingsIndexName(settingsIndexName))
                 .readingConverter(converter)
                 .normalizer(normalizer)
-                .build(runner.client(), id);
+                .build(server.client(), id);
 
-        assertEquals(runner.client(), suggester.client);
+        assertEquals(server.client(), suggester.client);
 
         SuggestSettings settings = suggester.settings();
         assertEquals(settingsIndexName, settings.getSettingsIndexName());

@@ -15,7 +15,6 @@
  */
 package org.codelibs.fess.suggest.index;
 
-import static org.codelibs.opensearch.runner.OpenSearchRunner.newConfigs;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -37,6 +36,7 @@ import org.codelibs.fess.suggest.exception.SuggestIndexException;
 import org.codelibs.fess.suggest.index.contents.querylog.QueryLog;
 import org.codelibs.fess.suggest.index.contents.querylog.QueryLogReader;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
+import org.codelibs.fess.suggest.SuggestTestServer;
 import org.codelibs.opensearch.runner.OpenSearchRunner;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -53,26 +53,20 @@ public class SuggestIndexerErrorHandlingTest {
 
     static Suggester suggester;
     static OpenSearchRunner runner;
+    static SuggestTestServer server;
 
     @BeforeClass
     public static void beforeClass() throws Exception {
-        runner = new OpenSearchRunner();
-        runner.onBuild((number, settingsBuilder) -> {
-            settingsBuilder.put("http.cors.enabled", true);
-            settingsBuilder.put("discovery.type", "single-node");
-        })
-                .build(newConfigs().clusterName("SuggestIndexerErrorHandlingTest")
-                        .numOfNode(1)
-                        .pluginTypes("org.codelibs.opensearch.extension.ExtensionPlugin"));
+        server = SuggestTestServer.start("SuggestIndexerErrorHandlingTest");
+        runner = server.runner();
         runner.ensureYellow();
-        suggester = Suggester.builder().build(runner.client(), TEST_ID);
+        suggester = Suggester.builder().build(server.client(), TEST_ID);
         suggester.createIndexIfNothing();
     }
 
     @AfterClass
     public static void afterClass() throws Exception {
-        runner.close();
-        runner.clean();
+        server.close();
     }
 
     @Before

@@ -25,7 +25,7 @@ import org.codelibs.fess.suggest.index.SuggestIndexResponse;
 import org.codelibs.fess.suggest.index.writer.SuggestWriter;
 import org.codelibs.fess.suggest.index.writer.SuggestWriterResult;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
-import org.opensearch.transport.client.Client;
+import org.codelibs.fesen.opensearch.transport.client.Client;
 
 /**
  * Internal operations class for core indexing functionality.

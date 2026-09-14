@@ -39,8 +39,8 @@ import org.codelibs.fess.suggest.index.contents.querylog.QueryLog;
 import org.codelibs.fess.suggest.index.contents.querylog.QueryLogReader;
 import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
-import org.opensearch.OpenSearchStatusException;
-import org.opensearch.transport.client.Client;
+import org.codelibs.fesen.opensearch.OpenSearchStatusException;
+import org.codelibs.fesen.opensearch.transport.client.Client;
 
 /**
  * Internal operations class for content-based indexing functionality.

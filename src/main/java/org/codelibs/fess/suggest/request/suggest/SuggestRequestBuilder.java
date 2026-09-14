@@ -18,7 +18,7 @@ package org.codelibs.fess.suggest.request.suggest;
 import org.codelibs.fess.suggest.converter.ReadingConverter;
 import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.request.RequestBuilder;
-import org.opensearch.transport.client.Client;
+import org.codelibs.fesen.opensearch.transport.client.Client;
 
 /**
  * Builder class for constructing {@link SuggestRequest} instances.

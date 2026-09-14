@@ -15,19 +15,19 @@
  */
 package org.codelibs.fess.suggest.settings;
 
-import static org.codelibs.opensearch.runner.OpenSearchRunner.newConfigs;
 import static org.junit.Assert.assertEquals;
 
 import java.util.Collections;
 
 import org.codelibs.fess.suggest.Suggester;
 import org.codelibs.fess.suggest.entity.ElevateWord;
+import org.codelibs.fess.suggest.SuggestTestServer;
 import org.codelibs.opensearch.runner.OpenSearchRunner;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.opensearch.index.IndexNotFoundException;
+import org.codelibs.fesen.opensearch.index.IndexNotFoundException;
 
 public class ElevateWordSettingsTest {
     String id = "elevateWordSettingsTest";
@@ -35,31 +35,25 @@ public class ElevateWordSettingsTest {
     static SuggestSettings settings;
 
     static OpenSearchRunner runner;
+    static SuggestTestServer server;
 
     @BeforeClass
     public static void beforeClass() throws Exception {
-        runner = new OpenSearchRunner();
-        runner.onBuild((number, settingsBuilder) -> {
-            settingsBuilder.put("http.cors.enabled", true);
-            settingsBuilder.put("discovery.type", "single-node");
-        })
-                .build(newConfigs().clusterName("ArraySettingsTest")
-                        .numOfNode(1)
-                        .pluginTypes("org.codelibs.opensearch.extension.ExtensionPlugin"));
+        server = SuggestTestServer.start("ArraySettingsTest");
+        runner = server.runner();
         runner.ensureYellow();
     }
 
     @AfterClass
     public static void afterClass() throws Exception {
-        runner.close();
-        runner.clean();
+        server.close();
     }
 
     @Before
     public void before() throws Exception {
         runner.admin().indices().prepareDelete("_all").execute().actionGet();
         runner.refresh();
-        settings = Suggester.builder().build(runner.client(), id).settings();
+        settings = Suggester.builder().build(server.client(), id).settings();
     }
 
     @Test

@@ -38,19 +38,19 @@ import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.request.popularwords.PopularWordsRequestBuilder;
 import org.codelibs.fess.suggest.request.suggest.SuggestRequestBuilder;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
-import org.opensearch.action.admin.indices.alias.Alias;
-import org.opensearch.action.admin.indices.alias.IndicesAliasesRequestBuilder;
-import org.opensearch.action.admin.indices.alias.get.GetAliasesResponse;
-import org.opensearch.action.admin.indices.create.CreateIndexResponse;
-import org.opensearch.action.admin.indices.exists.indices.IndicesExistsResponse;
-import org.opensearch.action.admin.indices.get.GetIndexResponse;
-import org.opensearch.action.admin.indices.refresh.RefreshResponse;
-import org.opensearch.action.search.SearchResponse;
-import org.opensearch.cluster.metadata.AliasMetadata;
-import org.opensearch.common.xcontent.XContentType;
-import org.opensearch.index.query.QueryBuilder;
-import org.opensearch.index.query.QueryBuilders;
-import org.opensearch.transport.client.Client;
+import org.codelibs.fesen.opensearch.action.admin.indices.alias.Alias;
+import org.codelibs.fesen.opensearch.action.admin.indices.alias.IndicesAliasesRequestBuilder;
+import org.codelibs.fesen.opensearch.action.admin.indices.alias.get.GetAliasesResponse;
+import org.codelibs.fesen.opensearch.action.admin.indices.create.CreateIndexResponse;
+import org.codelibs.fesen.opensearch.action.admin.indices.exists.indices.IndicesExistsResponse;
+import org.codelibs.fesen.opensearch.action.admin.indices.get.GetIndexResponse;
+import org.codelibs.fesen.opensearch.action.admin.indices.refresh.RefreshResponse;
+import org.codelibs.fesen.opensearch.action.search.SearchResponse;
+import org.codelibs.fesen.opensearch.cluster.metadata.AliasMetadata;
+import org.codelibs.fesen.opensearch.common.xcontent.XContentType;
+import org.codelibs.fesen.opensearch.index.query.QueryBuilder;
+import org.codelibs.fesen.opensearch.index.query.QueryBuilders;
+import org.codelibs.fesen.opensearch.transport.client.Client;
 
 /**
  * The Suggester class provides functionality for managing and querying suggestion indices.

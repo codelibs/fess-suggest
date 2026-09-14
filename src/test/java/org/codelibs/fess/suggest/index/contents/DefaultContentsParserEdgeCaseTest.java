@@ -15,7 +15,6 @@
  */
 package org.codelibs.fess.suggest.index.contents;
 
-import static org.codelibs.opensearch.runner.OpenSearchRunner.newConfigs;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -36,6 +35,7 @@ import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.fess.suggest.index.contents.querylog.QueryLog;
 import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.normalizer.NormalizerChain;
+import org.codelibs.fess.suggest.SuggestTestServer;
 import org.codelibs.opensearch.runner.OpenSearchRunner;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -48,6 +48,7 @@ import org.junit.Test;
 public class DefaultContentsParserEdgeCaseTest {
     static Suggester suggester;
     static OpenSearchRunner runner;
+    static SuggestTestServer server;
     static SuggestAnalyzer analyzer;
     static ReadingConverter defaultReadingConverter;
     static Normalizer defaultNormalizer;
@@ -58,16 +59,10 @@ public class DefaultContentsParserEdgeCaseTest {
 
     @BeforeClass
     public static void beforeClass() throws Exception {
-        runner = new OpenSearchRunner();
-        runner.onBuild((number, settingsBuilder) -> {
-            settingsBuilder.put("http.cors.enabled", true);
-            settingsBuilder.put("discovery.type", "single-node");
-        })
-                .build(newConfigs().clusterName("DefaultContentsParserEdgeCaseTest")
-                        .numOfNode(1)
-                        .pluginTypes("org.codelibs.opensearch.extension.ExtensionPlugin"));
+        server = SuggestTestServer.start("DefaultContentsParserEdgeCaseTest");
+        runner = server.runner();
         runner.ensureYellow();
-        suggester = Suggester.builder().build(runner.client(), "DefaultContentsParserEdgeCaseTest");
+        suggester = Suggester.builder().build(server.client(), "DefaultContentsParserEdgeCaseTest");
         analyzer = suggester.settings().analyzer().new DefaultContentsAnalyzer();
         defaultReadingConverter = createDefaultReadingConverter();
         defaultNormalizer = createDefaultNormalizer();
@@ -75,9 +70,8 @@ public class DefaultContentsParserEdgeCaseTest {
 
     @AfterClass
     public static void afterClass() throws Exception {
-        if (runner != null) {
-            runner.close();
-            runner.clean();
+        if (server != null) {
+            server.close();
         }
     }
 

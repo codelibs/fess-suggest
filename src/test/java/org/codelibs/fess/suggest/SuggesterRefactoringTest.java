@@ -15,7 +15,6 @@
  */
 package org.codelibs.fess.suggest;
 
-import static org.codelibs.opensearch.runner.OpenSearchRunner.newConfigs;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -31,10 +30,10 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.opensearch.action.admin.indices.alias.Alias;
-import org.opensearch.action.admin.indices.alias.get.GetAliasesResponse;
-import org.opensearch.action.admin.indices.create.CreateIndexResponse;
-import org.opensearch.transport.client.Client;
+import org.codelibs.fesen.opensearch.action.admin.indices.alias.Alias;
+import org.codelibs.fesen.opensearch.action.admin.indices.alias.get.GetAliasesResponse;
+import org.codelibs.fesen.opensearch.action.admin.indices.create.CreateIndexResponse;
+import org.codelibs.fesen.opensearch.transport.client.Client;
 
 /**
  * Test class for refactoring changes made to Suggester class.
@@ -46,26 +45,20 @@ import org.opensearch.transport.client.Client;
  */
 public class SuggesterRefactoringTest {
     static OpenSearchRunner runner;
+    static SuggestTestServer server;
     static Client client;
 
     @BeforeClass
     public static void beforeClass() throws Exception {
-        runner = new OpenSearchRunner();
-        runner.onBuild((number, settingsBuilder) -> {
-            settingsBuilder.put("http.cors.enabled", true);
-            settingsBuilder.put("discovery.type", "single-node");
-        })
-                .build(newConfigs().clusterName("SuggesterRefactoringTest")
-                        .numOfNode(1)
-                        .pluginTypes("org.codelibs.opensearch.extension.ExtensionPlugin"));
+        server = SuggestTestServer.start("SuggesterRefactoringTest");
+        runner = server.runner();
         runner.ensureYellow();
-        client = runner.client();
+        client = server.client();
     }
 
     @AfterClass
     public static void afterClass() throws Exception {
-        runner.close();
-        runner.clean();
+        server.close();
     }
 
     @Before

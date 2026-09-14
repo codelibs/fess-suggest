@@ -15,7 +15,6 @@
  */
 package org.codelibs.fess.suggest.converter;
 
-import static org.codelibs.opensearch.runner.OpenSearchRunner.newConfigs;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -24,19 +23,21 @@ import java.util.List;
 
 import org.codelibs.fess.suggest.Suggester;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
+import org.codelibs.fess.suggest.SuggestTestServer;
 import org.codelibs.opensearch.runner.OpenSearchRunner;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.opensearch.action.admin.indices.create.CreateIndexResponse;
-import org.opensearch.common.settings.Settings;
-import org.opensearch.common.xcontent.XContentFactory;
-import org.opensearch.transport.client.Client;
+import org.codelibs.fesen.opensearch.action.admin.indices.create.CreateIndexResponse;
+import org.codelibs.fesen.opensearch.common.settings.Settings;
+import org.codelibs.fesen.opensearch.common.xcontent.XContentFactory;
+import org.codelibs.fesen.opensearch.transport.client.Client;
 
 public class AnalyzerConverterTest {
 
     private static OpenSearchRunner runner;
+    private static SuggestTestServer server;
     private static Client client;
     private static SuggestSettings settings;
     private AnalyzerConverter converter;
@@ -45,16 +46,10 @@ public class AnalyzerConverterTest {
 
     @BeforeClass
     public static void beforeClass() throws Exception {
-        runner = new OpenSearchRunner();
-        runner.onBuild((number, settingsBuilder) -> {
-            settingsBuilder.put("http.cors.enabled", true);
-            settingsBuilder.put("discovery.type", "single-node");
-        })
-                .build(newConfigs().clusterName("AnalyzerConverterTest")
-                        .numOfNode(1)
-                        .pluginTypes("org.codelibs.opensearch.extension.ExtensionPlugin"));
+        server = SuggestTestServer.start("AnalyzerConverterTest");
+        runner = server.runner();
         runner.ensureYellow();
-        client = runner.client();
+        client = server.client();
 
         // Create test index with analyzers
         createTestIndex();
@@ -65,8 +60,7 @@ public class AnalyzerConverterTest {
 
     @AfterClass
     public static void afterClass() throws Exception {
-        runner.close();
-        runner.clean();
+        server.close();
     }
 
     @Before

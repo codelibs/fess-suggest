@@ -125,9 +125,9 @@
 			<version>${corelib.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>org.opensearch</groupId>
-			<artifactId>opensearch</artifactId>
-			<version>${opensearch.version}</version>
+			<groupId>org.codelibs.fesen.client</groupId>
+			<artifactId>fesen-httpclient</artifactId>
+			<version>${fesen.httpclient.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>

@@ -15,7 +15,6 @@
  */
 package org.codelibs.fess.suggest.util;
 
-import static org.codelibs.opensearch.runner.OpenSearchRunner.newConfigs;
 import static org.junit.Assert.*;
 
 import java.util.ArrayList;
@@ -24,15 +23,16 @@ import java.util.List;
 import java.util.Map;
 
 import org.codelibs.fess.suggest.Suggester;
+import org.codelibs.fess.suggest.SuggestTestServer;
 import org.codelibs.opensearch.runner.OpenSearchRunner;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.opensearch.action.index.IndexResponse;
-import org.opensearch.common.xcontent.XContentType;
-import org.opensearch.index.query.QueryBuilders;
-import org.opensearch.transport.client.Client;
+import org.codelibs.fesen.opensearch.action.index.IndexResponse;
+import org.codelibs.fesen.opensearch.common.xcontent.XContentType;
+import org.codelibs.fesen.opensearch.index.query.QueryBuilders;
+import org.codelibs.fesen.opensearch.transport.client.Client;
 
 /**
  * Integration tests for PitOperationHelper.
@@ -40,28 +40,22 @@ import org.opensearch.transport.client.Client;
 public class PitOperationHelperTest {
 
     private static OpenSearchRunner runner;
+    private static SuggestTestServer server;
     private static Client client;
     private static final String INDEX_NAME = "pit-test-index";
     private Suggester suggester;
 
     @BeforeClass
     public static void beforeClass() throws Exception {
-        runner = new OpenSearchRunner();
-        runner.onBuild((number, settingsBuilder) -> {
-            settingsBuilder.put("http.cors.enabled", true);
-            settingsBuilder.put("discovery.type", "single-node");
-        })
-                .build(newConfigs().clusterName("PitOperationHelperTest")
-                        .numOfNode(1)
-                        .pluginTypes("org.codelibs.opensearch.extension.ExtensionPlugin"));
+        server = SuggestTestServer.start("PitOperationHelperTest");
+        runner = server.runner();
         runner.ensureYellow();
-        client = runner.client();
+        client = server.client();
     }
 
     @AfterClass
     public static void afterClass() throws Exception {
-        runner.close();
-        runner.clean();
+        server.close();
     }
 
     @Before

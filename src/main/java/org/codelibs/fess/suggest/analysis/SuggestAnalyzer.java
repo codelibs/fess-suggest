@@ -17,7 +17,7 @@ package org.codelibs.fess.suggest.analysis;
 
 import java.util.List;
 
-import org.opensearch.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken;
+import org.codelibs.fesen.opensearch.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken;
 
 /**
  * Interface for analyzing and processing suggestion tokens.

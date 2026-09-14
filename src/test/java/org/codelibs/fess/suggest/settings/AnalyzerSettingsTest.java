@@ -15,7 +15,6 @@
  */
 package org.codelibs.fess.suggest.settings;
 
-import static org.codelibs.opensearch.runner.OpenSearchRunner.newConfigs;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -26,13 +25,14 @@ import java.util.Set;
 import org.codelibs.fess.suggest.Suggester;
 import org.codelibs.fess.suggest.analysis.SuggestAnalyzer;
 import org.codelibs.fess.suggest.util.SuggestUtil;
+import org.codelibs.fess.suggest.SuggestTestServer;
 import org.codelibs.opensearch.runner.OpenSearchRunner;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.opensearch.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken;
-import org.opensearch.index.IndexNotFoundException;
+import org.codelibs.fesen.opensearch.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken;
+import org.codelibs.fesen.opensearch.index.IndexNotFoundException;
 
 public class AnalyzerSettingsTest {
     String id = "analyzerSettingsTest";
@@ -40,37 +40,31 @@ public class AnalyzerSettingsTest {
     static SuggestSettings settings;
 
     static OpenSearchRunner runner;
+    static SuggestTestServer server;
 
     @BeforeClass
     public static void beforeClass() throws Exception {
-        runner = new OpenSearchRunner();
-        runner.onBuild((number, settingsBuilder) -> {
-            settingsBuilder.put("http.cors.enabled", true);
-            settingsBuilder.put("discovery.type", "single-node");
-        })
-                .build(newConfigs().clusterName("ArraySettingsTest")
-                        .numOfNode(1)
-                        .pluginTypes("org.codelibs.opensearch.extension.ExtensionPlugin"));
+        server = SuggestTestServer.start("ArraySettingsTest");
+        runner = server.runner();
         runner.ensureYellow();
     }
 
     @AfterClass
     public static void afterClass() throws Exception {
-        runner.close();
-        runner.clean();
+        server.close();
     }
 
     @Before
     public void before() throws Exception {
         runner.admin().indices().prepareDelete("_all").execute().actionGet();
         runner.refresh();
-        settings = Suggester.builder().build(runner.client(), id).settings();
+        settings = Suggester.builder().build(server.client(), id).settings();
     }
 
     @Test
     public void test_defaultAnalyzer() {
         String text = "Fess (フェス) は「5 分で簡単に構築可能な全文検索サーバー」です。 Java 実行環境があればどの OS でも実行可能です。 Fess は Apache ライセンスで提供され、無料 (フリーソフト) でご利用いただけます。";
-        SuggestAnalyzer analyzer = SuggestUtil.createDefaultAnalyzer(runner.client(), settings);
+        SuggestAnalyzer analyzer = SuggestUtil.createDefaultAnalyzer(server.client(), settings);
         final List<AnalyzeToken> tokens = analyzer.analyze(text, "", null);
         final List<AnalyzeToken> readingTokens = analyzer.analyzeAndReading(text, "", null);
 

@@ -15,7 +15,6 @@
  */
 package org.codelibs.fess.suggest;
 
-import static org.codelibs.opensearch.runner.OpenSearchRunner.newConfigs;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -48,34 +47,31 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.opensearch.action.admin.indices.get.GetIndexResponse;
-import org.opensearch.action.bulk.BulkRequestBuilder;
-import org.opensearch.action.index.IndexAction;
-import org.opensearch.action.index.IndexRequestBuilder;
-import org.opensearch.action.support.WriteRequest;
-import org.opensearch.transport.client.Client;
+import org.codelibs.fesen.opensearch.action.admin.indices.get.GetIndexResponse;
+import org.codelibs.fesen.opensearch.action.bulk.BulkRequestBuilder;
+import org.codelibs.fesen.opensearch.action.index.IndexAction;
+import org.codelibs.fesen.opensearch.action.index.IndexRequestBuilder;
+import org.codelibs.fesen.opensearch.action.support.WriteRequest;
+import org.codelibs.fesen.opensearch.transport.client.Client;
 
 public class SuggesterTest {
     static Suggester suggester;
 
     static OpenSearchRunner runner;
+    static SuggestTestServer server;
 
     @BeforeClass
     public static void beforeClass() throws Exception {
-        runner = new OpenSearchRunner();
-        runner.onBuild((number, settingsBuilder) -> {
-            settingsBuilder.put("http.cors.enabled", true);
-            settingsBuilder.put("discovery.type", "single-node");
-        }).build(newConfigs().clusterName("SuggesterTest").numOfNode(1).pluginTypes("org.codelibs.opensearch.extension.ExtensionPlugin"));
+        server = SuggestTestServer.start("SuggesterTest");
+        runner = server.runner();
         runner.ensureYellow();
-        suggester = Suggester.builder().build(runner.client(), "SuggesterTest");
+        suggester = Suggester.builder().build(server.client(), "SuggesterTest");
         suggester.createIndexIfNothing();
     }
 
     @AfterClass
     public static void afterClass() throws Exception {
-        runner.close();
-        runner.clean();
+        server.close();
     }
 
     @Before
@@ -328,7 +324,7 @@ public class SuggesterTest {
         analyzerMapping.put(FieldNames.ANALYZER_SETTINGS_FIELD_NAME, field);
         analyzerMapping.put(FieldNames.ANALYZER_SETTINGS_CONTENTS_ANALYZER, "title_contents_analyzer");
         analyzerMapping.put(FieldNames.ANALYZER_SETTINGS_CONTENTS_READING_ANALYZER, "");
-        runner.client()
+        server.client()
                 .prepareIndex()
                 .setIndex(suggester.settings().analyzer().getAnalyzerSettingsIndexName())
                 .setSource(analyzerMapping)
@@ -358,7 +354,7 @@ public class SuggesterTest {
 
     @Test
     public void test_indexFromDocumentReader() throws Exception {
-        Client client = runner.client();
+        Client client = server.client();
         int num = 1000;
         String indexName = "test";
 
@@ -728,7 +724,7 @@ public class SuggesterTest {
         SuggestResponse response3 = suggester.suggest().setQuery("-aa-").setSuggestDetail(true).execute().getResponse();
         assertEquals(1, response3.getNum());
 
-        GetIndexResponse getIndexResponse = runner.client().admin().indices().prepareGetIndex().execute().actionGet();
+        GetIndexResponse getIndexResponse = server.client().admin().indices().prepareGetIndex().addIndices("*").execute().actionGet();
         int count = 0;
         for (String index : getIndexResponse.getIndices()) {
             if (index.startsWith(suggester.getIndex())) {
@@ -741,7 +737,7 @@ public class SuggesterTest {
         response = suggester.suggest().setSuggestDetail(true).execute().getResponse();
         assertEquals(3, response.getNum());
 
-        getIndexResponse = runner.client().admin().indices().prepareGetIndex().execute().actionGet();
+        getIndexResponse = server.client().admin().indices().prepareGetIndex().addIndices("*").execute().actionGet();
         count = 0;
         for (String index : getIndexResponse.getIndices()) {
             if (index.startsWith(suggester.getIndex())) {
