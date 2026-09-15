@@ -47,12 +47,14 @@ import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.normalizer.NormalizerChain;
 import org.codelibs.fess.suggest.settings.AnalyzerSettings;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
+import org.codelibs.fesen.opensearch.OpenSearchStatusException;
 import org.codelibs.fesen.opensearch.action.bulk.BulkRequestBuilder;
 import org.codelibs.fesen.opensearch.action.bulk.BulkResponse;
 import org.codelibs.fesen.opensearch.action.delete.DeleteRequest;
 import org.codelibs.fesen.opensearch.action.search.DeletePitRequest;
 import org.codelibs.fesen.opensearch.common.xcontent.json.JsonXContent;
 import org.codelibs.fesen.opensearch.core.action.ActionListener;
+import org.codelibs.fesen.opensearch.core.rest.RestStatus;
 import org.codelibs.fesen.opensearch.core.xcontent.XContentBuilder;
 import org.codelibs.fesen.opensearch.index.query.QueryBuilder;
 import org.codelibs.fesen.opensearch.search.SearchHit;
@@ -391,5 +393,21 @@ public final class SuggestUtil {
      */
     public static String escapeWildcardQuery(final String query) {
         return query.replace("*", "\\*").replace("?", "\\?");
+    }
+
+    /**
+     * Returns whether a create index request failed because an index with that name already exists,
+     * which is what a request gets back when another process sharing the index name created it first.
+     *
+     * <p>fesen-httpclient does not map {@code resource_already_exists_exception} to an exception class of its own:
+     * it raises an {@link OpenSearchStatusException} with status 400 whose message names the error type, as in
+     * {@code OpenSearch exception [type=resource_already_exists_exception, reason=...]}.</p>
+     *
+     * @param e the exception thrown by the create index request
+     * @return true if the index already exists
+     */
+    public static boolean isResourceAlreadyExistsException(final OpenSearchStatusException e) {
+        final String message = e.getMessage();
+        return e.status() == RestStatus.BAD_REQUEST && message != null && message.contains("type=resource_already_exists_exception");
     }
 }
