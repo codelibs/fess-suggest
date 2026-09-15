@@ -21,17 +21,16 @@ import java.util.List;
 
 import org.codelibs.fess.suggest.settings.AnalyzerSettings;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
+import org.codelibs.fess.suggest.util.TransliteratorUtil;
 import org.codelibs.fesen.opensearch.action.admin.indices.analyze.AnalyzeAction;
 import org.codelibs.fesen.opensearch.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken;
 import org.codelibs.fesen.opensearch.core.common.Strings;
 import org.codelibs.fesen.opensearch.transport.client.Client;
 
-import com.ibm.icu.text.Transliterator;
-
 /**
  * AnalyzerConverter is a class that implements the ReadingConverter interface.
  * It is responsible for converting text using specified language analyzers.
- * The class uses a Transliterator to convert between Hiragana and Katakana.
+ * Readings are converted from Hiragana to Katakana with {@link TransliteratorUtil#hiraganaToKatakana(String)}.
  *
  * <p>Constructor:
  * <ul>
@@ -60,7 +59,6 @@ import com.ibm.icu.text.Transliterator;
  *   <li>{@link #client}: The client used to perform analysis.</li>
  *   <li>{@link #settings}: The settings for suggestions.</li>
  *   <li>{@link #analyzerSettings}: The settings for the analyzer.</li>
- *   <li>{@link #transliterator}: The transliterator used to convert between Hiragana and Katakana.</li>
  * </ul>
  */
 public class AnalyzerConverter implements ReadingConverter {
@@ -69,9 +67,6 @@ public class AnalyzerConverter implements ReadingConverter {
     private final SuggestSettings settings;
     /** Analyzer settings. */
     protected final AnalyzerSettings analyzerSettings;
-
-    /** Transliterator for Hiragana to Katakana. */
-    protected final Transliterator transliterator = Transliterator.getInstance("Hiragana-Katakana");
 
     /**
      * Constructor.
@@ -152,12 +147,12 @@ public class AnalyzerConverter implements ReadingConverter {
                     if (Strings.isNullOrEmpty(reading)) {
                         reading = term;
                     }
-                    reading = transliterator.transliterate(reading);
+                    reading = TransliteratorUtil.hiraganaToKatakana(reading);
 
                     final int pos = text.indexOf(term, offset);
                     if (pos > 0) {
                         final String tmp = text.substring(offset, pos);
-                        readingBuf.append(transliterator.transliterate(tmp));
+                        readingBuf.append(TransliteratorUtil.hiraganaToKatakana(tmp));
                         offset = pos;
                     } else if (pos == -1) {
                         continue;

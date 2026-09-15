@@ -22,7 +22,7 @@ A powerful Java library that provides intelligent search suggestion functionalit
 - **Java**: 21+ (configured via parent POM)
 - **OpenSearch**: Latest (provided scope)
 - **Apache Lucene**: Query parsing and text analysis
-- **ICU4J**: Unicode text processing and normalization
+- **ICU4J** (optional): only needed for `ICUNormalizer`
 - **JUnit 4**: Testing framework
 - **Maven**: Build and dependency management
 
@@ -199,7 +199,7 @@ SuggestSettings settings = SuggestSettings.builder()
 Suggester customSuggester = Suggester.builder()
     .settings(settings)
     .readingConverter(new ReadingConverterChain())
-    .normalizer(new ICUNormalizer())
+    .normalizer(new ICUNormalizer("Any-Lower")) // needs com.ibm.icu:icu4j on the class path
     .build(client, "custom-suggest");
 ```
 

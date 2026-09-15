@@ -24,13 +24,12 @@ import java.util.List;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.TokenizerFactory;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+import org.codelibs.fess.suggest.util.TransliteratorUtil;
 import org.codelibs.fesen.opensearch.core.common.Strings;
-
-import com.ibm.icu.text.Transliterator;
 
 /**
  * {@link KatakanaConverter} converts input strings to katakana representation.
- * It utilizes a transliterator to convert hiragana to katakana and can optionally
+ * It converts hiragana to katakana with {@link TransliteratorUtil#hiraganaToKatakana(String)} and can optionally
  * use a tokenizer to process the input.
  *
  * <p>
@@ -41,9 +40,6 @@ import com.ibm.icu.text.Transliterator;
  * </p>
  */
 public class KatakanaConverter implements ReadingConverter {
-
-    /** The transliterator for Hiragana-Katakana conversion. */
-    protected final Transliterator transliterator = Transliterator.getInstance("Hiragana-Katakana");
 
     /** Flag indicating if the converter is initialized. */
     protected volatile boolean initialized = false;
@@ -113,7 +109,7 @@ public class KatakanaConverter implements ReadingConverter {
                 final int pos = inputStr.indexOf(term, offset);
                 if (pos > 0) {
                     final String tmp = inputStr.substring(offset, pos);
-                    kanaBuf.append(transliterator.transliterate(tmp));
+                    kanaBuf.append(TransliteratorUtil.hiraganaToKatakana(tmp));
                     offset = pos;
                 } else if (pos == -1) {
                     continue;
@@ -121,7 +117,7 @@ public class KatakanaConverter implements ReadingConverter {
 
                 String reading = getReadingFromAttribute(stream);
                 if (Strings.isNullOrEmpty(reading)) {
-                    reading = transliterator.transliterate(att.toString());
+                    reading = TransliteratorUtil.hiraganaToKatakana(att.toString());
                 }
                 kanaBuf.append(reading);
                 offset += term.length();

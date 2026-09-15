@@ -10,7 +10,7 @@
 - Java 21+, Maven
 - OpenSearch (provided dependency)
 - Apache Lucene (query parsing, text analysis)
-- ICU4J (Unicode text processing)
+- ICU4J (optional: only `ICUNormalizer` needs it; `TransliteratorUtilTest` uses it as the reference)
 - JUnit 4 (testing)
 
 **Repository:** https://github.com/codelibs/fess-suggest

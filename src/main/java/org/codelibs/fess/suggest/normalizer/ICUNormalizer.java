@@ -31,6 +31,9 @@ import com.ibm.icu.text.Transliterator;
  * String normalizedText = normalizer.normalize("text to normalize", "field");
  * </pre>
  *
+ * <p>ICU4J is an optional dependency of fess-suggest: add {@code com.ibm.icu:icu4j} to the class path to use this
+ * normalizer. The reading converters do not need it.</p>
+ *
  * @see com.ibm.icu.text.Transliterator
  */
 public class ICUNormalizer implements Normalizer {

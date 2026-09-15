@@ -21,7 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.ibm.icu.text.Transliterator;
+import org.codelibs.fess.suggest.util.TransliteratorUtil;
 
 /**
  * Converts Katakana characters to their corresponding Alphabet representations.
@@ -40,8 +40,8 @@ import com.ibm.icu.text.Transliterator;
  * </p>
  *
  * <p>
- * The class also utilizes ICU4J's {@link com.ibm.icu.text.Transliterator} to convert full-width characters
- * to half-width and to convert any characters to lowercase, ensuring consistency in the output.
+ * Each reading is then converted from full-width to half-width and to lower case with {@link TransliteratorUtil},
+ * ensuring consistency in the output.
  * </p>
  *
  * <p>
@@ -55,18 +55,11 @@ public class KatakanaToAlphabetConverter implements ReadingConverter {
     /** Static conversion map shared across all instances. */
     private static final Map<String, String[]> CONVERT_MAP = generateConvertMapping();
 
-    /** Transliterator for full-width to half-width conversion. */
-    protected Transliterator fullWidthHalfWidth;
-
-    /** Transliterator for any-lower. */
-    protected Transliterator anyLower;
-
     /**
      * Constructor for KatakanaToAlphabetConverter.
      */
     public KatakanaToAlphabetConverter() {
-        fullWidthHalfWidth = Transliterator.getInstance("Fullwidth-Halfwidth");
-        anyLower = Transliterator.getInstance("Any-Lower");
+        // nothing
     }
 
     @Override
@@ -111,9 +104,7 @@ public class KatakanaToAlphabetConverter implements ReadingConverter {
         }
 
         for (final StringBuilder buf : bufList) {
-            String s = fullWidthHalfWidth.transliterate(buf.toString());
-            s = anyLower.transliterate(s);
-            list.add(s);
+            list.add(TransliteratorUtil.toLowerCase(TransliteratorUtil.fullwidthToHalfwidth(buf.toString())));
         }
 
         return list;

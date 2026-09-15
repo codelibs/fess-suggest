@@ -118,6 +118,10 @@
 			<groupId>com.ibm.icu</groupId>
 			<artifactId>icu4j</artifactId>
 			<version>${icu4j.version}</version>
+			<!-- Only ICUNormalizer, which takes any ICU transliterator ID, still needs ICU4J at run time; the reading
+			     converters use TransliteratorUtil. Optional keeps the 14 MiB jar out of applications that do not
+			     use that normalizer, while TransliteratorUtilTest keeps using ICU4J as its reference. -->
+			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>org.codelibs</groupId>
