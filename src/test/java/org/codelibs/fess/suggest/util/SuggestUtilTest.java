@@ -16,6 +16,7 @@
 package org.codelibs.fess.suggest.util;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -45,6 +46,8 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.codelibs.fesen.opensearch.OpenSearchStatusException;
+import org.codelibs.fesen.opensearch.core.rest.RestStatus;
 import org.codelibs.fesen.opensearch.index.query.QueryBuilders;
 import org.codelibs.fesen.opensearch.transport.client.Client;
 
@@ -90,6 +93,27 @@ public class SuggestUtilTest {
         // Make it accessible to test it throws no exception
         constructor.setAccessible(true);
         constructor.newInstance();
+    }
+
+    @Test
+    public void testIsResourceAlreadyExistsException() {
+        // TEST_INDEX was created in beforeClass()
+        final OpenSearchStatusException alreadyExists = createIndexExpectingFailure(TEST_INDEX);
+        assertTrue(SuggestUtil.isResourceAlreadyExistsException(alreadyExists));
+
+        // another 400 from the same request is not taken for it
+        final OpenSearchStatusException invalidName = createIndexExpectingFailure("Invalid_Upper_Case_Name");
+        assertEquals(RestStatus.BAD_REQUEST, invalidName.status());
+        assertFalse(SuggestUtil.isResourceAlreadyExistsException(invalidName));
+    }
+
+    private static OpenSearchStatusException createIndexExpectingFailure(final String index) {
+        try {
+            client.admin().indices().prepareCreate(index).execute().actionGet();
+        } catch (final OpenSearchStatusException e) {
+            return e;
+        }
+        throw new AssertionError("Creating " + index + " did not fail.");
     }
 
     @Test

@@ -31,10 +31,13 @@ import org.apache.logging.log4j.Logger;
 import org.codelibs.core.lang.StringUtil;
 import org.codelibs.fess.suggest.exception.SuggestSettingsException;
 import org.codelibs.fess.suggest.exception.SuggesterException;
+import org.codelibs.fess.suggest.util.SuggestUtil;
+import org.codelibs.fesen.opensearch.OpenSearchStatusException;
 import org.codelibs.fesen.opensearch.action.get.GetResponse;
 import org.codelibs.fesen.opensearch.common.collect.Tuple;
 import org.codelibs.fesen.opensearch.common.xcontent.XContentType;
 import org.codelibs.fesen.opensearch.common.xcontent.json.JsonXContent;
+import org.codelibs.fesen.opensearch.core.rest.RestStatus;
 import org.codelibs.fesen.opensearch.core.xcontent.XContentBuilder;
 import org.codelibs.fesen.opensearch.index.IndexNotFoundException;
 import org.codelibs.fesen.opensearch.transport.client.Client;
@@ -189,8 +192,7 @@ public class SuggestSettings {
         boolean doIndexCreate = false;
         boolean doCreate = false;
         try {
-            final GetResponse getResponse =
-                    client.prepareGet().setIndex(settingsIndexName).setId(settingsId).execute().actionGet(getSearchTimeout());
+            final GetResponse getResponse = getSettingsDocument();
 
             if (!getResponse.isExists()) {
                 doCreate = true;
@@ -211,6 +213,14 @@ public class SuggestSettings {
                             .actionGet(getIndicesTimeout());
                 } catch (final IOException e) {
                     throw new SuggesterException("Failed to load index settings for settings index: " + settingsIndexName, e);
+                } catch (final OpenSearchStatusException e) {
+                    if (!SuggestUtil.isResourceAlreadyExistsException(e)) {
+                        throw e;
+                    }
+                    // another process sharing this index name created it after the lookup above
+                    if (logger.isInfoEnabled()) {
+                        logger.info("Settings index was created by another process: index={}", settingsIndexName);
+                    }
                 }
             }
 
@@ -234,6 +244,22 @@ public class SuggestSettings {
             final List<Tuple<String, Object>> defaultArraySettings = defaultArraySettings();
             defaultArraySettings.addAll(arraySettings);
             defaultArraySettings.forEach(t -> array().add(t.v1(), t.v2()));
+        }
+    }
+
+    private GetResponse getSettingsDocument() {
+        try {
+            return client.prepareGet().setIndex(settingsIndexName).setId(settingsId).execute().actionGet(getSearchTimeout());
+        } catch (final OpenSearchStatusException e) {
+            if (e.status() != RestStatus.SERVICE_UNAVAILABLE) {
+                throw e;
+            }
+            // another process sharing this index name has just created it and its primary shard has not started yet
+            if (logger.isInfoEnabled()) {
+                logger.info("Settings index is not available yet, waiting for it: index={}", settingsIndexName);
+            }
+            client.admin().cluster().prepareHealth(settingsIndexName).setWaitForYellowStatus().execute().actionGet(getClusterTimeout());
+            return client.prepareGet().setIndex(settingsIndexName).setId(settingsId).execute().actionGet(getSearchTimeout());
         }
     }
 

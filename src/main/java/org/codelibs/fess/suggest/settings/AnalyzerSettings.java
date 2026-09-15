@@ -29,12 +29,16 @@ import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.codelibs.core.io.ResourceUtil;
 import org.codelibs.core.lang.StringUtil;
 import org.codelibs.fess.suggest.analysis.SuggestAnalyzer;
 import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.exception.SuggestSettingsException;
 import org.codelibs.fess.suggest.util.PitOperationHelper;
+import org.codelibs.fess.suggest.util.SuggestUtil;
+import org.codelibs.fesen.opensearch.OpenSearchStatusException;
 import org.codelibs.fesen.opensearch.action.admin.indices.analyze.AnalyzeAction;
 import org.codelibs.fesen.opensearch.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken;
 import org.codelibs.fesen.opensearch.action.admin.indices.exists.indices.IndicesExistsResponse;
@@ -76,6 +80,8 @@ import org.codelibs.fesen.opensearch.transport.client.Client;
  * @see FieldAnalyzerMapping
  */
 public class AnalyzerSettings {
+    private static final Logger logger = LogManager.getLogger(AnalyzerSettings.class);
+
     /** Analyzer name for reading. */
     public static final String READING_ANALYZER = "reading_analyzer";
     /** Analyzer name for reading term. */
@@ -133,8 +139,25 @@ public class AnalyzerSettings {
             final IndicesExistsResponse response =
                     client.admin().indices().prepareExists(analyzerSettingsIndexName).execute().actionGet(settings.getIndicesTimeout());
             if (!response.isExists()) {
-                createAnalyzerSettings(loadIndexSettings(), loadIndexMapping());
+                try {
+                    createAnalyzerSettings(loadIndexSettings(), loadIndexMapping());
+                } catch (final OpenSearchStatusException e) {
+                    if (!SuggestUtil.isResourceAlreadyExistsException(e)) {
+                        throw e;
+                    }
+                    // another process sharing this index name created it after the lookup above
+                    if (logger.isInfoEnabled()) {
+                        logger.info("Analyzer settings index was created by another process: index={}", analyzerSettingsIndexName);
+                    }
+                }
             }
+            // an index that another process has just created exists before its primary shard can be searched
+            client.admin()
+                    .cluster()
+                    .prepareHealth(analyzerSettingsIndexName)
+                    .setWaitForYellowStatus()
+                    .execute()
+                    .actionGet(settings.getClusterTimeout());
             analyzerMap.put(analyzerSettingsIndexName, getAnalyzerNames());
             fieldAnalyzerMappingMap.put(analyzerSettingsIndexName, getFieldAnalyzerMapping());
         } catch (final IOException e) {

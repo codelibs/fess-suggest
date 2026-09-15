@@ -36,6 +36,7 @@ import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.exception.SuggestSettingsException;
 import org.codelibs.fess.suggest.util.PitOperationHelper;
 import org.codelibs.fess.suggest.util.SuggestUtil;
+import org.codelibs.fesen.opensearch.OpenSearchStatusException;
 import org.codelibs.fesen.opensearch.action.admin.indices.create.CreateIndexResponse;
 import org.codelibs.fesen.opensearch.common.xcontent.XContentFactory;
 import org.codelibs.fesen.opensearch.common.xcontent.XContentType;
@@ -258,6 +259,7 @@ public class ArraySettings {
                     .setId(id)
                     .setDocAsUpsert(true)
                     .setDoc(builder)
+                    .setRetryOnConflict(5)
                     .execute()
                     .actionGet(settings.getIndexTimeout());
             client.admin().indices().prepareRefresh().setIndices(actualIndex).execute().actionGet(settings.getIndicesTimeout());
@@ -317,14 +319,24 @@ public class ArraySettings {
                         .isEmpty();
             } catch (final IndexNotFoundException e) {
                 empty = true;
-                final CreateIndexResponse response = client.admin()
-                        .indices()
-                        .prepareCreate(actualIndex)
-                        .setSettings(loadIndexSettings(), XContentType.JSON)
-                        .execute()
-                        .actionGet(settings.getIndicesTimeout());
-                if (!response.isAcknowledged()) {
-                    throw new SuggestSettingsException("Failed to create " + actualIndex + "/" + type + " index.", e);
+                try {
+                    final CreateIndexResponse response = client.admin()
+                            .indices()
+                            .prepareCreate(actualIndex)
+                            .setSettings(loadIndexSettings(), XContentType.JSON)
+                            .execute()
+                            .actionGet(settings.getIndicesTimeout());
+                    if (!response.isAcknowledged()) {
+                        throw new SuggestSettingsException("Failed to create " + actualIndex + "/" + type + " index.", e);
+                    }
+                } catch (final OpenSearchStatusException createException) {
+                    if (!SuggestUtil.isResourceAlreadyExistsException(createException)) {
+                        throw createException;
+                    }
+                    // another process sharing this index name created it after the lookup above
+                    if (logger.isInfoEnabled()) {
+                        logger.info("Array settings index was created by another process: index={}", actualIndex);
+                    }
                 }
                 client.admin()
                         .cluster()
