@@ -47,6 +47,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.codelibs.fesen.opensearch.OpenSearchStatusException;
+import org.codelibs.fesen.opensearch.action.admin.indices.alias.Alias;
 import org.codelibs.fesen.opensearch.core.rest.RestStatus;
 import org.codelibs.fesen.opensearch.index.query.QueryBuilders;
 import org.codelibs.fesen.opensearch.transport.client.Client;
@@ -105,6 +106,27 @@ public class SuggestUtilTest {
         final OpenSearchStatusException invalidName = createIndexExpectingFailure("Invalid_Upper_Case_Name");
         assertEquals(RestStatus.BAD_REQUEST, invalidName.status());
         assertFalse(SuggestUtil.isResourceAlreadyExistsException(invalidName));
+    }
+
+    @Test
+    public void testIsMultipleWriteIndicesException() {
+        final String alias = "test_write_alias";
+        client.admin().indices().prepareCreate("test_write_alias_1").addAlias(new Alias(alias).writeIndex(true)).execute().actionGet();
+
+        // a second index that declares the same write alias is refused
+        OpenSearchStatusException secondWriteIndex = null;
+        try {
+            client.admin().indices().prepareCreate("test_write_alias_2").addAlias(new Alias(alias).writeIndex(true)).execute().actionGet();
+        } catch (final OpenSearchStatusException e) {
+            secondWriteIndex = e;
+        }
+        assertNotNull("Creating a second write index for " + alias + " did not fail.", secondWriteIndex);
+        assertTrue(secondWriteIndex.getMessage(), SuggestUtil.isMultipleWriteIndicesException(secondWriteIndex));
+        assertFalse(SuggestUtil.isResourceAlreadyExistsException(secondWriteIndex));
+
+        // other create failures are not taken for it
+        assertFalse(SuggestUtil.isMultipleWriteIndicesException(createIndexExpectingFailure(TEST_INDEX)));
+        assertFalse(SuggestUtil.isMultipleWriteIndicesException(createIndexExpectingFailure("Invalid_Upper_Case_Name")));
     }
 
     private static OpenSearchStatusException createIndexExpectingFailure(final String index) {

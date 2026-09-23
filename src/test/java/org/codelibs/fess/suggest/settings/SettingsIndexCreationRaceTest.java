@@ -29,6 +29,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.codelibs.fesen.client.HttpClient;
 import org.codelibs.fesen.opensearch.OpenSearchStatusException;
@@ -160,6 +161,18 @@ public class SettingsIndexCreationRaceTest {
         assertSettingsUsable();
     }
 
+    @Test
+    public void test_settingsIndexWhosePrimaryIsStillInitializing() throws Exception {
+        // another process has just created the settings index; the search engine reports a new index whose primary is
+        // still initializing as yellow, so gets keep failing for a while after a yellow wait has returned
+        SuggestSettings.builder().build(server.client(), ID).init();
+        try (final UnavailableClient client = new UnavailableClient(server.httpPort(), SETTINGS_INDEX, 3)) {
+            SuggestSettings.builder().build(client, ID).init();
+            assertEquals(0, client.remaining.get());
+        }
+        assertSettingsUsable();
+    }
+
     private static void assertInitSurvivesPreemptedCreate(final String index) throws Exception {
         try (final PreemptingClient client = new PreemptingClient(server.httpPort(), index)) {
             SuggestSettings.builder().build(client, ID).init();
@@ -244,6 +257,35 @@ public class SettingsIndexCreationRaceTest {
                     listener.onFailure(e);
                     return;
                 }
+            }
+            super.doExecute(action, request, listener);
+        }
+    }
+
+    /**
+     * Answers the first gets on the given index with the 503 a get receives while the primary shard is not started.
+     */
+    static class UnavailableClient extends HttpClient {
+        private final String index;
+
+        final AtomicInteger remaining;
+
+        UnavailableClient(final int httpPort, final String index, final int failures) {
+            super(clientSettings(httpPort), null);
+            this.index = index;
+            remaining = new AtomicInteger(failures);
+        }
+
+        @Override
+        protected <Request extends ActionRequest, Response extends ActionResponse> void doExecute(final ActionType<Response> action,
+                final Request request, final ActionListener<Response> listener) {
+            if (action == GetAction.INSTANCE && index.equals(((GetRequest) request).index())
+                    && remaining.getAndUpdate(n -> Math.max(n - 1, 0)) > 0) {
+                listener.onFailure(new OpenSearchStatusException(
+                        "OpenSearch exception [type=no_shard_available_action_exception, reason=No shard available for [get [" + index
+                                + "]]]",
+                        RestStatus.SERVICE_UNAVAILABLE, null));
+                return;
             }
             super.doExecute(action, request, listener);
         }
