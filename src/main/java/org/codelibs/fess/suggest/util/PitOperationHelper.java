@@ -19,9 +19,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.codelibs.fesen.opensearch.action.search.CreatePitAction;
 import org.codelibs.fesen.opensearch.action.search.CreatePitRequest;
+import org.codelibs.fesen.opensearch.action.search.CreatePitResponse;
 import org.codelibs.fesen.opensearch.action.search.SearchRequest;
 import org.codelibs.fesen.opensearch.action.search.SearchRequestBuilder;
 import org.codelibs.fesen.opensearch.action.search.SearchResponse;
@@ -186,6 +188,7 @@ public final class PitOperationHelper {
      * @param request The search request the PIT context is created for, or null
      * @param indices The indices the PIT context covers
      * @return The created PIT ID
+     * @throws SuggesterException if the PIT context could not be created because no shard of the indices is available
      */
     public static String createPit(final Client client, final SuggestSettings settings, final SearchRequest request,
             final String... indices) {
@@ -200,6 +203,15 @@ public final class PitOperationHelper {
                 request.routing((String) null);
             }
         }
-        return client.execute(CreatePitAction.INSTANCE, createPitRequest).actionGet(settings.getSearchTimeout()).getId();
+        final CreatePitResponse response =
+                client.execute(CreatePitAction.INSTANCE, createPitRequest).actionGet(settings.getSearchTimeout());
+        final String pitId = response.getId();
+        if (pitId == null) {
+            // partial PIT creation is allowed, so a PIT on indices none of whose shards are available is answered without an ID
+            throw new SuggesterException("Failed to create a point in time on " + String.join(",", indices)
+                    + ": no shard is available (total=" + response.getTotalShards() + ", successful=" + response.getSuccessfulShards()
+                    + ", failed=" + response.getFailedShards() + "). The shards of the index may be unassigned; check the cluster health.");
+        }
+        return pitId;
     }
 }
