@@ -410,4 +410,21 @@ public final class SuggestUtil {
         final String message = e.getMessage();
         return e.status() == RestStatus.BAD_REQUEST && message != null && message.contains("type=resource_already_exists_exception");
     }
+
+    /**
+     * Returns whether a create index request failed because one of the aliases it declares as the write index is already
+     * the write index of another index, which is what a request gets back when another process sharing the index name
+     * created its own index with the same write alias first.
+     *
+     * <p>As with {@link #isResourceAlreadyExistsException(OpenSearchStatusException)}, fesen-httpclient keeps the error
+     * type only in the message: {@code OpenSearch exception [type=illegal_state_exception, reason=alias [...] has more
+     * than one write index [...]]}.</p>
+     *
+     * @param e the exception thrown by the create index request
+     * @return true if the write alias already has a write index
+     */
+    public static boolean isMultipleWriteIndicesException(final OpenSearchStatusException e) {
+        final String message = e.getMessage();
+        return message != null && message.contains("type=illegal_state_exception") && message.contains("has more than one write index");
+    }
 }

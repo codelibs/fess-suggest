@@ -35,6 +35,7 @@ import org.codelibs.fess.suggest.util.SuggestUtil;
 import org.codelibs.fesen.opensearch.OpenSearchStatusException;
 import org.codelibs.fesen.opensearch.action.get.GetResponse;
 import org.codelibs.fesen.opensearch.common.collect.Tuple;
+import org.codelibs.fesen.opensearch.common.unit.TimeValue;
 import org.codelibs.fesen.opensearch.common.xcontent.XContentType;
 import org.codelibs.fesen.opensearch.common.xcontent.json.JsonXContent;
 import org.codelibs.fesen.opensearch.core.rest.RestStatus;
@@ -112,6 +113,12 @@ import org.codelibs.fesen.opensearch.transport.client.Client;
  */
 public class SuggestSettings {
     private static final Logger logger = LogManager.getLogger(SuggestSettings.class);
+
+    /** The first interval, in milliseconds, between gets of the settings document while its index is not available. */
+    private static final long SETTINGS_INDEX_RETRY_INITIAL_INTERVAL = 100L;
+
+    /** The longest interval, in milliseconds, between gets of the settings document while its index is not available. */
+    private static final long SETTINGS_INDEX_RETRY_MAX_INTERVAL = 2000L;
 
     /** The settings ID. */
     protected final String settingsId;
@@ -247,19 +254,37 @@ public class SuggestSettings {
         }
     }
 
+    /**
+     * Reads the settings document, waiting while the primary shard of the settings index has not started.
+     *
+     * <p>Another process sharing this index name may have just created the index. A yellow wait does not cover that: the
+     * search engine reports a newly created index whose primary shard is still initializing as yellow. The get is therefore
+     * retried with a growing interval until the cluster timeout elapses.</p>
+     *
+     * @return the settings document
+     */
     private GetResponse getSettingsDocument() {
-        try {
-            return client.prepareGet().setIndex(settingsIndexName).setId(settingsId).execute().actionGet(getSearchTimeout());
-        } catch (final OpenSearchStatusException e) {
-            if (e.status() != RestStatus.SERVICE_UNAVAILABLE) {
-                throw e;
+        final long deadline = System.currentTimeMillis() + TimeValue.parseTimeValue(getClusterTimeout(), "clusterTimeout").millis();
+        long interval = SETTINGS_INDEX_RETRY_INITIAL_INTERVAL;
+        while (true) {
+            try {
+                return client.prepareGet().setIndex(settingsIndexName).setId(settingsId).execute().actionGet(getSearchTimeout());
+            } catch (final OpenSearchStatusException e) {
+                if (e.status() != RestStatus.SERVICE_UNAVAILABLE || System.currentTimeMillis() >= deadline) {
+                    throw e;
+                }
+                if (interval == SETTINGS_INDEX_RETRY_INITIAL_INTERVAL && logger.isInfoEnabled()) { // first retry only
+                    logger.info("Settings index is not available yet, waiting for it: index={}", settingsIndexName);
+                }
+                client.admin().cluster().prepareHealth(settingsIndexName).setWaitForYellowStatus().execute().actionGet(getClusterTimeout());
+                try {
+                    Thread.sleep(interval);
+                } catch (final InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    throw e;
+                }
+                interval = Math.min(interval * 2, SETTINGS_INDEX_RETRY_MAX_INTERVAL);
             }
-            // another process sharing this index name has just created it and its primary shard has not started yet
-            if (logger.isInfoEnabled()) {
-                logger.info("Settings index is not available yet, waiting for it: index={}", settingsIndexName);
-            }
-            client.admin().cluster().prepareHealth(settingsIndexName).setWaitForYellowStatus().execute().actionGet(getClusterTimeout());
-            return client.prepareGet().setIndex(settingsIndexName).setId(settingsId).execute().actionGet(getSearchTimeout());
         }
     }
 

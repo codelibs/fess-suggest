@@ -38,6 +38,8 @@ import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.request.popularwords.PopularWordsRequestBuilder;
 import org.codelibs.fess.suggest.request.suggest.SuggestRequestBuilder;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
+import org.codelibs.fess.suggest.util.SuggestUtil;
+import org.codelibs.fesen.opensearch.OpenSearchStatusException;
 import org.codelibs.fesen.opensearch.action.admin.indices.alias.Alias;
 import org.codelibs.fesen.opensearch.action.admin.indices.alias.IndicesAliasesRequestBuilder;
 import org.codelibs.fesen.opensearch.action.admin.indices.alias.get.GetAliasesResponse;
@@ -191,35 +193,53 @@ public class Suggester {
 
     /**
      * Creates a new index if no index exists.
+     *
+     * <p>Several processes that share the index name can call this at the same time against a cluster that has no suggest
+     * index yet. The index is therefore created together with its aliases in one request, and the update alias is marked as
+     * the write index. The search engine applies index creations one at a time and refuses a second write index for the
+     * same alias, so only the first request succeeds; every other process uses the index that request created.</p>
+     *
      * @return True if an index was created, false otherwise.
      */
     public boolean createIndexIfNothing() {
         try {
-            boolean created = false;
             final IndicesExistsResponse response =
                     client.admin().indices().prepareExists(getSearchAlias(index)).execute().actionGet(suggestSettings.getIndicesTimeout());
-            if (!response.isExists()) {
-                final String mappingSource = getDefaultMappings();
-                final String settingsSource = getDefaultIndexSettings();
-                final String indexName = createIndexName(index);
-                if (logger.isInfoEnabled()) {
-                    logger.info("Creating suggest index: index={}, searchAlias={}, updateAlias={}", indexName, getSearchAlias(index),
-                            getUpdateAlias(index));
-                }
+            if (response.isExists()) {
+                return false;
+            }
+            final String mappingSource = getDefaultMappings();
+            final String settingsSource = getDefaultIndexSettings();
+            final String indexName = createIndexName(index);
+            if (logger.isInfoEnabled()) {
+                logger.info("Creating suggest index: index={}, searchAlias={}, updateAlias={}", indexName, getSearchAlias(index),
+                        getUpdateAlias(index));
+            }
 
+            boolean created = true;
+            try {
                 client.admin()
                         .indices()
                         .prepareCreate(indexName)
                         .setSettings(settingsSource, XContentType.JSON)
                         .setMapping(mappingSource)
                         .addAlias(new Alias(getSearchAlias(index)))
-                        .addAlias(new Alias(getUpdateAlias(index)))
+                        .addAlias(new Alias(getUpdateAlias(index)).writeIndex(true))
                         .execute()
                         .actionGet(suggestSettings.getIndicesTimeout());
-
-                client.admin().cluster().prepareHealth().setWaitForYellowStatus().execute().actionGet(suggestSettings.getClusterTimeout());
-                created = true;
+            } catch (final OpenSearchStatusException e) {
+                if (!SuggestUtil.isResourceAlreadyExistsException(e) && !SuggestUtil.isMultipleWriteIndicesException(e)) {
+                    throw e;
+                }
+                // another process sharing this index name created the suggest index after the lookup above
+                if (logger.isInfoEnabled()) {
+                    logger.info("Using the suggest index created by another process: index={}, updateAlias={}, indices={}", index,
+                            getUpdateAlias(index), getIndicesForAlias(getUpdateAlias(index)));
+                }
+                created = false;
             }
+
+            client.admin().cluster().prepareHealth().setWaitForYellowStatus().execute().actionGet(suggestSettings.getClusterTimeout());
             return created;
         } catch (final Exception e) {
             if (logger.isDebugEnabled()) {
