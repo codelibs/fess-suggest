@@ -29,7 +29,10 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.codelibs.fess.suggest.exception.SuggesterException;
 import org.codelibs.fesen.opensearch.action.index.IndexResponse;
+import org.codelibs.fesen.opensearch.action.support.ActiveShardCount;
+import org.codelibs.fesen.opensearch.common.settings.Settings;
 import org.codelibs.fesen.opensearch.common.xcontent.XContentType;
 import org.codelibs.fesen.opensearch.index.query.QueryBuilders;
 import org.codelibs.fesen.opensearch.transport.client.Client;
@@ -183,6 +186,28 @@ public class PitOperationHelperTest {
             source.put("name", "document" + i);
             source.put("value", i);
             IndexResponse response = client.prepareIndex(INDEX_NAME).setSource(source, XContentType.JSON).execute().actionGet();
+        }
+    }
+
+    @Test
+    public void testCreatePit_indexWithUnassignedShards() {
+        // no shard of the index can be allocated, as after a restore that leaves the index red
+        client.admin()
+                .indices()
+                .prepareCreate("pit-red-index")
+                .setSettings(
+                        Settings.builder().put("index.number_of_replicas", 0).put("index.routing.allocation.require._name", "no-such-node"))
+                .setWaitForActiveShards(ActiveShardCount.NONE)
+                .execute()
+                .actionGet();
+
+        try {
+            PitOperationHelper.search(client, suggester.settings(), "pit-red-index", QueryBuilders.matchAllQuery(), 10,
+                    (hit, accumulator) -> accumulator.add(hit.getId()));
+            fail("A PIT search on an index without available shards must fail.");
+        } catch (final SuggesterException e) {
+            assertTrue(e.getMessage(), e.getMessage().contains("pit-red-index"));
+            assertTrue(e.getMessage(), e.getMessage().contains("unassigned"));
         }
     }
 }
