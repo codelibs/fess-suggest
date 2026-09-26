@@ -21,7 +21,9 @@ import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Stream;
@@ -41,6 +43,8 @@ import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.codelibs.fess.suggest.util.SuggestUtil;
 import org.codelibs.fesen.opensearch.OpenSearchStatusException;
 import org.codelibs.fesen.opensearch.action.admin.indices.alias.Alias;
+import org.codelibs.fesen.opensearch.action.admin.indices.alias.IndicesAliasesRequest;
+import org.codelibs.fesen.opensearch.action.admin.indices.alias.IndicesAliasesRequest.AliasActions;
 import org.codelibs.fesen.opensearch.action.admin.indices.alias.IndicesAliasesRequestBuilder;
 import org.codelibs.fesen.opensearch.action.admin.indices.alias.get.GetAliasesResponse;
 import org.codelibs.fesen.opensearch.action.admin.indices.create.CreateIndexResponse;
@@ -199,6 +203,9 @@ public class Suggester {
      * the write index. The search engine applies index creations one at a time and refuses a second write index for the
      * same alias, so only the first request succeeds; every other process uses the index that request created.</p>
      *
+     * <p>When the index exists already, the update alias is made writable if it has no write index (see
+     * {@link #ensureUpdateAliasWriteIndex()}).</p>
+     *
      * @return True if an index was created, false otherwise.
      */
     public boolean createIndexIfNothing() {
@@ -206,6 +213,7 @@ public class Suggester {
             final IndicesExistsResponse response =
                     client.admin().indices().prepareExists(getSearchAlias(index)).execute().actionGet(suggestSettings.getIndicesTimeout());
             if (response.isExists()) {
+                ensureUpdateAliasWriteIndex();
                 return false;
             }
             final String mappingSource = getDefaultMappings();
@@ -247,6 +255,44 @@ public class Suggester {
             }
             throw new SuggesterException("Failed to create suggest index: " + index, e);
         }
+    }
+
+    /**
+     * Marks the index behind the update alias as its write index when the alias points at that single index with
+     * {@code is_write_index: false}.
+     *
+     * <p>fesen-httpclient 3.8.0 and earlier sent {@code is_write_index: false} for every alias of a create index request that
+     * did not set it, so a suggest index created by Fess 15.8 or earlier has no write index behind the update alias, and every
+     * write through it fails with "no write index is defined for alias" until the next index rotation replaces the alias.
+     * An alias without the flag, or one that points at several indices, is left alone.</p>
+     */
+    private void ensureUpdateAliasWriteIndex() {
+        final String updateAlias = getUpdateAlias(index);
+        final IndicesExistsResponse existsResponse =
+                client.admin().indices().prepareExists(updateAlias).execute().actionGet(suggestSettings.getIndicesTimeout());
+        if (!existsResponse.isExists()) {
+            return;
+        }
+        final Map<String, AliasMetadata> aliasMap = new HashMap<>();
+        final GetAliasesResponse getAliasesResponse =
+                client.admin().indices().prepareGetAliases(updateAlias).execute().actionGet(suggestSettings.getIndicesTimeout());
+        for (final Map.Entry<String, List<AliasMetadata>> entry : getAliasesResponse.getAliases().entrySet()) {
+            entry.getValue().stream().filter(a -> updateAlias.equals(a.alias())).forEach(a -> aliasMap.put(entry.getKey(), a));
+        }
+        if (aliasMap.size() != 1) {
+            return;
+        }
+        final Map.Entry<String, AliasMetadata> entry = aliasMap.entrySet().iterator().next();
+        if (!Boolean.FALSE.equals(entry.getValue().writeIndex())) {
+            return;
+        }
+        if (logger.isInfoEnabled()) {
+            logger.info("Marking the suggest index as the write index of its update alias: index={}, updateAlias={}", entry.getKey(),
+                    updateAlias);
+        }
+        final IndicesAliasesRequest request = new IndicesAliasesRequest();
+        request.addAliasAction(AliasActions.add().index(entry.getKey()).alias(updateAlias).writeIndex(true));
+        client.admin().indices().aliases(request).actionGet(suggestSettings.getIndicesTimeout());
     }
 
     /**
