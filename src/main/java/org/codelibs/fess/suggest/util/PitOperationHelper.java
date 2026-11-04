@@ -18,8 +18,11 @@ package org.codelibs.fess.suggest.util;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
-import org.codelibs.fess.suggest.exception.SuggesterException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.codelibs.fess.suggest.exception.PitUnavailableException;
 import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.codelibs.fesen.opensearch.action.search.CreatePitAction;
 import org.codelibs.fesen.opensearch.action.search.CreatePitRequest;
@@ -52,6 +55,13 @@ import org.codelibs.fesen.opensearch.transport.client.Client;
  * takes care of moving them, and the created context is always released in a {@code finally} block.
  */
 public final class PitOperationHelper {
+    private static final Logger logger = LogManager.getLogger(PitOperationHelper.class);
+
+    /** The first interval, in milliseconds, between PIT based reads while the target index's primary shard has not started. */
+    private static final long PIT_RETRY_INITIAL_INTERVAL = 100L;
+
+    /** The longest interval, in milliseconds, between PIT based reads while the target index's primary shard has not started. */
+    private static final long PIT_RETRY_MAX_INTERVAL = 2000L;
 
     private PitOperationHelper() {
         // Utility class
@@ -188,7 +198,7 @@ public final class PitOperationHelper {
      * @param request The search request the PIT context is created for, or null
      * @param indices The indices the PIT context covers
      * @return The created PIT ID
-     * @throws SuggesterException if the PIT context could not be created because no shard of the indices is available
+     * @throws PitUnavailableException if the PIT context could not be created because no shard of the indices is available
      */
     public static String createPit(final Client client, final SuggestSettings settings, final SearchRequest request,
             final String... indices) {
@@ -208,10 +218,52 @@ public final class PitOperationHelper {
         final String pitId = response.getId();
         if (pitId == null) {
             // partial PIT creation is allowed, so a PIT on indices none of whose shards are available is answered without an ID
-            throw new SuggesterException("Failed to create a point in time on " + String.join(",", indices)
+            throw new PitUnavailableException("Failed to create a point in time on " + String.join(",", indices)
                     + ": no shard is available (total=" + response.getTotalShards() + ", successful=" + response.getSuccessfulShards()
                     + ", failed=" + response.getFailedShards() + "). The shards of the index may be unassigned; check the cluster health.");
         }
         return pitId;
+    }
+
+    /**
+     * Runs a PIT based read, retrying while the primary shard of the given index has not started.
+     *
+     * <p>Another process sharing this index name may have just created it. A yellow wait does not cover that: the
+     * search engine reports a newly created index whose primary shard is still initializing as yellow, so
+     * {@link #createPit} fails with a {@link PitUnavailableException} right after such a wait has returned. The
+     * read is therefore retried with a growing interval until the cluster timeout elapses, the same way
+     * {@code SuggestSettings#getSettingsDocument} retries its get of the settings document.</p>
+     *
+     * @param <T> The type of value the read returns
+     * @param client The OpenSearch client
+     * @param settings The suggest settings containing timeout configurations
+     * @param index The index name the read targets, used only for the wait between retries
+     * @param reader The read to retry
+     * @return The value returned by {@code reader}
+     */
+    public static <T> T readWithRetry(final Client client, final SuggestSettings settings, final String index, final Supplier<T> reader) {
+        final long deadline =
+                System.currentTimeMillis() + TimeValue.parseTimeValue(settings.getClusterTimeout(), "clusterTimeout").millis();
+        long interval = PIT_RETRY_INITIAL_INTERVAL;
+        while (true) {
+            try {
+                return reader.get();
+            } catch (final PitUnavailableException e) {
+                if (System.currentTimeMillis() >= deadline) {
+                    throw e;
+                }
+                if (interval == PIT_RETRY_INITIAL_INTERVAL && logger.isInfoEnabled()) { // first retry only
+                    logger.info("A point in time on {} is not available yet, waiting for it", index);
+                }
+                client.admin().cluster().prepareHealth(index).setWaitForYellowStatus().execute().actionGet(settings.getClusterTimeout());
+                try {
+                    Thread.sleep(interval);
+                } catch (final InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    throw e;
+                }
+                interval = Math.min(interval * 2, PIT_RETRY_MAX_INTERVAL);
+            }
+        }
     }
 }

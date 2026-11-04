@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.codelibs.fess.suggest.Suggester;
 import org.codelibs.fess.suggest.SuggestTestServer;
@@ -29,11 +30,13 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.codelibs.fess.suggest.exception.SuggesterException;
+import org.codelibs.fess.suggest.exception.PitUnavailableException;
+import org.codelibs.fess.suggest.settings.SuggestSettings;
 import org.codelibs.fesen.opensearch.action.index.IndexResponse;
 import org.codelibs.fesen.opensearch.action.support.ActiveShardCount;
 import org.codelibs.fesen.opensearch.common.settings.Settings;
 import org.codelibs.fesen.opensearch.common.xcontent.XContentType;
+import org.codelibs.fesen.opensearch.index.IndexNotFoundException;
 import org.codelibs.fesen.opensearch.index.query.QueryBuilders;
 import org.codelibs.fesen.opensearch.transport.client.Client;
 
@@ -205,9 +208,71 @@ public class PitOperationHelperTest {
             PitOperationHelper.search(client, suggester.settings(), "pit-red-index", QueryBuilders.matchAllQuery(), 10,
                     (hit, accumulator) -> accumulator.add(hit.getId()));
             fail("A PIT search on an index without available shards must fail.");
-        } catch (final SuggesterException e) {
+        } catch (final PitUnavailableException e) {
+            // the exact type matters: it is the contract PitOperationHelper#readWithRetry relies on to tell this
+            // failure apart from any other SuggesterException
             assertTrue(e.getMessage(), e.getMessage().contains("pit-red-index"));
             assertTrue(e.getMessage(), e.getMessage().contains("unassigned"));
         }
     }
+
+    @Test
+    public void testReadWithRetry_succeedsAfterOneRetry() {
+        createTestIndex();
+
+        final AtomicInteger calls = new AtomicInteger();
+        final String result = PitOperationHelper.readWithRetry(client, suggester.settings(), INDEX_NAME, () -> {
+            if (calls.incrementAndGet() == 1) {
+                throw new PitUnavailableException("temporarily unavailable");
+            }
+            return "ok";
+        });
+
+        assertEquals("ok", result);
+        assertEquals(2, calls.get());
+    }
+
+    @Test
+    public void testReadWithRetry_rethrowsSameExceptionInstanceAfterDeadline() {
+        createTestIndex();
+
+        // a short cluster timeout keeps the test fast without depending on how many retries fit in it
+        final SuggestSettings shortDeadlineSettings = SuggestSettings.builder().clusterTimeout("300ms").build(client, "pit-retry-test");
+        final List<PitUnavailableException> attempts = new ArrayList<>();
+
+        try {
+            PitOperationHelper.readWithRetry(client, shortDeadlineSettings, INDEX_NAME, () -> {
+                final PitUnavailableException e = new PitUnavailableException("still unavailable");
+                attempts.add(e);
+                throw e;
+            });
+            fail("readWithRetry must give up once the cluster timeout has elapsed.");
+        } catch (final PitUnavailableException e) {
+            assertFalse(attempts.isEmpty());
+            // the rethrown exception must be the exact instance from the last attempt, not a new wrapper
+            assertSame(attempts.get(attempts.size() - 1), e);
+        }
+    }
+
+    @Test
+    public void testReadWithRetry_propagatesOtherFailuresWithoutRetrying() {
+        final AtomicInteger calls = new AtomicInteger();
+
+        try {
+            PitOperationHelper.readWithRetry(client, suggester.settings(), INDEX_NAME, () -> {
+                calls.incrementAndGet();
+                throw new IndexNotFoundException(INDEX_NAME);
+            });
+            fail("A failure that is not a PitUnavailableException must not be retried.");
+        } catch (final IndexNotFoundException e) {
+            assertEquals(1, calls.get());
+        }
+    }
+
+    // A test for the InterruptedException branch of readWithRetry was attempted and dropped: the interrupt can land
+    // either on Thread.sleep (handled) or on the yellow-wait health check's actionGet (not handled - fesen-httpclient's
+    // FutureUtils.get wraps that InterruptedException into an IllegalStateException("Future got interrupted") instead
+    // of propagating it, the same as the pre-existing SuggestSettings#getSettingsDocument retry this mirrors). Which
+    // one happens is a race with no way to control it from the test, so the test was flaky between the two outcomes
+    // instead of exercising a single well-defined behavior. See 0015-pre-phase-review-fixes.md for the write-up.
 }

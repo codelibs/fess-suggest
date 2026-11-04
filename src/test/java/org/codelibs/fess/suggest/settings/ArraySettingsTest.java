@@ -15,7 +15,11 @@
  */
 package org.codelibs.fess.suggest.settings;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+
+import java.util.Locale;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.codelibs.fess.suggest.Suggester;
 import org.codelibs.fess.suggest.SuggestTestServer;
@@ -24,6 +28,16 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.codelibs.fesen.client.HttpClient;
+import org.codelibs.fesen.opensearch.action.ActionRequest;
+import org.codelibs.fesen.opensearch.action.ActionType;
+import org.codelibs.fesen.opensearch.action.search.CreatePitAction;
+import org.codelibs.fesen.opensearch.action.search.CreatePitRequest;
+import org.codelibs.fesen.opensearch.action.search.CreatePitResponse;
+import org.codelibs.fesen.opensearch.action.search.ShardSearchFailure;
+import org.codelibs.fesen.opensearch.common.settings.Settings;
+import org.codelibs.fesen.opensearch.core.action.ActionListener;
+import org.codelibs.fesen.opensearch.core.action.ActionResponse;
 import org.codelibs.fesen.opensearch.index.IndexNotFoundException;
 
 public class ArraySettingsTest {
@@ -89,5 +103,59 @@ public class ArraySettingsTest {
 
         settings.array().delete(key);
         assertEquals(0, settings.array().get(key).length);
+    }
+
+    /**
+     * Reproduces the race ArraySettings#getFromArrayIndex can hit right after another process has created the
+     * array settings index: the first PIT creation on it fails because its primary shard has not started yet.
+     * get() must retry instead of failing.
+     */
+    @Test
+    public void test_getRetriesWhenPitCreationFailsOnce() throws Exception {
+        final String key = "key";
+        final String value = "a";
+        // build the array settings index for real first, through the plain client this test does not intercept
+        settings.array().add(key, value);
+        final String actualIndex = settings.array().arraySettingsIndexName + "." + id.toLowerCase(Locale.ENGLISH);
+
+        try (PitFailingOnceClient client = new PitFailingOnceClient(server.httpPort(), actualIndex, 1)) {
+            final SuggestSettings interceptedSettings = SuggestSettings.builder().build(client, id);
+            assertArrayEquals(new String[] { value }, interceptedSettings.array().get(key));
+            assertEquals(0, client.remainingFailures.get());
+        }
+    }
+
+    /**
+     * Fails the first PIT creation on the given index with a response that carries no ID, the way OpenSearch
+     * answers a PIT request none of whose shards are available, and lets every later attempt through normally.
+     */
+    static class PitFailingOnceClient extends HttpClient {
+        private final String index;
+
+        final AtomicInteger remainingFailures;
+
+        PitFailingOnceClient(final int httpPort, final String index, final int failures) {
+            super(clientSettings(httpPort), null);
+            this.index = index;
+            remainingFailures = new AtomicInteger(failures);
+        }
+
+        @Override
+        protected <Request extends ActionRequest, Response extends ActionResponse> void doExecute(final ActionType<Response> action,
+                final Request request, final ActionListener<Response> listener) {
+            if (action == CreatePitAction.INSTANCE && index.equals(((CreatePitRequest) request).getIndices()[0])
+                    && remainingFailures.getAndUpdate(n -> Math.max(n - 1, 0)) > 0) {
+                @SuppressWarnings("unchecked")
+                final Response noShardResponse =
+                        (Response) new CreatePitResponse(null, System.currentTimeMillis(), 1, 0, 1, 0, new ShardSearchFailure[0]);
+                listener.onResponse(noShardResponse);
+                return;
+            }
+            super.doExecute(action, request, listener);
+        }
+    }
+
+    private static Settings clientSettings(final int httpPort) {
+        return Settings.builder().putList("http.hosts", "localhost:" + httpPort).put("http.socket_timeout", 60000).build();
     }
 }

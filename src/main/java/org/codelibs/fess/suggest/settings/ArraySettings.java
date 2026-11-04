@@ -205,9 +205,12 @@ public class ArraySettings {
     protected Map<String, Object>[] getFromArrayIndex(final String index, final String type, final String key) {
         final String actualIndex = index + "." + type.toLowerCase(Locale.ENGLISH);
         try {
-            final List<Map<String, Object>> sourceList =
-                    PitOperationHelper.search(client, settings, actualIndex, QueryBuilders.termQuery(FieldNames.ARRAY_KEY, key),
-                            DEFAULT_SEARCH_SIZE, (hit, accumulator) -> accumulator.add(hit.getSourceAsMap()));
+            // a PIT read here can race the same way AnalyzerSettings#init does: another process may have just
+            // created actualIndex, and the yellow wait in createMappingIfEmpty returns before its primary shard
+            // has actually started. Retry with PitOperationHelper#readWithRetry instead of failing right away.
+            final List<Map<String, Object>> sourceList = PitOperationHelper.readWithRetry(client, settings, actualIndex,
+                    () -> PitOperationHelper.search(client, settings, actualIndex, QueryBuilders.termQuery(FieldNames.ARRAY_KEY, key),
+                            DEFAULT_SEARCH_SIZE, (hit, accumulator) -> accumulator.add(hit.getSourceAsMap())));
 
             final Map<String, Object>[] array = sourceList.toArray(new Map[sourceList.size()]);
 
