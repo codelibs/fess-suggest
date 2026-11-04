@@ -159,7 +159,11 @@ public class AnalyzerSettings {
                     .execute()
                     .actionGet(settings.getClusterTimeout());
             analyzerMap.put(analyzerSettingsIndexName, getAnalyzerNames());
-            fieldAnalyzerMappingMap.put(analyzerSettingsIndexName, getFieldAnalyzerMapping());
+            // getFieldAnalyzerMapping reads through a PIT, which can still fail right after the yellow wait above
+            // returns (see PitOperationHelper#readWithRetry); getAnalyzerNames reads index settings from the
+            // cluster state instead, so it is not affected and does not need the same retry.
+            fieldAnalyzerMappingMap.put(analyzerSettingsIndexName,
+                    PitOperationHelper.readWithRetry(client, settings, analyzerSettingsIndexName, this::getFieldAnalyzerMapping));
         } catch (final IOException e) {
             throw new SuggestSettingsException("Failed to create mappings.");
         }
