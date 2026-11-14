@@ -18,6 +18,7 @@ package org.codelibs.fess.suggest.settings;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -34,17 +35,27 @@ import org.apache.logging.log4j.Logger;
 import org.codelibs.core.io.ResourceUtil;
 import org.codelibs.core.lang.StringUtil;
 import org.codelibs.fess.suggest.analysis.SuggestAnalyzer;
+import org.codelibs.fess.suggest.analysis.TokenizerStageResult;
 import org.codelibs.fess.suggest.constants.FieldNames;
 import org.codelibs.fess.suggest.exception.SuggestSettingsException;
+import org.codelibs.fess.suggest.util.LogRateLimiter;
 import org.codelibs.fess.suggest.util.PitOperationHelper;
 import org.codelibs.fess.suggest.util.SuggestUtil;
+import org.codelibs.fesen.opensearch.OpenSearchException;
 import org.codelibs.fesen.opensearch.OpenSearchStatusException;
 import org.codelibs.fesen.opensearch.action.admin.indices.analyze.AnalyzeAction;
 import org.codelibs.fesen.opensearch.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken;
+import org.codelibs.fesen.opensearch.action.admin.indices.analyze.AnalyzeRequestBuilder;
 import org.codelibs.fesen.opensearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.codelibs.fesen.opensearch.action.admin.indices.settings.get.GetSettingsResponse;
 import org.codelibs.fesen.opensearch.common.settings.Settings;
+import org.codelibs.fesen.opensearch.common.xcontent.XContentFactory;
+import org.codelibs.fesen.opensearch.common.xcontent.XContentHelper;
 import org.codelibs.fesen.opensearch.common.xcontent.XContentType;
+import org.codelibs.fesen.opensearch.core.common.bytes.BytesArray;
+import org.codelibs.fesen.opensearch.core.common.bytes.BytesReference;
+import org.codelibs.fesen.opensearch.core.xcontent.ToXContent;
+import org.codelibs.fesen.opensearch.core.xcontent.XContentBuilder;
 import org.codelibs.fesen.opensearch.index.query.QueryBuilders;
 import org.codelibs.fesen.opensearch.transport.client.Client;
 
@@ -100,6 +111,13 @@ public class AnalyzerSettings {
 
     /** Page size used to walk over the field analyzer mappings. */
     protected static final int FIELD_ANALYZER_MAPPING_PAGE_SIZE = 500;
+
+    private static final String PART_OF_SPEECH_ATTRIBUTE = "partOfSpeech";
+
+    private static final String READING_ATTRIBUTE = "reading";
+
+    /** Interval of the warning logs of a failed analyze request of the tokenizer stage, to avoid flooding the log. */
+    private static final long ANALYZE_FAILURE_WARN_INTERVAL_MILLIS = 60_000L;
 
     /** OpenSearch client. */
     protected final Client client;
@@ -377,6 +395,8 @@ public class AnalyzerSettings {
 
         private final int maxContentLenth = settings.getAsInt(SuggestSettings.DefaultKeys.MAX_CONTENT_LENGTH, 50000);
 
+        private final LogRateLimiter analyzeFailureWarnLimiter = new LogRateLimiter(ANALYZE_FAILURE_WARN_INTERVAL_MILLIS);
+
         /**
          * Analyzes the given text.
          * @param text The text to analyze.
@@ -422,6 +442,136 @@ public class AnalyzerSettings {
             } catch (final IllegalArgumentException e) {
                 return analyze(text, field, lang);
             }
+        }
+
+        /**
+         * Analyzes the given text and returns the output of the tokenizer stage, using the explain mode of the analyze API.
+         *
+         * <p>
+         * If the response is valid but the tokenizer provides no part of speech (e.g. a non-Japanese analyzer), a result
+         * without tokens is returned, because this is a normal state of such an analyzer. {@code null} is returned only when
+         * the tokenizer stage cannot be obtained: the text is too long, the analyze request failed (e.g. the explain response
+         * exceeding the allowed number of tokens for a long text without whitespace; logged as a warning at most once
+         * per minute), or the response lacks the tokenizer stage or the char-filtered text.
+         * </p>
+         * @param text The text to analyze.
+         * @param field The field name.
+         * @param lang The language.
+         * @return The tokenizer stage result, or null if it is not available.
+         */
+        @Override
+        public TokenizerStageResult analyzeTokenizerStage(final String text, final String field, final String lang) {
+            if (text == null || text.length() > maxContentLenth) {
+                return null;
+            }
+            final String analyzerName = getContentsAnalyzerName(field, lang);
+            final String target = "analyzer=" + analyzerName + ", field=" + field + ", lang=" + lang + ", textSize=" + text.length();
+            try {
+                // AnalyzeRequestBuilder has no setter for explain, and the response has no accessor for the detail.
+                final AnalyzeRequestBuilder builder =
+                        client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text).setAnalyzer(analyzerName);
+                builder.request().explain(true);
+                // Limits the response size: without it every token of every filter stage carries all attributes.
+                builder.request().attributes(List.of(PART_OF_SPEECH_ATTRIBUTE, READING_ATTRIBUTE));
+                final AnalyzeAction.Response response = builder.execute().actionGet(settings.getIndicesTimeout());
+                return parseTokenizerStage(convertToMap(response), target);
+            } catch (OpenSearchException | IOException | IllegalArgumentException | IllegalStateException e) {
+                logAnalyzeFailure(target, e);
+                return null;
+            }
+        }
+
+        // The text is not logged. Without the limit, every text without whitespace that is too long would log a warning.
+        private void logAnalyzeFailure(final String target, final Exception e) {
+            if (analyzeFailureWarnLimiter.tryAcquire()) {
+                logger.warn("Failed to analyze the tokenizer stage: {}, error={}", target, e.getMessage());
+            } else {
+                logger.debug("Failed to analyze the tokenizer stage (not warned: at most once per minute): {}, error={}", target,
+                        e.getMessage(), e);
+            }
+        }
+
+        // getTokens() is null for an explain response, so the response is read through its JSON form.
+        private Map<String, Object> convertToMap(final AnalyzeAction.Response response) throws IOException {
+            final XContentBuilder jsonBuilder = XContentFactory.jsonBuilder();
+            response.toXContent(jsonBuilder, ToXContent.EMPTY_PARAMS);
+            final String json = BytesReference.bytes(jsonBuilder).utf8ToString();
+            return XContentHelper.convertToMap(new BytesArray(json), true, XContentType.JSON).v2();
+        }
+
+        // Each null return logs its own reason at debug level, so that the causes can be told apart.
+        // Static and package-private so that the parsing of the response can be tested without an analyze request.
+        static TokenizerStageResult parseTokenizerStage(final Map<String, Object> responseMap, final String target) {
+            if (!(responseMap.get("detail") instanceof final Map<?, ?> detail)) {
+                return unavailable("the response has no detail", target);
+            }
+            if (!(detail.get("tokenizer") instanceof final Map<?, ?> tokenizer)
+                    || !(tokenizer.get("tokens") instanceof final List<?> rawTokens)) {
+                return unavailable("the response has no tokenizer tokens", target);
+            }
+            final List<AnalyzeToken> tokens = new ArrayList<>(rawTokens.size());
+            boolean hasPartOfSpeech = false;
+            for (final Object rawToken : rawTokens) {
+                final AnalyzeToken token = rawToken instanceof final Map<?, ?> tokenMap ? toAnalyzeToken(tokenMap) : null;
+                if (token == null) {
+                    return unavailable("a token of the response has an unexpected form", target);
+                }
+                hasPartOfSpeech |= token.getAttributes().containsKey(PART_OF_SPEECH_ATTRIBUTE);
+                tokens.add(token);
+            }
+
+            // Judged before the char filters: an analyzer without part of speech (e.g. a non-Japanese one) may have no char filter,
+            // and the caller needs neither tokens nor text from it.
+            final String charFilteredText = extractCharFilteredText(detail);
+            if (!hasPartOfSpeech) {
+                if (logger.isDebugEnabled()) {
+                    logger.debug("The tokenizer provides no part of speech: {}", target);
+                }
+                return new TokenizerStageResult(List.of(), charFilteredText == null ? "" : charFilteredText);
+            }
+            if (charFilteredText == null) {
+                // With part of speech but without the char-filtered text, the analyzer settings or the response key is wrong.
+                return unavailable("the response has no filtered_text of the char filters", target);
+            }
+            return new TokenizerStageResult(tokens, charFilteredText);
+        }
+
+        private static TokenizerStageResult unavailable(final String reason, final String target) {
+            if (logger.isDebugEnabled()) {
+                logger.debug("Tokenizer stage is not available ({}): {}", reason, target);
+            }
+            return null;
+        }
+
+        // The key is the singular "filtered_text" and its value is an array of strings.
+        // The last char filter gives the text that the tokenizer actually receives. A missing "charfilters" is not
+        // replaced by the original text, so that a wrong key or analyzer configuration is detected instead of hidden.
+        private static String extractCharFilteredText(final Map<?, ?> detail) {
+            if (!(detail.get("charfilters") instanceof final List<?> charFilters) || charFilters.isEmpty()) {
+                return null;
+            }
+            if (!(charFilters.get(charFilters.size() - 1) instanceof final Map<?, ?> charFilter)
+                    || !(charFilter.get("filtered_text") instanceof final List<?> filteredTexts) || filteredTexts.isEmpty()) {
+                return null;
+            }
+            return filteredTexts.get(0) instanceof final String filteredText ? filteredText : null;
+        }
+
+        private static AnalyzeToken toAnalyzeToken(final Map<?, ?> tokenMap) {
+            if (!(tokenMap.get("token") instanceof final String term) || !(tokenMap.get("start_offset") instanceof final Number startOffset)
+                    || !(tokenMap.get("end_offset") instanceof final Number endOffset)) {
+                return null;
+            }
+            final int position = tokenMap.get("position") instanceof final Number number ? number.intValue() : 0;
+            final String type = tokenMap.get("type") instanceof final String typeValue ? typeValue : null;
+            final Map<String, Object> attributes = new HashMap<>();
+            for (final String attributeName : List.of(PART_OF_SPEECH_ATTRIBUTE, READING_ATTRIBUTE)) {
+                final Object value = tokenMap.get(attributeName);
+                if (value != null) {
+                    attributes.put(attributeName, value);
+                }
+            }
+            return new AnalyzeToken(term, position, startOffset.intValue(), endOffset.intValue(), 1, type, attributes);
         }
     }
 

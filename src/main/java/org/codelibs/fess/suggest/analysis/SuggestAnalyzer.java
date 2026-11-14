@@ -43,4 +43,26 @@ public interface SuggestAnalyzer {
      * @return a list of analyzed tokens with their readings
      */
     List<AnalyzeToken> analyzeAndReading(String text, String field, String lang);
+
+    /**
+     * Analyzes the given text and returns the output of the tokenizer stage, i.e. the tokens
+     * before any token filter runs, together with the text after the char filters have been applied.
+     * The tokens carry the attributes {@code partOfSpeech} and {@code reading} when the tokenizer provides them.
+     *
+     * <p>
+     * If the analysis succeeds but the tokenizer provides no part of speech (e.g. a non-Japanese analyzer),
+     * the returned result has no tokens. {@code null} means that the tokenizer stage could not be obtained.
+     * The default implementation does not support this operation and returns {@code null}.
+     * </p>
+     *
+     * @param text the text to analyze
+     * @param field the field associated with the text
+     * @param lang the language of the text
+     * @return the tokenizer stage result (without tokens if the tokenizer provides no part of speech),
+     *         or {@code null} if it could not be obtained (not supported by this analyzer, the text is too long,
+     *         the analysis failed, or the response lacks the tokenizer stage or the char-filtered text)
+     */
+    default TokenizerStageResult analyzeTokenizerStage(final String text, final String field, final String lang) {
+        return null;
+    }
 }
