@@ -459,6 +459,22 @@ public class SuggesterTest {
     @Test
     @SuppressWarnings("unchecked")
     public void test_deleteOldWords() throws Exception {
+        // This test verifies the deletion logic: compound words (検索エンジン) would add a candidate to the count of 検索.
+        final String compoundEnabledPrevious = System.getProperty("fess.suggest.compound.enabled");
+        System.setProperty("fess.suggest.compound.enabled", "false");
+        try {
+            runDeleteOldWords();
+        } finally {
+            if (compoundEnabledPrevious == null) {
+                System.clearProperty("fess.suggest.compound.enabled");
+            } else {
+                System.setProperty("fess.suggest.compound.enabled", compoundEnabledPrevious);
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void runDeleteOldWords() throws Exception {
         String field = suggester.settings().array().get(SuggestSettings.DefaultKeys.SUPPORTED_FIELDS)[0];
         ElevateWord elevateWord =
                 new ElevateWord("test", 2.0f, Collections.singletonList("test"), Collections.singletonList("content"), null, null);
@@ -494,6 +510,38 @@ public class SuggesterTest {
         SuggestResponse response6 = suggester.suggest().setQuery("検索").setSuggestDetail(true).execute().getResponse();
         assertEquals(1, response6.getNum());
 
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void test_deleteOldWordsWithCompoundWords() throws Exception {
+        // The compound words are enabled by default: they are old/new words like the fragments.
+        final String field = suggester.settings().array().get(SuggestSettings.DefaultKeys.SUPPORTED_FIELDS)[0];
+
+        suggester.indexer().indexFromDocument(new Map[] { Collections.singletonMap(field, (Object) "新型コロナ") });
+        suggester.refresh();
+
+        Thread.sleep(50);
+        final ZonedDateTime threshold = ZonedDateTime.now();
+        Thread.sleep(50);
+
+        suggester.indexer().indexFromDocument(new Map[] { Collections.singletonMap(field, (Object) "検索エンジン") });
+        suggester.refresh();
+
+        final List<String> oldWordsBefore = suggester.suggest().setQuery("新型").execute().getResponse().getWords();
+        assertTrue(oldWordsBefore.toString(), oldWordsBefore.contains("新型コロナ"));
+        final List<String> newWordsBefore = suggester.suggest().setQuery("検索").execute().getResponse().getWords();
+        assertTrue(newWordsBefore.toString(), newWordsBefore.contains("検索エンジン"));
+
+        suggester.indexer().deleteOldWords(threshold);
+        suggester.refresh();
+
+        // The old compound word and its fragments are deleted, and the new compound word is kept.
+        assertEquals(0, suggester.suggest().setQuery("新型").execute().getResponse().getNum());
+        assertEquals(0, suggester.suggest().setQuery("コロナ").execute().getResponse().getNum());
+        final List<String> newWordsAfter = suggester.suggest().setQuery("検索").execute().getResponse().getWords();
+        assertTrue(newWordsAfter.toString(), newWordsAfter.contains("検索エンジン"));
+        assertTrue(newWordsAfter.toString(), newWordsAfter.contains("検索"));
     }
 
     @Test

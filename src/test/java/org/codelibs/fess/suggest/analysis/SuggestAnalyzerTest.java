@@ -17,6 +17,7 @@ package org.codelibs.fess.suggest.analysis;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
@@ -367,6 +368,13 @@ public class SuggestAnalyzerTest {
         for (int i = 0; i < tokens1.size(); i++) {
             assertEquals(tokens1.get(i).getTerm(), tokens2.get(i).getTerm());
         }
+    }
+
+    @Test
+    public void testAnalyzeTokenizerStageDefaultReturnsNull() {
+        // The default implementation reports "not available" so that existing implementations keep working
+        assertNull(analyzer.analyzeTokenizerStage("test text", "content", "en"));
+        assertNull(analyzer.analyzeTokenizerStage(null, null, null));
     }
 
     /**
