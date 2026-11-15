@@ -187,7 +187,7 @@ public class DefaultContentsParserCompoundWordTest {
     @Test
     public void test_compound_allTargetPartsOfSpeech() throws Exception {
         final String[] partsOfSpeech = { "名詞-一般", "名詞-サ変接続", "名詞-固有名詞-一般", "名詞-固有名詞-人名-一般", "名詞-固有名詞-人名-姓", "名詞-固有名詞-人名-名", "名詞-固有名詞-組織",
-                "名詞-固有名詞-地域-一般", "名詞-固有名詞-地域-国", "名詞-接尾-一般", "名詞-接尾-サ変接続", "名詞-接尾-地域" };
+                "名詞-固有名詞-地域-一般", "名詞-固有名詞-地域-国", "名詞-接尾-一般", "名詞-接尾-サ変接続", "名詞-接尾-地域", "名詞-形容動詞語幹" };
         final DefaultContentsParser parser = new DefaultContentsParser();
         for (final String partOfSpeech : partsOfSpeech) {
             final StubAnalyzer analyzer = StubAnalyzer.fixed("あいうえ", tok("あい", 0, 2, "名詞-一般", "アイ"), tok("うえ", 2, 4, partOfSpeech, "ウエ"));
@@ -196,9 +196,25 @@ public class DefaultContentsParserCompoundWordTest {
     }
 
     @Test
+    public void test_compound_adjectivalNounStemIsJoinedWithNouns() throws Exception {
+        final DefaultContentsParser parser = new DefaultContentsParser();
+        // 健康診断: 健康 is 名詞-形容動詞語幹, 診断 is 名詞-サ変接続.
+        final StubAnalyzer head = StubAnalyzer.fixed("健康診断", tok("健康", 0, 2, "名詞-形容動詞語幹", "ケンコウ"), tok("診断", 2, 4, "名詞-サ変接続", "シンダン"));
+        assertEquals(List.of("健康診断"), compoundWords(parser, head, "健康診断", "健康", "診断"));
+        // 特別養護老人ホーム: one run of 4 tokens starting with the stem.
+        final StubAnalyzer longer = StubAnalyzer.fixed("特別養護老人ホーム", tok("特別", 0, 2, "名詞-形容動詞語幹", "トクベツ"), tok("養護", 2, 4, "名詞-サ変接続", "ヨウゴ"),
+                tok("老人", 4, 6, "名詞-一般", "ロウジン"), tok("ホーム", 6, 9, "名詞-一般", "ホーム"));
+        assertEquals(List.of("特別養護老人ホーム"), compoundWords(parser, longer, "特別養護老人ホーム", "特別", "養護", "老人", "ホーム"));
+        // 静かな町: the auxiliary verb な ends the run, so a lone stem is not a compound.
+        final StubAnalyzer alone =
+                StubAnalyzer.fixed("静かな町", tok("静か", 0, 2, "名詞-形容動詞語幹", "シズカ"), tok("な", 2, 3, "助動詞", "ナ"), tok("町", 3, 4, "名詞-一般", "マチ"));
+        assertEquals(List.of(), compoundWords(parser, alone, "静かな町", "静か", "町"));
+    }
+
+    @Test
     public void test_compound_nonTargetPartsOfSpeechAreNotJoinedWithAdjacentGeneralNoun() throws Exception {
-        final String[] nonTargets = { "名詞-数", "名詞-接尾-助数詞", "名詞-接尾-人名", "名詞-形容動詞語幹", "名詞-非自立", "名詞-代名詞", "名詞-副詞可能", "動詞-自立", "助詞-連体化",
-                "形容詞-自立", "記号-一般", "名詞-接尾-副詞可能", "名詞-接尾-助動詞語幹", "名詞-固有名詞-地域", "名詞-ナイ形容詞語幹", "名詞-特殊-助動詞語幹", "名詞-引用文字列" };
+        final String[] nonTargets = { "名詞-数", "名詞-接尾-助数詞", "名詞-接尾-人名", "名詞-非自立", "名詞-代名詞", "名詞-副詞可能", "動詞-自立", "助詞-連体化", "形容詞-自立", "記号-一般",
+                "名詞-接尾-副詞可能", "名詞-接尾-助動詞語幹", "名詞-固有名詞-地域", "名詞-ナイ形容詞語幹", "名詞-特殊-助動詞語幹", "名詞-引用文字列" };
         final DefaultContentsParser parser = new DefaultContentsParser();
         for (final String partOfSpeech : nonTargets) {
             // The non-target is adjacent to a 名詞-一般, so only the part of speech can prevent the join.

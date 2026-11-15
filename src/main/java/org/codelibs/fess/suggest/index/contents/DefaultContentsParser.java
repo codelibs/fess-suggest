@@ -126,9 +126,9 @@ public class DefaultContentsParser implements ContentsParser {
 
     private static final String READING_ATTRIBUTE = "reading";
 
-    /** Exact match with the part of speech given by the tokenizer. Numbers, counters and non-nouns are not included. */
+    /** Exact match with the part of speech given by the tokenizer. Includes the adjectival-noun stems (名詞-形容動詞語幹, e.g. 健康 in 健康診断). Numbers, counters and non-nouns are not included. */
     private static final Set<String> COMPOUND_PARTS_OF_SPEECH = Set.of("名詞-一般", "名詞-サ変接続", "名詞-固有名詞-一般", "名詞-固有名詞-人名-一般", "名詞-固有名詞-人名-姓",
-            "名詞-固有名詞-人名-名", "名詞-固有名詞-組織", "名詞-固有名詞-地域-一般", "名詞-固有名詞-地域-国", "名詞-接尾-一般", "名詞-接尾-サ変接続", "名詞-接尾-地域");
+            "名詞-固有名詞-人名-名", "名詞-固有名詞-組織", "名詞-固有名詞-地域-一般", "名詞-固有名詞-地域-国", "名詞-接尾-一般", "名詞-接尾-サ変接続", "名詞-接尾-地域", "名詞-形容動詞語幹");
 
     /** The brackets: ASCII ones and the full-width and Japanese ones. Used when the break chars property is not set. */
     private static final String DEFAULT_COMPOUND_BREAK_CHARS = "()[]{}<>（）［］｛｝＜＞〈〉《》「」『』【】〔〕";
