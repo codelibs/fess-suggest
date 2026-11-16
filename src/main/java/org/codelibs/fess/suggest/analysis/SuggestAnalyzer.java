@@ -47,7 +47,8 @@ public interface SuggestAnalyzer {
     /**
      * Analyzes the given text and returns the output of the tokenizer stage, i.e. the tokens
      * before any token filter runs, together with the text after the char filters have been applied.
-     * The tokens carry the attributes {@code partOfSpeech} and {@code reading} when the tokenizer provides them.
+     * The tokens carry the attributes {@code partOfSpeech}, {@code reading} and {@code inflectionForm}
+     * when the tokenizer provides them.
      *
      * <p>
      * If the analysis succeeds but the tokenizer provides no part of speech (e.g. a non-Japanese analyzer),

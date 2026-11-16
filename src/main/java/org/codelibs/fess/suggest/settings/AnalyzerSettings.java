@@ -116,6 +116,11 @@ public class AnalyzerSettings {
 
     private static final String READING_ATTRIBUTE = "reading";
 
+    private static final String INFLECTION_FORM_ATTRIBUTE = "inflectionForm";
+
+    private static final List<String> TOKENIZER_STAGE_ATTRIBUTES =
+            List.of(PART_OF_SPEECH_ATTRIBUTE, READING_ATTRIBUTE, INFLECTION_FORM_ATTRIBUTE);
+
     /** Interval of the warning logs of a failed analyze request of the tokenizer stage, to avoid flooding the log. */
     private static final long ANALYZE_FAILURE_WARN_INTERVAL_MILLIS = 60_000L;
 
@@ -472,7 +477,7 @@ public class AnalyzerSettings {
                         client.admin().indices().prepareAnalyze(analyzerSettingsIndexName, text).setAnalyzer(analyzerName);
                 builder.request().explain(true);
                 // Limits the response size: without it every token of every filter stage carries all attributes.
-                builder.request().attributes(List.of(PART_OF_SPEECH_ATTRIBUTE, READING_ATTRIBUTE));
+                builder.request().attributes(TOKENIZER_STAGE_ATTRIBUTES);
                 final AnalyzeAction.Response response = builder.execute().actionGet(settings.getIndicesTimeout());
                 return parseTokenizerStage(convertToMap(response), target);
             } catch (OpenSearchException | IOException | IllegalArgumentException | IllegalStateException e) {
@@ -565,9 +570,11 @@ public class AnalyzerSettings {
             final int position = tokenMap.get("position") instanceof final Number number ? number.intValue() : 0;
             final String type = tokenMap.get("type") instanceof final String typeValue ? typeValue : null;
             final Map<String, Object> attributes = new HashMap<>();
-            for (final String attributeName : List.of(PART_OF_SPEECH_ATTRIBUTE, READING_ATTRIBUTE)) {
+            for (final String attributeName : TOKENIZER_STAGE_ATTRIBUTES) {
                 final Object value = tokenMap.get(attributeName);
-                if (value != null) {
+                // A non-string inflectionForm is treated as absent, so that a consumer can cast the value safely.
+                final boolean isInvalidInflectionForm = INFLECTION_FORM_ATTRIBUTE.equals(attributeName) && !(value instanceof String);
+                if (value != null && !isInvalidInflectionForm) {
                     attributes.put(attributeName, value);
                 }
             }
