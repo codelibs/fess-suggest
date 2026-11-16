@@ -23,7 +23,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -35,6 +37,8 @@ import org.codelibs.fess.suggest.analysis.TokenizerStageResult;
 import org.codelibs.fess.suggest.converter.ReadingConverter;
 import org.codelibs.fess.suggest.entity.SuggestItem;
 import org.codelibs.fess.suggest.index.contents.DefaultContentsParser.FragmentExclusion;
+import org.codelibs.fess.suggest.index.contents.querylog.QueryLog;
+import org.codelibs.fess.suggest.normalizer.Normalizer;
 import org.codelibs.fess.suggest.normalizer.NormalizerChain;
 import org.codelibs.fesen.opensearch.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken;
 import org.junit.After;
@@ -42,7 +46,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 /**
- * Unit tests of the fragment filter of {@link DefaultContentsParser}: the fragments of documents, the search words,
+ * Unit tests of the fragment filter of {@link DefaultContentsParser}: the fragments of documents, the search words, the query logs,
  * and the symbol and small tsu / long vowel tokens at both ends of a compound word.
  * The analyzer is a stub that returns fixed tokens, so no OpenSearch is needed.
  */
@@ -62,8 +66,13 @@ public class DefaultContentsParserFragmentTest {
 
     private static final String PROP_COMPOUND_MAX_LENGTH = "fess.suggest.compound.max.length";
 
-    private static final String[] PROPERTIES =
-            { PROP_FILTER, PROP_LATIN_SHORT, PROP_SINGLE_HAN, PROP_COMPOUND, PROP_COMPOUND_MAX_TOKENS, PROP_COMPOUND_MAX_LENGTH };
+    private static final String PROP_MAX_CONTENT_LENGTH = "fess.suggest.max.analyzed.content.length";
+
+    /** The prefix of the readings of the compound words made by the tokenizer stage, to tell them from the readings of the fragments. */
+    private static final String COMPOUND_READING_PREFIX = "cmp-";
+
+    private static final String[] PROPERTIES = { PROP_FILTER, PROP_LATIN_SHORT, PROP_SINGLE_HAN, PROP_COMPOUND, PROP_COMPOUND_MAX_TOKENS,
+            PROP_COMPOUND_MAX_LENGTH, PROP_MAX_CONTENT_LENGTH };
 
     private static final Set<String> SUFFIX_TERMS = Set.of("選", "安", "県");
 
@@ -215,6 +224,93 @@ public class DefaultContentsParserFragmentTest {
         assertEquals(1, parser.getExcludedFragmentCount(FragmentExclusion.SINGLE_KANA));
         assertEquals(0, parser.getExcludedFragmentCount(FragmentExclusion.SINGLE_HAN));
         assertEquals(0, parser.getExcludedSearchWordCount(FragmentExclusion.SYMBOL_ONLY));
+    }
+
+    // ============================================================
+    // Chunks of documents
+    // ============================================================
+
+    @Test
+    public void test_inflection_blankChunkInTheMiddleDoesNotShiftTheChunkIndex() throws Exception {
+        // A chunk is closed when it gets longer than 4 characters, so 5 white spaces between the words make a blank chunk.
+        System.setProperty(PROP_MAX_CONTENT_LENGTH, "4");
+        final DefaultContentsParser parser = new DefaultContentsParser();
+        final FragmentStubAnalyzer analyzer = new FragmentStubAnalyzer(chunk -> switch (chunk) {
+        case "aaaa" -> List.of(finalToken("なかっ", 0), finalToken("東京", 3));
+        case "bbbb" -> List.of(finalToken("なかっ", 0), finalToken("大阪", 3));
+        default -> List.of(); // the blank chunk
+        }, chunk -> switch (chunk) {
+        // The same term is not inflected in the first chunk and inflected in the second one, so that a shifted index is detected.
+        case "aaaa" -> stageResult(stageToken("なかっ", 0, "名詞-一般", null), stageToken("東京", 3, "名詞-一般", null));
+        case "bbbb" -> stageResult(stageToken("なかっ", 0, "形容詞-自立", "連用タ接続"), stageToken("大阪", 3, "名詞-一般", null));
+        default -> null;
+        });
+
+        final List<SuggestItem> items = parseText(parser, analyzer, "ja", "aaaa" + " ".repeat(6) + "bbbb");
+
+        // The blank chunk really exists between the two chunks.
+        assertEquals(List.of("aaaa", "", "bbbb"), analyzer.analyzeCalls);
+        // The "なかっ" of the second chunk is excluded, and that of the first chunk is not excluded by the map of the second one.
+        assertEquals(List.of("なかっ", "東京", "大阪"), texts(items));
+        assertEquals(1, parser.getExcludedFragmentCount(FragmentExclusion.INFLECTION_FORM));
+    }
+
+    @Test
+    public void test_order_fragmentsOfAllChunksComeBeforeCompoundWordsOfAllChunks() throws Exception {
+        System.setProperty(PROP_COMPOUND, "true");
+        System.setProperty(PROP_MAX_CONTENT_LENGTH, "4");
+        final DefaultContentsParser parser = new DefaultContentsParser();
+        final Map<String, List<String>> termsByChunk =
+                Map.of("aaaa", List.of("東京", "大学"), "bbbb", List.of("福岡", "札幌"), "cccc", List.of("京都", "奈良"), "dddd", List.of("神戸", "横浜"));
+        final FragmentStubAnalyzer analyzer = new FragmentStubAnalyzer(chunk -> finalTokens(termsByChunk.getOrDefault(chunk, List.of())),
+                chunk -> termsByChunk.containsKey(chunk) ? stageResult(termsByChunk.get(chunk)) : null);
+
+        // Two chunks for each field.
+        final Map<String, String> fieldTexts = new LinkedHashMap<>();
+        fieldTexts.put("content", "aaaa bbbb");
+        fieldTexts.put("title", "cccc dddd");
+        final List<SuggestItem> items = parseFields(parser, analyzer, "ja", readingConverter(), readingConverter(), fieldTexts);
+
+        // For each field: the fragments of every chunk, and then the compound words of every chunk.
+        assertEquals(List.of("東京", "大学", "福岡", "札幌", "東京大学", "福岡札幌", "京都", "奈良", "神戸", "横浜", "京都奈良", "神戸横浜"), texts(items));
+        assertEquals(List.of("content", "content", "content", "content", "content", "content", "title", "title", "title", "title", "title",
+                "title"), items.stream().map(item -> item.getFields()[0]).collect(Collectors.toList()));
+    }
+
+    @Test
+    public void test_stage_isProcessedChunkByChunkWithoutKeepingTheFetchedResults() throws Exception {
+        System.setProperty(PROP_COMPOUND, "true");
+        System.setProperty(PROP_MAX_CONTENT_LENGTH, "4");
+        final DefaultContentsParser parser = new DefaultContentsParser();
+        final List<String> events = new CopyOnWriteArrayList<>();
+        final Map<String, List<String>> termsByChunk = Map.of("aaaa", List.of("東京", "大学"), "bbbb", List.of("福岡", "札幌"));
+        final FragmentStubAnalyzer analyzer =
+                new FragmentStubAnalyzer(chunk -> finalTokens(termsByChunk.getOrDefault(chunk, List.of())), chunk -> {
+                    events.add("stage:" + chunk);
+                    return stageResult(termsByChunk.get(chunk), term -> COMPOUND_READING_PREFIX + term);
+                });
+        // Only the compound words have a reading that starts with the prefix, so that the readings of the fragments are not recorded.
+        final ReadingConverter compoundReadingRecorder = new ReadingConverter() {
+            @Override
+            public void init() {
+            }
+
+            @Override
+            public List<String> convert(final String text, final String field, final String... langs) {
+                if (text.startsWith(COMPOUND_READING_PREFIX)) {
+                    events.add("convert:" + text);
+                }
+                return new ArrayList<>(List.of(text));
+            }
+        };
+
+        final List<SuggestItem> items =
+                parseFields(parser, analyzer, "ja", readingConverter(), compoundReadingRecorder, Map.of(FIELD, "aaaa bbbb"));
+
+        // The compound words of a chunk are made before the next chunk is requested. If every chunk were requested first,
+        // both stages would come before both conversions.
+        assertEquals(List.of("stage:aaaa", "convert:cmp-東京cmp-大学", "stage:bbbb", "convert:cmp-福岡cmp-札幌"), events);
+        assertEquals(List.of("東京", "大学", "福岡", "札幌", "東京大学", "福岡札幌"), texts(items));
     }
 
     // ============================================================
@@ -432,6 +528,201 @@ public class DefaultContentsParserFragmentTest {
     }
 
     // ============================================================
+    // Query logs (parseQueryLog)
+    // ============================================================
+
+    @Test
+    public void test_queryLog_sokuonChouonAndSymbolsMakeNoItem() throws Exception {
+        final DefaultContentsParser parser = new DefaultContentsParser();
+
+        for (final String query : new String[] { "content:ッ", "content:ー", "content:ｰ", "content:\"!!!\"", "content:\"...\"" }) {
+            assertEquals(query, List.of(), parseQueryLog(parser, query, FIELD));
+        }
+        // Every word reached the filter (it was not dropped earlier by the query parser), and was excluded for the right reason.
+        assertEquals(3, parser.getExcludedSearchWordCount(FragmentExclusion.SOKUON_CHOUON_ONLY));
+        assertEquals(2, parser.getExcludedSearchWordCount(FragmentExclusion.SYMBOL_ONLY));
+    }
+
+    @Test
+    public void test_queryLog_shortWordsAreKept() throws Exception {
+        final DefaultContentsParser parser = new DefaultContentsParser();
+
+        for (final String word : new String[] { "ai", "月", "x" }) {
+            final List<SuggestItem> items = parseQueryLog(parser, "content:" + word, FIELD);
+            assertEquals(word, 1, items.size());
+            assertEquals(word, items.get(0).getText());
+        }
+    }
+
+    @Test
+    public void test_queryLog_lengthRulesAreNotAppliedEvenWhenEnabled() throws Exception {
+        // The optional rules are on, so that a length rule applied to the query logs by mistake is detected (by default, ai and 月 are kept anyway).
+        System.setProperty(PROP_LATIN_SHORT, "true");
+        System.setProperty(PROP_SINGLE_HAN, "true");
+        final DefaultContentsParser parser = new DefaultContentsParser();
+        final String[] words = { "ai", "月", "x", "あ", "ア" };
+
+        // The rules are really on: the same words are excluded as the fragments of a Japanese document.
+        assertEquals(List.of(), fragments(parser, "ja", words));
+
+        for (final String word : words) {
+            final List<SuggestItem> items = parseQueryLog(parser, "content:" + word, FIELD);
+            assertEquals(word, 1, items.size());
+            assertEquals(word, items.get(0).getText());
+        }
+        assertNoLengthRuleExclusionOfSearchWords(parser);
+    }
+
+    @Test
+    public void test_searchWords_lengthRulesAreNotAppliedEvenWhenEnabled() throws Exception {
+        System.setProperty(PROP_LATIN_SHORT, "true");
+        System.setProperty(PROP_SINGLE_HAN, "true");
+        final DefaultContentsParser parser = new DefaultContentsParser();
+        final FragmentStubAnalyzer analyzer = FragmentStubAnalyzer.forSearchWords();
+
+        assertEquals(List.of(), fragments(parser, "ja", "ai", "月", "x", "あ", "ア"));
+
+        for (final String word : new String[] { "ai", "月", "x", "あ", "ア" }) {
+            for (final String[] langs : new String[][] { null, { "ja" } }) {
+                final SuggestItem item = parseSearchWords(parser, analyzer, langs, word);
+                assertNotNull(word, item);
+                assertEquals(word, item.getText());
+            }
+        }
+        assertNoLengthRuleExclusionOfSearchWords(parser);
+    }
+
+    private static void assertNoLengthRuleExclusionOfSearchWords(final DefaultContentsParser parser) {
+        assertEquals(0, parser.getExcludedSearchWordCount(FragmentExclusion.ALPHANUMERIC_SHORT));
+        assertEquals(0, parser.getExcludedSearchWordCount(FragmentExclusion.SINGLE_KANA));
+        assertEquals(0, parser.getExcludedSearchWordCount(FragmentExclusion.SINGLE_HAN));
+    }
+
+    @Test
+    public void test_queryLog_excludedWordsAreDroppedAndReadingsStayAlignedWithTheWords() throws Exception {
+        final DefaultContentsParser parser = new DefaultContentsParser();
+
+        final List<SuggestItem> items = parseQueryLog(parser, "content:ー AND content:映画 AND content:ッ AND content:ai", FIELD);
+
+        assertEquals(1, items.size());
+        final SuggestItem item = items.get(0);
+        assertEquals("映画 ai", item.getText());
+        assertEquals(2, item.getReadings().length);
+        assertEquals(List.of("映画-r"), Arrays.asList(item.getReadings()[0]));
+        assertEquals(List.of("ai-r"), Arrays.asList(item.getReadings()[1]));
+        assertEquals(SuggestItem.Kind.QUERY, item.getKinds()[0]);
+        assertEquals(1, item.getQueryFreq());
+    }
+
+    @Test
+    public void test_queryLog_fieldWithOnlyExcludedWordsMakesNoItemButOtherFieldsRemain() throws Exception {
+        final DefaultContentsParser parser = new DefaultContentsParser();
+
+        final List<SuggestItem> items = parseQueryLog(parser, "content:ー AND title:映画", FIELD, "title");
+
+        assertEquals(1, items.size());
+        assertEquals("映画", items.get(0).getText());
+        assertEquals(List.of("title"), Arrays.asList(items.get(0).getFields()));
+        assertEquals(List.of(), parseQueryLog(parser, "content:ー AND title:ッ", FIELD, "title"));
+    }
+
+    @Test
+    public void test_queryLog_tagsAndRolesAreKeptForTheRemainingWords() throws Exception {
+        final DefaultContentsParser parser = new DefaultContentsParser();
+        final ReadingConverter converter = suffixReadingConverter();
+
+        final List<SuggestItem> items = parser.parseQueryLog(new QueryLog("content:ー AND content:映画 AND label:tag1", "role:role1"),
+                new String[] { FIELD }, new String[] { "label" }, "role", converter, new NormalizerChain());
+
+        assertEquals(1, items.size());
+        assertEquals("映画", items.get(0).getText());
+        assertEquals(List.of("tag1"), Arrays.asList(items.get(0).getTags()));
+        assertEquals(List.of("role1"), Arrays.asList(items.get(0).getRoles()));
+    }
+
+    @Test
+    public void test_queryLog_excludedWordsAreCountedAsSearchWords() throws Exception {
+        final DefaultContentsParser parser = new DefaultContentsParser();
+
+        parseQueryLog(parser, "content:ッ AND content:ー AND content:\"!!!\" AND content:ai", FIELD);
+
+        assertEquals(2, parser.getExcludedSearchWordCount(FragmentExclusion.SOKUON_CHOUON_ONLY));
+        assertEquals(1, parser.getExcludedSearchWordCount(FragmentExclusion.SYMBOL_ONLY));
+        assertEquals(0, parser.getExcludedSearchWordCount(FragmentExclusion.ALPHANUMERIC_SHORT));
+        assertEquals(0, parser.getExcludedFragmentCount(FragmentExclusion.SOKUON_CHOUON_ONLY));
+    }
+
+    @Test
+    public void test_queryLog_filterDisabledKeepsEveryWord() throws Exception {
+        System.setProperty(PROP_FILTER, "false");
+        final DefaultContentsParser parser = new DefaultContentsParser();
+
+        final List<SuggestItem> items = parseQueryLog(parser, "content:ッ", FIELD);
+
+        assertEquals(1, items.size());
+        assertEquals("ッ", items.get(0).getText());
+        assertEquals(List.of("ッ-r"), Arrays.asList(items.get(0).getReadings()[0]));
+        final List<SuggestItem> itemsOfTwoWords = parseQueryLog(parser, "content:ー AND content:映画", FIELD);
+        assertEquals(1, itemsOfTwoWords.size());
+        assertEquals("ー 映画", itemsOfTwoWords.get(0).getText());
+        assertEquals(0, parser.getExcludedSearchWordCount(FragmentExclusion.SOKUON_CHOUON_ONLY));
+    }
+
+    @Test
+    public void test_queryLog_excludedWordsAreNotPassedToTheReadingConverter() throws Exception {
+        final DefaultContentsParser parser = new DefaultContentsParser();
+        final List<String> convertedTexts = new ArrayList<>();
+
+        final List<SuggestItem> items = parseQueryLogWith(parser, recordingReadingConverter(convertedTexts), new NormalizerChain(),
+                "content:ー AND content:映画 AND content:ッ", FIELD);
+
+        assertEquals(List.of("映画"), texts(items));
+        // The reading is not made for an excluded word, so the exclusion is before the reading conversion.
+        assertEquals(List.of("映画"), convertedTexts);
+    }
+
+    @Test
+    public void test_queryLog_normalizerIsAppliedToTheRemainingWordsAndTheirReadings() throws Exception {
+        final DefaultContentsParser parser = new DefaultContentsParser();
+        final List<String> convertedTexts = new ArrayList<>();
+
+        final List<SuggestItem> items = parseQueryLogWith(parser, recordingReadingConverter(convertedTexts), lowerCaseNormalizer(),
+                "content:ー AND content:MOVIE", FIELD);
+
+        assertEquals(List.of("movie"), texts(items));
+        assertEquals(List.of("movie"), convertedTexts);
+        assertEquals(List.of("movie-r"), Arrays.asList(items.get(0).getReadings()[0]));
+    }
+
+    @Test
+    public void test_queryLog_exclusionIsJudgedBeforeNormalization() throws Exception {
+        final DefaultContentsParser parser = new DefaultContentsParser();
+        final Normalizer swapper = longVowelSwapNormalizer();
+
+        // "x" becomes the long vowel mark by the normalizer, but it is not excluded because the original word is judged.
+        final List<SuggestItem> keptItems = parseQueryLogWith(parser, suffixReadingConverter(), swapper, "content:x", FIELD);
+        assertEquals(List.of("ー"), texts(keptItems));
+        assertEquals(List.of("ー-r"), Arrays.asList(keptItems.get(0).getReadings()[0]));
+        // The long vowel mark is excluded though the normalizer would change it to "x".
+        assertEquals(List.of(), parseQueryLogWith(parser, suffixReadingConverter(), swapper, "content:ー", FIELD));
+        assertEquals(1, parser.getExcludedSearchWordCount(FragmentExclusion.SOKUON_CHOUON_ONLY));
+    }
+
+    @Test
+    public void test_searchWords_exclusionIsJudgedBeforeNormalization() throws Exception {
+        final DefaultContentsParser parser = new DefaultContentsParser();
+        final FragmentStubAnalyzer analyzer = FragmentStubAnalyzer.forSearchWords();
+        final Normalizer swapper = longVowelSwapNormalizer();
+
+        // The same order as parseQueryLog.
+        final SuggestItem keptItem = parseSearchWordsWith(parser, analyzer, readingConverter(), swapper, "x");
+        assertNotNull(keptItem);
+        assertEquals("ー", keptItem.getText());
+        assertNull(parseSearchWordsWith(parser, analyzer, readingConverter(), swapper, "ー"));
+        assertEquals(1, parser.getExcludedSearchWordCount(FragmentExclusion.SOKUON_CHOUON_ONLY));
+    }
+
+    // ============================================================
     // Helpers
     // ============================================================
 
@@ -450,14 +741,25 @@ public class DefaultContentsParserFragmentTest {
 
     private static List<SuggestItem> parse(final DefaultContentsParser parser, final SuggestAnalyzer analyzer, final String lang)
             throws IOException {
-        final Map<String, Object> document = new HashMap<>();
-        document.put(FIELD, "text");
+        return parseText(parser, analyzer, lang, "text");
+    }
+
+    private static List<SuggestItem> parseText(final DefaultContentsParser parser, final SuggestAnalyzer analyzer, final String lang,
+            final String text) throws IOException {
+        final ReadingConverter converter = readingConverter();
+        return parseFields(parser, analyzer, lang, converter, converter, Map.of(FIELD, text));
+    }
+
+    /** Parses a document that has the given text for each field. The fields are in the iteration order of the map. */
+    private static List<SuggestItem> parseFields(final DefaultContentsParser parser, final SuggestAnalyzer analyzer, final String lang,
+            final ReadingConverter readingConverter, final ReadingConverter contentsReadingConverter, final Map<String, String> fieldTexts)
+            throws IOException {
+        final Map<String, Object> document = new HashMap<>(fieldTexts);
         if (lang != null) {
             document.put("lang", lang);
         }
-        final ReadingConverter converter = readingConverter();
-        return parser.parseDocument(document, new String[] { FIELD }, new String[] { "label" }, "role", "lang", converter, converter,
-                new NormalizerChain(), analyzer);
+        return parser.parseDocument(document, fieldTexts.keySet().toArray(String[]::new), new String[] { "label" }, "role", "lang",
+                readingConverter, contentsReadingConverter, new NormalizerChain(), analyzer);
     }
 
     /** The texts of the fragments made from the tokens of the given terms. */
@@ -467,22 +769,61 @@ public class DefaultContentsParserFragmentTest {
 
     /** The texts of the compound words made from the adjacent tokens of the given terms (no fragment is generated). */
     private static List<String> compoundsOf(final DefaultContentsParser parser, final String... terms) throws IOException {
-        final List<AnalyzeToken> tokens = new ArrayList<>();
-        int offset = 0;
-        for (final String term : terms) {
-            tokens.add(stageToken(term, offset));
-            offset += term.length();
-        }
-        final TokenizerStageResult stageResult = new TokenizerStageResult(tokens, String.join("", terms));
+        final TokenizerStageResult stageResult = stageResult(List.of(terms));
         final FragmentStubAnalyzer analyzer = new FragmentStubAnalyzer(chunk -> List.of(), chunk -> stageResult);
         return texts(parse(parser, analyzer, "ja"));
     }
 
+    /** The tokens of the final stage: adjacent tokens without attributes. */
+    private static List<AnalyzeToken> finalTokens(final List<String> terms) {
+        final List<AnalyzeToken> tokens = new ArrayList<>();
+        int offset = 0;
+        for (final String term : terms) {
+            tokens.add(finalToken(term, offset));
+            offset += term.length();
+        }
+        return tokens;
+    }
+
+    private static AnalyzeToken finalToken(final String term, final int offset) {
+        return new AnalyzeToken(term, 0, offset, offset + term.length(), 1, "word", Map.of());
+    }
+
+    /** The tokenizer stage of adjacent tokens of the terms. The reading of a token is the term. */
+    private static TokenizerStageResult stageResult(final List<String> terms) {
+        return stageResult(terms, Function.identity());
+    }
+
+    private static TokenizerStageResult stageResult(final List<String> terms, final Function<String, String> readingOf) {
+        final List<AnalyzeToken> tokens = new ArrayList<>();
+        int offset = 0;
+        for (final String term : terms) {
+            tokens.add(stageToken(term, offset, readingOf.apply(term)));
+            offset += term.length();
+        }
+        return new TokenizerStageResult(tokens, String.join("", terms));
+    }
+
+    private static TokenizerStageResult stageResult(final AnalyzeToken... tokens) {
+        return new TokenizerStageResult(List.of(tokens), Arrays.stream(tokens).map(AnalyzeToken::getTerm).collect(Collectors.joining()));
+    }
+
     // The tokenizer gives the ASCII symbols 名詞-サ変接続, and the suffixes 名詞-接尾-一般.
-    private static AnalyzeToken stageToken(final String term, final int offset) {
+    private static AnalyzeToken stageToken(final String term, final int offset, final String reading) {
         final boolean symbol = term.codePoints().noneMatch(Character::isLetterOrDigit);
         final String partOfSpeech = SUFFIX_TERMS.contains(term) ? "名詞-接尾-一般" : symbol ? "名詞-サ変接続" : "名詞-一般";
-        return new AnalyzeToken(term, 0, offset, offset + term.length(), 1, "word", Map.of("partOfSpeech", partOfSpeech, "reading", term));
+        return new AnalyzeToken(term, 0, offset, offset + term.length(), 1, "word",
+                Map.of("partOfSpeech", partOfSpeech, "reading", reading));
+    }
+
+    /** A token of the tokenizer stage with the given part of speech and inflection form (null for none). */
+    private static AnalyzeToken stageToken(final String term, final int offset, final String partOfSpeech, final String inflectionForm) {
+        final Map<String, Object> attributes = new HashMap<>();
+        attributes.put("partOfSpeech", partOfSpeech);
+        if (inflectionForm != null) {
+            attributes.put("inflectionForm", inflectionForm);
+        }
+        return new AnalyzeToken(term, 0, offset, offset + term.length(), 1, "word", attributes);
     }
 
     private static SuggestItem parseSearchWords(final DefaultContentsParser parser, final SuggestAnalyzer analyzer, final String[] langs,
@@ -490,6 +831,62 @@ public class DefaultContentsParserFragmentTest {
         final ReadingConverter converter = readingConverter();
         return parser.parseSearchWords(words, null, new String[] { FIELD }, new String[0], new String[0], 1, converter,
                 new NormalizerChain(), analyzer, langs);
+    }
+
+    private static SuggestItem parseSearchWordsWith(final DefaultContentsParser parser, final SuggestAnalyzer analyzer,
+            final ReadingConverter readingConverter, final Normalizer normalizer, final String... words) throws IOException {
+        return parser.parseSearchWords(words, null, new String[] { FIELD }, new String[0], new String[0], 1, readingConverter, normalizer,
+                analyzer, null);
+    }
+
+    private static List<SuggestItem> parseQueryLog(final DefaultContentsParser parser, final String queryString, final String... fields) {
+        return parseQueryLogWith(parser, suffixReadingConverter(), new NormalizerChain(), queryString, fields);
+    }
+
+    private static List<SuggestItem> parseQueryLogWith(final DefaultContentsParser parser, final ReadingConverter readingConverter,
+            final Normalizer normalizer, final String queryString, final String... fields) {
+        return parser.parseQueryLog(new QueryLog(queryString, null), fields, new String[0], "role", readingConverter, normalizer);
+    }
+
+    private static Normalizer lowerCaseNormalizer() {
+        return (text, field, langs) -> text.toLowerCase(Locale.ROOT);
+    }
+
+    /**
+     * Swaps "x" and the long vowel mark. It is a probe of the order of the normalization and the exclusion: a word that is excluded
+     * only before (or only after) the normalization is told from the result.
+     */
+    private static Normalizer longVowelSwapNormalizer() {
+        return (text, field, langs) -> "x".equals(text) ? "ー" : "ー".equals(text) ? "x" : text;
+    }
+
+    /** Records the texts passed to {@code convert}, and returns the text + "-r" as the reading. */
+    private static ReadingConverter recordingReadingConverter(final List<String> convertedTexts) {
+        return new ReadingConverter() {
+            @Override
+            public void init() {
+            }
+
+            @Override
+            public List<String> convert(final String text, final String field, final String... langs) {
+                convertedTexts.add(text);
+                return new ArrayList<>(List.of(text + "-r"));
+            }
+        };
+    }
+
+    /** The reading of a word is the word + "-r", so that a reading shifted from its word is detected. */
+    private static ReadingConverter suffixReadingConverter() {
+        return new ReadingConverter() {
+            @Override
+            public void init() {
+            }
+
+            @Override
+            public List<String> convert(final String text, final String field, final String... langs) {
+                return new ArrayList<>(List.of(text + "-r"));
+            }
+        };
     }
 
     private static List<String> texts(final List<SuggestItem> items) {

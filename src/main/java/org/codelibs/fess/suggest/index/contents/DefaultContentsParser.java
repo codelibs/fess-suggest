@@ -110,8 +110,9 @@ import org.codelibs.fesen.opensearch.action.admin.indices.analyze.AnalyzeAction.
  * <p>{@link #parseDocument} does not make a candidate of a meaningless fragment (a token). A fragment is excluded when it consists only of
  * the small tsu and the long vowel marks ({@code ッ っ ー ｰ ｯ}), or has no letter or digit (a symbol, an emoji), whatever the language is.
  * When the language of the document is not set or is {@code ja}, a single ASCII letter or digit, and a single hiragana or katakana are
- * also excluded. The search words ({@link #parseSearchWords}) are excluded only by the first two rules (not by length), so that
- * the history of searches such as {@code ai} and {@code 月} is kept. The symbol tokens and the tokens that consist only of the small tsu
+ * also excluded. The search words ({@link #parseSearchWords} and the words of the query logs, {@link #parseQueryLog}) are excluded only by
+ * the first two rules (not by length), so that the history of searches such as {@code ai} and {@code 月} is kept. A query log field whose
+ * words are all excluded makes no item. The symbol tokens and the tokens that consist only of the small tsu
  * and the long vowel marks at both ends of a compound word are removed.</p>
  *
  * <p>System properties:</p>
@@ -268,7 +269,7 @@ public class DefaultContentsParser implements ContentsParser {
     /** The number of the fragments of documents excluded by the fragment filter. Shared by the parallel streams, so it is atomic. */
     private final Map<FragmentExclusion, AtomicLong> excludedFragmentCounts = new EnumMap<>(FragmentExclusion.class);
 
-    /** The number of the search words excluded by the fragment filter. Only the rules independent of the language are used. */
+    /** The number of the search words (of the search words and the query logs) excluded by the fragment filter. Only the rules independent of the language are used. */
     private final Map<FragmentExclusion, AtomicLong> excludedSearchWordCounts = new EnumMap<>(FragmentExclusion.class);
 
     /** The number of the chunks for which the inflected forms could not be judged. */
@@ -381,7 +382,8 @@ public class DefaultContentsParser implements ContentsParser {
     }
 
     /**
-     * Returns the number of the search words that were excluded by the fragment filter, for the given reason.
+     * Returns the number of the search words that were excluded by the fragment filter, for the given reason. It counts the words of
+     * {@link #parseSearchWords} and {@link #parseQueryLog}.
      * Only {@link FragmentExclusion#SOKUON_CHOUON_ONLY} and {@link FragmentExclusion#SYMBOL_ONLY} are applied to the search words.
      *
      * @param reason the reason
@@ -456,19 +458,24 @@ public class DefaultContentsParser implements ContentsParser {
         final List<SuggestItem> items = new ArrayList<>(fields.length);
         try {
             for (final String field : fields) {
-                final String[] words = SuggestUtil.parseQuery(queryString, field);
-                if (words.length == 0) {
+                final String[] parsedWords = SuggestUtil.parseQuery(queryString, field);
+                final List<String> words = new ArrayList<>(parsedWords.length);
+                final List<String[]> readings = new ArrayList<>(parsedWords.length);
+                for (final String parsedWord : parsedWords) {
+                    // Before the reading is made, so that an excluded word has no reading and the readings stay aligned with the words.
+                    if (isExcludedByFragmentFilter(parsedWord)) {
+                        continue;
+                    }
+                    final String word = normalizer.normalize(parsedWord, field, "");
+                    words.add(word);
+                    readings.add(readingConverter.convert(word, field).toArray(String[]::new));
+                }
+                if (words.isEmpty()) {
                     continue;
                 }
 
-                final String[][] readings = new String[words.length][];
-                for (int j = 0; j < words.length; j++) {
-                    words[j] = normalizer.normalize(words[j], field, "");
-                    final List<String> l = readingConverter.convert(words[j], field);
-                    readings[j] = l.toArray(String[]::new);
-                }
-
-                items.add(new SuggestItem(words, readings, new String[] { field }, 0, 1, -1, tags, roles, null, SuggestItem.Kind.QUERY));
+                items.add(new SuggestItem(words.toArray(String[]::new), readings.toArray(String[][]::new), new String[] { field }, 0, 1, -1,
+                        tags, roles, null, SuggestItem.Kind.QUERY));
             }
         } catch (final IOException e) {
             throw new SuggesterException("Failed to create SuggestItem from query log.", e);
@@ -501,11 +508,11 @@ public class DefaultContentsParser implements ContentsParser {
                 readingTokens = null;
             }
 
-            // One request for each chunk, shared by the inflected forms and the compound words.
-            final List<TokenizerStageFetch> stageFetches =
-                    compoundEnabled || inflectionEnabled ? fetchTokenizerStages(analyzer, field, text, lang) : List.of();
-            final InflectedAdjectives inflectedAdjectives =
-                    inflectionEnabled ? findInflectedAdjectives(field, lang, stageFetches) : InflectedAdjectives.NONE;
+            // One request for each chunk, shared by the inflected forms and the compound words. The compound words are created here,
+            // but added after the fragments below.
+            final TokenizerStageOutcome stageOutcome =
+                    analyzeTokenizerStages(analyzer, field, text, lang, tags, roles, readingConverter, contentsReadingConverter);
+            final InflectedAdjectives inflectedAdjectives = stageOutcome.inflectedAdjectives;
 
             final Map<FragmentExclusion, Integer> excludedFragments = new EnumMap<>(FragmentExclusion.class);
             try {
@@ -542,15 +549,12 @@ public class DefaultContentsParser implements ContentsParser {
             }
             recordExcludedFragments(field, lang, excludedFragments);
 
-            if (compoundEnabled) {
-                final List<SuggestItem> compoundItems =
-                        createCompoundItems(stageFetches, field, lang, tags, roles, readingConverter, contentsReadingConverter);
-                if (!compoundItems.isEmpty()) {
-                    if (items == null) {
-                        items = new ArrayList<>(compoundItems.size());
-                    }
-                    items.addAll(compoundItems);
+            final List<SuggestItem> compoundItems = stageOutcome.compoundItems;
+            if (!compoundItems.isEmpty()) {
+                if (items == null) {
+                    items = new ArrayList<>(compoundItems.size());
                 }
+                items.addAll(compoundItems);
             }
         }
 
@@ -680,27 +684,84 @@ public class DefaultContentsParser implements ContentsParser {
     }
 
     /**
-     * Gets the tokenizer stage of every chunk of the text, once for each chunk. The chunks are the same as those of the tokens
-     * ({@link #analyzeTextByChunk}), so the returned list has the same index as the chunks. An exception of the analyzer is kept
-     * in the element, because the analysis of the tokenizer stage is additional and must not break the indexing of the fragments.
-     * @return The results for each chunk. The element of a blank chunk is null (the analyzer is not called)
+     * The inflected adjectives and the compound words of a field, both found from the tokenizer stage.
      */
-    private List<TokenizerStageFetch> fetchTokenizerStages(final SuggestAnalyzer analyzer, final String field, final String text,
-            final String lang) {
-        final List<TokenizerStageFetch> fetches = new ArrayList<>();
+    private static final class TokenizerStageOutcome {
+
+        /** Used when the tokenizer stage is not requested: nothing is excluded and there is no compound word. */
+        static final TokenizerStageOutcome NONE = new TokenizerStageOutcome(InflectedAdjectives.NONE, List.of());
+
+        final InflectedAdjectives inflectedAdjectives;
+
+        /** The items of the compound words of every chunk. Empty when the compound words are disabled. */
+        final List<SuggestItem> compoundItems;
+
+        TokenizerStageOutcome(final InflectedAdjectives inflectedAdjectives, final List<SuggestItem> compoundItems) {
+            this.inflectedAdjectives = inflectedAdjectives;
+            this.compoundItems = compoundItems;
+        }
+    }
+
+    /**
+     * Gets the tokenizer stage once for each chunk of the text, and finds the inflected adjectives and creates the compound words
+     * from it. The chunks are the same as those of the tokens ({@link #analyzeTextByChunk}). Each chunk is processed and the result
+     * is released before the next chunk is requested, because the tokenizer stage has the attributes of every token and keeping
+     * it for all the chunks of a long field would increase the peak heap. What is kept for a chunk is only the inflected forms
+     * ((start, end) and term) and the items of the compound words.
+     * An exception of the analyzer is not thrown, because the analysis of the tokenizer stage is additional and must not break
+     * the indexing of the fragments.
+     * @return The outcome. {@link TokenizerStageOutcome#NONE} if neither the inflected forms nor the compound words are enabled
+     */
+    private TokenizerStageOutcome analyzeTokenizerStages(final SuggestAnalyzer analyzer, final String field, final String text,
+            final String lang, final String[] tags, final String[] roles, final ReadingConverter readingConverter,
+            final ReadingConverter contentsReadingConverter) {
+        if (!compoundEnabled && !inflectionEnabled) {
+            return TokenizerStageOutcome.NONE;
+        }
+        // The element of a chunk is added for every chunk (an empty map for a blank chunk) so that the index is the chunk index.
+        final List<Map<TokenSpan, String>> inflectedTermsByChunk = new ArrayList<>();
+        final Map<InflectionUndetermined, Integer> undeterminedChunks = new EnumMap<>(InflectionUndetermined.class);
+        final List<SuggestItem> compoundItems = new ArrayList<>();
+        final Map<CompoundDegradation, Integer> degradedChunks = new EnumMap<>(CompoundDegradation.class);
+
         forEachChunk(text, (chunk, ignoredIsLast) -> {
-            final String chunkText = chunk.trim();
-            if (chunkText.isEmpty()) {
-                fetches.add(null);
-                return;
+            final TokenizerStageFetch stageFetch = fetchTokenizerStage(analyzer, field, lang, chunk);
+            if (inflectionEnabled) {
+                inflectedTermsByChunk.add(findInflectedTerms(stageFetch, field, lang, undeterminedChunks));
             }
-            try {
-                fetches.add(new TokenizerStageFetch(chunkText, analyzer.analyzeTokenizerStage(chunkText, field, lang), null));
-            } catch (final RuntimeException e) {
-                fetches.add(new TokenizerStageFetch(chunkText, null, e));
+            if (compoundEnabled && stageFetch != null) {
+                final Set<CompoundDegradation> degradations = EnumSet.noneOf(CompoundDegradation.class);
+                compoundItems.addAll(createCompoundItemsOfChunk(stageFetch, field, lang, tags, roles, readingConverter,
+                        contentsReadingConverter, degradations));
+                for (final CompoundDegradation cause : degradations) {
+                    degradedChunks.merge(cause, 1, Integer::sum);
+                }
             }
         });
-        return fetches;
+
+        recordInflectionUndetermined(field, lang, undeterminedChunks);
+        if (compoundEnabled) {
+            warnIfDegraded(field, lang, degradedChunks);
+        }
+        return new TokenizerStageOutcome(new InflectedAdjectives(inflectedTermsByChunk), compoundItems);
+    }
+
+    /**
+     * Gets the tokenizer stage of a chunk. An exception of the analyzer is kept in the result.
+     * @param chunk The chunk, not trimmed
+     * @return The result, or null for a blank chunk (the analyzer is not called)
+     */
+    private TokenizerStageFetch fetchTokenizerStage(final SuggestAnalyzer analyzer, final String field, final String lang,
+            final String chunk) {
+        final String chunkText = chunk.trim();
+        if (chunkText.isEmpty()) {
+            return null;
+        }
+        try {
+            return new TokenizerStageFetch(chunkText, analyzer.analyzeTokenizerStage(chunkText, field, lang), null);
+        } catch (final RuntimeException e) {
+            return new TokenizerStageFetch(chunkText, null, e);
+        }
     }
 
     /**
@@ -736,41 +797,44 @@ public class DefaultContentsParser implements ContentsParser {
     }
 
     /**
-     * Finds the inflected adjectives of every chunk from the tokenizer stage, and counts the chunks that could not be judged.
+     * Finds the inflected adjectives of a chunk from its tokenizer stage, and counts the chunk in {@code undeterminedChunks} if it
+     * could not be judged.
+     * @param stageFetch The tokenizer stage of the chunk, or null for a blank chunk
+     * @return The terms of the inflected adjectives by (start, end). Empty if there is none or the chunk could not be judged
      */
-    private InflectedAdjectives findInflectedAdjectives(final String field, final String lang, final List<TokenizerStageFetch> fetches) {
-        final List<Map<TokenSpan, String>> termsByChunk = new ArrayList<>(fetches.size());
-        final Map<InflectionUndetermined, Integer> undeterminedChunks = new EnumMap<>(InflectionUndetermined.class);
-        for (final TokenizerStageFetch fetch : fetches) {
-            final Map<TokenSpan, String> terms = new HashMap<>();
-            termsByChunk.add(terms);
-            if (fetch == null) {
-                continue;
+    private Map<TokenSpan, String> findInflectedTerms(final TokenizerStageFetch stageFetch, final String field, final String lang,
+            final Map<InflectionUndetermined, Integer> undeterminedChunks) {
+        final Map<TokenSpan, String> terms = new HashMap<>();
+        if (stageFetch == null) {
+            return terms;
+        }
+        final InflectionUndetermined cause = findUndeterminedCause(stageFetch);
+        if (cause != null) {
+            undeterminedChunks.merge(cause, 1, Integer::sum);
+            if (stageFetch.failure != null && logger.isDebugEnabled()) {
+                logger.debug("Failed to get the tokenizer stage for the inflection forms: field={}, lang={}, textSize={}", field, lang,
+                        stageFetch.chunkText.length(), stageFetch.failure);
             }
-            final InflectionUndetermined cause = findUndeterminedCause(fetch);
-            if (cause != null) {
-                undeterminedChunks.merge(cause, 1, Integer::sum);
-                if (fetch.failure != null && logger.isDebugEnabled()) {
-                    logger.debug("Failed to get the tokenizer stage for the inflection forms: field={}, lang={}, textSize={}", field, lang,
-                            fetch.chunkText.length(), fetch.failure);
-                }
-                continue;
-            }
-            for (final AnalyzeToken stageToken : fetch.result.getTokens()) {
-                if (isInflectedAdjective(stageToken)) {
-                    terms.put(new TokenSpan(stageToken.getStartOffset(), stageToken.getEndOffset()), stageToken.getTerm());
-                }
+            return terms;
+        }
+        for (final AnalyzeToken stageToken : stageFetch.result.getTokens()) {
+            if (isInflectedAdjective(stageToken)) {
+                terms.put(new TokenSpan(stageToken.getStartOffset(), stageToken.getEndOffset()), stageToken.getTerm());
             }
         }
-        if (!undeterminedChunks.isEmpty()) {
-            undeterminedChunks.forEach((cause, count) -> inflectionUndeterminedChunkCounts.get(cause).addAndGet(count));
-            // Only logged at debug level: this is normal for a non-Japanese analyzer, and the reason is logged by the analyzer.
-            if (logger.isDebugEnabled()) {
-                logger.debug("Inflection forms were not judged for some chunks: field={}, lang={}, chunks={}", field, lang,
-                        undeterminedChunks);
-            }
+        return terms;
+    }
+
+    private void recordInflectionUndetermined(final String field, final String lang,
+            final Map<InflectionUndetermined, Integer> undeterminedChunks) {
+        if (undeterminedChunks.isEmpty()) {
+            return;
         }
-        return new InflectedAdjectives(termsByChunk);
+        undeterminedChunks.forEach((cause, count) -> inflectionUndeterminedChunkCounts.get(cause).addAndGet(count));
+        // Only logged at debug level: this is normal for a non-Japanese analyzer, and the reason is logged by the analyzer.
+        if (logger.isDebugEnabled()) {
+            logger.debug("Inflection forms were not judged for some chunks: field={}, lang={}, chunks={}", field, lang, undeterminedChunks);
+        }
     }
 
     private static InflectionUndetermined findUndeterminedCause(final TokenizerStageFetch fetch) {
@@ -796,33 +860,6 @@ public class DefaultContentsParser implements ContentsParser {
         final Object inflectionForm = attributes.get(INFLECTION_FORM_ATTRIBUTE);
         return INDEPENDENT_ADJECTIVE.equals(partOfSpeech) && inflectionForm instanceof String && !((String) inflectionForm).isEmpty()
                 && !BASIC_FORM.equals(inflectionForm);
-    }
-
-    /**
-     * Creates the items of the compound words of a field from the tokenizer stage of its chunks.
-     * This method never throws an exception caused by the compound word generation: the chunk falls back to the fragments only.
-     * @param stageFetches The tokenizer stage of the chunks, an element is null for a blank chunk
-     */
-    private List<SuggestItem> createCompoundItems(final List<TokenizerStageFetch> stageFetches, final String field, final String lang,
-            final String[] tags, final String[] roles, final ReadingConverter readingConverter,
-            final ReadingConverter contentsReadingConverter) {
-        final List<SuggestItem> compoundItems = new ArrayList<>();
-        final Map<CompoundDegradation, Integer> degradedChunks = new EnumMap<>(CompoundDegradation.class);
-
-        for (final TokenizerStageFetch stageFetch : stageFetches) {
-            if (stageFetch == null) {
-                continue;
-            }
-            final Set<CompoundDegradation> degradations = EnumSet.noneOf(CompoundDegradation.class);
-            compoundItems.addAll(createCompoundItemsOfChunk(stageFetch, field, lang, tags, roles, readingConverter,
-                    contentsReadingConverter, degradations));
-            for (final CompoundDegradation cause : degradations) {
-                degradedChunks.merge(cause, 1, Integer::sum);
-            }
-        }
-
-        warnIfDegraded(field, lang, degradedChunks);
-        return compoundItems;
     }
 
     private List<SuggestItem> createCompoundItemsOfChunk(final TokenizerStageFetch stageFetch, final String field, final String lang,
@@ -1255,6 +1292,25 @@ public class DefaultContentsParser implements ContentsParser {
     }
 
     /**
+     * Excludes a search word by the rules independent of the language, and counts it. Used by both entry points of the search words
+     * ({@link #parseSearchWords} and {@link #parseQueryLog}). The length rules are not applied, so that the history of {@code ai}
+     * and {@code 月} is kept.
+     * @param searchWord The search word. null is not excluded here, but left to the caller as before
+     * @return True if the filter is enabled and the word is excluded
+     */
+    private boolean isExcludedByFragmentFilter(final String searchWord) {
+        if (!fragmentFilterEnabled || searchWord == null) {
+            return false;
+        }
+        final FragmentExclusion exclusion = findLanguageIndependentExclusion(searchWord);
+        if (exclusion == null) {
+            return false;
+        }
+        excludedSearchWordCounts.get(exclusion).incrementAndGet();
+        return true;
+    }
+
+    /**
      * Check if the search word is excluded.
      * @param searchWord Search word
      * @param field Field
@@ -1265,12 +1321,8 @@ public class DefaultContentsParser implements ContentsParser {
     protected boolean isExcludeSearchword(final String searchWord, final String field, final String[] langs,
             final SuggestAnalyzer analyzer) {
         // Checked before the analyzer, so that the analysis request is saved. null is left to the analyzer as before.
-        if (fragmentFilterEnabled && searchWord != null) {
-            final FragmentExclusion exclusion = findLanguageIndependentExclusion(searchWord);
-            if (exclusion != null) {
-                excludedSearchWordCounts.get(exclusion).incrementAndGet();
-                return true;
-            }
+        if (isExcludedByFragmentFilter(searchWord)) {
+            return true;
         }
         if (langs == null || langs.length == 0) {
             final List<AnalyzeToken> tokens = analyzer.analyze(searchWord, "", null);
