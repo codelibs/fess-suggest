@@ -49,7 +49,7 @@ public final class TokenizerStageResult {
     /**
      * Returns the tokens produced by the tokenizer.
      * Each token has its offsets in the original text, and carries the attributes
-     * {@code partOfSpeech} and {@code reading} when the tokenizer provides them.
+     * {@code partOfSpeech}, {@code reading} and {@code inflectionForm} when the tokenizer provides them.
      *
      * @return an unmodifiable list of tokens, which is empty if the tokenizer provides no part of speech
      */

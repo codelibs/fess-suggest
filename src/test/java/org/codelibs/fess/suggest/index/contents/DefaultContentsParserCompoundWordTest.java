@@ -72,6 +72,12 @@ public class DefaultContentsParserCompoundWordTest {
 
     private static final String PROP_ENABLED = "fess.suggest.compound.enabled";
 
+    /** The exclusion of the inflected adjectives also uses the tokenizer stage, so the request stops only when both are disabled. */
+    private static final String PROP_INFLECTION_ENABLED = "fess.suggest.fragment.inflection.enabled";
+
+    /** The fragment filter also removes the small tsu and the long vowel marks at the ends of a compound word. */
+    private static final String PROP_FRAGMENT_FILTER_ENABLED = "fess.suggest.fragment.filter.enabled";
+
     private static final String PROP_MAX_TOKENS = "fess.suggest.compound.max.tokens";
 
     private static final String PROP_MAX_LENGTH = "fess.suggest.compound.max.length";
@@ -80,8 +86,8 @@ public class DefaultContentsParserCompoundWordTest {
 
     private static final String PROP_BREAK_TOKENS = "fess.suggest.compound.break.tokens";
 
-    private static final String[] COMPOUND_PROPERTIES =
-            { PROP_ENABLED, PROP_MAX_TOKENS, PROP_MAX_LENGTH, PROP_BREAK_CHARS, PROP_BREAK_TOKENS };
+    private static final String[] COMPOUND_PROPERTIES = { PROP_ENABLED, PROP_INFLECTION_ENABLED, PROP_FRAGMENT_FILTER_ENABLED,
+            PROP_MAX_TOKENS, PROP_MAX_LENGTH, PROP_BREAK_CHARS, PROP_BREAK_TOKENS };
 
     /** The terms that {@link #compoundsOfTermsWithSuffix} makes 名詞-接尾-一般 tokens, as the tokenizer does for these suffixes. */
     private static final Set<String> SUFFIX_TERMS = Set.of("ら", "たち", "等", "者", "選", "安");
@@ -591,11 +597,12 @@ public class DefaultContentsParserCompoundWordTest {
     @Test
     public void test_degradation_disabled() throws Exception {
         System.setProperty(PROP_ENABLED, "false");
+        System.setProperty(PROP_INFLECTION_ENABLED, "false");
         final StubAnalyzer analyzer = StubAnalyzer.fixed("新型コロナ", tok("新型", 0, 2, "名詞-一般", "シンガタ"), tok("コロナ", 2, 5, "名詞-一般", "コロナ"));
         final DefaultContentsParser parser = new DefaultContentsParser();
 
         assertEquals(List.of("新型", "コロナ"), texts(parse(parser, analyzer, "新型コロナ")));
-        // No additional analysis request is made.
+        // No additional analysis request is made, because the inflected forms are not excluded either.
         assertEquals(List.of(), analyzer.stageChunks);
         assertEquals(0, parser.getCompoundAnalyzedChunkCount());
     }
@@ -1074,11 +1081,22 @@ public class DefaultContentsParserCompoundWordTest {
 
     @Test
     public void test_symbol_longVowelMarkIsALetter() throws Exception {
+        // ー (U+30FC) is a letter, so the symbol rule does not remove it. With the fragment filter disabled it stays.
+        System.setProperty(PROP_FRAGMENT_FILTER_ENABLED, "false");
         final DefaultContentsParser parser = new DefaultContentsParser();
 
-        // ー (U+30FC) is a letter, so it is not removed.
         assertEquals(List.of("ーquiet"), compoundsOfTerms(parser, "ー", "quiet"));
         assertEquals(List.of("quietー"), compoundsOfTerms(parser, "quiet", "ー"));
+    }
+
+    @Test
+    public void test_symbol_longVowelMarkAtTheEndsIsRemovedByTheFragmentFilter() throws Exception {
+        final DefaultContentsParser parser = new DefaultContentsParser();
+
+        // The tokens of only the small tsu and the long vowel marks are removed at the ends (fragment filter), so one token is left.
+        assertEquals(List.of(), compoundsOfTerms(parser, "ー", "quiet"));
+        assertEquals(List.of(), compoundsOfTerms(parser, "quiet", "ー"));
+        assertEquals(List.of("quietcity"), compoundsOfTerms(parser, "ー", "quiet", "city"));
     }
 
     @Test

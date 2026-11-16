@@ -16,10 +16,12 @@
 package org.codelibs.fess.suggest.settings;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -37,6 +39,12 @@ public class DefaultContentsAnalyzerParseTokenizerStageTest {
     private static Map<String, Object> token(final String term, final int startOffset, final int endOffset, final String partOfSpeech) {
         return partOfSpeech == null ? Map.of("token", term, "start_offset", startOffset, "end_offset", endOffset, "position", 0)
                 : Map.of("token", term, "start_offset", startOffset, "end_offset", endOffset, "position", 0, "partOfSpeech", partOfSpeech);
+    }
+
+    private static Map<String, Object> tokenWithInflectionForm(final String term, final String partOfSpeech, final Object inflectionForm) {
+        final Map<String, Object> token = new HashMap<>(token(term, 0, term.length(), partOfSpeech));
+        token.put("inflectionForm", inflectionForm);
+        return token;
     }
 
     private static Map<String, Object> charFilter(final String name, final String filteredText) {
@@ -116,6 +124,65 @@ public class DefaultContentsAnalyzerParseTokenizerStageTest {
 
         assertNotNull(result);
         assertEquals("シンガタ", result.getTokens().get(0).getAttributes().get("reading"));
+    }
+
+    @Test
+    public void testInflectionFormAttributeIsExtracted() {
+        final TokenizerStageResult result = parse(response(List.of(charFilter("mapping_char", "なかっ 大きい")),
+                List.of(tokenWithInflectionForm("なかっ", "形容詞-自立", "連用タ接続"), tokenWithInflectionForm("大きい", "形容詞-自立", "基本形"))));
+
+        assertNotNull(result);
+        assertEquals("連用タ接続", result.getTokens().get(0).getAttributes().get("inflectionForm"));
+        assertEquals("基本形", result.getTokens().get(1).getAttributes().get("inflectionForm"));
+    }
+
+    @Test
+    public void testNoInflectionFormAttributeIsAbsent() {
+        // A noun has no inflection form. The key is absent in the response of the client, and null in the raw REST response.
+        final Map<String, Object> noun = token("新型", 0, 2, "名詞-一般");
+        final Map<String, Object> nounWithNull = tokenWithInflectionForm("コロナ", "名詞-一般", null);
+
+        final TokenizerStageResult result = parse(response(List.of(charFilter("mapping_char", "新型コロナ")), List.of(noun, nounWithNull)));
+
+        assertNotNull(result);
+        assertEquals(2, result.getTokens().size());
+        for (final var token : result.getTokens()) {
+            assertFalse(token.getAttributes().containsKey("inflectionForm"));
+            assertEquals("名詞-一般", token.getAttributes().get("partOfSpeech"));
+        }
+    }
+
+    @Test
+    public void testNonStringInflectionFormIsAbsent() {
+        final TokenizerStageResult result = parse(response(List.of(charFilter("mapping_char", "なかっ大き")),
+                List.of(tokenWithInflectionForm("なかっ", "形容詞-自立", 1), tokenWithInflectionForm("大き", "形容詞-自立", List.of("ガル接続")))));
+
+        assertNotNull(result);
+        assertEquals(2, result.getTokens().size());
+        for (final var token : result.getTokens()) {
+            assertFalse(token.getAttributes().containsKey("inflectionForm"));
+            assertEquals("形容詞-自立", token.getAttributes().get("partOfSpeech"));
+        }
+    }
+
+    @Test
+    public void testInflectionFormWithoutPartOfSpeechDoesNotMakeTokensAvailable() {
+        // Only the part of speech decides whether the tokens are returned: an inflection form alone is not enough.
+        final TokenizerStageResult result =
+                parse(response(List.of(charFilter("mapping_char", "なかっ")), List.of(tokenWithInflectionForm("なかっ", null, "連用タ接続"))));
+
+        assertNotNull(result);
+        assertTrue(result.getTokens().isEmpty());
+        assertEquals("なかっ", result.getCharFilteredText());
+    }
+
+    @Test
+    public void testPartOfSpeechWithoutInflectionFormKeepsTokens() {
+        // The part of speech decides, so a token without an inflection form (such as a noun) is kept.
+        final TokenizerStageResult result = parse(response(List.of(charFilter("mapping_char", "新型")), List.of(token("新型", 0, 2, "名詞-一般"))));
+
+        assertNotNull(result);
+        assertEquals(1, result.getTokens().size());
     }
 
     @Test
