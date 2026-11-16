@@ -40,7 +40,6 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.codelibs.fesen.opensearch.action.admin.indices.analyze.AnalyzeAction.AnalyzeToken;
 
 public class DefaultContentsParserTest {
     static Suggester suggester;
@@ -170,45 +169,6 @@ public class DefaultContentsParserTest {
         assertNotNull(items);
         // Should handle large text by splitting into chunks
         assertTrue(items.size() > 0);
-    }
-
-    @Test
-    public void test_analyzeText() throws Exception {
-        SuggestAnalyzer analyzer = suggester.settings().analyzer().new DefaultContentsAnalyzer();
-        String text = "これはテストです。検索エンジン。";
-
-        List<AnalyzeToken> tokens = defaultContentsParser.analyzeText(analyzer, "content", text, null);
-
-        assertNotNull(tokens);
-        assertTrue(tokens.size() > 0);
-    }
-
-    @Test
-    public void test_analyzeTextByReading() throws Exception {
-        SuggestAnalyzer analyzer = suggester.settings().analyzer().new DefaultContentsAnalyzer();
-        String text = "これはテストです。検索エンジン。";
-
-        List<AnalyzeToken> tokens = defaultContentsParser.analyzeTextByReading(analyzer, "content", text, null);
-
-        assertNotNull(tokens);
-        // analyzeAndReading may return null for some analyzers
-        // Just verify it doesn't throw an exception
-    }
-
-    @Test
-    public void test_analyzeTextWithLargeContent() throws Exception {
-        SuggestAnalyzer analyzer = suggester.settings().analyzer().new DefaultContentsAnalyzer();
-        // Create text larger than maxAnalyzedContentLength (1000 chars by default)
-        StringBuilder largeText = new StringBuilder();
-        for (int i = 0; i < 2000; i++) {
-            largeText.append("テスト ");
-        }
-
-        List<AnalyzeToken> tokens = defaultContentsParser.analyzeText(analyzer, "content", largeText.toString(), null);
-
-        assertNotNull(tokens);
-        // Should handle large text by splitting into chunks
-        assertTrue(tokens.size() > 0);
     }
 
     @Test

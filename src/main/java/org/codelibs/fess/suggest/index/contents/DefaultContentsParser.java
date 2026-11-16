@@ -500,7 +500,7 @@ public class DefaultContentsParser implements ContentsParser {
             final String text = textObj.toString();
             final String lang = document.get(langFieldName) == null ? null : document.get(langFieldName).toString();
 
-            // Not analyzeText: the chunk of each token is needed to match it with the tokenizer stage of the same chunk.
+            // The chunk of each token is needed to match it with the tokenizer stage of the same chunk.
             final ChunkedTokens chunkedTokens = analyzeTextByChunk(analyzer, field, text, lang, false);
             final List<AnalyzeToken> tokens = chunkedTokens.tokens;
             List<AnalyzeToken> readingTokens = analyzeTextByChunk(analyzer, field, text, lang, true).tokens;
@@ -1144,41 +1144,6 @@ public class DefaultContentsParser implements ContentsParser {
         final String[] roles1 = SuggestUtil.parseQuery(queryString, roleFieldName);
         final String[] roles2 = filterQueryString == null ? new String[0] : SuggestUtil.parseQuery(filterQueryString, roleFieldName);
         return Stream.concat(Arrays.stream(roles1), Arrays.stream(roles2)).toArray(String[]::new);
-    }
-
-    /**
-     * Analyze text.
-     *
-     * <p>{@link #parseDocument} does not call this method: it uses an internal method that also records the chunk of each token
-     * (to match the tokens with the tokenizer stage of the same chunk). Overriding this method in a subclass therefore does not
-     * affect the analysis of a document.</p>
-     *
-     * @param analyzer Analyzer
-     * @param field Field
-     * @param text Text
-     * @param lang Language
-     * @return List of tokens
-     */
-    protected List<AnalyzeToken> analyzeText(final SuggestAnalyzer analyzer, final String field, final String text, final String lang) {
-        return analyzeTextByChunk(analyzer, field, text, lang, false).tokens;
-    }
-
-    /**
-     * Analyze text by reading.
-     *
-     * <p>{@link #parseDocument} does not call this method: it uses an internal method that also records the chunk of each token
-     * (to match the tokens with the tokenizer stage of the same chunk). Overriding this method in a subclass therefore does not
-     * affect the analysis of a document.</p>
-     *
-     * @param analyzer Analyzer
-     * @param field Field
-     * @param text Text
-     * @param lang Language
-     * @return List of tokens
-     */
-    protected List<AnalyzeToken> analyzeTextByReading(final SuggestAnalyzer analyzer, final String field, final String text,
-            final String lang) {
-        return analyzeTextByChunk(analyzer, field, text, lang, true).tokens;
     }
 
     /**
